@@ -1,0 +1,12 @@
+CREATE TABLE arms (
+    id SERIAL PRIMARY KEY,
+
+    arm_name VARCHAR(10) NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uq_arm_name
+        UNIQUE (arm_name)
+);

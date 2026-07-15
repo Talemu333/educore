@@ -1,0 +1,23 @@
+INSERT INTO subjects (subject_name, subject_code)
+VALUES
+('English Language', 'ENG'),
+('Mathematics', 'MTH'),
+('Basic Science', 'BSC'),
+('Basic Technology', 'BTE'),
+('Computer Studies', 'CST'),
+('Physics', 'PHY'),
+('Chemistry', 'CHM'),
+('Biology', 'BIO'),
+('Economics', 'ECO'),
+('Government', 'GOV'),
+('Literature in English', 'LIT'),
+('Agricultural Science', 'AGR'),
+('Civic Education', 'CVE'),
+('Financial Accounting', 'ACC'),
+('Commerce', 'COM'),
+('Further Mathematics', 'FMA'),
+('Geography', 'GEO'),
+('Christian Religious Studies', 'CRS'),
+('Islamic Religious Studies', 'IRS'),
+('French', 'FRE'),
+('Yoruba', 'YOR');
