@@ -21,5 +21,16 @@ router.get(
     authorize(ROLES.ADMIN),
     studentController.getAllStudents
 );
-
+router.get(
+    "/:id",
+    authenticate,
+    authorize(ROLES.ADMIN),
+    studentController.getStudentById
+);
+router.put(
+    "/:id",
+    authenticate,
+    authorize(ROLES.ADMIN),
+    studentController.updateStudent
+);
 module.exports = router;

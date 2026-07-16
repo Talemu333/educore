@@ -6,6 +6,7 @@ const passport = require("passport");
 require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes");
+const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
@@ -30,4 +31,11 @@ app.use("/", routes);
 app.use("/api/classes", classRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
+
+
+
+
+
+
+app.use(errorHandler);
 module.exports = app;

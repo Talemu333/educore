@@ -122,8 +122,126 @@ const getAllStudents = async () => {
     return result.rows;
 };
 
+const getStudentById = async (id) => {
+
+    const query = `
+        SELECT
+
+            s.*,
+
+            c.class_name,
+
+            a.arm_name,
+
+            st.state_name,
+
+            n.nationality_name
+
+        FROM students s
+
+        INNER JOIN classes c
+            ON s.class_id = c.id
+
+        INNER JOIN arms a
+            ON s.arm_id = a.id
+
+        LEFT JOIN states st
+            ON s.state_id = st.id
+
+        LEFT JOIN nationalities n
+            ON s.nationality_id = n.id
+
+        WHERE s.id = $1;
+    `;
+
+    const result = await pool.query(query, [id]);
+
+    return result.rows[0];
+
+};
+
+const updateStudent = async (client, id, student) => {
+
+    const query = `
+        UPDATE students
+
+        SET
+
+            surname=$1,
+
+            first_name=$2,
+
+            middle_name=$3,
+
+            gender=$4,
+
+            date_of_birth=$5,
+
+            state_id=$6,
+
+            nationality_id=$7,
+
+            religion=$8,
+
+            blood_group=$9,
+
+            genotype=$10,
+
+            residential_address=$11,
+
+            class_id=$12,
+
+            arm_id=$13,
+
+            updated_at=CURRENT_TIMESTAMP
+
+        WHERE id=$14
+
+        RETURNING *;
+    `;
+
+    const values = [
+
+        student.surname,
+
+        student.first_name,
+
+        student.middle_name,
+
+        student.gender,
+
+        student.date_of_birth,
+
+        student.state_id,
+
+        student.nationality_id,
+
+        student.religion,
+
+        student.blood_group,
+
+        student.genotype,
+
+        student.residential_address,
+
+        student.class_id,
+
+        student.arm_id,
+
+        id
+
+    ];
+
+    const result = await client.query(query, values);
+
+    return result.rows[0];
+
+};
+
 module.exports = {
     createStudent,
     validateClassArm,
-    getAllStudents
+    getAllStudents,
+    getStudentById,
+    updateStudent
 };

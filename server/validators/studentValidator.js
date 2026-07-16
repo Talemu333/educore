@@ -34,8 +34,41 @@ const createStudentSchema = Joi.object({
 
 });
 
+const updateStudentSchema = Joi.object({
+
+    surname: Joi.string().trim().required(),
+
+    first_name: Joi.string().trim().required(),
+
+    middle_name: Joi.string().allow("").optional(),
+
+    gender: Joi.string()
+        .valid("Male", "Female")
+        .required(),
+
+    date_of_birth: Joi.date().required(),
+
+    state_id: Joi.number().integer().required(),
+
+    nationality_id: Joi.number().integer().required(),
+
+    religion: Joi.string().allow("").optional(),
+
+    blood_group: Joi.string().allow("").optional(),
+
+    genotype: Joi.string().allow("").optional(),
+
+    residential_address: Joi.string().required(),
+
+    class_id: Joi.number().integer().required(),
+
+    arm_id: Joi.number().integer().required()
+
+});
+
 module.exports = {
 
-    createStudentSchema
+    createStudentSchema,
+    updateStudentSchema
 
 };
