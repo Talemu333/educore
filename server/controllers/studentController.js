@@ -32,8 +32,31 @@ const createStudent = async (req, res, next) => {
 
 };
 
+const getAllStudents = async (req, res, next) => {
+
+    try {
+
+        const students = await studentService.getAllStudents();
+
+        res.json({
+
+            success: true,
+
+            count: students.length,
+
+            data: students
+
+        });
+
+    } catch (err) {
+
+        next(err);
+
+    }
+
+};
+
 module.exports = {
-
-    createStudent
-
+    createStudent,
+    getAllStudents
 };

@@ -15,5 +15,11 @@ router.post(
     authorize(ROLES.ADMIN),
     studentController.createStudent
 );
+router.get(
+    "/",
+    authenticate,
+    authorize(ROLES.ADMIN),
+    studentController.getAllStudents
+);
 
 module.exports = router;
