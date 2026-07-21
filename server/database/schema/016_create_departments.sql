@@ -1,0 +1,13 @@
+CREATE TABLE departments (
+
+    id SERIAL PRIMARY KEY,
+
+    department_name VARCHAR(100) NOT NULL UNIQUE,
+
+    status BOOLEAN DEFAULT TRUE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+);

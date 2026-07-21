@@ -1,37 +1,52 @@
 const classModel = require("../models/classModel");
-const classSchema = require("../validators/classValidator");
+const createClassSchema = require("../validators/classValidator");
+const classService = require("../services/classService");
 const {
     successResponse,
     errorResponse
 } = require("../utils/response");
 
-const getClasses = async (req, res) => {
+
+const getClasses = async (req, res, next) => {
+    try {
+
+        const classes = await classService.getClasses();
+
+        res.status(200).json({
+            success: true,
+            data: classes
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getClassArms = async (req, res, next) => {
 
     try {
 
-        const classes = await classModel.getAllClasses();
+        const arms = await classService.getClassArms(req.params.id);
 
-        return successResponse(
-            res,
-            "Classes retrieved successfully.",
-            classes
-        );
+        res.status(200).json({
 
-    } catch (error) {
+            success: true,
 
-        console.error(error);
+            data: arms
 
-        return errorResponse(
-            res,
-            "Internal server error."
-        );
+        });
+
+    } catch (err) {
+
+        next(err);
+
     }
 
 };
 
 const createClass = async (req, res) => {
 
-    const { error } = classSchema.validate(req.body);
+    const { error } = createClassSchema.validate(req.body);
 
     if (error) {
 
@@ -68,5 +83,6 @@ const createClass = async (req, res) => {
 
 module.exports = {
     getClasses,
+    getClassArms,
     createClass
 };

@@ -1,0 +1,15 @@
+module.exports = {
+
+    ADMISSION: "ADMISSION",
+
+    PAYMENT: "PAYMENT",
+
+    RESULT: "RESULT",
+
+    ATTENDANCE: "ATTENDANCE",
+
+    ANNOUNCEMENT: "ANNOUNCEMENT",
+
+    SYSTEM: "SYSTEM"
+
+};

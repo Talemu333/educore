@@ -1,0 +1,13 @@
+CREATE TABLE qualifications (
+
+    id SERIAL PRIMARY KEY,
+
+    qualification_name VARCHAR(100) NOT NULL UNIQUE,
+
+    status BOOLEAN DEFAULT TRUE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+);

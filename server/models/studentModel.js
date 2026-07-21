@@ -88,7 +88,7 @@ const validateClassArm = async (client, classId, armId) => {
 
 };
 
-const getAllStudents = async () => {
+const getAllStudents = async (limit, offset) => {
 
     const query = `
         SELECT
@@ -114,12 +114,32 @@ const getAllStudents = async () => {
 
         ORDER BY
             s.surname,
-            s.first_name;
+            s.first_name
+
+        LIMIT $1
+        OFFSET $2;
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(query, [
+        limit,
+        offset
+    ]);
 
     return result.rows;
+};
+
+const countStudents = async () => {
+
+    const result = await pool.query(`
+
+        SELECT COUNT(*) AS total
+
+        FROM students;
+
+    `);
+
+    return Number(result.rows[0].total);
+
 };
 
 const getStudentById = async (id) => {
@@ -238,10 +258,181 @@ const updateStudent = async (client, id, student) => {
 
 };
 
+const getStudentsByClass = async (
+
+    classId,
+
+    armId
+
+) => {
+
+    const query = `
+
+        SELECT *
+
+        FROM students
+
+        WHERE
+
+            class_id = $1
+
+            AND (
+
+                arm_id = $2
+
+                OR
+
+                (
+
+                    arm_id IS NULL
+
+                    AND
+
+                    $2 IS NULL
+
+                )
+
+            )
+
+        ORDER BY surname, first_name;
+
+    `;
+
+    const result = await pool.query(
+
+        query,
+
+        [
+
+            classId,
+
+            armId
+
+        ]
+
+    );
+
+    return result.rows;
+
+};
+
+const updateCurrentClass = async (
+
+    studentId,
+
+    classId,
+
+    armId,
+
+    client = pool
+
+) => {
+
+    const query = `
+
+        UPDATE students
+
+        SET
+
+            class_id = $2,
+
+            arm_id = $3,
+
+            updated_at = CURRENT_TIMESTAMP
+
+        WHERE id = $1;
+
+    `;
+
+    await client.query(query, [
+
+        studentId,
+
+        classId,
+
+        armId
+
+    ]);
+
+};
+
+const searchStudents = async (searchTerm) => {
+
+    const query = `
+
+        SELECT
+
+            s.id,
+
+            s.admission_number,
+
+            s.surname,
+
+            s.first_name,
+
+            s.middle_name,
+
+            c.class_name,
+
+            a.arm_name
+
+        FROM students s
+
+        LEFT JOIN classes c
+            ON s.class_id = c.id
+
+        LEFT JOIN arms a
+            ON s.arm_id = a.id
+
+        WHERE
+
+            LOWER(s.surname)
+                LIKE LOWER($1)
+
+            OR LOWER(s.first_name)
+                LIKE LOWER($1)
+
+            OR LOWER(
+                COALESCE(
+                    s.middle_name,
+                    ''
+                )
+            ) LIKE LOWER($1)
+
+            OR LOWER(s.admission_number)
+                LIKE LOWER($1)
+
+        ORDER BY
+
+            s.surname,
+
+            s.first_name
+
+        LIMIT 20;
+
+    `;
+
+    const result = await pool.query(
+
+        query,
+
+        [`%${searchTerm}%`]
+
+    );
+
+    return result.rows;
+
+};
+
 module.exports = {
     createStudent,
     validateClassArm,
     getAllStudents,
     getStudentById,
-    updateStudent
+    updateStudent,
+    getStudentsByClass,
+    updateCurrentClass,
+    searchStudents,
+    countStudents
+
 };

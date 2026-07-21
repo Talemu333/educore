@@ -3,6 +3,7 @@ const pool = require("../config/database");
 const studentModel = require("../models/studentModel");
 const generateAdmissionNumber = require("../utils/admissionNumberGenerator");
 const ApiError = require("../utils/ApiError");
+const getPagination = require("../utils/pagination");
 
 const createStudent = async (studentData) => {
     const client = await pool.connect();
@@ -48,11 +49,11 @@ const createStudent = async (studentData) => {
 
 };
 
-const getAllStudents = async () => {
+// const getAllStudents = async () => {
 
-    return await studentModel.getAllStudents();
+//     return await studentModel.getAllStudents();
 
-};
+// };
 
 const getStudentById = async (id) => {
 
@@ -120,11 +121,74 @@ const updateStudent = async (id, studentData) => {
 
 };
 
+const searchStudents = async (searchTerm) => {
+
+    if (!searchTerm.trim()) {
+
+        throw new ApiError(
+            400,
+            "Search term is required."
+        );
+
+    }
+
+    return await studentModel.searchStudents(
+        searchTerm
+    );
+
+};
+
+const getAllStudents = async (query) => {
+
+    const {
+
+        page,
+
+        limit,
+
+        offset
+
+    } = getPagination(query);
+
+    const [students, total] = await Promise.all([
+
+        studentModel.getAllStudents(
+
+            limit,
+
+            offset
+
+        ),
+
+        studentModel.countStudents()
+
+    ]);
+
+    return {
+
+        page,
+
+        limit,
+
+        total,
+
+        totalPages:
+
+            Math.ceil(total / limit),
+
+        data: students
+
+    };
+
+};
+
+
 module.exports = {
     createStudent,
     getAllStudents,
     getStudentById,
-    updateStudent
+    updateStudent,
+    searchStudents
 };
 
 

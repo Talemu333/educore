@@ -1,6 +1,6 @@
 const pool = require("../config/database");
 
-const getAllClasses = async () => {
+const getClasses = async () => {
     const query = `
         SELECT
             id,
@@ -13,6 +13,23 @@ const getAllClasses = async () => {
 
     const result = await pool.query(query);
     return result.rows;
+};
+
+const getClassArms = async (classId) => {
+
+    const query = `
+        SELECT
+            id,
+            arm_name
+        FROM arms
+        WHERE class_id = $1
+        ORDER BY arm_name;
+    `;
+
+    const result = await pool.query(query, [classId]);
+
+    return result.rows;
+
 };
 
 const createClass = async (classData) => {
@@ -39,7 +56,36 @@ const createClass = async (classData) => {
     return result.rows[0];
 };
 
+const getClassByName = async (className) => {
+
+    const query = `
+        SELECT *
+        FROM classes
+        WHERE LOWER(class_name) = LOWER($1)
+        LIMIT 1;
+    `;
+
+    const result = await pool.query(query, [className]);
+
+    return result.rows[0];
+
+};
+
+const getClassById = async (id) => {
+
+    const result = await pool.query(
+        `SELECT * FROM classes WHERE id = $1`,
+        [id]
+    );
+
+    return result.rows[0];
+
+};
+
 module.exports = {
-    getAllClasses,
-    createClass
+    getClasses,
+    getClassArms,
+    createClass,
+    getClassByName,
+    getClassById 
 };
