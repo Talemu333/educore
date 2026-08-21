@@ -58,7 +58,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.set("trust proxy", 1);
 app.use(session({
     secret: process.env.SESSION_SECRET,
 
@@ -70,7 +70,7 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24,
         httpOnly: true,
         secure: true,      // Change to true when using HTTPS
-        sameSite: "lax"
+        sameSite: "none"
     }
 }));
 app.use(passport.initialize());
