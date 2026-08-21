@@ -2,7 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import Loading from "@/components/common/Loading";
 
 import { useGradingScales } from "@/hooks/useGradingScales";

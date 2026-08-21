@@ -5,12 +5,12 @@ import { useDeactivateStudent } from "../../hooks/useDeactivateStudent";
 import toast from "react-hot-toast";
 
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import {
     Card,
     CardContent
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 
 import {
     Table,
@@ -518,9 +518,9 @@ export default StudentTable;
 // import toast from "react-hot-toast";
 
 // import { Link } from "react-router-dom";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import {Card,CardContent} from "@/components/ui/card";
+// import { Button } from "@/components/ui/Button";
+// import { Input } from "@/components/ui/Input";
+// import {Card,CardContent} from "@/components/ui/Card";
 // import {Table,TableHeader,TableBody,TableHead,TableRow,TableCell} from "@/components/ui/table";
 // import {Eye,Pencil,UserX} from "lucide-react";
 // import {

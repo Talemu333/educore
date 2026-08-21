@@ -13,7 +13,7 @@ import AcademicInformation from "./form/AcademicInformation";
 import AdditionalInformation from "./form/AdditionalInformation";
 import Loading from "../common/Loading";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { studentSchema } from "@/validators/studentSchema";
 
@@ -296,7 +296,7 @@ export default StudentForm;
 // import AcademicInformation from "./form/AcademicInformation";
 // import AdditionalInformation from "./form/AdditionalInformation";
 // import Loading from "../common/Loading";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/Button";
 // import { zodResolver } from "@hookform/resolvers/zod";
 // import { studentSchema } from "@/validators/studentSchema";
 

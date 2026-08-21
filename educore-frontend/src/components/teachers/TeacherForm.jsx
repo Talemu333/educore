@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { teacherSchema } from "@/validators/teacherSchema";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 import { useCreateTeacher } from "@/hooks/useCreateTeacher";
 import { useUpdateTeacher } from "@/hooks/useUpdateTeacher";

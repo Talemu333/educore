@@ -10,12 +10,12 @@ import {
     SheetTitle
 } from "@/components/ui/sheet";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import {
     Card,
     CardContent
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 
 import {
     Select,
@@ -630,9 +630,9 @@ export default LinkExistingParentSheet;
 //     SheetTitle
 // } from "@/components/ui/sheet";
 
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
-// import { Card, CardContent } from "@/components/ui/card";
+// import { Input } from "@/components/ui/Input";
+// import { Button } from "@/components/ui/Button";
+// import { Card, CardContent } from "@/components/ui/Card";
 // import { useParents } from "@/hooks/useParents";
 // import LinkParentDialog from "./LinkParentDialog";
 

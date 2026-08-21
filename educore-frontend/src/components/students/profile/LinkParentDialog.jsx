@@ -16,7 +16,7 @@ import {
     SelectValue
 } from "@/components/ui/select";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -476,7 +476,7 @@ export default LinkParentDialog;
 //     SelectValue
 // } from "@/components/ui/select";
 
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/Button";
 
 // import { Checkbox } from "@/components/ui/checkbox";
 

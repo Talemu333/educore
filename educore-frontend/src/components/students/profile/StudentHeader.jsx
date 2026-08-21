@@ -6,12 +6,12 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 import {
     Card,
     CardContent
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 
 import { Pencil } from "lucide-react";
 
@@ -195,8 +195,8 @@ export default StudentHeader;
 
 // import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { Badge } from "@/components/ui/badge";
-// import { Button } from "@/components/ui/button";
-// import { Card, CardContent } from "@/components/ui/card";
+// import { Button } from "@/components/ui/Button";
+// import { Card, CardContent } from "@/components/ui/Card";
 // import { Pencil } from "lucide-react";
 // import { Link } from "react-router-dom";
 

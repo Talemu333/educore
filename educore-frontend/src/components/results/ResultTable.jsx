@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { useSchoolSettings } from "@/hooks/useSchoolSettings";
 
 import { useStudentsForResultEntry } from "@/hooks/useStudentsForResultEntry";

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import AppSelect from "@/components/common/AppSelect";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { useClasses } from "@/hooks/useClasses";
@@ -443,7 +443,7 @@ export default ClassSubjectForm;
 // import { useEffect, useState } from "react";
 
 // import AppSelect from "@/components/common/AppSelect";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/Button";
 // import { Checkbox } from "@/components/ui/checkbox";
 
 // import { useClasses } from "@/hooks/useClasses";

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useUnlinkParent } from "@/hooks/useUnlinkParent";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserPlus, Users } from "lucide-react";
@@ -341,8 +341,8 @@ export default StudentParentsTab;
 // import { useState } from "react";
 // import { useUnlinkParent } from "@/hooks/useUnlinkParent";
 
-// import { Button } from "@/components/ui/button";
-// import { Card, CardContent } from "@/components/ui/card";
+// import { Button } from "@/components/ui/Button";
+// import { Card, CardContent } from "@/components/ui/Card";
 // import { Badge } from "@/components/ui/badge";
 // import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 // import { UserPlus, Users } from "lucide-react";

@@ -7,7 +7,7 @@ import {
 
 import {
     Button
-} from "@/components/ui/button";
+} from "@/components/ui/Button";
 
 
 import Loading

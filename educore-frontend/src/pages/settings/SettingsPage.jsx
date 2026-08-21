@@ -35,7 +35,7 @@ import Loading from "@/components/common/Loading";
 
 import {
     Button
-} from "@/components/ui/button";
+} from "@/components/ui/Button";
 
 import toast from "react-hot-toast";
 
@@ -2706,7 +2706,7 @@ export default SettingsPage;
 
 // import {
 //     Button
-// } from "@/components/ui/button";
+// } from "@/components/ui/Button";
 
 // import toast from "react-hot-toast";
 

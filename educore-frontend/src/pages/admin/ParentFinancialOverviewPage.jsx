@@ -9,16 +9,16 @@ import {
 } from "react-router-dom";
 
 
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 
 import { Badge } from "@/components/ui/badge";
 

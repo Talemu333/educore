@@ -22,7 +22,7 @@ import {
 
 import Loading from "@/components/common/Loading";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 import {
     Printer

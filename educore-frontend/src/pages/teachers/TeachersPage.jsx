@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useDepartments } from "@/hooks/useDepartments";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 import TeacherTable from "@/components/teachers/TeacherTable";
 import AddTeacherSheet from "@/components/teachers/AddTeacherSheet";
@@ -385,8 +385,8 @@ export default TeachersPage;
 // import { useState } from "react";
 // import { useDepartments } from "@/hooks/useDepartments";
 
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
+// import { Button } from "@/components/ui/Button";
+// import { Input } from "@/components/ui/Input";
 
 // import TeacherTable from "@/components/teachers/TeacherTable";
 // import AddTeacherSheet from "@/components/teachers/AddTeacherSheet";

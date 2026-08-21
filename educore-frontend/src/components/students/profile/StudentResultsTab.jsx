@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 import { Printer } from "lucide-react";
 
@@ -1366,7 +1366,7 @@ function StudentResultsTab({
 export default StudentResultsTab;
 
 // import {useEffect,useState} from "react";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/Button";
 // import { Printer } from "lucide-react";
 
 // import { useStudentResultReport } from "@/hooks/useStudentResultReport";
