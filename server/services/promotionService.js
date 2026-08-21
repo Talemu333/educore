@@ -1,119 +1,208 @@
-const pool = require("../config/database");
-const ApiError = require("../utils/ApiError");
-const sessionModel = require("../models/sessionModel");
-const classModel = require("../models/classModel");
-const studentModel = require("../models/studentModel");
-const studentEnrollmentModel = require("../models/studentEnrollmentModel");
+const promotionModel =
+    require("../models/promotionModel");
 
-const promoteStudents = async (data) => {
+
+/*
+=========================================
+GET PROMOTION SETUP
+=========================================
+*/
+
+const getPromotionSetup = async () => {
 
     const currentSession =
-        await sessionModel.getSessionById(data.current_session_id);
+        await promotionModel.getCurrentSession();
+
 
     if (!currentSession) {
-        throw new ApiError(404, "Current academic session not found.");
+
+        throw new Error(
+            "No current academic session has been set."
+        );
+
     }
+
 
     const nextSession =
-        await sessionModel.getSessionById(data.next_session_id);
+        await promotionModel.getNextSession(
+            currentSession.id
+        );
 
-    if (!nextSession) {
-        throw new ApiError(404, "Next academic session not found.");
-    }
 
-    const client = await pool.connect();
+    const classes =
+        await promotionModel.getClasses();
 
-    try {
 
-        await client.query("BEGIN");
+    return {
 
-        for (const item of data.students) {
+        currentSession,
 
-            const student =
-                await studentModel.getStudentById(item.student_id);
+        nextSession,
 
-            if (!student) {
-                throw new ApiError(
-                    404,
-                    `Student with ID ${item.student_id} not found.`
-                );
-            }
+        classes
 
-            const nextClass =
-                await classModel.getClassById(item.next_class_id);
-
-            if (!nextClass) {
-                throw new ApiError(
-                    404,
-                    `Destination class not found for student ${item.student_id}.`
-                );
-            }
-
-            const exists =
-                await studentEnrollmentModel.enrollmentExists(
-                    item.student_id,
-                    data.next_session_id
-                );
-
-            if (exists) {
-                throw new ApiError(
-                    409,
-                    `${student.first_name} ${student.surname} already has an enrollment for this session.`
-                );
-            }
-
-            await studentEnrollmentModel.createEnrollment({
-
-                student_id: item.student_id,
-
-                session_id: data.next_session_id,
-
-                class_id: item.next_class_id,
-
-                arm_id: item.next_arm_id,
-
-                enrollment_status: item.status
-
-            }, client);
-
-            await studentModel.updateCurrentClass(
-
-                item.student_id,
-
-                item.next_class_id,
-
-                item.next_arm_id,
-
-                client
-
-            );
-
-        }
-
-        await client.query("COMMIT");
-
-        return {
-
-            promoted_students: data.students.length,
-
-            session: nextSession.session_name
-
-        };
-
-    } catch (error) {
-
-        await client.query("ROLLBACK");
-
-        throw error;
-
-    } finally {
-
-        client.release();
-
-    }
+    };
 
 };
 
+
+/*
+=========================================
+GET STUDENTS FOR PROMOTION
+=========================================
+*/
+
+const getStudentsForPromotion = async ({
+    classId,
+    armId
+}) => {
+
+    const currentSession =
+        await promotionModel.getCurrentSession();
+
+
+    if (!currentSession) {
+
+        throw new Error(
+            "No current academic session has been set."
+        );
+
+    }
+
+
+    return await promotionModel
+        .getStudentsForPromotion({
+
+            sessionId:
+                currentSession.id,
+
+            classId,
+
+            armId
+
+        });
+
+};
+
+
+/*
+=========================================
+GET ARMS
+=========================================
+*/
+
+const getArmsByClass = async (
+    classId
+) => {
+
+    return await promotionModel
+        .getArmsByClass(classId);
+
+};
+
+
+/*
+=========================================
+PROMOTE STUDENTS
+=========================================
+*/
+
+const processStudentDecisions = async ({
+    students,
+    destinationClassId,
+    defaultArmId,
+    processedBy
+}) => {
+
+    if (
+        !Array.isArray(students) ||
+        students.length === 0
+    ) {
+
+        throw new Error(
+            "At least one student must be selected."
+        );
+
+    }
+
+
+    const currentSession =
+        await promotionModel
+            .getCurrentSession();
+
+
+    if (!currentSession) {
+
+        throw new Error(
+            "No current academic session has been set."
+        );
+
+    }
+
+
+    const nextSession =
+        await promotionModel
+            .getNextSession(
+                currentSession.id
+            );
+
+
+    /*
+    =========================================
+    GRADUATION DOES NOT REQUIRE NEXT SESSION
+    =========================================
+    */
+
+    const hasNonGraduatingStudents =
+        students.some(
+            student =>
+                student.action !==
+                "Graduated"
+        );
+
+
+    if (
+        hasNonGraduatingStudents &&
+        !nextSession
+    ) {
+
+        throw new Error(
+            "There is no next academic session available."
+        );
+
+    }
+
+
+    return await promotionModel
+        .processStudentDecisions({
+
+            students,
+
+            currentSessionId:
+                currentSession.id,
+
+            nextSessionId:
+                nextSession?.id || null,
+
+            destinationClassId,
+
+            defaultArmId,
+
+            processedBy
+
+        });
+
+};
+
+
 module.exports = {
-    promoteStudents
-}
+
+    getPromotionSetup,
+
+    getStudentsForPromotion,
+
+    getArmsByClass,
+
+    processStudentDecisions
+
+};

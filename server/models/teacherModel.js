@@ -132,6 +132,10 @@ const getTeachers = async () => {
 
             t.id,
 
+            t.department_id,
+
+            t.qualification_id,
+
             t.staff_number,
 
             CONCAT(
@@ -159,6 +163,8 @@ const getTeachers = async () => {
 
         LEFT JOIN qualifications q
             ON q.id = t.qualification_id
+
+        WHERE t.status = 'Active'
 
         ORDER BY t.surname, t.first_name;
 
@@ -215,11 +221,116 @@ const getTeacherById = async (id) => {
 
 };
 
+const updateTeacher = async (client, id, teacherData) => {
+
+    const query = `
+
+        UPDATE teachers
+        SET
+
+            surname = $1,
+            first_name = $2,
+            middle_name = $3,
+            gender = $4,
+            date_of_birth = $5,
+            phone_number = $6,
+            email = $7,
+            address = $8,
+            marital_status = $9,
+            qualification_id = $10,
+            department_id = $11,
+            employment_date = $12,
+            state_id = $13,
+            nationality_id = $14,
+            next_of_kin_name = $15,
+            next_of_kin_phone = $16,
+            emergency_contact_name = $17,
+            emergency_contact_phone = $18,
+            updated_at = CURRENT_TIMESTAMP
+
+        WHERE id = $19
+
+        RETURNING *;
+
+    `;
+
+    const values = [
+
+        teacherData.surname,
+        teacherData.first_name,
+        teacherData.middle_name,
+        teacherData.gender,
+        teacherData.date_of_birth,
+        teacherData.phone_number,
+        teacherData.email,
+        teacherData.address,
+        teacherData.marital_status,
+        teacherData.qualification_id,
+        teacherData.department_id,
+        teacherData.employment_date,
+        teacherData.state_id,
+        teacherData.nationality_id,
+        teacherData.next_of_kin_name,
+        teacherData.next_of_kin_phone,
+        teacherData.emergency_contact_name,
+        teacherData.emergency_contact_phone,
+        id
+
+    ];
+
+    const result = await client.query(query, values);
+
+    return result.rows[0];
+
+};
+
+const deactivateTeacher = async (client, id) => {
+
+    const query = `
+        UPDATE teachers
+        SET
+
+            status = FALSE,
+
+            updated_at = CURRENT_TIMESTAMP
+
+        WHERE id = $1
+
+        RETURNING *;
+    `;
+
+    const result = await client.query(query, [id]);
+
+    return result.rows[0];
+
+};
+
+const getTeacherByUserId = async (userId) => {
+
+    const query = `
+
+        SELECT *
+
+        FROM teachers
+
+        WHERE user_id = $1;
+
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    return result.rows[0];
+
+};
+
 module.exports = {
 
     createTeacher,
     getNextTeacherId,
     getTeachers,
-    getTeacherById
+    getTeacherById,
+    updateTeacher,
+    deactivateTeacher,
+    getTeacherByUserId
 
 };

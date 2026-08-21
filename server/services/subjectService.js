@@ -36,7 +36,14 @@ const createSubject = async (subjectData) => {
 
 };
 
+const getSubjectsByClass = async (classId) => {
+
+    return await subjectModel.getSubjectsByClass(classId);
+
+};
+
 module.exports = {
     getSubjects,
-    createSubject
+    createSubject,
+    getSubjectsByClass
 };

@@ -22,5 +22,14 @@ router.get(
     reportController.getStudentReport
 
 );
+router.get(
+
+    "/transcript/:studentId",
+
+    authenticate,
+
+    reportController.getStudentTranscript
+
+);
 
 module.exports = router;

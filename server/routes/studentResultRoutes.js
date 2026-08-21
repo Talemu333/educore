@@ -28,4 +28,73 @@ router.post(
     studentResultController.createBulkResults
 );
 
+// router.get(
+
+//     "/assignment/:assignmentId/students",
+
+//     authenticate,
+
+//     authorize(ROLES.ADMIN, ROLES.TEACHER),
+
+//     studentResultController.getStudentsForAssignment
+
+// );
+
+router.get(
+
+    "/class-sheet",
+
+    authenticate,
+
+    authorize(ROLES.ADMIN),
+
+    studentResultController
+        .getClassResultSheet
+
+);
+
+router.get(
+
+    "/broadsheet",
+
+    authenticate,
+
+    authorize(ROLES.ADMIN),
+
+    studentResultController
+        .getClassBroadsheet
+
+);
+
+router.get(
+
+    "/assignment/:assignmentId/students",
+
+    authenticate,
+
+    authorize(
+        ROLES.ADMIN,
+        ROLES.TEACHER
+    ),
+
+    studentResultController
+        .getStudentsForResultEntry
+
+);
+
+router.get(
+    "/student/:studentId/session/:sessionId/term/:termId/report",
+
+    authenticate,
+
+    authorize(
+        ROLES.ADMIN,
+        ROLES.TEACHER,
+        ROLES.PARENT
+    ),
+
+    studentResultController
+        .getStudentResultReport
+);
+
 module.exports = router;

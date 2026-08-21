@@ -1,5 +1,9 @@
 const Joi = require("joi");
 
+const scoreSchema = Joi.number()
+    .min(0)
+    .required();
+
 const createResultSchema = Joi.object({
 
     student_id: Joi.number()
@@ -18,17 +22,12 @@ const createResultSchema = Joi.object({
         .integer()
         .required(),
 
-    ca_score: Joi.number()
-        .min(0)
-        .max(30)
-        .required(),
+    ca_score: scoreSchema,
 
-    exam_score: Joi.number()
-        .min(0)
-        .max(70)
-        .required()
+    exam_score: scoreSchema
 
 });
+
 
 const createBulkResultsSchema = Joi.object({
 
@@ -53,15 +52,9 @@ const createBulkResultsSchema = Joi.object({
                     .integer()
                     .required(),
 
-                ca_score: Joi.number()
-                    .min(0)
-                    .max(30)
-                    .required(),
+                ca_score: scoreSchema,
 
-                exam_score: Joi.number()
-                    .min(0)
-                    .max(70)
-                    .required()
+                exam_score: scoreSchema
 
             })
 
@@ -71,9 +64,11 @@ const createBulkResultsSchema = Joi.object({
 
 });
 
+
 module.exports = {
 
     createResultSchema,
+
     createBulkResultsSchema
 
 };

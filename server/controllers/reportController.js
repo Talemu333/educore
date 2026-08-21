@@ -8,9 +8,9 @@ const getStudentReport = asyncHandler(async (req, res) => {
 
             req.params.studentId,
 
-            req.query.session_id,
+            req.query.sessionId,
 
-            req.query.term_id
+            req.query.termId
 
         );
 
@@ -24,6 +24,25 @@ const getStudentReport = asyncHandler(async (req, res) => {
 
 });
 
+const getStudentTranscript = asyncHandler(async (req, res) => {
+
+    const transcript = await reportService.getStudentTranscript(
+
+        req.params.studentId
+
+    );
+
+    res.status(200).json({
+
+        success: true,
+
+        data: transcript
+
+    });
+
+});
+
 module.exports = {
-    getStudentReport
+    getStudentReport,
+    getStudentTranscript
 }

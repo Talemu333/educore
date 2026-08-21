@@ -4,7 +4,7 @@ const createClassSchema = Joi.object({
     class_name: Joi.string().trim().max(50).required(),
 
     class_level: Joi.string()
-        .valid("Nursery", "Primary", "Junior Secondary", "Senior Secondary")
+        .valid("Nursery", "Primary", "Junior", "Senior")
         .required(),
 
     sort_order: Joi.number()

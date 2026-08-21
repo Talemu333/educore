@@ -24,8 +24,19 @@ const createFeeStructureSchema = Joi.object({
 
 });
 
+const updateFeeStructureSchema = Joi.object({
+
+    amount: Joi.number()
+        .positive()
+        .required()
+
+});
+
 module.exports = {
 
-    createFeeStructureSchema
+    createFeeStructureSchema,
+
+    updateFeeStructureSchema
 
 };
+

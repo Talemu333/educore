@@ -39,8 +39,22 @@ const createArm = async (armData) => {
 
 };
 
+const getArms = async () => {
+
+    return await armModel.getArms();
+
+};
+
+const getArmsByClass = async (classId) => {
+
+    return await armModel.getArmsByClass(classId);
+
+};
+
 module.exports = {
 
-    createArm
+    createArm,
+    getArms,
+    getArmsByClass
 
 };

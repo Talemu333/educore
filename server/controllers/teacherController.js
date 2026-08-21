@@ -49,8 +49,50 @@ const getTeacherById = asyncHandler(async (req, res) => {
 
 });
 
+const updateTeacher = asyncHandler(async (req, res) => {
+
+    const teacher = await teacherService.updateTeacher(
+
+        req.params.id,
+
+        req.body
+
+    );
+
+    res.json({
+
+        success: true,
+
+        message: "Teacher updated successfully.",
+
+        data: teacher
+
+    });
+
+});
+
+const deactivateTeacher = asyncHandler(async (req, res) => {
+
+    await teacherService.deactivateTeacher(
+
+        req.params.id
+
+    );
+
+    res.json({
+
+        success: true,
+
+        message: "Teacher deactivated successfully."
+
+    });
+
+});
+
 module.exports = {
     createTeacher,
     getTeachers,
-    getTeacherById
+    getTeacherById,
+    updateTeacher,
+    deactivateTeacher
 }

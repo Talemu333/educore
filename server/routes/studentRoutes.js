@@ -14,15 +14,15 @@ router.post(
     validate(createStudentSchema),
     studentController.createStudent
 );
-router.get(
+// router.get(
 
-    "/search",
+//     "/search",
 
-    authenticate,
+//     authenticate,
 
-    studentController.searchStudents
+//     studentController.searchStudents
 
-);
+// );
 router.get(
     "/",
     authenticate,
@@ -42,14 +42,20 @@ router.put(
     validate(updateStudentSchema),
     studentController.updateStudent
 );
-router.get(
+router.patch(
 
-    "/search",
+    "/:id/deactivate",
 
     authenticate,
 
-    studentController.searchStudents
+    authorize(ROLES.ADMIN),
 
+    studentController.deactivateStudent
+
+);
+router.get(
+    "/:id/parents",
+    studentController.getStudentParents
 );
 
 module.exports = router;

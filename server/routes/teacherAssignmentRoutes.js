@@ -14,6 +14,45 @@ const {
 
 const ROLE_NAMES = require("../config/roleNames");
 
+
+router.get(
+
+    "/my-assignments",
+
+    authenticate,
+
+    teacherAssignmentController.getMyAssignments
+
+);
+
+router.get(
+
+    "/my-students",
+
+    authenticate,
+
+    teacherAssignmentController.getMyStudents
+
+);
+
+router.get(
+    "/teacher/:id",
+    authenticate,
+    teacherAssignmentController.getAssignmentsByTeacher
+);
+
+router.get(
+
+    "/",
+
+    authenticate,
+    authorize(ROLE_NAMES.ADMIN),
+
+    teacherAssignmentController
+        .getAllAssignments
+
+);
+
 router.post(
     "/",
     authenticate,
@@ -21,5 +60,27 @@ router.post(
     validate(createAssignmentSchema),
     teacherAssignmentController.createAssignment
 );
+
+router.delete(
+    "/:id",
+    authenticate,
+    authorize(ROLE_NAMES.ADMIN),
+    teacherAssignmentController.deleteAssignment
+);
+
+router.put(
+
+    "/:id",
+
+    authenticate,
+
+    authorize(ROLE_NAMES.ADMIN),
+
+    validate(createAssignmentSchema),
+
+    teacherAssignmentController.updateAssignment
+
+);
+
 
 module.exports = router;

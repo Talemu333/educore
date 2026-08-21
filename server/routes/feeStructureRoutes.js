@@ -51,4 +51,16 @@ router.get(
 
 );
 
+router.put(
+    "/:id",
+    authenticate,
+    authorize(
+        ROLES.ADMIN
+    ),
+    validate(
+        feeStructureValidator.updateFeeStructureSchema
+    ),
+    feeStructureController.updateFeeStructure
+);
+
 module.exports = router;

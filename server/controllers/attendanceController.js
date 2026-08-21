@@ -1,81 +1,262 @@
-const attendanceService = require("../services/attendanceService");
-const asyncHandler = require("../middlewares/asyncHandler");
-const ApiError = require("../utils/ApiError"); 
+const attendanceService =
+    require("../services/attendanceService");
+
+const asyncHandler =
+    require("../middlewares/asyncHandler");
 
 
-const createAttendance = asyncHandler(async (req, res) => {
+/*
+=========================================
+SAVE ATTENDANCE
+=========================================
 
-    const result =
-        await attendanceService.createAttendance(
+This handles BOTH:
 
-            req.body,
+- New attendance
+- Updating existing attendance
 
-            req.user.id
+The service/model decides whether to
+INSERT or UPDATE.
+=========================================
+*/
 
-        );
+const saveAttendance = asyncHandler(
+    async (req, res) => {
 
-    res.status(201).json({
+        const result =
+            await attendanceService.saveAttendance(
 
-        success: true,
+                req.body,
 
-        message: "Attendance recorded successfully.",
+                req.user.id
 
-        data: result
+            );
 
-    });
 
-});
+        res.status(200).json({
 
-const getAttendanceByDate =
-asyncHandler(async (req, res) => {
+            success: true,
 
-    const attendance =
-        await attendanceService.getAttendanceByDate(
+            message:
+                "Attendance saved successfully.",
 
-            req.query.class_id,
+            data: result
 
-            req.query.arm_id,
+        });
 
-            req.query.attendance_date
+    }
+);
 
-        );
 
-    res.json({
+/*
+=========================================
+GET ATTENDANCE BY DATE
+=========================================
+*/
 
-        success: true,
+const getAttendanceByDate = asyncHandler(
+    async (req, res) => {
 
-        data: attendance
+        const attendance =
+            await attendanceService.getAttendanceByDate({
 
-    });
+                sessionId:
+                    req.query.session_id,
 
-});
+                termId:
+                    req.query.term_id,
 
-const getStudentAttendance =
-asyncHandler(async (req, res) => {
+                classId:
+                    req.query.class_id,
 
-    const attendance =
-        await attendanceService.getStudentAttendance(
+                armId:
+                    req.query.arm_id || null,
 
-            req.params.studentId
+                attendanceDate:
+                    req.query.attendance_date
 
-        );
+            });
 
-    res.json({
+        res.json({
 
-        success: true,
+            success: true,
 
-        data: attendance
+            data: attendance
 
-    });
+        });
 
-});
+    }
+);
+
+
+/*
+=========================================
+GET STUDENT ATTENDANCE
+=========================================
+*/
+
+const getStudentAttendance = asyncHandler(
+    async (req, res) => {
+
+        const attendance =
+            await attendanceService.getStudentAttendance({
+
+                studentId:
+                    req.params.studentId,
+
+                sessionId:
+                    req.query.session_id,
+
+                termId:
+                    req.query.term_id
+
+            });
+
+
+        res.json({
+
+            success: true,
+
+            data: attendance
+
+        });
+
+    }
+);
+
+
+/*
+=========================================
+GET ATTENDANCE SUMMARY
+=========================================
+*/
+
+const getAttendanceSummary = asyncHandler(
+    async (req, res) => {
+
+        const summary =
+            await attendanceService.getAttendanceSummary({
+
+                studentId:
+                    req.params.studentId,
+
+                sessionId:
+                    req.query.session_id,
+
+                termId:
+                    req.query.term_id
+
+            });
+
+
+        res.json({
+
+            success: true,
+
+            data: summary
+
+        });
+
+    }
+);
+
+const getStudentsForAttendance =
+    asyncHandler(
+        async (req, res) => {
+
+            const students =
+                await attendanceService
+                    .getStudentsForAttendance({
+
+                        sessionId:
+                            req.query.session_id,
+
+                        classId:
+                            req.query.class_id,
+
+                        armId:
+                            req.query.arm_id ||
+                            null
+
+                    });
+
+
+            res.json({
+
+                success: true,
+
+                data: students
+
+            });
+
+        }
+    );
+
+    const getTeacherAttendanceStudents =
+    asyncHandler(
+        async (req, res) => {
+
+            const result =
+                await attendanceService
+                    .getStudentsForTeacherAttendance(
+
+                        req.params.assignmentId,
+
+                        req.user.id
+
+                    );
+
+            res.json({
+
+                success: true,
+
+                data: result
+
+            });
+
+        }
+    );
+
+    const getAttendanceByAssignment =
+    asyncHandler(
+        async (req, res) => {
+
+            const attendance =
+                await attendanceService
+                    .getAttendanceByAssignment(
+
+                        req.params.assignmentId,
+
+                        req.query.attendance_date,
+
+                        req.user
+
+                    );
+
+            res.json({
+
+                success: true,
+
+                data: attendance
+
+            });
+
+        }
+    );
+
 
 module.exports = {
 
-    createAttendance,
+    saveAttendance,
 
     getAttendanceByDate,
 
-    getStudentAttendance
+    getStudentAttendance,
+
+    getAttendanceSummary,
+
+    getStudentsForAttendance,
+    getTeacherAttendanceStudents,
+    getAttendanceByAssignment
 
 };

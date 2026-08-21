@@ -59,11 +59,52 @@ const getArmById = async (id) => {
 
 };
 
+const getArms = async () => {
+
+    const query = `
+
+        SELECT
+            a.id,
+            a.arm_name,
+            a.class_id,
+            c.class_name
+        FROM arms a
+        JOIN classes c
+            ON a.class_id = c.id
+        ORDER BY c.class_name, a.arm_name;
+
+    `;
+
+    const result = await pool.query(query);
+
+    return result.rows;
+
+};
+
+const getArmsByClass = async (classId) => {
+
+    const query = `
+        SELECT
+            id,
+            arm_name,
+            class_id
+        FROM arms
+        WHERE class_id = $1
+        ORDER BY arm_name;
+    `;
+
+    const result = await pool.query(query, [classId]);
+
+    return result.rows;
+
+};
+
 module.exports = {
 
     createArm,
-
     getArmByName,
-    getArmById
+    getArmById,
+    getArms,
+    getArmsByClass
 
 };

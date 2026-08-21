@@ -141,15 +141,16 @@ const getFeeStructures = async () => {
     const query = `
 
         SELECT
-
             fs.id,
 
+            fs.session_id,
+            fs.term_id,
+            fs.class_id,
+            fs.fee_type_id,
+
             s.session_name,
-
             t.term_name,
-
             c.class_name,
-
             ft.fee_name,
 
             fs.amount

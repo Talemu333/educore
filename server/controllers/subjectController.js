@@ -34,8 +34,27 @@ const createSubject = asyncHandler(async (req, res) => {
 
 });
 
+const getSubjectsByClass =
+asyncHandler(async (req, res) => {
+
+    const subjects =
+        await subjectService.getSubjectsByClass(
+            req.params.classId
+        );
+
+    res.json({
+
+        success: true,
+
+        data: subjects
+
+    });
+
+});
+
 module.exports = {
     getSubjects,
-    createSubject
+    createSubject,
+    getSubjectsByClass
 
 };

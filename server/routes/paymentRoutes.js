@@ -54,6 +54,17 @@ router.get(
 );
 router.get(
 
+    "/reports",
+
+    authenticate,
+
+    authorize(ROLES.ADMIN),
+
+    paymentController.getPaymentReport
+
+);
+router.get(
+
     "/receipt/:receiptNumber",
 
     authenticate,

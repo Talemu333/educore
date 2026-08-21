@@ -57,7 +57,11 @@ const getStudentPayments = asyncHandler(
 
 const createPayment = asyncHandler(async (req, res) => {
 
-    const payment = await paymentService.createPayment(req.body);
+    const payment =
+        await paymentService.createPayment(
+            req.body,
+            req.user.id
+        );
 
     res.status(201).json({
 
@@ -132,11 +136,44 @@ const verifyReceipt = asyncHandler(
 
 );
 
+const getPaymentReport = asyncHandler(
+
+    async (req, res) => {
+
+        const report =
+            await paymentService.getPaymentReport(
+                req.query
+            );
+
+        const summary =
+            await paymentService.getPaymentReportSummary(
+                req.query
+            );
+
+        res.json({
+
+            success: true,
+
+            data: {
+
+                report,
+
+                summary
+
+            }
+
+        });
+
+    }
+
+);
+
 module.exports = {
     getStudentFinancialSummary,
     getStudentPayments,
     createPayment,
     getDailyRevenue,
     getReceipt,
-    verifyReceipt
+    verifyReceipt,
+    getPaymentReport
 }

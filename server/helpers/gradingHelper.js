@@ -1,56 +1,39 @@
-const getGrade = (totalScore) => {
+const gradingSystemModel =
+    require("../models/gradingSystemModel");
 
-    if (totalScore >= 70) {
+
+const getGrade = async (totalScore) => {
+
+    const grading =
+
+        await gradingSystemModel.getGradeForScore(
+            Number(totalScore)
+        );
+
+
+    if (!grading) {
 
         return {
-            grade: "A",
-            remark: "Excellent"
+
+            grade: "F",
+
+            remark: "Fail"
+
         };
 
     }
 
-    if (totalScore >= 60) {
-
-        return {
-            grade: "B",
-            remark: "Very Good"
-        };
-
-    }
-
-    if (totalScore >= 50) {
-
-        return {
-            grade: "C",
-            remark: "Good"
-        };
-
-    }
-
-    if (totalScore >= 45) {
-
-        return {
-            grade: "D",
-            remark: "Fair"
-        };
-
-    }
-
-    if (totalScore >= 40) {
-
-        return {
-            grade: "E",
-            remark: "Pass"
-        };
-
-    }
 
     return {
-        grade: "F",
-        remark: "Fail"
+
+        grade: grading.grade,
+
+        remark: grading.remark
+
     };
 
 };
+
 
 module.exports = {
 

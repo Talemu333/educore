@@ -1,5 +1,6 @@
 const classModel = require("../models/classModel");
-const createClassSchema = require("../validators/classValidator");
+const {createClassSchema} = require("../validators/classValidator");
+const validate = require("../middlewares/validate");
 const classService = require("../services/classService");
 const {
     successResponse,

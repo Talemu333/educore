@@ -4,11 +4,33 @@ const studentModel = require("../models/studentModel");
 const generateAdmissionNumber = require("../utils/admissionNumberGenerator");
 const ApiError = require("../utils/ApiError");
 const getPagination = require("../utils/pagination");
+const studentEnrollmentModel = require("../models/studentEnrollmentModel");
+const sessionModel = require("../models/sessionModel");
+const ENROLLMENT_STATUS = require("../config/enrollmentStatus");
 
 const createStudent = async (studentData) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+
+        const session = await sessionModel.getSessionById(
+
+            studentData.session_id
+
+        );
+
+        if (!session) {
+
+            throw new ApiError(
+
+                404,
+
+                "Academic session not found."
+
+            );
+
+        }
+
         const validArm = await studentModel.validateClassArm(
             client,
             studentData.class_id,
@@ -22,13 +44,35 @@ const createStudent = async (studentData) => {
             );
         }
 
-        const admission = await generateAdmissionNumber(Client);
+        const admission = await generateAdmissionNumber(client);
         studentData.admission_number = admission.admissionNumber;
         studentData.admission_sequence = admission.admissionSequence;
 
         const student = await studentModel.createStudent(
             client,
             studentData
+        );
+
+        await studentEnrollmentModel.createEnrollment(
+
+            {
+
+                student_id: student.id,
+
+                session_id: studentData.session_id,
+
+                class_id: studentData.class_id,
+
+                arm_id: studentData.arm_id,
+
+                enrollment_date: studentData.admission_date,
+
+                enrollment_status: ENROLLMENT_STATUS.ACTIVE
+
+            },
+
+            client
+
         );
 
         await client.query("COMMIT");
@@ -150,19 +194,31 @@ const getAllStudents = async (query) => {
 
     } = getPagination(query);
 
-    const [students, total] = await Promise.all([
+    const search = query.search?.trim();
 
-        studentModel.getAllStudents(
+    let students;
+    let total;
 
+    if (search) {
+
+        students = await studentModel.searchStudents(
+            search,
             limit,
-
             offset
+        );
 
-        ),
+        total = await studentModel.countSearchStudents(search);
 
-        studentModel.countStudents()
+    } else {
 
-    ]);
+        students = await studentModel.getAllStudents(
+            limit,
+            offset
+        );
+
+        total = await studentModel.countStudents();
+
+    }
 
     return {
 
@@ -182,13 +238,90 @@ const getAllStudents = async (query) => {
 
 };
 
+const deactivateStudent = async (id) => {
+
+    const client = await pool.connect();
+
+    try {
+
+        await client.query("BEGIN");
+
+        const student = await studentModel.deactivateStudent(
+
+            client,
+
+            id
+
+        );
+
+        if (!student) {
+
+            throw new ApiError(
+
+                404,
+
+                "Student not found."
+
+            );
+
+        }
+
+        await client.query("COMMIT");
+
+        return student;
+
+    } 
+    catch (err) {
+
+        await client.query("ROLLBACK");
+
+        if (err.code === "23503") {
+
+            throw new ApiError(
+
+                400,
+
+                "This student cannot be deleted because academic records already exist."
+
+            );
+
+        }
+
+        throw err;
+
+    } 
+    
+    finally {
+
+        client.release();
+
+    }
+
+};
+
+const getStudentParents = async (studentId) => {
+
+    const student = await studentModel.getStudentById(studentId);
+
+    if (!student) {
+
+        throw new ApiError(404, "Student not found.");
+
+    }
+
+    return await studentModel.getStudentParents(studentId);
+
+};
+
 
 module.exports = {
     createStudent,
     getAllStudents,
     getStudentById,
     updateStudent,
-    searchStudents
+    searchStudents,
+    deactivateStudent,
+    getStudentParents
 };
 
 

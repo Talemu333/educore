@@ -8,7 +8,10 @@ const feeStructureModel = require("../models/feeStructureModel");
 const notificationService = require("./notificationService");
 const NOTIFICATION_TYPES = require("../constants/notificationTypes");
 
-const createPayment = async (data) => {
+const createPayment = async (
+    data,
+    receivedBy
+) => {
 
     const student = await studentModel.getStudentById(
         data.student_id
@@ -58,7 +61,7 @@ const createPayment = async (data) => {
 
     }
 
-    console.log("Student:", student);
+    // console.log("Student:", student);
 
     const totalFees = await feeStructureModel.getTotalFeesForClass(
 
@@ -99,11 +102,10 @@ const createPayment = async (data) => {
         const payment = await paymentModel.createPayment(
             {
                 ...data,
-                amount_paid: paymentAmount
+                amount_paid: paymentAmount,
+                received_by: receivedBy
             },
-
             client
-
         );
 
         const year = new Date().getFullYear();
@@ -123,7 +125,7 @@ const createPayment = async (data) => {
 
             {
 
-                user_id: data.received_by,
+                user_id: receivedBy,
 
                 title: "Payment Received",
 
@@ -292,6 +294,110 @@ const verifyReceipt = async (receiptNumber) => {
 
 };
 
+const getPaymentReport = async (filters) => {
+
+    return await paymentModel.getPaymentReport(
+        filters
+    );
+
+};
+
+
+const getPaymentReportSummary = async (filters) => {
+
+    return await paymentModel.getPaymentReportSummary(
+        filters
+    );
+
+};
+
+const getParentFeeBreakdown = async (userId, studentId) => {
+
+    // Verify that the student actually belongs to this parent
+    const children =
+        await parentModel.getChildrenByParentUserId(
+            userId
+        );
+
+    const child = children.find(
+        student =>
+            Number(student.id) === Number(studentId)
+    );
+
+    if (!child) {
+
+        throw new ApiError(
+            403,
+            "You are not authorized to view this student's fee information."
+        );
+
+    }
+
+
+    const query = `
+        SELECT
+
+            fs.id,
+
+            fs.amount,
+
+            ft.fee_name,
+
+            ft.description,
+
+            s.session_name,
+
+            t.term_name,
+
+            c.class_name
+
+        FROM fee_structures fs
+
+        JOIN fee_types ft
+            ON fs.fee_type_id = ft.id
+
+        JOIN academic_sessions s
+            ON fs.session_id = s.id
+
+        JOIN terms t
+            ON fs.term_id = t.id
+
+        JOIN classes c
+            ON fs.class_id = c.id
+
+        JOIN student_enrollments se
+            ON se.student_id = $1
+
+            AND se.session_id = fs.session_id
+
+            AND se.class_id = fs.class_id
+
+            AND se.enrollment_status = 'Active'
+
+        WHERE
+
+            fs.session_id = se.session_id
+
+            AND fs.term_id = (
+                SELECT term_id
+                FROM student_fee_summaries
+                WHERE student_id = $1
+                LIMIT 1
+            )
+
+        ORDER BY
+            ft.fee_name;
+    `;
+
+    const result = await pool.query(
+        query,
+        [studentId]
+    );
+
+    return result.rows;
+
+};
+
 module.exports = {
 
     createPayment,
@@ -299,6 +405,9 @@ module.exports = {
     getStudentPayments,
     getDailyRevenue,
     getReceipt,
-    verifyReceipt
+    verifyReceipt,
+    getPaymentReport,
+    getPaymentReportSummary,
+    getParentFeeBreakdown
 
 };

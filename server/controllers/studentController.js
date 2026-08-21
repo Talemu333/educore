@@ -89,10 +89,40 @@ const searchStudents = asyncHandler(
 
 );
 
+const deactivateStudent = asyncHandler(async (req, res) => {
+
+    await studentService.deactivateStudent(req.params.id);
+
+    res.json({
+
+        success: true,
+
+        message: "Student deactivated successfully."
+
+    });
+
+});
+
+const getStudentParents = asyncHandler(async (req, res) => {
+
+    const parents = await studentService.getStudentParents(req.params.id);
+
+    res.json({
+
+        success: true,
+
+        data: parents
+
+    });
+
+});
+
 module.exports = {
     createStudent,
     getAllStudents,
     getStudentById,
     updateStudent,
-    searchStudents
+    searchStudents,
+    deactivateStudent,
+    getStudentParents
 };

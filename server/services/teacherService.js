@@ -7,9 +7,10 @@ const userModel = require("../models/userModel");
 const schoolSettingModel = require("../models/schoolSettingModel");
 const generateTemporaryPassword = require("../utils/passwordGenerator");
 const generateStaffNumber = require("../utils/staffNumberGenerator");
-const ROLES = require("../constants/roles");
+// const ROLES = require("../constants/roles");
 const roleModel = require("../models/roleModel");
 const ROLE_NAMES = require("../config/roleNames");
+const { normalizeGender } = require("../helpers/normalizeHelper");
 
 const createTeacher = async (teacherData) => {
 
@@ -47,7 +48,7 @@ const createTeacher = async (teacherData) => {
             surname: teacherData.surname,
             first_name: teacherData.first_name,
             middle_name: teacherData.middle_name,
-            gender: teacherData.gender,
+            gender: normalizeGender(teacherData.gender),
             date_of_birth: teacherData.date_of_birth,
             phone_number: teacherData.phone_number,
             email: teacherData.email,
@@ -97,8 +98,86 @@ const getTeacherById = async (id) => {
 
 };
 
+const updateTeacher = async (
+
+    id,
+
+    teacherData
+
+) => {
+
+    return await withTransaction(async (client) => {
+
+        const existingTeacher = await teacherModel.getTeacherById(id);
+
+        if (!existingTeacher) {
+
+            throw new ApiError(
+
+                404,
+
+                "Teacher not found."
+
+            );
+
+        }
+
+        const teacher = await teacherModel.updateTeacher(
+
+            client,
+
+            id,
+
+            {
+
+                ...teacherData,
+
+                gender: normalizeGender(teacherData.gender)
+
+            }
+
+        );
+
+        return teacher;
+
+    });
+
+};
+
+const deactivateTeacher = async (id) => {
+
+    return await withTransaction(async (client) => {
+
+        const teacher = await teacherModel.getTeacherById(id);
+
+        if (!teacher) {
+
+            throw new ApiError(
+
+                404,
+
+                "Teacher not found."
+
+            );
+
+        }
+
+        return await teacherModel.deactivateTeacher(
+
+            client,
+
+            id
+
+        );
+
+    });
+
+};
+
 module.exports = {
     createTeacher,
     getTeachers,
-    getTeacherById 
+    getTeacherById,
+    updateTeacher,
+    deactivateTeacher
 }

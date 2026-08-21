@@ -1,4 +1,5 @@
 module.exports = {
+    PROPRIETOR: "Proprietor",
     ADMIN: "Admin",
     TEACHER: "Teacher",
     STUDENT: "Student",

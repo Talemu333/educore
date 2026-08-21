@@ -25,6 +25,7 @@ const createTeacherSchema = Joi.object({
         .optional(),
 
     gender: Joi.string()
+        .insensitive()
         .valid("Male", "Female")
         .required(),
 
@@ -84,8 +85,49 @@ const createTeacherSchema = Joi.object({
 
 });
 
+const updateTeacherSchema = Joi.object({
+
+    surname: Joi.string().required(),
+
+    first_name: Joi.string().required(),
+
+    middle_name: Joi.string().allow("", null),
+
+    gender: Joi.string().required(),
+
+    date_of_birth: Joi.date().required(),
+
+    phone_number: Joi.string().required(),
+
+    email: Joi.string().email().allow("", null),
+
+    address: Joi.string().allow("", null),
+
+    marital_status: Joi.string().required(),
+
+    qualification_id: Joi.number().required(),
+
+    department_id: Joi.number().required(),
+
+    employment_date: Joi.date().required(),
+
+    state_id: Joi.number().required(),
+
+    nationality_id: Joi.number().required(),
+
+    next_of_kin_name: Joi.string().allow("", null),
+
+    next_of_kin_phone: Joi.string().allow("", null),
+
+    emergency_contact_name: Joi.string().allow("", null),
+
+    emergency_contact_phone: Joi.string().allow("", null)
+
+});
+
 module.exports = {
 
-    createTeacherSchema
+    createTeacherSchema,
+    updateTeacherSchema
 
 };

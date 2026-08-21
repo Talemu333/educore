@@ -1,24 +1,23 @@
+const asyncHandler = require("../middlewares/asyncHandler");
+
 const stateService = require("../services/stateService");
 
-const getStates = async (req, res, next) => {
+const getStates = asyncHandler(async (req, res) => {
 
-    try {
+    const states = await stateService.getStates();
 
-        const states = await stateService.getStates();
+    res.json({
 
-        res.json({
-            success: true,
-            data: states
-        });
+        success: true,
 
-    } catch (err) {
+        data: states
 
-        next(err);
+    });
 
-    }
-
-};
+});
 
 module.exports = {
+
     getStates
+
 };

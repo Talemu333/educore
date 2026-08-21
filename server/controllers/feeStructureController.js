@@ -33,10 +33,31 @@ const getFeeStructures = asyncHandler(async (req, res) => {
 
 });
 
+const updateFeeStructure = asyncHandler(async (req, res) => {
+
+    const feeStructure =
+        await feeStructureService.updateFeeStructure(
+            req.params.id,
+            req.body
+        );
+
+    res.json({
+
+        success: true,
+
+        message: "Fee structure updated successfully.",
+
+        data: feeStructure
+
+    });
+
+});
+
 module.exports = {
 
     createFeeStructure,
 
-    getFeeStructures
+    getFeeStructures,
+    updateFeeStructure
 
 };

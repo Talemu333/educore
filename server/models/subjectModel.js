@@ -91,11 +91,40 @@ const getSubjectById = async (id) => {
 
 };
 
+const getSubjectsByClass = async (classId) => {
+
+    const query = `
+
+        SELECT
+
+            s.id,
+
+            s.subject_name
+
+        FROM class_subjects cs
+
+        JOIN subjects s
+
+            ON s.id = cs.subject_id
+
+        WHERE cs.class_id = $1
+
+        ORDER BY s.subject_name;
+
+    `;
+
+    const result = await pool.query(query, [classId]);
+
+    return result.rows;
+
+};
+
 module.exports = {
     getSubjects,
     createSubject,
     getSubjectByCode,
     getSubjectByName,
-    getSubjectById
+    getSubjectById,
+    getSubjectsByClass
 
 };

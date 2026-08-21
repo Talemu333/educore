@@ -1,11 +1,25 @@
 const express = require("express");
+
 const router = express.Router();
-const attendanceController = require("../controllers/attendanceController");
-const authenticate = require("../middlewares/authenticate");
-const authorize = require("../middlewares/authorize");
-const validate = require("../middlewares/validate");
-const {createAttendanceSchema} = require("../validators/attendanceValidator");
-const ROLES = require("../constants/roles");
+
+const attendanceController =
+    require("../controllers/attendanceController");
+
+const authenticate =
+    require("../middlewares/authenticate");
+
+const authorize =
+    require("../middlewares/authorize");
+
+const ROLES =
+    require("../constants/roles");
+
+
+/*
+=========================================
+SAVE / UPDATE ATTENDANCE
+=========================================
+*/
 
 router.post(
 
@@ -21,11 +35,16 @@ router.post(
 
     ),
 
-    validate(createAttendanceSchema),
-
-    attendanceController.createAttendance
+    attendanceController.saveAttendance
 
 );
+
+
+/*
+=========================================
+GET ATTENDANCE BY DATE
+=========================================
+*/
 
 router.get(
 
@@ -42,6 +61,32 @@ router.get(
     ),
 
     attendanceController.getAttendanceByDate
+
+);
+
+
+/*
+=========================================
+GET STUDENT ATTENDANCE
+=========================================
+*/
+
+router.get(
+
+    "/students",
+
+    authenticate,
+
+    authorize(
+
+        ROLES.ADMIN,
+
+        ROLES.TEACHER
+
+    ),
+
+    attendanceController
+        .getStudentsForAttendance
 
 );
 
@@ -64,5 +109,63 @@ router.get(
     attendanceController.getStudentAttendance
 
 );
+
+
+/*
+=========================================
+GET ATTENDANCE SUMMARY
+=========================================
+*/
+
+router.get(
+
+    "/student/:studentId/summary",
+
+    authenticate,
+
+    authorize(
+
+        ROLES.ADMIN,
+
+        ROLES.TEACHER,
+
+        ROLES.PARENT
+
+    ),
+
+    attendanceController.getAttendanceSummary
+
+);
+
+router.get(
+
+    "/assignment/:assignmentId/students",
+
+    authenticate,
+
+    authorize(
+        ROLES.TEACHER
+    ),
+
+    attendanceController
+        .getTeacherAttendanceStudents
+
+);
+
+router.get(
+
+    "/assignment/:assignmentId",
+
+    authenticate,
+
+    authorize(
+        ROLES.TEACHER
+    ),
+
+    attendanceController
+        .getAttendanceByAssignment
+
+);
+
 
 module.exports = router;

@@ -14,6 +14,11 @@ const createStudentSchema = Joi.object({
 
     date_of_birth: Joi.date().required(),
 
+    session_id: Joi.number()
+        .integer()
+        .positive()
+        .required(),
+
     class_id: Joi.number().integer().required(),
 
     arm_id: Joi.number().integer().required(),

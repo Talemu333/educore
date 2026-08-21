@@ -12,6 +12,15 @@ router.get(
     authenticate,
     subjectController.getSubjects
 );
+router.get(
+
+    "/class/:classId",
+
+    authenticate,
+
+    subjectController.getSubjectsByClass
+
+);
 router.post(
     "/",
     authenticate,

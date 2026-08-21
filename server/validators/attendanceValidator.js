@@ -57,6 +57,27 @@ const createAttendanceSchema = Joi.object({
 
 });
 
+const updateAttendanceSchema = Joi.object({
+
+    status: Joi.string()
+
+        .valid(
+
+            "PRESENT",
+
+            "ABSENT",
+
+            "LATE",
+
+            "EXCUSED"
+
+        )
+
+        .required()
+
+});
+
 module.exports = {
-    createAttendanceSchema
+    createAttendanceSchema,
+    updateAttendanceSchema
 }

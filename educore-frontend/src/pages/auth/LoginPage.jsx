@@ -1,0 +1,490 @@
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { login } from "../../services/authService";
+import ROLES from "../../constants/roles";
+
+function LoginPage() {
+
+    const {
+        register,
+        handleSubmit,
+        formState: {
+            errors,
+            isSubmitting
+        },
+    } = useForm();
+
+
+    const navigate = useNavigate();
+
+    const {
+        loginUser
+    } = useAuth();
+
+
+    const onSubmit = async (data) => {
+
+        try {
+
+            const response = await login(data);
+
+
+            await loginUser(response.user);
+
+
+            if (response.user.must_change_password) {
+
+                navigate("/change-password");
+
+            } else if (
+                response.user.role_name === ROLES.PARENT
+            ) {
+
+                navigate("/parent-dashboard");
+
+            } else {
+
+                navigate("/dashboard");
+
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            alert(
+                error.response?.data?.message ||
+                "Login failed."
+            );
+
+        }
+
+    };
+
+
+    return (
+
+        <div
+            className="
+                min-h-screen
+                w-full
+                overflow-x-hidden
+                bg-slate-100
+                px-4
+                py-8
+                sm:px-6
+                sm:py-12
+                lg:px-8
+            "
+        >
+
+            <div
+                className="
+                    flex
+                    min-h-[calc(100vh-4rem)]
+                    items-center
+                    justify-center
+                    sm:min-h-[calc(100vh-6rem)]
+                "
+            >
+
+                <div
+                    className="
+                        w-full
+                        max-w-md
+                        rounded-2xl
+                        bg-white
+                        p-6
+                        shadow-xl
+                        sm:p-8
+                        md:p-10
+                    "
+                >
+
+                    {/* =====================================
+                        BRAND
+                    ===================================== */}
+
+                    <div className="text-center">
+
+                        <h1
+                            className="
+                                text-2xl
+                                font-bold
+                                text-blue-700
+                                sm:text-3xl
+                            "
+                        >
+                            EDUCORE
+                        </h1>
+
+
+                        <p
+                            className="
+                                mt-2
+                                text-sm
+                                text-gray-500
+                                sm:text-base
+                            "
+                        >
+                            School Management System
+                        </p>
+
+                    </div>
+
+
+                    {/* =====================================
+                        LOGIN FORM
+                    ===================================== */}
+
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="
+                            mt-7
+                            space-y-5
+                            sm:mt-8
+                        "
+                    >
+
+                        {/* =================================
+                            USERNAME / EMAIL
+                        ================================= */}
+
+                        <div>
+
+                            <label
+                                htmlFor="login"
+                                className="
+                                    mb-2
+                                    block
+                                    text-sm
+                                    font-medium
+                                    text-gray-700
+                                "
+                            >
+                                Username or Email
+                            </label>
+
+
+                            <input
+                                id="login"
+                                type="text"
+                                autoComplete="username"
+                                inputMode="email"
+                                {...register("login", {
+                                    required:
+                                        "Username or email is required",
+                                })}
+                                className="
+                                    block
+                                    w-full
+                                    rounded-lg
+                                    border
+                                    border-gray-300
+                                    bg-white
+                                    px-3
+                                    py-3
+                                    text-sm
+                                    text-gray-900
+                                    outline-none
+                                    transition
+                                    placeholder:text-gray-400
+                                    focus:border-blue-600
+                                    focus:ring-2
+                                    focus:ring-blue-100
+                                    sm:text-base
+                                "
+                                placeholder="Enter username or email"
+                            />
+
+
+                            {errors.login && (
+
+                                <p
+                                    className="
+                                        mt-1.5
+                                        text-xs
+                                        text-red-500
+                                        sm:text-sm
+                                    "
+                                >
+                                    {errors.login.message}
+                                </p>
+
+                            )}
+
+                        </div>
+
+
+                        {/* =================================
+                            PASSWORD
+                        ================================= */}
+
+                        <div>
+
+                            <label
+                                htmlFor="password"
+                                className="
+                                    mb-2
+                                    block
+                                    text-sm
+                                    font-medium
+                                    text-gray-700
+                                "
+                            >
+                                Password
+                            </label>
+
+
+                            <input
+                                id="password"
+                                type="password"
+                                autoComplete="current-password"
+                                {...register("password", {
+                                    required:
+                                        "Password is required",
+                                })}
+                                className="
+                                    block
+                                    w-full
+                                    rounded-lg
+                                    border
+                                    border-gray-300
+                                    bg-white
+                                    px-3
+                                    py-3
+                                    text-sm
+                                    text-gray-900
+                                    outline-none
+                                    transition
+                                    placeholder:text-gray-400
+                                    focus:border-blue-600
+                                    focus:ring-2
+                                    focus:ring-blue-100
+                                    sm:text-base
+                                "
+                                placeholder="Enter your password"
+                            />
+
+
+                            {errors.password && (
+
+                                <p
+                                    className="
+                                        mt-1.5
+                                        text-xs
+                                        text-red-500
+                                        sm:text-sm
+                                    "
+                                >
+                                    {errors.password.message}
+                                </p>
+
+                            )}
+
+                        </div>
+
+
+                        {/* =================================
+                            SUBMIT BUTTON
+                        ================================= */}
+
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="
+                                flex
+                                min-h-12
+                                w-full
+                                items-center
+                                justify-center
+                                rounded-lg
+                                bg-blue-700
+                                px-4
+                                py-3
+                                text-sm
+                                font-semibold
+                                text-white
+                                shadow-sm
+                                transition
+                                hover:bg-blue-800
+                                focus:outline-none
+                                focus:ring-2
+                                focus:ring-blue-500
+                                focus:ring-offset-2
+                                disabled:cursor-not-allowed
+                                disabled:opacity-60
+                                sm:text-base
+                            "
+                        >
+
+                            {isSubmitting
+                                ? "Signing In..."
+                                : "Sign In"}
+
+                        </button>
+
+                    </form>
+
+
+                    {/* =====================================
+                        FOOTER
+                    ===================================== */}
+
+                    <div
+                        className="
+                            mt-6
+                            text-center
+                            text-xs
+                            text-gray-400
+                            sm:mt-8
+                            sm:text-sm
+                        "
+                    >
+
+                        <p>
+                            EDUCORE School Management System
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    );
+
+}
+
+
+export default LoginPage;
+
+// import { useAuth } from "../../context/AuthContext";
+// import { useNavigate } from "react-router-dom";
+// import { useForm } from "react-hook-form";
+// import { login } from "../../services/authService";
+// import ROLES from "../../constants/roles";
+
+// function LoginPage() {
+//     const {
+//         register,
+//         handleSubmit,
+//         formState: { errors, isSubmitting },
+//     } = useForm();
+
+//     const navigate = useNavigate();
+//     const { loginUser } = useAuth();
+
+//     const onSubmit = async (data) => {
+//         try {
+//             const response = await login(data);
+
+//             await loginUser(response.user);
+
+//             if (response.user.must_change_password) {
+
+//                 navigate("/change-password");
+
+//             } else if (response.user.role_name === ROLES.PARENT) {
+
+//                 navigate("/parent-dashboard");
+
+//             } else {
+
+//                 navigate("/dashboard");
+
+//             }
+            
+//         } catch (error) {
+//             console.error(error);
+
+//             alert(
+//                 error.response?.data?.message ||
+//                 "Login failed."
+//             );
+//         }
+//     };
+
+//     return (
+//         <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+
+//             <div className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
+
+//                 <h1 className="text-3xl font-bold text-blue-700 text-center">
+//                     EDUCORE
+//                 </h1>
+
+//                 <p className="text-gray-500 text-center mt-2 mb-8">
+//                     School Management System
+//                 </p>
+
+//                 <form
+//                     onSubmit={handleSubmit(onSubmit)}
+//                     className="space-y-5"
+//                 >
+
+//                     <div>
+
+//                         <label className="block mb-2 font-medium">
+//                             Username or Email
+//                         </label>
+
+//                         <input
+//                             type="text"
+//                             {...register("login", {
+//                                 required: "Username or email is required",
+//                             })}
+//                             className="w-full border rounded-lg p-3"
+//                         />
+
+//                         {errors.login && (
+//                             <p className="text-red-500 text-sm mt-1">
+//                                 {errors.login.message}
+//                             </p>
+//                         )}
+
+//                     </div>
+
+//                     <div>
+
+//                         <label className="block mb-2 font-medium">
+//                             Password
+//                         </label>
+
+//                         <input
+//                             type="password"
+//                             {...register("password", {
+//                                 required: "Password is required",
+//                             })}
+//                             className="w-full border rounded-lg p-3"
+//                         />
+
+//                         {errors.password && (
+//                             <p className="text-red-500 text-sm mt-1">
+//                                 {errors.password.message}
+//                             </p>
+//                         )}
+
+//                     </div>
+
+//                     <button
+//                         type="submit"
+//                         disabled={isSubmitting}
+//                         className="w-full bg-blue-700 hover:bg-blue-800 text-white rounded-lg p-3 font-semibold"
+//                     >
+//                         {isSubmitting ? "Signing In..." : "Sign In"}
+//                     </button>
+
+//                 </form>
+
+//             </div>
+
+//         </div>
+//     );
+// }
+
+// export default LoginPage;

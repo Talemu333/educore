@@ -112,6 +112,8 @@ const getAllStudents = async (limit, offset) => {
         INNER JOIN arms a
             ON s.arm_id = a.id
 
+        WHERE s.status = 'Active'
+
         ORDER BY
             s.surname,
             s.first_name
@@ -356,7 +358,7 @@ const updateCurrentClass = async (
 
 };
 
-const searchStudents = async (searchTerm) => {
+const searchStudents = async (searchTerm, limit, offset) => {
 
     const query = `
 
@@ -372,6 +374,8 @@ const searchStudents = async (searchTerm) => {
 
             s.middle_name,
 
+            s.gender,
+
             c.class_name,
 
             a.arm_name
@@ -384,23 +388,17 @@ const searchStudents = async (searchTerm) => {
         LEFT JOIN arms a
             ON s.arm_id = a.id
 
-        WHERE
+        WHERE s.status = 'Active'
 
-            LOWER(s.surname)
-                LIKE LOWER($1)
+        AND (
 
-            OR LOWER(s.first_name)
-                LIKE LOWER($1)
+            LOWER(s.surname) LIKE LOWER($1)
 
-            OR LOWER(
-                COALESCE(
-                    s.middle_name,
-                    ''
-                )
-            ) LIKE LOWER($1)
+            OR LOWER(s.first_name) LIKE LOWER($1)
 
-            OR LOWER(s.admission_number)
-                LIKE LOWER($1)
+            OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1)
+
+            OR LOWER(s.admission_number) LIKE LOWER($1))
 
         ORDER BY
 
@@ -408,7 +406,54 @@ const searchStudents = async (searchTerm) => {
 
             s.first_name
 
-        LIMIT 20;
+        LIMIT $2
+        OFFSET $3;
+
+    `;
+
+    const result = await pool.query(
+
+        query,
+
+        [
+            `%${searchTerm}%`,
+
+            limit,
+
+            offset
+        ]
+
+    );
+
+    return result.rows;
+
+};
+
+const countSearchStudents = async (searchTerm) => {
+
+    const query = `
+
+        SELECT COUNT(*) AS total
+
+        FROM students
+
+        WHERE
+
+            LOWER(surname)
+                LIKE LOWER($1)
+
+            OR LOWER(first_name)
+                LIKE LOWER($1)
+
+            OR LOWER(
+                COALESCE(
+                    middle_name,
+                    ''
+                )
+            ) LIKE LOWER($1)
+
+            OR LOWER(admission_number)
+                LIKE LOWER($1);
 
     `;
 
@@ -420,9 +465,88 @@ const searchStudents = async (searchTerm) => {
 
     );
 
+    return Number(result.rows[0].total);
+
+};
+
+const deactivateStudent = async (client, id) => {
+
+    const query = `
+        UPDATE students
+        SET
+            status = 'Inactive',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        RETURNING *;
+    `;
+
+    const result = await client.query(query, [id]);
+
+    return result.rows[0];
+
+};
+
+const getStudentParents = async (studentId) => {
+
+    const query = `
+        SELECT
+
+            p.id,
+
+            p.user_id,
+
+            u.username,
+
+            p.surname,
+
+            p.first_name,
+
+            p.middle_name,
+
+            p.gender,
+
+            p.phone_number,
+
+            p.alternate_phone,
+
+            p.email,
+
+            p.occupation,
+
+            p.residential_address,
+
+            sp.relationship_id,
+
+            r.relationship_name,
+
+            sp.is_primary_contact
+
+        FROM student_parents sp
+
+        INNER JOIN parents p
+            ON sp.parent_id = p.id
+
+        INNER JOIN users u
+            ON p.user_id = u.id
+
+        LEFT JOIN relationships r
+            ON sp.relationship_id = r.id
+
+        WHERE sp.student_id = $1
+
+        ORDER BY
+
+            sp.is_primary_contact DESC,
+
+            p.surname;
+    `;
+
+    const result = await pool.query(query, [studentId]);
+
     return result.rows;
 
 };
+
 
 module.exports = {
     createStudent,
@@ -433,6 +557,9 @@ module.exports = {
     getStudentsByClass,
     updateCurrentClass,
     searchStudents,
-    countStudents
+    countStudents,
+    countSearchStudents,
+    deactivateStudent,
+    getStudentParents
 
 };

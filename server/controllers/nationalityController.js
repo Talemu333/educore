@@ -1,24 +1,23 @@
+const asyncHandler = require("../middlewares/asyncHandler");
+
 const nationalityService = require("../services/nationalityService");
 
-const getNationalities = async (req, res, next) => {
+const getNationalities = asyncHandler(async (req, res) => {
 
-    try {
+    const nationalities = await nationalityService.getNationalities();
 
-        const nationalities = await nationalityService.getNationalities();
+    res.json({
 
-        res.json({
-            success: true,
-            data: nationalities
-        });
+        success: true,
 
-    } catch (err) {
+        data: nationalities
 
-        next(err);
+    });
 
-    }
-
-};
+});
 
 module.exports = {
+
     getNationalities
+
 };

@@ -8,16 +8,16 @@ router.post("/login", authController.login);
 
 router.post("/logout", authController.logout);
 
-router.get("/me", authenticate, (req, res) => {
+router.get(
+    "/me",
+    authenticate,
+    authController.getCurrentUser
+);
 
-    res.json({
-
-        success: true,
-
-        user: req.user
-
-    });
-
-});
+router.post(
+    "/change-password",
+    authenticate,
+    authController.changePassword
+);
 
 module.exports = router;

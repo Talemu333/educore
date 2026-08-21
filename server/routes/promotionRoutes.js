@@ -1,24 +1,116 @@
-const express = require("express");
-const router = express.Router();
-const promotionController = require("../controllers/promotionController");
-const authenticate = require("../middlewares/authenticate");
-const authorize = require("../middlewares/authorize");
-const validate = require("../middlewares/validate");
-const {createPromotionSchema} = require("../validators/promotionValidator");
-const ROLES = require("../config/roles");
+const express =
+    require("express");
+
+const router =
+    express.Router();
+
+
+const authenticate =
+    require("../middlewares/authenticate");
+
+const authorize =
+    require("../middlewares/authorize");
+
+
+const ROLE_NAMES =
+    require("../config/roleNames");
+
+
+const promotionController =
+    require("../controllers/promotionController");
+
+
+/*
+=========================================
+AUTHENTICATION
+=========================================
+*/
+
+router.use(
+    authenticate
+);
+
+
+/*
+=========================================
+PROMOTION SETUP
+=========================================
+
+Proprietor + Principal
+=========================================
+*/
+
+router.get(
+
+    "/setup",
+
+    authorize(
+        ROLE_NAMES.ADMIN
+    ),
+
+    promotionController
+        .getPromotionSetup
+
+);
+
+
+/*
+=========================================
+GET STUDENTS
+=========================================
+*/
+
+router.get(
+
+    "/students",
+
+    authorize(
+        ROLE_NAMES.ADMIN
+    ),
+
+    promotionController
+        .getStudentsForPromotion
+
+);
+
+
+/*
+=========================================
+GET ARMS
+=========================================
+*/
+
+router.get(
+
+    "/classes/:classId/arms",
+
+    authorize(
+        ROLE_NAMES.ADMIN
+    ),
+
+    promotionController
+        .getArmsByClass
+
+);
+
+
+/*
+=========================================
+PROMOTE
+=========================================
+*/
 
 router.post(
 
-    "/",
+    "/promote",
 
-    authenticate,
+    authorize(
+        ROLE_NAMES.ADMIN
+    ),
 
-    authorize(ROLES.ADMIN),
-
-    validate(createPromotionSchema),
-
-    promotionController.promoteStudents
+    promotionController.processStudentDecisions
 
 );
+
 
 module.exports = router;

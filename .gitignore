@@ -1,0 +1,6 @@
+node_modules/
+.env
+educore-frontend/node_modules/
+educore-frontend/.env
+server/node_modules/
+server/.env
