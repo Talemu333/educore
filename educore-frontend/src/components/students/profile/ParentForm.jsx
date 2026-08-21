@@ -9,7 +9,7 @@ import { parentSchema } from "@/validators/parentValidator";
 import { useCreateParent } from "@/hooks/useCreateParent";
 import { useRelationships } from "@/hooks/useRelationships";
 import {Select,SelectContent, SelectItem,SelectTrigger,SelectValue} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/Textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
 function ParentForm({studentId, parent = null, onSuccess}) {
