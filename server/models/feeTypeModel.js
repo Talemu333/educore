@@ -1,146 +1,40 @@
 const pool = require("../config/database");
 
-const createFeeType = async (data, client = pool) => {
-
-    const query = `
-
-        INSERT INTO fee_types (
-
-            fee_name,
-
-            description
-
-        )
-
-        VALUES ($1, $2)
-
+const createFeeType = async (data, schoolId, client = pool) => {
+    const result = await client.query(`
+        INSERT INTO fee_types (fee_name, description, school_id)
+        VALUES ($1, $2, $3)
         RETURNING *;
-
-    `;
-
-    const values = [
-
-        data.fee_name,
-
-        data.description
-
-    ];
-
-    const result = await client.query(query, values);
-
+    `, [data.fee_name, data.description, schoolId]);
     return result.rows[0];
-
 };
 
-const getFeeTypeById = async (id) => {
-
-    const query = `
-
-        SELECT *
-
-        FROM fee_types
-
-        WHERE id = $1;
-
-    `;
-
-    const result = await pool.query(query, [id]);
-
+const getFeeTypeById = async (id, schoolId) => {
+    const result = await pool.query(`SELECT * FROM fee_types WHERE id = $1 AND school_id = $2`, [id, schoolId]);
     return result.rows[0];
-
 };
 
-const getFeeTypeByName = async (feeName) => {
-
-    const query = `
-
-        SELECT *
-
-        FROM fee_types
-
-        WHERE LOWER(fee_name) = LOWER($1);
-
-    `;
-
-    const result = await pool.query(query, [feeName]);
-
+const getFeeTypeByName = async (feeName, schoolId) => {
+    const result = await pool.query(`SELECT * FROM fee_types WHERE LOWER(fee_name) = LOWER($1) AND school_id = $2`, [feeName, schoolId]);
     return result.rows[0];
-
 };
 
-const getFeeTypes = async () => {
-
-    const query = `
-
-        SELECT *
-
-        FROM fee_types
-
-        ORDER BY fee_name;
-
-    `;
-
-    const result = await pool.query(query);
-
+const getFeeTypes = async (schoolId) => {
+    const result = await pool.query(`SELECT * FROM fee_types WHERE school_id = $1 ORDER BY fee_name`, [schoolId]);
     return result.rows;
-
 };
-const updateFeeType = async (id, data, client = pool) => {
 
-    const query = `
-
-        UPDATE fee_types
-
-        SET
-
-            fee_name = $2,
-
-            description = $3
-
-        WHERE id = $1
-
-        RETURNING *;
-
-    `;
-
-    const values = [
-
-        id,
-
-        data.fee_name,
-
-        data.description
-
-    ];
-
-    const result = await client.query(query, values);
-
+const updateFeeType = async (id, data, schoolId, client = pool) => {
+    const result = await client.query(`
+        UPDATE fee_types SET fee_name = $2, description = $3
+        WHERE id = $1 AND school_id = $4 RETURNING *;
+    `, [id, data.fee_name, data.description, schoolId]);
     return result.rows[0];
-
 };
 
-const deleteFeeType = async (id, client = pool) => {
-
-    const query = `
-
-        DELETE FROM fee_types
-
-        WHERE id = $1
-
-        RETURNING *;
-
-    `;
-
-    const result = await client.query(query, [id]);
-
+const deleteFeeType = async (id, schoolId, client = pool) => {
+    const result = await client.query(`DELETE FROM fee_types WHERE id = $1 AND school_id = $2 RETURNING *`, [id, schoolId]);
     return result.rows[0];
-
 };
-module.exports = {
-    createFeeType,
-    getFeeTypeById,
-    getFeeTypeByName,
-    getFeeTypes,
-    updateFeeType,
-    deleteFeeType
-}
+
+module.exports = { createFeeType, getFeeTypeById, getFeeTypeByName, getFeeTypes, updateFeeType, deleteFeeType };
