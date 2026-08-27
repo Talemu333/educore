@@ -1,292 +1,92 @@
 const pool = require("../config/database");
 
-
-/*
-=========================================
-GET ALL SESSIONS
-=========================================
-*/
-
-const getSessions = async () => {
-
-    const query = `
-        SELECT
-            id,
-            session_name,
-            start_date,
-            end_date,
-            is_current,
-            created_at,
-            updated_at
+const getSessions = async (schoolId) => {
+    const result = await pool.query(`
+        SELECT id, session_name, start_date, end_date, is_current, created_at, updated_at
         FROM academic_sessions
+        WHERE school_id = $1
         ORDER BY start_date DESC;
-    `;
-
-    const result = await pool.query(query);
-
+    `, [schoolId]);
     return result.rows;
-
 };
 
-
-/*
-=========================================
-GET SESSION BY ID
-=========================================
-*/
-
-const getSessionById = async (id) => {
-
-    const result = await pool.query(
-        `
+const getSessionById = async (id, schoolId) => {
+    const result = await pool.query(`
         SELECT *
         FROM academic_sessions
-        WHERE id = $1
-        `,
-        [id]
-    );
-
+        WHERE id = $1 AND school_id = $2
+    `, [id, schoolId]);
     return result.rows[0];
-
 };
 
-
-/*
-=========================================
-CREATE SESSION
-=========================================
-*/
-
-const createSession = async ({
-    session_name,
-    start_date,
-    end_date
-}) => {
-
-    const result = await pool.query(
-        `
-        INSERT INTO academic_sessions (
-            session_name,
-            start_date,
-            end_date
-        )
-        VALUES ($1, $2, $3)
+const createSession = async ({ session_name, start_date, end_date }, schoolId) => {
+    const result = await pool.query(`
+        INSERT INTO academic_sessions (session_name, start_date, end_date, school_id)
+        VALUES ($1, $2, $3, $4)
         RETURNING *
-        `,
-        [
-            session_name,
-            start_date,
-            end_date
-        ]
-    );
-
+    `, [session_name, start_date, end_date, schoolId]);
     return result.rows[0];
-
 };
 
-
-/*
-=========================================
-UPDATE SESSION
-=========================================
-*/
-
-const updateSession = async (
-    id,
-    {
-        session_name,
-        start_date,
-        end_date
-    }
-) => {
-
-    const result = await pool.query(
-        `
+const updateSession = async (id, { session_name, start_date, end_date }, schoolId) => {
+    const result = await pool.query(`
         UPDATE academic_sessions
-        SET
-            session_name = $1,
-            start_date = $2,
-            end_date = $3,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4
+        SET session_name = $1, start_date = $2, end_date = $3, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $4 AND school_id = $5
         RETURNING *
-        `,
-        [
-            session_name,
-            start_date,
-            end_date,
-            id
-        ]
-    );
-
+    `, [session_name, start_date, end_date, id, schoolId]);
     return result.rows[0];
-
 };
 
-
-/*
-=========================================
-SET CURRENT SESSION
-=========================================
-*/
-
-const setCurrentSession = async (sessionId) => {
-
+const setCurrentSession = async (sessionId, schoolId) => {
     const client = await pool.connect();
-
     try {
-
-        /*
-        =========================================
-        START TRANSACTION
-        =========================================
-        */
-
         await client.query("BEGIN");
 
-
-        /*
-        =========================================
-        VERIFY SESSION EXISTS
-        =========================================
-        */
-
-        const sessionResult = await client.query(
-            `
-            SELECT *
-            FROM academic_sessions
-            WHERE id = $1
-            `,
-            [sessionId]
-        );
-
+        const sessionResult = await client.query(`
+            SELECT * FROM academic_sessions
+            WHERE id = $1 AND school_id = $2
+        `, [sessionId, schoolId]);
 
         if (sessionResult.rows.length === 0) {
-
-            const error = new Error(
-                "Academic session not found."
-            );
-
+            const error = new Error("Academic session not found.");
             error.statusCode = 404;
-
             throw error;
-
         }
 
-
-        /*
-        =========================================
-        REMOVE CURRENT STATUS FROM ALL SESSIONS
-        =========================================
-        */
-
-        await client.query(
-            `
+        await client.query(`
             UPDATE academic_sessions
-            SET
-                is_current = false,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE is_current = true
-            `
-        );
+            SET is_current = false, updated_at = CURRENT_TIMESTAMP
+            WHERE school_id = $1
+        `, [schoolId]);
 
+        const updatedSessionResult = await client.query(`
+            UPDATE academic_sessions
+            SET is_current = true, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1 AND school_id = $2
+            RETURNING *
+        `, [sessionId, schoolId]);
 
-        /*
-        =========================================
-        MAKE SELECTED SESSION CURRENT
-        =========================================
-        */
-
-        const updatedSessionResult =
-            await client.query(
-                `
-                UPDATE academic_sessions
-                SET
-                    is_current = true,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = $1
-                RETURNING *
-                `,
-                [sessionId]
-            );
-
-
-        /*
-        =========================================
-        UPDATE SCHOOL SETTINGS
-        =========================================
-
-        IMPORTANT:
-        This keeps school_settings.current_session_id
-        synchronized with academic_sessions.is_current.
-        =========================================
-        */
-
-        await client.query(
-            `
+        await client.query(`
             UPDATE school_settings
-            SET
-                current_session_id = $1,
-                updated_at = CURRENT_TIMESTAMP
-            `,
-            [sessionId]
-        );
-
-
-        /*
-        =========================================
-        COMMIT
-        =========================================
-        */
+            SET current_session_id = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE school_id = $2
+        `, [sessionId, schoolId]);
 
         await client.query("COMMIT");
-
-
         return updatedSessionResult.rows[0];
-
     } catch (error) {
-
-        /*
-        =========================================
-        ROLLBACK
-        =========================================
-        */
-
         await client.query("ROLLBACK");
-
         throw error;
-
     } finally {
-
-        /*
-        =========================================
-        RELEASE CONNECTION
-        =========================================
-        */
-
         client.release();
-
     }
-
 };
 
-
-/*
-=========================================
-EXPORT
-=========================================
-*/
-
 module.exports = {
-
     getSessions,
-
     getSessionById,
-
     createSession,
-
     updateSession,
-
     setCurrentSession
-
 };
