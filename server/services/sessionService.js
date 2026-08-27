@@ -1,92 +1,29 @@
 const sessionModel = require("../models/sessionModel");
 
-
-/*
-=========================================
-GET ALL SESSIONS
-=========================================
-*/
-
-const getSessions = async () => {
-
-    return await sessionModel.getSessions();
-
+const getSessions = async (schoolId) => {
+    return await sessionModel.getSessions(schoolId);
 };
 
-
-/*
-=========================================
-GET SESSION BY ID
-=========================================
-*/
-
-const getSessionById = async (id) => {
-
-    return await sessionModel.getSessionById(id);
-
+const getSessionById = async (id, schoolId) => {
+    return await sessionModel.getSessionById(id, schoolId);
 };
 
-
-/*
-=========================================
-CREATE SESSION
-=========================================
-*/
-
-const createSession = async (data) => {
-
-    return await sessionModel.createSession(data);
-
+const createSession = async (data, schoolId) => {
+    return await sessionModel.createSession(data, schoolId);
 };
 
-
-/*
-=========================================
-UPDATE SESSION
-=========================================
-*/
-
-const updateSession = async (id, data) => {
-
-    return await sessionModel.updateSession(
-        id,
-        data
-    );
-
+const updateSession = async (id, data, schoolId) => {
+    return await sessionModel.updateSession(id, data, schoolId);
 };
 
-
-/*
-=========================================
-SET CURRENT SESSION
-=========================================
-*/
-
-const setCurrentSession = async (sessionId) => {
-
-    return await sessionModel.setCurrentSession(
-        sessionId
-    );
-
+const setCurrentSession = async (sessionId, schoolId) => {
+    return await sessionModel.setCurrentSession(sessionId, schoolId);
 };
-
-
-/*
-=========================================
-EXPORT
-=========================================
-*/
 
 module.exports = {
-
     getSessions,
-
     getSessionById,
-
     createSession,
-
     updateSession,
-
     setCurrentSession
-
 };
