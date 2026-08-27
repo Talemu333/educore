@@ -1,4 +1,3 @@
-// services/teacherService.js
 const bcrypt = require("bcrypt");
 const ApiError = require("../utils/ApiError");
 const { withTransaction } = require("./transactionService");
@@ -7,40 +6,33 @@ const userModel = require("../models/userModel");
 const schoolSettingModel = require("../models/schoolSettingModel");
 const generateTemporaryPassword = require("../utils/passwordGenerator");
 const generateStaffNumber = require("../utils/staffNumberGenerator");
-// const ROLES = require("../constants/roles");
 const roleModel = require("../models/roleModel");
 const ROLE_NAMES = require("../config/roleNames");
 const { normalizeGender } = require("../helpers/normalizeHelper");
 
-const createTeacher = async (teacherData) => {
+const createTeacher = async (teacherData, schoolId) => {
+    if (!schoolId) throw new ApiError(403, "School context is required.");
 
     return await withTransaction(async (client) => {
-        // business logic here
-        const existingUser = await userModel.getUserByUsername(teacherData.username);
-        if (existingUser) {
-            throw new ApiError(
-                409,
-                "Username already exists."
-            );
-        }
+        const existingUser = await userModel.getUserByUsername(teacherData.username, schoolId);
+        if (existingUser) throw new ApiError(409, "Username already exists.");
+
         const temporaryPassword = generateTemporaryPassword();
-        const hashedPassword = await bcrypt.hash(temporaryPassword,10);
-        const school = await schoolSettingModel.getSchoolSettings();
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        const school = await schoolSettingModel.getSchoolSettings(schoolId);
         const prefix = school.teacher_prefix;
         const teacherId = await teacherModel.getNextTeacherId(client);
-        const staffNumber = generateStaffNumber(prefix,teacherId);
+        const staffNumber = generateStaffNumber(prefix, teacherId);
         const teacherRole = await roleModel.getRoleByName(ROLE_NAMES.TEACHER);
-        if (!teacherRole) {
-            throw new ApiError(
-                500,
-                "Teacher role is not configured."
-            );
-        }
+        if (!teacherRole) throw new ApiError(500, "Teacher role is not configured.");
+
         const user = await userModel.createUser(client, {
             username: teacherData.username,
+            email: teacherData.email,
             password: hashedPassword,
             role_id: teacherRole.id
-        });
+        }, schoolId);
+
         const teacher = await teacherModel.createTeacher(client, {
             id: teacherId,
             user_id: user.id,
@@ -63,121 +55,43 @@ const createTeacher = async (teacherData) => {
             next_of_kin_phone: teacherData.next_of_kin_phone,
             emergency_contact_name: teacherData.emergency_contact_name,
             emergency_contact_phone: teacherData.emergency_contact_phone
+        }, schoolId);
 
-        });
-        return {
-            teacher,
-            temporaryPassword
-        };
-
-
+        return { teacher, temporaryPassword };
     });
-
 };
 
-const getTeachers = async () => {
-
-    return await teacherModel.getTeachers();
-
+const getTeachers = async (schoolId) => {
+    if (!schoolId) throw new ApiError(403, "School context is required.");
+    return teacherModel.getTeachers(schoolId);
 };
 
-const getTeacherById = async (id) => {
-
-    const teacher = await teacherModel.getTeacherById(id);
-
-    if (!teacher) {
-
-        throw new ApiError(
-            404,
-            "Teacher not found."
-        );
-
-    }
-
+const getTeacherById = async (id, schoolId) => {
+    if (!schoolId) throw new ApiError(403, "School context is required.");
+    const teacher = await teacherModel.getTeacherById(id, schoolId);
+    if (!teacher) throw new ApiError(404, "Teacher not found.");
     return teacher;
-
 };
 
-const updateTeacher = async (
-
-    id,
-
-    teacherData
-
-) => {
-
-    return await withTransaction(async (client) => {
-
-        const existingTeacher = await teacherModel.getTeacherById(id);
-
-        if (!existingTeacher) {
-
-            throw new ApiError(
-
-                404,
-
-                "Teacher not found."
-
-            );
-
-        }
-
-        const teacher = await teacherModel.updateTeacher(
-
-            client,
-
-            id,
-
-            {
-
-                ...teacherData,
-
-                gender: normalizeGender(teacherData.gender)
-
-            }
-
-        );
-
-        return teacher;
-
+const updateTeacher = async (id, teacherData, schoolId) => {
+    if (!schoolId) throw new ApiError(403, "School context is required.");
+    return withTransaction(async (client) => {
+        const existingTeacher = await teacherModel.getTeacherById(id, schoolId);
+        if (!existingTeacher) throw new ApiError(404, "Teacher not found.");
+        return teacherModel.updateTeacher(client, id, {
+            ...teacherData,
+            gender: normalizeGender(teacherData.gender)
+        }, schoolId);
     });
-
 };
 
-const deactivateTeacher = async (id) => {
-
-    return await withTransaction(async (client) => {
-
-        const teacher = await teacherModel.getTeacherById(id);
-
-        if (!teacher) {
-
-            throw new ApiError(
-
-                404,
-
-                "Teacher not found."
-
-            );
-
-        }
-
-        return await teacherModel.deactivateTeacher(
-
-            client,
-
-            id
-
-        );
-
+const deactivateTeacher = async (id, schoolId) => {
+    if (!schoolId) throw new ApiError(403, "School context is required.");
+    return withTransaction(async (client) => {
+        const teacher = await teacherModel.getTeacherById(id, schoolId);
+        if (!teacher) throw new ApiError(404, "Teacher not found.");
+        return teacherModel.deactivateTeacher(client, id, schoolId);
     });
-
 };
 
-module.exports = {
-    createTeacher,
-    getTeachers,
-    getTeacherById,
-    updateTeacher,
-    deactivateTeacher
-}
+module.exports = { createTeacher, getTeachers, getTeacherById, updateTeacher, deactivateTeacher };
