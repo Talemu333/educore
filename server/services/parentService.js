@@ -108,14 +108,14 @@ const getParentFeeBreakdown = async (userId, studentId, schoolId) => {
 
 const getParentFinancialOverview = async (sessionId, termId, schoolId) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
-    return parentModel.getParentFinancialOverview(sessionId, termId);
+    return parentModel.getParentFinancialOverview(sessionId, termId, schoolId);
 };
 
 const getParentFinancialDetails = async (parentId, sessionId, termId, schoolId) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
     const result = await pool.query(`SELECT p.id FROM parents p JOIN users u ON u.id = p.user_id WHERE p.id = $1 AND u.school_id = $2`, [parentId, schoolId]);
     if (!result.rows[0]) throw new ApiError(404, "Parent not found in this school.");
-    return parentModel.getParentFinancialDetails(parentId, sessionId, termId);
+    return parentModel.getParentFinancialDetails(parentId, sessionId, termId, schoolId);
 };
 
 module.exports = { createParent, updateParent, unlinkParent, getParents, linkExistingParent, getParentDashboard, getParentPaymentSummary, getParentPaymentHistory, getParentFeeBreakdown, getParentFinancialOverview, getParentFinancialDetails };
