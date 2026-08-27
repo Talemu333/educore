@@ -1,45 +1,34 @@
 const subjectModel = require("../models/subjectModel");
 const ApiError = require("../utils/ApiError");
-const classModel = require("../models/classModel");
 
-const getSubjects = async () => {
-    return await subjectModel.getSubjects();
+const getSubjects = async (schoolId) => {
+    return await subjectModel.getSubjects(schoolId);
 };
 
-const createSubject = async (subjectData) => {
-
-    // Check if subject code already exists
+const createSubject = async (subjectData, schoolId) => {
     const existingCode = await subjectModel.getSubjectByCode(
-        subjectData.subject_code
+        subjectData.subject_code,
+        schoolId
     );
 
     if (existingCode) {
-        throw new ApiError(
-            409,
-            "Subject code already exists."
-        );
+        throw new ApiError(409, "Subject code already exists in this school.");
     }
 
-    // Check if subject name already exists
     const existingName = await subjectModel.getSubjectByName(
-        subjectData.subject_name
+        subjectData.subject_name,
+        schoolId
     );
 
     if (existingName) {
-        throw new ApiError(
-            409,
-            "Subject name already exists."
-        );
+        throw new ApiError(409, "Subject name already exists in this school.");
     }
 
-    return await subjectModel.createSubject(subjectData);
-
+    return await subjectModel.createSubject(subjectData, schoolId);
 };
 
-const getSubjectsByClass = async (classId) => {
-
-    return await subjectModel.getSubjectsByClass(classId);
-
+const getSubjectsByClass = async (classId, schoolId) => {
+    return await subjectModel.getSubjectsByClass(classId, schoolId);
 };
 
 module.exports = {
