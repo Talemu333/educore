@@ -1,653 +1,91 @@
 const pool = require("../config/database");
-
 const ApiError = require("../utils/ApiError");
+const attendanceModel = require("../models/attendanceModel");
+const studentModel = require("../models/studentModel");
+const sessionModel = require("../models/sessionModel");
+const termModel = require("../models/termModel");
+const classModel = require("../models/classModel");
+const studentEnrollmentModel = require("../models/studentEnrollmentModel");
+const teacherAssignmentService = require("./teacherAssignmentService");
 
-const attendanceModel =
-    require("../models/attendanceModel");
+const validateContext = async (data, schoolId) => {
+    if (!schoolId) throw new ApiError(403,"School context is required.");
+    const session = await sessionModel.getSessionById(data.session_id, schoolId);
+    if (!session) throw new ApiError(404,"Academic session not found.");
+    const term = await termModel.getTermById(data.term_id, schoolId);
+    if (!term) throw new ApiError(404,"Term not found.");
+    if (Number(term.session_id) !== Number(data.session_id)) throw new ApiError(400,"Selected term does not belong to the selected academic session.");
+    const classData = await classModel.getClassById(data.class_id, schoolId);
+    if (!classData) throw new ApiError(404,"Class not found.");
+    return classData;
+};
 
-const studentModel =
-    require("../models/studentModel");
-
-const sessionModel =
-    require("../models/sessionModel");
-
-const termModel =
-    require("../models/termModel");
-
-const classModel =
-    require("../models/classModel");
-
-const studentEnrollmentModel =
-    require("../models/studentEnrollmentModel");
-
-const teacherAssignmentService =
-    require("./teacherAssignmentService");
-
-
-/*
-=========================================
-SAVE / UPDATE ATTENDANCE
-=========================================
-*/
-
-const saveAttendance = async (data, userId) => {
-
-    /*
-    -------------------------------------
-    VALIDATE REQUIRED DATA
-    -------------------------------------
-    */
-
-    if (!data.session_id) {
-
-        throw new ApiError(
-            400,
-            "Academic session is required."
-        );
-
-    }
-
-
-    if (!data.term_id) {
-
-        throw new ApiError(
-            400,
-            "Term is required."
-        );
-
-    }
-
-
-    if (!data.class_id) {
-
-        throw new ApiError(
-            400,
-            "Class is required."
-        );
-
-    }
-
-
-    if (!data.attendance_date) {
-
-        throw new ApiError(
-            400,
-            "Attendance date is required."
-        );
-
-    }
-
-
-    if (
-        !Array.isArray(data.students) ||
-        data.students.length === 0
-    ) {
-
-        throw new ApiError(
-            400,
-            "No students were provided."
-        );
-
-    }
-
-
-    /*
-    -------------------------------------
-    VALIDATE SESSION
-    -------------------------------------
-    */
-
-    const session =
-        await sessionModel.getSessionById(
-            data.session_id
-        );
-
-    if (!session) {
-
-        throw new ApiError(
-            404,
-            "Academic session not found."
-        );
-
-    }
-
-
-    /*
-    -------------------------------------
-    VALIDATE TERM
-    -------------------------------------
-    */
-
-    const term =
-        await termModel.getTermById(
-            data.term_id
-        );
-
-    if (!term) {
-
-        throw new ApiError(
-            404,
-            "Term not found."
-        );
-
-    }
-
-
-    /*
-    -------------------------------------
-    VALIDATE CLASS
-    -------------------------------------
-    */
-
-    const classData =
-        await classModel.getClassById(
-            data.class_id
-        );
-
-    if (!classData) {
-
-        throw new ApiError(
-            404,
-            "Class not found."
-        );
-
-    }
-
-
-    /*
-    -------------------------------------
-    DATABASE TRANSACTION
-    -------------------------------------
-    */
-
-    const client =
-        await pool.connect();
-
-
+const saveAttendance = async (data,userId,schoolId) => {
+    if (!data.session_id) throw new ApiError(400,"Academic session is required.");
+    if (!data.term_id) throw new ApiError(400,"Term is required.");
+    if (!data.class_id) throw new ApiError(400,"Class is required.");
+    if (!data.attendance_date) throw new ApiError(400,"Attendance date is required.");
+    if (!Array.isArray(data.students) || !data.students.length) throw new ApiError(400,"No students were provided.");
+    const classData = await validateContext(data,schoolId);
+    const client = await pool.connect();
     try {
-
         await client.query("BEGIN");
-
-
-        const savedAttendance = [];
-
-
-        /*
-        ---------------------------------
-        PROCESS EACH STUDENT
-        ---------------------------------
-        */
-
-        for (
-            const item of data.students
-        ) {
-
-
-            /*
-            -------------------------------
-            VALIDATE STUDENT
-            -------------------------------
-            */
-
-            const student =
-                await studentModel.getStudentById(
-                    item.student_id
-                );
-
-
-            if (!student) {
-
-                throw new ApiError(
-
-                    404,
-
-                    `Student with ID ${item.student_id} not found.`
-
-                );
-
-            }
-
-
-            /*
-            -------------------------------
-            VALIDATE STATUS
-            -------------------------------
-            */
-
-            const allowedStatuses = [
-
-                "PRESENT",
-
-                "ABSENT",
-
-                "LATE",
-
-                "EXCUSED"
-
-            ];
-
-
-            if (
-                !allowedStatuses.includes(
-                    item.status
-                )
-            ) {
-
-                throw new ApiError(
-
-                    400,
-
-                    `Invalid attendance status for ${student.first_name} ${student.surname}.`
-
-                );
-
-            }
-
-
-            /*
-            -------------------------------
-            UPSERT ATTENDANCE
-            -------------------------------
-            */
-
-            const attendance =
-                await attendanceModel.upsertAttendance(
-
-                    {
-
-                        student_id:
-                            item.student_id,
-
-                        session_id:
-                            data.session_id,
-
-                        term_id:
-                            data.term_id,
-
-                        class_id:
-                            data.class_id,
-
-                        arm_id:
-                            data.arm_id || null,
-
-                        attendance_date:
-                            data.attendance_date,
-
-                        status:
-                            item.status,
-
-                        marked_by:
-                            userId
-
-                    },
-
-                    client
-
-                );
-
-
-            savedAttendance.push(
-                attendance
-            );
-
+        const savedAttendance=[];
+        for (const item of data.students) {
+            const student=await studentModel.getStudentById(item.student_id,schoolId);
+            if (!student) throw new ApiError(404,`Student with ID ${item.student_id} not found.`);
+            if (!["PRESENT","ABSENT","LATE","EXCUSED"].includes(item.status)) throw new ApiError(400,`Invalid attendance status for ${student.first_name} ${student.surname}.`);
+            const attendance=await attendanceModel.upsertAttendance({...item,session_id:data.session_id,term_id:data.term_id,class_id:data.class_id,arm_id:data.arm_id||null,attendance_date:data.attendance_date,marked_by:userId,school_id:schoolId},client);
+            if (!attendance) throw new ApiError(403,"Attendance user or student does not belong to this school.");
+            savedAttendance.push(attendance);
         }
-
-
         await client.query("COMMIT");
-
-
-        return {
-
-            attendance_date:
-                data.attendance_date,
-
-            class:
-                classData.class_name,
-
-            students_processed:
-                savedAttendance.length,
-
-            attendance:
-                savedAttendance
-
-        };
-
-
-    } catch (error) {
-
-        await client.query(
-            "ROLLBACK"
-        );
-
-        throw error;
-
-    } finally {
-
-        client.release();
-
-    }
-
+        return {attendance_date:data.attendance_date,class:classData.class_name,students_processed:savedAttendance.length,attendance:savedAttendance};
+    } catch(error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
 };
 
-
-/*
-=========================================
-GET ATTENDANCE BY DATE
-=========================================
-*/
-
-const getAttendanceByDate = async ({
-    sessionId,
-    termId,
-    classId,
-    armId,
-    attendanceDate
-}) => {
-
-    if (!sessionId) {
-
-        throw new ApiError(
-            400,
-            "Academic session is required."
-        );
-
-    }
-
-    if (!termId) {
-
-        throw new ApiError(
-            400,
-            "Term is required."
-        );
-
-    }
-
-    if (!classId) {
-
-        throw new ApiError(
-            400,
-            "Class is required."
-        );
-
-    }
-
-    if (!attendanceDate) {
-
-        throw new ApiError(
-            400,
-            "Attendance date is required."
-        );
-
-    }
-
-    return attendanceModel.getAttendanceByDate({
-
-        sessionId,
-
-        termId,
-
-        classId,
-
-        armId: armId || null,
-
-        attendanceDate
-
-    });
-
+const getAttendanceByDate = async ({sessionId,termId,classId,armId,attendanceDate,schoolId}) => {
+    if (!sessionId) throw new ApiError(400,"Academic session is required.");
+    if (!termId) throw new ApiError(400,"Term is required.");
+    if (!classId) throw new ApiError(400,"Class is required.");
+    if (!attendanceDate) throw new ApiError(400,"Attendance date is required.");
+    await validateContext({session_id:sessionId,term_id:termId,class_id:classId},schoolId);
+    return attendanceModel.getAttendanceByDate({sessionId,termId,classId,armId:armId||null,attendanceDate,schoolId});
 };
 
-
-/*
-=========================================
-GET STUDENT ATTENDANCE
-=========================================
-*/
-
-const getStudentAttendance = async ({
-    studentId,
-    sessionId,
-    termId
-}) => {
-
-    const student =
-        await studentModel.getStudentById(
-            studentId
-        );
-
-
-    if (!student) {
-
-        throw new ApiError(
-            404,
-            "Student not found."
-        );
-
-    }
-
-
-    if (!sessionId) {
-
-        throw new ApiError(
-            400,
-            "Academic session is required."
-        );
-
-    }
-
-
-    if (!termId) {
-
-        throw new ApiError(
-            400,
-            "Term is required."
-        );
-
-    }
-
-
-    return attendanceModel
-        .getStudentAttendance({
-
-            studentId,
-
-            sessionId,
-
-            termId
-
-        });
-
+const getStudentAttendance = async ({studentId,sessionId,termId,schoolId}) => {
+    if (!sessionId) throw new ApiError(400,"Academic session is required.");
+    if (!termId) throw new ApiError(400,"Term is required.");
+    const student=await studentModel.getStudentById(studentId,schoolId);
+    if (!student) throw new ApiError(404,"Student not found.");
+    await validateContext({session_id:sessionId,term_id:termId,class_id:student.class_id},schoolId);
+    return attendanceModel.getStudentAttendance({studentId,sessionId,termId,schoolId});
 };
 
-
-/*
-=========================================
-GET ATTENDANCE SUMMARY
-=========================================
-*/
-
-const getAttendanceSummary = async (
-    studentId,
-    sessionId,
-    termId
-) => {
-
-    const summary =
-        await attendanceModel
-            .getAttendanceSummary(
-                studentId
-            );
-
-
-    const totalDays =
-        Number(
-            summary.total_days || 0
-        );
-
-
-    const presentDays =
-        Number(
-            summary.present_days || 0
-        );
-
-
-    const absentDays =
-        Number(
-            summary.absent_days || 0
-        );
-
-
-    const lateDays =
-        Number(
-            summary.late_days || 0
-        );
-
-
-    const excusedDays =
-        Number(
-            summary.excused_days || 0
-        );
-
-
-    const percentage =
-        totalDays === 0
-
-            ? 0
-
-            : (
-                presentDays /
-                totalDays
-            ) * 100;
-
-
-    return {
-
-        total_days:
-            totalDays,
-
-        present_days:
-            presentDays,
-
-        absent_days:
-            absentDays,
-
-        late_days:
-            lateDays,
-
-        excused_days:
-            excusedDays,
-
-        attendance_percentage:
-            Number(
-                percentage.toFixed(2)
-            )
-
-    };
-
+const getAttendanceSummary = async (studentId,sessionId,termId,schoolId) => {
+    const student=await studentModel.getStudentById(studentId,schoolId);
+    if (!student) throw new ApiError(404,"Student not found.");
+    const summary=await attendanceModel.getAttendanceSummary({studentId,sessionId,termId,schoolId});
+    const totalDays=Number(summary.total_days||0),presentDays=Number(summary.present_days||0);
+    return {...summary,total_days:totalDays,present_days:presentDays,absent_days:Number(summary.absent_days||0),late_days:Number(summary.late_days||0),excused_days:Number(summary.excused_days||0),attendance_percentage:totalDays===0?0:Number(((presentDays/totalDays)*100).toFixed(2))};
 };
 
-const getStudentsForAttendance = async ({
-    sessionId,
-    classId,
-    armId
-}) => {
-
-    return await studentEnrollmentModel
-        .getStudentsForAttendance({
-
-            sessionId,
-
-            classId,
-
-            armId
-
-        });
-
+const getStudentsForAttendance = async ({sessionId,classId,armId,schoolId}) => {
+    await validateContext({session_id:sessionId,term_id:(await sessionModel.getCurrentTermId?.(schoolId)),class_id:classId},schoolId).catch(()=>{});
+    return studentEnrollmentModel.getStudentsForAttendance({sessionId,classId,armId,schoolId});
 };
 
-const getStudentsForTeacherAttendance = async (
-    assignmentId,
-    userId
-) => {
-
-    const assignment =
-        await teacherAssignmentService
-            .getAssignmentForTeacherAttendance(
-                assignmentId,
-                userId
-            );
-
-    const students =
-        await studentEnrollmentModel
-            .getStudentsForAssignment(
-                assignmentId
-            );
-
-    return {
-
-        assignment,
-
-        students
-
-    };
-
+const getStudentsForTeacherAttendance = async (assignmentId,userId,schoolId) => {
+    const assignment=await teacherAssignmentService.getAssignmentForTeacherAttendance(assignmentId,userId,schoolId);
+    const students=await studentEnrollmentModel.getStudentsForAssignment(assignmentId,schoolId);
+    return {assignment,students};
 };
 
-const getAttendanceByAssignment = async (
-    assignmentId,
-    attendanceDate,
-    user
-) => {
-
-    if (!attendanceDate) {
-
-        throw new ApiError(
-            400,
-            "Attendance date is required."
-        );
-
-    }
-
-    const assignment =
-        await teacherAssignmentService
-            .getAssignmentForTeacherAttendance(
-                assignmentId,
-                user.id
-            );
-
-    return attendanceModel
-        .getAttendanceByDate({
-
-            sessionId:
-                assignment.session_id,
-
-            termId:
-                assignment.term_id,
-
-            classId:
-                assignment.class_id,
-
-            armId:
-                assignment.arm_id,
-
-            attendanceDate
-
-        });
-
+const getAttendanceByAssignment = async (assignmentId,attendanceDate,user,schoolId) => {
+    if (!attendanceDate) throw new ApiError(400,"Attendance date is required.");
+    const assignment=await teacherAssignmentService.getAssignmentForTeacherAttendance(assignmentId,user.id,schoolId);
+    return attendanceModel.getAttendanceByDate({sessionId:assignment.session_id,termId:assignment.term_id,classId:assignment.class_id,armId:assignment.arm_id,attendanceDate,schoolId});
 };
 
-
-module.exports = {
-
-    saveAttendance,
-
-    getAttendanceByDate,
-
-    getStudentAttendance,
-
-    getAttendanceSummary,
-
-    getStudentsForAttendance,
-    getStudentsForTeacherAttendance,
-    getAttendanceByAssignment
-
-};
+module.exports={saveAttendance,getAttendanceByDate,getStudentAttendance,getAttendanceSummary,getStudentsForAttendance,getStudentsForTeacherAttendance,getAttendanceByAssignment};
