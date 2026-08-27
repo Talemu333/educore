@@ -15,15 +15,16 @@ const createParent = async (client, parentData) => {
             alternate_phone,
             email,
             occupation,
-            residential_address
+            residential_address,
+            school_id
 
         )
 
-        VALUES (
-
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
-
-        )
+        SELECT
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+            u.school_id
+        FROM users u
+        WHERE u.id = $2
 
         RETURNING *;
     `;
@@ -737,7 +738,8 @@ const getStudentFeeBreakdown = async (studentId) => {
 
 const getParentFinancialOverview = async (
     sessionId,
-    termId
+    termId,
+    schoolId
 ) => {
 
     const query = `
@@ -966,6 +968,8 @@ const getParentFinancialOverview = async (
         JOIN student_financials sf
             ON sf.student_id = sp.student_id
 
+        WHERE p.school_id = $3
+
         GROUP BY
 
             p.id,
@@ -989,7 +993,8 @@ const getParentFinancialOverview = async (
         query,
         [
             sessionId,
-            termId
+            termId,
+            schoolId
         ]
     );
 
@@ -999,7 +1004,8 @@ const getParentFinancialOverview = async (
 const getParentFinancialDetails = async (
     parentId,
     sessionId,
-    termId
+    termId,
+    schoolId
 ) => {
 
     const query = `
@@ -1225,6 +1231,8 @@ const getParentFinancialDetails = async (
 
             p.id = $1
 
+            AND p.school_id = $4
+
             AND se.session_id = $2
 
             AND se.enrollment_status = 'Active'
@@ -1242,7 +1250,8 @@ const getParentFinancialDetails = async (
         [
             parentId,
             sessionId,
-            termId
+            termId,
+            schoolId
         ]
     );
 
