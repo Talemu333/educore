@@ -14,9 +14,13 @@ GET ALL ADMINISTRATORS
 =========================================
 */
 
-const getAdmins = async () => {
+const getAdmins = async (
+    schoolId
+) => {
 
-    return await userModel.getAdmins();
+    return await userModel.getAdmins(
+        schoolId
+    );
 
 };
 
@@ -59,24 +63,12 @@ const createAdministrator = async ({
     username,
     email,
     password,
-    admin_type
+    admin_type,
+    schoolId
 }) => {
-
-    /*
-    =========================================
-    GET ADMIN ROLE
-    =========================================
-    */
 
     const adminRole =
         await getAdminRole();
-
-
-    /*
-    =========================================
-    HASH PASSWORD
-    =========================================
-    */
 
     const hashedPassword =
         await bcrypt.hash(
@@ -84,38 +76,22 @@ const createAdministrator = async ({
             10
         );
 
-
-    /*
-    =========================================
-    CREATE USER
-    =========================================
-    */
-
     const administrator =
-        await userModel.createAdministrator({
-
-            username,
-
-            email,
-
-            password:
-                hashedPassword,
-
-            role_id:
-                adminRole.id,
-
-            admin_type
-
-        });
-
+        await userModel.createAdministrator(
+            {
+                username,
+                email,
+                password: hashedPassword,
+                role_id: adminRole.id,
+                admin_type
+            },
+            schoolId
+        );
 
     return {
-
         ...administrator,
-
         role_name:
             adminRole.role_name
-
     };
 
 };
@@ -128,11 +104,13 @@ ACTIVATE ADMINISTRATOR
 */
 
 const activateAdministrator = async (
-    userId
+    userId,
+    schoolId
 ) => {
 
     return await userModel.activateAdmin(
-        userId
+        userId,
+        schoolId
     );
 
 };
@@ -145,26 +123,22 @@ DEACTIVATE ADMINISTRATOR
 */
 
 const deactivateAdministrator = async (
-    userId
+    userId,
+    schoolId
 ) => {
 
     return await userModel.deactivateAdmin(
-        userId
+        userId,
+        schoolId
     );
 
 };
 
 
 module.exports = {
-
     getAdmins,
-
     getAdminRole,
-
     createAdministrator,
-
     activateAdministrator,
-
     deactivateAdministrator
-
 };
