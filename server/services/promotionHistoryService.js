@@ -1,41 +1,21 @@
-const promotionHistoryModel =
-    require("../models/promotionHistoryModel");
-
-
-/*
-=========================================
-GET PROMOTION HISTORY
-=========================================
-*/
+const promotionHistoryModel = require("../models/promotionHistoryModel");
 
 const getPromotionHistory = async ({
+    schoolId,
     action,
     sessionId,
     search,
     page,
     limit
 }) => {
-
-    return await promotionHistoryModel
-        .getPromotionHistory({
-
-            action,
-
-            sessionId,
-
-            search,
-
-            page,
-
-            limit
-
-        });
-
+    return await promotionHistoryModel.getPromotionHistory({
+        schoolId,
+        action,
+        sessionId,
+        search,
+        page,
+        limit
+    });
 };
 
-
-module.exports = {
-
-    getPromotionHistory
-
-};
+module.exports = { getPromotionHistory };
