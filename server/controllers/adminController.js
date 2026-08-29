@@ -16,8 +16,20 @@ const getAdmins = async (
 
     try {
 
+        const schoolId =
+            req.user?.school_id;
+
+        if (!schoolId) {
+            return res.status(403).json({
+                success: false,
+                message: "School context is required."
+            });
+        }
+
         const administrators =
-            await adminService.getAdmins();
+            await adminService.getAdmins(
+                schoolId
+            );
 
 
         res.json({
@@ -57,6 +69,16 @@ const createAdministrator = async (
             password,
             admin_type
         } = req.body;
+
+        const schoolId =
+            req.user?.school_id;
+
+        if (!schoolId) {
+            return res.status(403).json({
+                success: false,
+                message: "School context is required."
+            });
+        }
 
 
         /*
@@ -144,7 +166,9 @@ const createAdministrator = async (
                 password,
 
                 admin_type:
-                    normalizedAdminType
+                    normalizedAdminType,
+
+                schoolId
 
             });
 
@@ -210,10 +234,20 @@ const activateAdministrator = async (
             id
         } = req.params;
 
+        const schoolId =
+            req.user?.school_id;
+
+        if (!schoolId) {
+            return res.status(403).json({
+                success: false,
+                message: "School context is required."
+            });
+        }
 
         const administrator =
             await adminService.activateAdministrator(
-                id
+                id,
+                schoolId
             );
 
 
@@ -270,10 +304,20 @@ const deactivateAdministrator = async (
             id
         } = req.params;
 
+        const schoolId =
+            req.user?.school_id;
+
+        if (!schoolId) {
+            return res.status(403).json({
+                success: false,
+                message: "School context is required."
+            });
+        }
 
         const administrator =
             await adminService.deactivateAdministrator(
-                id
+                id,
+                schoolId
             );
 
 
