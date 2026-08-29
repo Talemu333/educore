@@ -27,6 +27,8 @@ const findUser = async (login) => {
 
             users.admin_type,
 
+            users.school_id,
+
             roles.role_name
 
         FROM users
@@ -76,6 +78,8 @@ const findUserById = async (id) => {
             users.last_login,
 
             users.admin_type,
+
+            users.school_id,
 
             roles.role_name
 
