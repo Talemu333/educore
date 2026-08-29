@@ -12,4 +12,10 @@ router.get(
     termController.getTerms
 );
 
+router.post(
+    "/",
+    authenticate,
+    termController.createTerm
+);
+
 module.exports = router;
