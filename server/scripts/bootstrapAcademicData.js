@@ -7,17 +7,22 @@ const bootstrapAcademicData = async () => {
     try {
         await client.query("BEGIN");
 
-        // The original schema made class_name globally unique. In a
-        // multi-school database the same class name (e.g. JSS1) must be
-        // allowed in different schools, so uniqueness is scoped to school.
+        // The original schema made class_name and sort_order globally unique.
+        // In a multi-school database both values must be scoped to a school.
         await client.query(`
             ALTER TABLE classes
-            DROP CONSTRAINT IF EXISTS uq_class_name
+            DROP CONSTRAINT IF EXISTS uq_class_name,
+            DROP CONSTRAINT IF EXISTS uq_sort_order
         `);
 
         await client.query(`
             CREATE UNIQUE INDEX IF NOT EXISTS uq_class_school_name
             ON classes (school_id, class_name)
+        `);
+
+        await client.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_class_school_sort_order
+            ON classes (school_id, sort_order)
         `);
 
         const schoolsResult = await client.query(`SELECT id FROM schools ORDER BY id`);
