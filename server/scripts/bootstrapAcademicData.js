@@ -79,37 +79,63 @@ const bootstrapAcademicData = async () => {
             const targetClassMap = new Map();
 
             for (const sourceClass of sourceClassesResult.rows) {
-                const classResult = await client.query(
+                const existingClass = await client.query(
                     `
-                    INSERT INTO classes (
-                        school_id,
-                        class_name,
-                        class_level,
-                        sort_order
-                    )
-                    VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (school_id, class_name)
-                    DO UPDATE SET
-                        class_level = EXCLUDED.class_level,
-                        sort_order = EXCLUDED.sort_order
-                    RETURNING id, class_name
+                    SELECT id
+                    FROM classes
+                    WHERE school_id = $1
+                      AND class_name = $2
+                    LIMIT 1
                     `,
-                    [
-                        school.id,
-                        sourceClass.class_name,
-                        sourceClass.class_level,
-                        sourceClass.sort_order
-                    ]
+                    [school.id, sourceClass.class_name]
                 );
+
+                let targetClassId;
+
+                if (existingClass.rowCount) {
+                    targetClassId = existingClass.rows[0].id;
+
+                    await client.query(
+                        `
+                        UPDATE classes
+                        SET class_level = $1,
+                            sort_order = $2
+                        WHERE id = $3
+                        `,
+                        [
+                            sourceClass.class_level,
+                            sourceClass.sort_order,
+                            targetClassId
+                        ]
+                    );
+                } else {
+                    const classResult = await client.query(
+                        `
+                        INSERT INTO classes (
+                            school_id,
+                            class_name,
+                            class_level,
+                            sort_order
+                        )
+                        VALUES ($1, $2, $3, $4)
+                        RETURNING id
+                        `,
+                        [
+                            school.id,
+                            sourceClass.class_name,
+                            sourceClass.class_level,
+                            sourceClass.sort_order
+                        ]
+                    );
+
+                    targetClassId = classResult.rows[0].id;
+                    classesCreated++;
+                }
 
                 targetClassMap.set(
                     sourceClass.class_name,
-                    classResult.rows[0].id
+                    targetClassId
                 );
-
-                if (classResult.command === "INSERT") {
-                    classesCreated++;
-                }
             }
 
             for (const sourceArm of sourceArmsResult.rows) {
@@ -121,17 +147,14 @@ const bootstrapAcademicData = async () => {
                     continue;
                 }
 
-                const armResult = await client.query(
+                const existingArm = await client.query(
                     `
-                    INSERT INTO arms (
-                        school_id,
-                        class_id,
-                        arm_name
-                    )
-                    VALUES ($1, $2, $3)
-                    ON CONFLICT (school_id, arm_name)
-                    DO NOTHING
-                    RETURNING id
+                    SELECT id
+                    FROM arms
+                    WHERE school_id = $1
+                      AND class_id = $2
+                      AND arm_name = $3
+                    LIMIT 1
                     `,
                     [
                         school.id,
@@ -140,7 +163,23 @@ const bootstrapAcademicData = async () => {
                     ]
                 );
 
-                if (armResult.rowCount) {
+                if (!existingArm.rowCount) {
+                    await client.query(
+                        `
+                        INSERT INTO arms (
+                            school_id,
+                            class_id,
+                            arm_name
+                        )
+                        VALUES ($1, $2, $3)
+                        `,
+                        [
+                            school.id,
+                            targetClassId,
+                            sourceArm.arm_name
+                        ]
+                    );
+
                     armsCreated++;
                 }
             }
@@ -218,7 +257,51 @@ const bootstrapAcademicData = async () => {
                         Boolean(sourceTerm.is_current) &&
                         Boolean(targetSession.is_current);
 
-                    const termResult = await client.query(
+                    const existingTerm = await client.query(
+                        `
+                        SELECT id, is_current
+                        FROM terms
+                        WHERE school_id = $1
+                          AND session_id = $2
+                          AND term_name = $3
+                        LIMIT 1
+                        `,
+                        [
+                            school.id,
+                            targetSession.id,
+                            sourceTerm.term_name
+                        ]
+                    );
+
+                    if (existingTerm.rowCount) {
+                        if (shouldBeCurrent && !existingTerm.rows[0].is_current) {
+                            await client.query(
+                                `
+                                UPDATE terms
+                                SET is_current = FALSE
+                                WHERE school_id = $1
+                                  AND session_id = $2
+                                  AND is_current = TRUE
+                                `,
+                                [school.id, targetSession.id]
+                            );
+
+                            await client.query(
+                                `
+                                UPDATE terms
+                                SET is_current = TRUE
+                                WHERE id = $1
+                                `,
+                                [existingTerm.rows[0].id]
+                            );
+
+                            hasCurrentTerm = true;
+                        }
+
+                        continue;
+                    }
+
+                    await client.query(
                         `
                         INSERT INTO terms (
                             school_id,
@@ -229,9 +312,6 @@ const bootstrapAcademicData = async () => {
                             is_current
                         )
                         VALUES ($1, $2, $3, $4, $5, $6)
-                        ON CONFLICT (school_id, session_id, term_name)
-                        DO NOTHING
-                        RETURNING id, is_current
                         `,
                         [
                             school.id,
@@ -243,12 +323,10 @@ const bootstrapAcademicData = async () => {
                         ]
                     );
 
-                    if (termResult.rowCount) {
-                        termsCreated++;
+                    termsCreated++;
 
-                        if (termResult.rows[0].is_current) {
-                            hasCurrentTerm = true;
-                        }
+                    if (shouldBeCurrent) {
+                        hasCurrentTerm = true;
                     }
                 }
             }
@@ -301,7 +379,7 @@ const bootstrapAcademicData = async () => {
                             `
                             UPDATE school_settings
                             SET current_session_id = $1,
-                                current_term_id = COALESCE(current_term_id, $2),
+                                current_term_id = $2,
                                 updated_at = CURRENT_TIMESTAMP
                             WHERE school_id = $3
                             `,
