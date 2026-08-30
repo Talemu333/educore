@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/api/axios";
-
+import { useAuth } from "@/context/AuthContext";
 
 const fetchTerms = async () => {
 
@@ -12,14 +12,18 @@ const fetchTerms = async () => {
 
 };
 
-
 export const useTerms = () => {
+
+    const { user } = useAuth();
+    const schoolId = user?.school_id;
 
     return useQuery({
 
-        queryKey: ["terms"],
+        queryKey: ["terms", schoolId],
 
-        queryFn: fetchTerms
+        queryFn: fetchTerms,
+
+        enabled: !!schoolId
 
     });
 
