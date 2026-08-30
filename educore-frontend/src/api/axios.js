@@ -1,7 +1,11 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://educore-api-7e1v.onrender.com/api",
+    baseURL:
+        import.meta.env.VITE_API_URL ||
+        (import.meta.env.PROD
+            ? "https://educore-api-7e1v.onrender.com/api"
+            : "http://localhost:5000/api"),
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",
@@ -9,15 +13,3 @@ const api = axios.create({
 });
 
 export default api;
-
-// import axios from "axios";
-
-// const api = axios.create({
-//     baseURL: "http://localhost:5000/api",
-//     withCredentials: true,
-//     headers: {
-//         "Content-Type": "application/json",
-//     },
-// });
-
-// export default api;
