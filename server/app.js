@@ -59,6 +59,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set("trust proxy", 1);
+
+const isProduction = process.env.NODE_ENV === "production";
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
 
@@ -69,8 +72,8 @@ app.use(session({
     cookie: {
         maxAge: 1000 * 60 * 60 * 24,
         httpOnly: true,
-        secure: true,      // Change to true when using HTTPS
-        sameSite: "none"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
     }
 }));
 app.use(passport.initialize());
@@ -102,7 +105,7 @@ app.use("/api/password",passwordRoutes);
 app.use("/api/arms", armRoutes);
 app.use("/api/parents", parentRoutes);
 app.use("/api/relationships",relationshipRoutes);
-app.use("/api/departments", departmentRoutes);
+app.use("/api/departments",departmentRoutes);
 app.use("/api/qualifications", qualificationRoutes);
 app.use("/api/class-subjects", classSubjectRoutes);
 app.use("/api/school-settings", schoolSettingRoutes);
