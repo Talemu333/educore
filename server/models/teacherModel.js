@@ -34,7 +34,7 @@ const getTeachers = async (schoolId) => {
         FROM teachers t
         LEFT JOIN departments d ON d.id = t.department_id
         LEFT JOIN qualifications q ON q.id = t.qualification_id
-        WHERE t.school_id = $1 AND t.status = TRUE
+        WHERE t.school_id = $1 AND t.status = 'Active'
         ORDER BY t.surname, t.first_name;
     `, [schoolId]);
     return result.rows;
