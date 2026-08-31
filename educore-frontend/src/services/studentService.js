@@ -22,7 +22,9 @@ export const getStudents = async (search = "", page = 1, limit = 10) => {
 
     );
 
-    return response.data.data;
+    // Keep the complete paginated response so consumers can access
+    // data, total, page, limit and totalPages.
+    return response.data;
 
 };
 
