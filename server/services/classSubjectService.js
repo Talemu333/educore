@@ -30,14 +30,14 @@ const saveClassSubjects = async (data, schoolId) => {
     try {
         await client.query("BEGIN");
 
-        await classSubjectModel.deleteByClassId(client, data.class_id);
+        await classSubjectModel.deleteByClassId(client, data.class_id, schoolId);
 
         for (const subject of data.subjects) {
             await classSubjectModel.create(client, {
                 class_id: data.class_id,
                 subject_id: subject.subject_id,
                 is_compulsory: subject.is_compulsory
-            });
+            }, schoolId);
         }
 
         await client.query("COMMIT");
