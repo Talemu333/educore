@@ -1,232 +1,83 @@
 const pool = require("../config/database");
 
-
-const getAllGradingScales = async () => {
-
-    const query = `
-
-        SELECT
-
-            id,
-
-            grade,
-
-            min_score,
-
-            max_score,
-
-            remark,
-
-            created_at,
-
-            updated_at
-
+const getAllGradingScales = async (schoolId) => {
+    const result = await pool.query(`
+        SELECT id, school_id, grade, min_score, max_score,
+               remark, created_at, updated_at
         FROM grading_systems
-
+        WHERE school_id = $1
         ORDER BY min_score DESC;
-
-    `;
-
-    const result =
-        await pool.query(query);
+    `, [schoolId]);
 
     return result.rows;
-
 };
 
-
-const getGradingSystemById = async (id) => {
-
-    const query = `
-
+const getGradingSystemById = async (id, schoolId) => {
+    const result = await pool.query(`
         SELECT *
-
         FROM grading_systems
-
-        WHERE id = $1;
-
-    `;
-
-    const result =
-        await pool.query(
-            query,
-            [id]
-        );
+        WHERE id = $1 AND school_id = $2;
+    `, [id, schoolId]);
 
     return result.rows[0];
-
 };
 
-
-const createGradingSystem = async (data) => {
-
-    const query = `
-
+const createGradingSystem = async (data, schoolId) => {
+    const result = await pool.query(`
         INSERT INTO grading_systems (
-
-            grade,
-
-            min_score,
-
-            max_score,
-
-            remark
-
+            school_id, grade, min_score, max_score, remark
         )
-
-        VALUES ($1, $2, $3, $4)
-
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *;
-
-    `;
-
-    const values = [
-
-        data.grade,
-
-        data.min_score,
-
-        data.max_score,
-
-        data.remark
-
-    ];
-
-    const result =
-        await pool.query(
-            query,
-            values
-        );
+    `, [schoolId, data.grade, data.min_score, data.max_score, data.remark]);
 
     return result.rows[0];
-
 };
 
-
-const updateGradingSystem = async (
-    id,
-    data
-) => {
-
-    const query = `
-
+const updateGradingSystem = async (id, data, schoolId) => {
+    const result = await pool.query(`
         UPDATE grading_systems
-
-        SET
-
-            grade = $1,
-
+        SET grade = $1,
             min_score = $2,
-
             max_score = $3,
-
             remark = $4,
-
             updated_at = CURRENT_TIMESTAMP
-
-        WHERE id = $5
-
+        WHERE id = $5 AND school_id = $6
         RETURNING *;
-
-    `;
-
-    const values = [
-
-        data.grade,
-
-        data.min_score,
-
-        data.max_score,
-
-        data.remark,
-
-        id
-
-    ];
-
-    const result =
-        await pool.query(
-            query,
-            values
-        );
+    `, [data.grade, data.min_score, data.max_score, data.remark, id, schoolId]);
 
     return result.rows[0];
-
 };
 
-
-const deleteGradingSystem = async (id) => {
-
-    const query = `
-
+const deleteGradingSystem = async (id, schoolId) => {
+    const result = await pool.query(`
         DELETE FROM grading_systems
-
-        WHERE id = $1
-
+        WHERE id = $1 AND school_id = $2
         RETURNING *;
-
-    `;
-
-    const result =
-        await pool.query(
-            query,
-            [id]
-        );
+    `, [id, schoolId]);
 
     return result.rows[0];
-
 };
 
-
-const getGradeForScore = async (score) => {
-
-    const query = `
-
-        SELECT
-
-            grade,
-
-            remark
-
+const getGradeForScore = async (score, schoolId) => {
+    const result = await pool.query(`
+        SELECT grade, remark
         FROM grading_systems
-
-        WHERE
-
-            $1 >= min_score
-
-            AND
-
-            $1 <= max_score
-
+        WHERE school_id = $2
+          AND $1 >= min_score
+          AND $1 <= max_score
         ORDER BY min_score DESC
-
         LIMIT 1;
-
-    `;
-
-    const result =
-        await pool.query(
-            query,
-            [score]
-        );
+    `, [score, schoolId]);
 
     return result.rows[0];
-
 };
-
 
 module.exports = {
-
     getAllGradingScales,
-
     getGradingSystemById,
-
     createGradingSystem,
-
     updateGradingSystem,
-
     deleteGradingSystem,
-
     getGradeForScore
-
 };
