@@ -39,9 +39,9 @@ const createEnrollment = async (data, client = pool, schoolId) => {
     const result = await client.query(`
         INSERT INTO student_enrollments(
             student_id, session_id, class_id, arm_id,
-            enrollment_date, enrollment_status
+            enrollment_date, enrollment_status, school_id
         )
-        VALUES($1,$2,$3,$4,$5,$6)
+        VALUES($1,$2,$3,$4,$5,$6,$7)
         RETURNING *;
     `, [
         data.student_id,
@@ -49,7 +49,8 @@ const createEnrollment = async (data, client = pool, schoolId) => {
         data.class_id,
         data.arm_id,
         data.enrollment_date,
-        data.enrollment_status
+        data.enrollment_status,
+        schoolId
     ]);
 
     return result.rows[0];
@@ -66,6 +67,7 @@ const getStudentsForAssignment = async (assignmentId, schoolId) => {
         WHERE ta.id = $1
           AND ta.school_id = $2
           AND s.school_id = $2
+          AND se.school_id = $2
           AND (ta.arm_id IS NULL OR ta.arm_id = se.arm_id)
           AND se.session_id = ta.session_id
           AND se.enrollment_status = 'Active'
@@ -90,6 +92,7 @@ const getStudentsByEnrollment = async (sessionId, classId, armId, schoolId) => {
           AND se.class_id = $2
           AND ($3::integer IS NULL OR se.arm_id = $3)
           AND se.enrollment_status = 'Active'
+          AND se.school_id = $4
           AND s.school_id = $4
           AND sess.school_id = $4
           AND c.school_id = $4
@@ -112,6 +115,7 @@ const getStudentsForAttendance = async ({ sessionId, classId, armId, schoolId })
           AND se.class_id = $2
           AND (se.arm_id = $3 OR (se.arm_id IS NULL AND $3 IS NULL))
           AND se.enrollment_status = 'Active'
+          AND se.school_id = $4
           AND s.school_id = $4
           AND sess.school_id = $4
           AND c.school_id = $4
