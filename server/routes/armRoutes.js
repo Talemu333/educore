@@ -10,25 +10,23 @@ const ROLES = require("../constants/roles");
 const armController = require("../controllers/armController");
 
 router.get(
-
     "/",
-
     authenticate,
-
     authorize(ROLES.ADMIN),
-
     armController.getArms
-
 );
 
 router.get(
-
     "/class/:classId",
-
     authenticate,
-
     armController.getArmsByClass
+);
 
+router.post(
+    "/",
+    authenticate,
+    authorize(ROLES.ADMIN),
+    armController.createArm
 );
 
 module.exports = router;
