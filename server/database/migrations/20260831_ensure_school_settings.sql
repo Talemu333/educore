@@ -13,17 +13,28 @@ FROM (
 WHERE ss.school_id IS NULL;
 
 -- Create settings for schools that do not yet have one.
--- school_name is NOT NULL in the existing EduCore schema, so populate it
--- from the owning school rather than relying on a database default.
-INSERT INTO school_settings (school_name, school_code, school_id, admission_prefix)
+-- school_settings has no school_code column. The school's code is used
+-- as the admission prefix, while the school identity is stored in school_id.
+INSERT INTO school_settings (
+    school_name,
+    admission_prefix,
+    school_email,
+    school_phone,
+    school_address,
+    school_id
+)
 SELECT
     s.school_name,
-    s.school_code,
-    s.id,
-    COALESCE(NULLIF(s.school_code, ''), 'SCH' || s.id::text)
+    COALESCE(NULLIF(s.school_code, ''), 'SCH' || s.id::text),
+    s.email,
+    s.phone,
+    s.address,
+    s.id
 FROM schools s
 WHERE NOT EXISTS (
-    SELECT 1 FROM school_settings ss WHERE ss.school_id = s.id
+    SELECT 1
+    FROM school_settings ss
+    WHERE ss.school_id = s.id
 );
 
 -- Prevent duplicate settings per school after existing duplicates are resolved.
