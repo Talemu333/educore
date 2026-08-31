@@ -11,7 +11,7 @@ const createTeacher = async (client, teacherData, schoolId) => {
         )
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
         RETURNING *;
-    `, [schoolId, teacherData.id, teacherData.user_id, teacherData.staff_number, teacherData.surname,
+    `, [teacherData.id, schoolId, teacherData.user_id, teacherData.staff_number, teacherData.surname,
         teacherData.first_name, teacherData.middle_name, teacherData.gender,
         teacherData.date_of_birth, teacherData.phone_number, teacherData.email,
         teacherData.address, teacherData.marital_status, teacherData.qualification_id,
