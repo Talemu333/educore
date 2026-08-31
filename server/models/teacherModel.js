@@ -3,15 +3,15 @@ const pool = require("../config/database");
 const createTeacher = async (client, teacherData, schoolId) => {
     const result = await client.query(`
         INSERT INTO teachers (
-            id, user_id, staff_number, surname, first_name, middle_name, gender,
+            id, school_id, user_id, staff_number, surname, first_name, middle_name, gender,
             date_of_birth, phone_number, email, address, marital_status,
             qualification_id, department_id, employment_date, state_id,
             nationality_id, next_of_kin_name, next_of_kin_phone,
             emergency_contact_name, emergency_contact_phone
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
         RETURNING *;
-    `, [teacherData.id, teacherData.user_id, teacherData.staff_number, teacherData.surname,
+    `, [schoolId, teacherData.id, teacherData.user_id, teacherData.staff_number, teacherData.surname,
         teacherData.first_name, teacherData.middle_name, teacherData.gender,
         teacherData.date_of_birth, teacherData.phone_number, teacherData.email,
         teacherData.address, teacherData.marital_status, teacherData.qualification_id,
@@ -32,10 +32,9 @@ const getTeachers = async (schoolId) => {
                CONCAT(t.surname, ' ', t.first_name, ' ', COALESCE(t.middle_name,'')) AS full_name,
                d.department_name, q.qualification_name, t.phone_number, t.email, t.status
         FROM teachers t
-        INNER JOIN users u ON u.id = t.user_id
         LEFT JOIN departments d ON d.id = t.department_id
         LEFT JOIN qualifications q ON q.id = t.qualification_id
-        WHERE t.status = 'Active' AND u.school_id = $1
+        WHERE t.school_id = $1 AND t.status = TRUE
         ORDER BY t.surname, t.first_name;
     `, [schoolId]);
     return result.rows;
@@ -51,7 +50,7 @@ const getTeacherById = async (id, schoolId) => {
         LEFT JOIN qualifications q ON q.id = t.qualification_id
         LEFT JOIN states s ON s.id = t.state_id
         LEFT JOIN nationalities n ON n.id = t.nationality_id
-        WHERE t.id = $1 AND u.school_id = $2;
+        WHERE t.id = $1 AND t.school_id = $2 AND u.school_id = $2;
     `, [id, schoolId]);
     return result.rows[0];
 };
@@ -66,8 +65,7 @@ const updateTeacher = async (client, id, teacherData, schoolId) => {
             next_of_kin_name = $15, next_of_kin_phone = $16,
             emergency_contact_name = $17, emergency_contact_phone = $18,
             updated_at = CURRENT_TIMESTAMP
-        FROM users u
-        WHERE t.id = $19 AND t.user_id = u.id AND u.school_id = $20
+        WHERE t.id = $19 AND t.school_id = $20
         RETURNING t.*;
     `, [teacherData.surname, teacherData.first_name, teacherData.middle_name,
         teacherData.gender, teacherData.date_of_birth, teacherData.phone_number,
@@ -82,8 +80,7 @@ const updateTeacher = async (client, id, teacherData, schoolId) => {
 const deactivateTeacher = async (client, id, schoolId) => {
     const result = await client.query(`
         UPDATE teachers t SET status = FALSE, updated_at = CURRENT_TIMESTAMP
-        FROM users u
-        WHERE t.id = $1 AND t.user_id = u.id AND u.school_id = $2
+        WHERE t.id = $1 AND t.school_id = $2
         RETURNING t.*;
     `, [id, schoolId]);
     return result.rows[0];
@@ -92,8 +89,7 @@ const deactivateTeacher = async (client, id, schoolId) => {
 const getTeacherByUserId = async (userId, schoolId) => {
     const result = await pool.query(`
         SELECT t.* FROM teachers t
-        INNER JOIN users u ON u.id = t.user_id
-        WHERE t.user_id = $1 AND u.school_id = $2;
+        WHERE t.user_id = $1 AND t.school_id = $2;
     `, [userId, schoolId]);
     return result.rows[0];
 };
