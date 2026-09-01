@@ -1,5 +1,6 @@
 import {
-    X
+    X,
+    Settings
 } from "lucide-react";
 
 import sidebarMenu
@@ -22,21 +23,12 @@ function Sidebar({
         user
     } = useAuth();
 
-
     const role =
         user?.role_name;
-
 
     const adminType =
         user?.admin_type;
 
-
-
-    /*
-    ==========================================
-    ACCESS CHECK
-    ==========================================
-    */
 
     const canAccess = (
         item
@@ -46,11 +38,8 @@ function Sidebar({
             item.roles &&
             !item.roles.includes(role)
         ) {
-
             return false;
-
         }
-
 
         if (
             role === "Admin" &&
@@ -59,89 +48,56 @@ function Sidebar({
                 adminType?.toLowerCase()
             )
         ) {
-
             return false;
-
         }
-
 
         return true;
 
     };
 
 
-
     /*
-    ==========================================
-    FILTER MENU
-    ==========================================
+    Super Admin has a dedicated platform
+    entry point. The existing school menu
+    remains unchanged for school users.
     */
-
     const filteredMenu =
-        sidebarMenu
+        role === "Super Admin"
+            ? [
+                {
+                    title: "School Management",
+                    icon: Settings,
+                    path: "/settings"
+                }
+            ]
+            : sidebarMenu
+                .filter(canAccess)
+                .map(item => {
 
-            .filter(canAccess)
-
-            .map(
-                item => {
-
-
-                    /*
-                    ------------------------------------------
-                    NORMAL MENU ITEM
-                    ------------------------------------------
-                    */
-
-                    if (
-                        !item.children
-                    ) {
-
+                    if (!item.children) {
                         return item;
-
                     }
-
-
-
-                    /*
-                    ------------------------------------------
-                    CHILD MENU ITEMS
-                    ------------------------------------------
-                    */
 
                     const children =
                         item.children.filter(
                             canAccess
                         );
 
-
-                    if (
-                        children.length === 0
-                    ) {
-
+                    if (children.length === 0) {
                         return null;
-
                     }
 
-
                     return {
-
                         ...item,
-
                         children
-
                     };
-
-                }
-            )
-
-            .filter(Boolean);
-
+                })
+                .filter(Boolean);
 
 
     return (
 
         <aside
-
             className={`
                 fixed
                 inset-y-0
@@ -165,13 +121,7 @@ function Sidebar({
                         : "-translate-x-full"
                 }
             `}
-
         >
-
-
-            {/* =============================================
-                LOGO
-            ============================================= */}
 
             <div
                 className="
@@ -185,67 +135,36 @@ function Sidebar({
             >
 
                 <h1 className="text-2xl font-bold">
-
                     EDUCORE
-
                 </h1>
 
-
-                {/* CLOSE BUTTON - MOBILE ONLY */}
-
                 <button
-
                     type="button"
-
                     onClick={onClose}
-
-                    className="
-                        rounded-md
-                        p-2
-                        transition-colors
-                        hover:bg-blue-600
-                        lg:hidden
-                    "
-
+                    className="rounded-md p-2 transition-colors hover:bg-blue-600 lg:hidden"
                     aria-label="Close menu"
-
                 >
-
                     <X className="h-5 w-5" />
-
                 </button>
 
             </div>
 
-
-
-            {/* =============================================
-                NAVIGATION
-            ============================================= */}
-
             <nav className="flex-1 space-y-2 overflow-y-auto p-4">
 
-                {filteredMenu.map(
-                    item => (
+                {filteredMenu.map(item => (
 
-                        <SidebarItem
+                    <SidebarItem
+                        key={
+                            item.path ||
+                            item.title
+                        }
+                        {...item}
+                        onClose={onClose}
+                    />
 
-                            key={
-                                item.path ||
-                                item.title
-                            }
-
-                            {...item}
-
-                            onClose={onClose}
-
-                        />
-
-                    )
-                )}
+                ))}
 
             </nav>
-
 
         </aside>
 
@@ -253,156 +172,4 @@ function Sidebar({
 
 }
 
-
 export default Sidebar;
-
-// import sidebarMenu from "../../constants/sidebarMenu";
-// import SidebarItem from "./SidebarItem";
-// import { useAuth } from "@/context/AuthContext";
-
-
-// function Sidebar() {
-
-//     const { user } = useAuth();
-
-//     const role = user?.role_name;
-//     const adminType = user?.admin_type;
-
-
-//     const canAccess = (item) => {
-
-//         /*
-//         =========================================
-//         ROLE CHECK
-//         =========================================
-//         */
-
-//         if (
-//             item.roles &&
-//             !item.roles.includes(role)
-//         ) {
-
-//             return false;
-
-//         }
-
-
-//         /*
-//         =========================================
-//         ADMIN TYPE CHECK
-//         =========================================
-//         */
-
-//         if (
-//             role === "Admin" &&
-//             item.adminTypes &&
-//             !item.adminTypes.includes(
-//                 adminType?.toLowerCase()
-//             )
-//         ) {
-
-//             return false;
-
-//         }
-
-
-//         return true;
-
-//     };
-
-
-//     const filteredMenu = sidebarMenu
-
-//         .filter(canAccess)
-
-//         .map(item => {
-
-//             /*
-//             =====================================
-//             NORMAL MENU ITEM
-//             =====================================
-//             */
-
-//             if (!item.children) {
-
-//                 return item;
-
-//             }
-
-
-//             /*
-//             =====================================
-//             CHILDREN
-//             =====================================
-//             */
-
-//             const children =
-//                 item.children.filter(canAccess);
-
-
-//             if (children.length === 0) {
-
-//                 return null;
-
-//             }
-
-
-//             return {
-
-//                 ...item,
-
-//                 children
-
-//             };
-
-//         })
-
-//         .filter(Boolean);
-
-
-//     return (
-
-//         <aside className="w-64 bg-blue-700 text-white">
-
-//             <div
-//                 className="
-//                     text-2xl
-//                     font-bold
-//                     p-6
-//                     border-b
-//                     border-blue-600
-//                 "
-//             >
-
-//                 EDUCORE
-
-//             </div>
-
-
-//             <nav className="p-4 space-y-2">
-
-//                 {filteredMenu.map(item => (
-
-//                     <SidebarItem
-
-//                         key={
-//                             item.path ||
-//                             item.title
-//                         }
-
-//                         {...item}
-
-//                     />
-
-//                 ))}
-
-//             </nav>
-
-//         </aside>
-
-//     );
-
-// }
-
-
-// export default Sidebar;
