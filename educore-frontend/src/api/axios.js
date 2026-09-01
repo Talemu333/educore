@@ -18,12 +18,15 @@ const api = axios.create({
 // only honors it for an authenticated Super Admin.
 api.interceptors.request.use((config) => {
     const path = window.location.pathname;
-    if (path.startsWith("/settings/schools/")) {
+    const schoolIdFromUrl = new URLSearchParams(window.location.search).get("schoolId");
+
+    if (path === "/settings" && schoolIdFromUrl) {
         const schoolId = sessionStorage.getItem("educore_super_admin_school_id");
-        if (schoolId) {
+        if (schoolId && schoolId === schoolIdFromUrl) {
             config.headers["X-School-Id"] = schoolId;
         }
     }
+
     return config;
 });
 
