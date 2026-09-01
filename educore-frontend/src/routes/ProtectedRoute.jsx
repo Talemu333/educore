@@ -1,5 +1,6 @@
 import {
-    Navigate
+    Navigate,
+    useLocation
 } from "react-router-dom";
 
 import {
@@ -19,12 +20,8 @@ function ProtectedRoute({
         loading
     } = useAuth();
 
+    const location = useLocation();
 
-    /*
-    =========================================
-    LOADING
-    =========================================
-    */
 
     if (loading) {
 
@@ -36,12 +33,6 @@ function ProtectedRoute({
 
     }
 
-
-    /*
-    =========================================
-    NOT AUTHENTICATED
-    =========================================
-    */
 
     if (!isAuthenticated) {
 
@@ -55,23 +46,11 @@ function ProtectedRoute({
     }
 
 
-    /*
-    =========================================
-    USER ROLE
-    =========================================
-    */
-
     const userRole =
         user?.role_name
             ?.trim()
             ?.toLowerCase();
 
-
-    /*
-    =========================================
-    USER ADMIN TYPE
-    =========================================
-    */
 
     const userAdminType =
         user?.admin_type
@@ -81,9 +60,31 @@ function ProtectedRoute({
 
     /*
     =========================================
-    CHECK ROLE
+    SUPER ADMIN
+    =========================================
+
+    Super Admin currently uses the existing
+    Settings route for platform school
+    management. It must not automatically
+    inherit access to normal school routes.
     =========================================
     */
+
+    if (userRole === "super admin") {
+
+        if (location.pathname === "/settings") {
+            return children;
+        }
+
+        return (
+            <Navigate
+                to="/settings"
+                replace
+            />
+        );
+
+    }
+
 
     if (allowedRoles?.length) {
 
@@ -115,16 +116,6 @@ function ProtectedRoute({
 
     }
 
-
-    /*
-    =========================================
-    CHECK ADMIN TYPE
-    =========================================
-
-    admin_type is relevant only when
-    the authenticated user's role is Admin.
-    =========================================
-    */
 
     if (
         allowedAdminTypes?.length &&
@@ -159,12 +150,6 @@ function ProtectedRoute({
 
     }
 
-
-    /*
-    =========================================
-    ACCESS GRANTED
-    =========================================
-    */
 
     return children;
 
