@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { getSchool } from "@/services/superAdminSchoolService";
 import LegacySettingsPage from "./LegacySettingsPage";
@@ -17,18 +17,31 @@ const tabs = [
     { id: "administrators", label: "Administrators" }
 ];
 
-function SuperAdminManageSchoolPage() {
-    const { id } = useParams();
+function AcademicManagementContent() {
+    const { data: sessions = [] } = useSessions();
+
+    return (
+        <div className="space-y-6">
+            <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
+                <AcademicTermManagement sessions={sessions} />
+            </section>
+            <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
+                <AcademicStructureManagement />
+            </section>
+        </div>
+    );
+}
+
+function SuperAdminManageSchoolPage({ schoolId: schoolIdProp }) {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { data: sessions = [] } = useSessions();
     const [school, setSchool] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("overview");
     const [contextReady, setContextReady] = useState(false);
 
-    const schoolId = useMemo(() => Number(id), [id]);
+    const schoolId = useMemo(() => Number(schoolIdProp), [schoolIdProp]);
     const isSuperAdmin = user?.role_name === "Super Admin";
 
     useEffect(() => {
@@ -133,20 +146,8 @@ function SuperAdminManageSchoolPage() {
             )}
 
             {contextReady && activeTab === "settings" && <LegacySettingsPage />}
-
-            {contextReady && activeTab === "academic" && (
-                <div className="space-y-6">
-                    <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
-                        <AcademicTermManagement sessions={sessions} />
-                    </section>
-                    <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
-                        <AcademicStructureManagement />
-                    </section>
-                </div>
-            )}
-
+            {contextReady && activeTab === "academic" && <AcademicManagementContent />}
             {contextReady && activeTab === "grading" && <GradingScalesPage />}
-
             {contextReady && activeTab === "administrators" && <AdministratorsPage />}
         </section>
     );
