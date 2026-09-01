@@ -1,132 +1,36 @@
-const express =
-    require("express");
+const express = require("express");
+const router = express.Router();
+const gradingSystemController = require("../controllers/gradingSystemController");
+const authenticate = require("../middlewares/authenticate");
+const authorize = require("../middlewares/authorize");
+const validate = require("../middlewares/validate");
+const { gradingSystemSchema } = require("../validators/gradingSystemValidator");
+const ROLES = require("../config/roles");
 
-const router =
-    express.Router();
-
-const gradingSystemController =
-    require("../controllers/gradingSystemController");
-
-const authenticate =
-    require("../middlewares/authenticate");
-
-const authorize =
-    require("../middlewares/authorize");
-
-const validate =
-    require("../middlewares/validate");
-
-const {
-
-    gradingSystemSchema
-
-} = require(
-    "../validators/gradingSystemValidator"
-);
-
-const ROLES =
-    require("../config/roles");
-
-
-/*
-=====================================
-GET ALL GRADES
-=====================================
-*/
-
-router.get(
-
-    "/",
-
-    authenticate,
-
-    gradingSystemController
-        .getAllGradingSystems
-
-);
-
-
-/*
-=====================================
-GET ONE GRADE
-=====================================
-*/
-
-router.get(
-
-    "/:id",
-
-    authenticate,
-
-    gradingSystemController
-        .getGradingSystemById
-
-);
-
-
-/*
-=====================================
-CREATE GRADE
-=====================================
-*/
+router.get("/", authenticate, gradingSystemController.getAllGradingSystems);
+router.get("/:id", authenticate, gradingSystemController.getGradingSystemById);
 
 router.post(
-
     "/",
-
     authenticate,
-
-    authorize(ROLES.ADMIN),
-
+    authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     validate(gradingSystemSchema),
-
-    gradingSystemController
-        .createGradingSystem
-
+    gradingSystemController.createGradingSystem
 );
-
-
-/*
-=====================================
-UPDATE GRADE
-=====================================
-*/
 
 router.put(
-
     "/:id",
-
     authenticate,
-
-    authorize(ROLES.ADMIN),
-
+    authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     validate(gradingSystemSchema),
-
-    gradingSystemController
-        .updateGradingSystem
-
+    gradingSystemController.updateGradingSystem
 );
-
-
-/*
-=====================================
-DELETE GRADE
-=====================================
-*/
 
 router.delete(
-
     "/:id",
-
     authenticate,
-
-    authorize(ROLES.ADMIN),
-
-    gradingSystemController
-        .deleteGradingSystem
-
+    authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN),
+    gradingSystemController.deleteGradingSystem
 );
 
-
-module.exports =
-    router;
+module.exports = router;
