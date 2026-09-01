@@ -1,6 +1,7 @@
 module.exports = {
     PROPRIETOR: "Proprietor",
     ADMIN: "Admin",
+    SUPER_ADMIN: "Super Admin",
     TEACHER: "Teacher",
     STUDENT: "Student",
     PARENT: "Parent",
