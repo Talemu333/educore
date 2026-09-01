@@ -7,7 +7,6 @@ const validateCreate = ({ school, admin }) => {
     if (!school?.school_name || !school?.admission_prefix) {
         throw Object.assign(new Error("School name and admission prefix are required."), { status: 400 });
     }
-
     if (!admin?.username || !admin?.password) {
         throw Object.assign(new Error("Administrator username and password are required."), { status: 400 });
     }
@@ -26,16 +25,45 @@ const createSchool = async (payload) => {
         school_motto: normalize(payload.school?.school_motto),
         school_level: normalize(payload.school?.school_level)
     };
-
     const admin = {
         username: normalize(payload.admin?.username),
         email: normalize(payload.admin?.email)
     };
-
     validateCreate({ school, admin: { ...admin, password: payload.admin?.password } });
-
     const hashedPassword = await bcrypt.hash(payload.admin.password, 10);
     return schoolModel.createSchool(school, admin, hashedPassword);
+};
+
+const createSchoolAdministrator = async (schoolId, payload) => {
+    const username = normalize(payload?.username);
+    const email = normalize(payload?.email);
+    const password = payload?.password;
+    const adminType = normalize(payload?.admin_type) || "proprietor";
+
+    if (!username || !password) {
+        throw Object.assign(new Error("Username and temporary password are required."), { status: 400 });
+    }
+    if (password.length < 6) {
+        throw Object.assign(new Error("Temporary password must be at least 6 characters."), { status: 400 });
+    }
+
+    const allowedAdminTypes = ["proprietor", "principal", "vice_principal", "bursar", "librarian"];
+    if (!allowedAdminTypes.includes(adminType.toLowerCase())) {
+        throw Object.assign(new Error("Invalid administrator type."), { status: 400 });
+    }
+
+    const school = await schoolModel.getSchoolById(schoolId);
+    if (!school) {
+        throw Object.assign(new Error("School not found."), { status: 404 });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return schoolModel.createSchoolAdministrator(
+        schoolId,
+        { username, email },
+        hashedPassword,
+        adminType.toLowerCase()
+    );
 };
 
 const updateSchool = async (id, data) => schoolModel.updateSchool(id, {
@@ -54,6 +82,7 @@ module.exports = {
     getSchools,
     getSchoolById,
     createSchool,
+    createSchoolAdministrator,
     updateSchool,
     setSchoolStatus
 };
