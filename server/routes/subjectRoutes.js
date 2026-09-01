@@ -7,24 +7,12 @@ const ROLES = require("../constants/roles");
 const validate = require("../middlewares/validate");
 const { createSubjectSchema } = require("../validators/subjectValidator");
 
-router.get(
-    "/",
-    authenticate,
-    subjectController.getSubjects
-);
-router.get(
-
-    "/class/:classId",
-
-    authenticate,
-
-    subjectController.getSubjectsByClass
-
-);
+router.get("/", authenticate, subjectController.getSubjects);
+router.get("/class/:classId", authenticate, subjectController.getSubjectsByClass);
 router.post(
     "/",
     authenticate,
-    authorize(ROLES.ADMIN),
+    authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     validate(createSubjectSchema),
     subjectController.createSubject
 );
