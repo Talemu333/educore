@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
     getSchools,
@@ -29,6 +30,7 @@ const initialAdminForm = {
 
 function SuperAdminSchoolManagement() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -247,6 +249,9 @@ function SuperAdminSchoolManagement() {
                                         <td className="p-3">{school.is_active ? "Active" : "Inactive"}</td>
                                         <td className="p-3">
                                             <div className="flex flex-wrap gap-2">
+                                                <button type="button" onClick={() => navigate(`/settings?schoolId=${school.school_id}`)} className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
+                                                    Manage
+                                                </button>
                                                 <button type="button" onClick={() => openAdminForm(school)} className="rounded-md border px-3 py-1.5">
                                                     Add Admin
                                                 </button>
