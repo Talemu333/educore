@@ -24,38 +24,17 @@ function ProtectedRoute({
 
 
     if (loading) {
-
-        return (
-            <h2>
-                Loading...
-            </h2>
-        );
-
+        return <h2>Loading...</h2>;
     }
 
 
     if (!isAuthenticated) {
-
-        return (
-            <Navigate
-                to="/"
-                replace
-            />
-        );
-
+        return <Navigate to="/" replace />;
     }
 
 
-    const userRole =
-        user?.role_name
-            ?.trim()
-            ?.toLowerCase();
-
-
-    const userAdminType =
-        user?.admin_type
-            ?.trim()
-            ?.toLowerCase();
+    const userRole = user?.role_name?.trim()?.toLowerCase();
+    const userAdminType = user?.admin_type?.trim()?.toLowerCase();
 
 
     /*
@@ -63,96 +42,47 @@ function ProtectedRoute({
     SUPER ADMIN
     =========================================
 
-    Super Admin currently uses the existing
-    Settings route for platform school
-    management. It must not automatically
-    inherit access to normal school routes.
+    Super Admin is a platform-level user. The
+    normal school routes remain unavailable,
+    but the Super Admin may enter the dedicated
+    management page for a selected school.
     =========================================
     */
-
     if (userRole === "super admin") {
-
-        if (location.pathname === "/settings") {
+        if (
+            location.pathname === "/settings" ||
+            location.pathname.startsWith("/settings/schools/")
+        ) {
             return children;
         }
 
-        return (
-            <Navigate
-                to="/settings"
-                replace
-            />
-        );
-
+        return <Navigate to="/settings" replace />;
     }
 
 
     if (allowedRoles?.length) {
+        const normalizedRoles = allowedRoles
+            .filter(Boolean)
+            .map(role => role.trim().toLowerCase());
 
-        const normalizedRoles =
-            allowedRoles
-                .filter(Boolean)
-                .map(role =>
-                    role
-                        .trim()
-                        .toLowerCase()
-                );
-
-
-        if (
-            !userRole ||
-            !normalizedRoles.includes(
-                userRole
-            )
-        ) {
-
-            return (
-                <Navigate
-                    to="/dashboard"
-                    replace
-                />
-            );
-
+        if (!userRole || !normalizedRoles.includes(userRole)) {
+            return <Navigate to="/dashboard" replace />;
         }
-
     }
 
 
-    if (
-        allowedAdminTypes?.length &&
-        userRole === "admin"
-    ) {
+    if (allowedAdminTypes?.length && userRole === "admin") {
+        const normalizedAdminTypes = allowedAdminTypes
+            .filter(Boolean)
+            .map(type => type.trim().toLowerCase());
 
-        const normalizedAdminTypes =
-            allowedAdminTypes
-                .filter(Boolean)
-                .map(type =>
-                    type
-                        .trim()
-                        .toLowerCase()
-                );
-
-
-        if (
-            !userAdminType ||
-            !normalizedAdminTypes.includes(
-                userAdminType
-            )
-        ) {
-
-            return (
-                <Navigate
-                    to="/dashboard"
-                    replace
-                />
-            );
-
+        if (!userAdminType || !normalizedAdminTypes.includes(userAdminType)) {
+            return <Navigate to="/dashboard" replace />;
         }
-
     }
 
 
     return children;
-
 }
 
 
