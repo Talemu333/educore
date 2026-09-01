@@ -38,10 +38,7 @@ const gradingSystemRoutes = require("./routes/gradingSystemRoutes");
 const websiteRoutes = require("./routes/websiteRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const promotionHistoryRoutes = require("./routes/promotionHistoryRoutes");
-
-
-
-
+const superAdminSchoolRoutes = require("./routes/superAdminSchoolRoutes");
 
 const app = express();
 
@@ -64,11 +61,8 @@ const isProduction = process.env.NODE_ENV === "production";
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
-
     resave: false,
-
     saveUninitialized: false,
-
     cookie: {
         maxAge: 1000 * 60 * 60 * 24,
         httpOnly: true,
@@ -113,9 +107,7 @@ app.use("/api/grading-scales", gradingSystemRoutes);
 app.use("/api/website",websiteRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/promotion-history",promotionHistoryRoutes);
-
-
-
+app.use("/api/super-admin/schools", superAdminSchoolRoutes);
 
 app.use(errorHandler);
 module.exports = app;
