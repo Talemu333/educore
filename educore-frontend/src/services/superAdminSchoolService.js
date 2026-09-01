@@ -10,6 +10,11 @@ export const createSchool = async (payload) => {
     return response.data;
 };
 
+export const createSchoolAdministrator = async (schoolId, payload) => {
+    const response = await api.post(`/super-admin/schools/${schoolId}/administrator`, payload);
+    return response.data;
+};
+
 export const updateSchool = async (id, payload) => {
     const response = await api.put(`/super-admin/schools/${id}`, payload);
     return response.data;
