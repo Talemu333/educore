@@ -1,86 +1,22 @@
-const schoolSettingsService =
-    require("../services/schoolSettingService");
+const schoolSettingsService = require("../services/schoolSettingService");
+const asyncHandler = require("../middlewares/asyncHandler");
 
-const asyncHandler =
-    require("../middlewares/asyncHandler");
+const getSchoolSettings = asyncHandler(async (req, res) => {
+    const settings = await schoolSettingsService.getSchoolSettings(req.user.school_id);
+    res.json({ success: true, data: settings });
+});
 
-// const getSchoolSettings = asyncHandler(
+const updateSchoolSettings = asyncHandler(async (req, res) => {
+    const settings = await schoolSettingsService.updateSchoolSettings(
+        req.body,
+        req.user.school_id
+    );
 
-//     async (req, res) => {
+    res.json({
+        success: true,
+        message: "School settings updated successfully.",
+        data: settings
+    });
+});
 
-//         const settings =
-//             await schoolSettingService
-//                 .getSchoolSettings();
-
-//         res.json({
-
-//             success: true,
-
-//             data: settings
-
-//         });
-
-//     }
-
-// );
-
-const getSchoolSettings = asyncHandler(
-
-    async (req, res) => {
-
-        const settings =
-
-            await schoolSettingsService
-                .getSchoolSettings();
-
-
-        res.json({
-
-            success: true,
-
-            data: settings
-
-        });
-
-    }
-
-);
-
-
-const updateSchoolSettings = asyncHandler(
-
-    async (req, res) => {
-
-        const settings =
-
-            await schoolSettingsService
-                .updateSchoolSettings(
-
-                    req.body
-
-                );
-
-
-        res.json({
-
-            success: true,
-
-            message:
-                "School settings updated successfully.",
-
-            data: settings
-
-        });
-
-    }
-
-);
-
-
-module.exports = {
-
-    getSchoolSettings,
-
-    updateSchoolSettings
-
-};
+module.exports = { getSchoolSettings, updateSchoolSettings };
