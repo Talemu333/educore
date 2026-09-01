@@ -1,4 +1,5 @@
 const dashboardModel = require("../models/dashboardModel");
+const expenseModel = require("../models/expenseModel");
 
 const getDashboard = async (schoolId) => {
     if (!schoolId) {
@@ -13,7 +14,8 @@ const getDashboard = async (schoolId) => {
     const [students, activeStudents, teachers, parents, classes,
         genderDistribution, classPopulation, recentStudents,
         todayAttendance, topStudents, expectedFees, totalPayments,
-        studentsWithPayments, recentPayments, recentAnnouncements] = await Promise.all([
+        studentsWithPayments, recentPayments, recentAnnouncements,
+        expenseSummary, recentExpenses, expenseCategories] = await Promise.all([
         dashboardModel.getStudentCount(schoolId),
         dashboardModel.getActiveStudentCount(schoolId),
         dashboardModel.getTeacherCount(schoolId),
@@ -28,7 +30,10 @@ const getDashboard = async (schoolId) => {
         dashboardModel.getTotalPayments(schoolId, session?.id, term?.id),
         dashboardModel.getStudentsWithPayments(schoolId, session?.id, term?.id),
         dashboardModel.getRecentPayments(schoolId),
-        dashboardModel.getRecentAnnouncements(schoolId)
+        dashboardModel.getRecentAnnouncements(schoolId),
+        expenseModel.getExpenseSummary(schoolId),
+        expenseModel.getRecentExpenses(schoolId),
+        expenseModel.getCategorySummary(schoolId)
     ]);
 
     const attendanceTotal = Number(todayAttendance?.total || 0);
@@ -67,7 +72,15 @@ const getDashboard = async (schoolId) => {
         recent_students: recentStudents,
         recent_payments: recentPayments,
         recent_announcements: recentAnnouncements,
-        top_students: topStudents
+        top_students: topStudents,
+        expenses: {
+            total_count: Number(expenseSummary?.total_count || 0),
+            total_amount: Number(expenseSummary?.total_amount || 0),
+            monthly_amount: Number(expenseSummary?.monthly_amount || 0),
+            yearly_amount: Number(expenseSummary?.yearly_amount || 0),
+            recent: recentExpenses,
+            by_category: expenseCategories
+        }
     };
 };
 
