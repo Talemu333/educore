@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
     getSchools,
     createSchool,
+    createSchoolAdministrator,
     setSchoolStatus
 } from "@/services/superAdminSchoolService";
 
@@ -19,14 +20,24 @@ const initialForm = {
     admin_password: ""
 };
 
+const initialAdminForm = {
+    username: "",
+    email: "",
+    password: "",
+    admin_type: "proprietor"
+};
+
 function SuperAdminSchoolManagement() {
     const { user } = useAuth();
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [adminSaving, setAdminSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [form, setForm] = useState(initialForm);
+    const [adminSchool, setAdminSchool] = useState(null);
+    const [adminForm, setAdminForm] = useState(initialAdminForm);
 
     const isSuperAdmin = user?.role_name === "Super Admin";
 
@@ -53,12 +64,16 @@ function SuperAdminSchoolManagement() {
         setForm((current) => ({ ...current, [name]: value }));
     };
 
+    const handleAdminChange = (event) => {
+        const { name, value } = event.target;
+        setAdminForm((current) => ({ ...current, [name]: value }));
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError("");
         setSuccess("");
         setSaving(true);
-
         try {
             await createSchool({
                 school: {
@@ -76,7 +91,6 @@ function SuperAdminSchoolManagement() {
                     password: form.admin_password
                 }
             });
-
             setForm(initialForm);
             setSuccess("School and initial proprietor account created successfully.");
             await loadSchools();
@@ -84,6 +98,36 @@ function SuperAdminSchoolManagement() {
             setError(err.response?.data?.message || "Unable to create school.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const openAdminForm = (school) => {
+        setError("");
+        setSuccess("");
+        setAdminSchool(school);
+        setAdminForm(initialAdminForm);
+    };
+
+    const closeAdminForm = () => {
+        setAdminSchool(null);
+        setAdminForm(initialAdminForm);
+    };
+
+    const handleCreateAdministrator = async (event) => {
+        event.preventDefault();
+        if (!adminSchool) return;
+        setError("");
+        setSuccess("");
+        setAdminSaving(true);
+        try {
+            await createSchoolAdministrator(adminSchool.school_id, adminForm);
+            setSuccess(`Administrator account created for ${adminSchool.school_name}.`);
+            closeAdminForm();
+            await loadSchools();
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to create administrator account.");
+        } finally {
+            setAdminSaving(false);
         }
     };
 
@@ -104,7 +148,7 @@ function SuperAdminSchoolManagement() {
             <div>
                 <h2 className="text-xl font-semibold">EduCore School Management</h2>
                 <p className="text-sm text-muted-foreground">
-                    Platform-level management. School administrators can only manage their own school.
+                    Platform-level management. Each school has its own administrator accounts and school data.
                 </p>
             </div>
 
@@ -130,7 +174,7 @@ function SuperAdminSchoolManagement() {
                         <input className="rounded-md border p-2" name="admin_password" value={form.admin_password} onChange={handleChange} placeholder="Temporary password *" type="password" minLength="6" required />
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                        The account is created as a proprietor and will be required to change its password on first login.
+                        The account is created as a proprietor and must change its password on first login.
                     </p>
                 </div>
 
@@ -138,6 +182,39 @@ function SuperAdminSchoolManagement() {
                     {saving ? "Creating..." : "Create School"}
                 </button>
             </form>
+
+            {adminSchool && (
+                <form onSubmit={handleCreateAdministrator} className="grid gap-4 rounded-lg border bg-muted/20 p-4">
+                    <div>
+                        <h3 className="font-medium">Create School Administrator</h3>
+                        <p className="text-sm text-muted-foreground">
+                            School: <strong>{adminSchool.school_name}</strong> (ID {adminSchool.school_id})
+                        </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-4">
+                        <input className="rounded-md border p-2" name="username" value={adminForm.username} onChange={handleAdminChange} placeholder="Username *" required />
+                        <input className="rounded-md border p-2" name="email" value={adminForm.email} onChange={handleAdminChange} placeholder="Email" type="email" />
+                        <input className="rounded-md border p-2" name="password" value={adminForm.password} onChange={handleAdminChange} placeholder="Temporary password *" type="password" minLength="6" required />
+                        <select className="rounded-md border p-2" name="admin_type" value={adminForm.admin_type} onChange={handleAdminChange}>
+                            <option value="proprietor">Proprietor</option>
+                            <option value="principal">Principal</option>
+                            <option value="vice_principal">Vice Principal</option>
+                            <option value="bursar">Bursar</option>
+                            <option value="librarian">Librarian</option>
+                        </select>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button type="submit" disabled={adminSaving} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
+                            {adminSaving ? "Creating..." : "Create Administrator"}
+                        </button>
+                        <button type="button" onClick={closeAdminForm} className="rounded-md border px-4 py-2 text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            )}
 
             <div className="rounded-lg border">
                 <div className="border-b p-4">
@@ -169,9 +246,14 @@ function SuperAdminSchoolManagement() {
                                         <td className="p-3">{school.user_count}</td>
                                         <td className="p-3">{school.is_active ? "Active" : "Inactive"}</td>
                                         <td className="p-3">
-                                            <button type="button" onClick={() => toggleStatus(school)} className="rounded-md border px-3 py-1.5">
-                                                {school.is_active ? "Deactivate" : "Activate"}
-                                            </button>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button type="button" onClick={() => openAdminForm(school)} className="rounded-md border px-3 py-1.5">
+                                                    Add Admin
+                                                </button>
+                                                <button type="button" onClick={() => toggleStatus(school)} className="rounded-md border px-3 py-1.5">
+                                                    {school.is_active ? "Deactivate" : "Activate"}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
