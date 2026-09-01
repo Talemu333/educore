@@ -5,6 +5,11 @@ export const getSchools = async () => {
     return response.data;
 };
 
+export const getSchool = async (id) => {
+    const response = await api.get(`/super-admin/schools/${id}`);
+    return response.data;
+};
+
 export const createSchool = async (payload) => {
     const response = await api.post("/super-admin/schools", payload);
     return response.data;
