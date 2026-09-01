@@ -13,7 +13,8 @@ import {
     Settings,
     Globe,
     LogOut,
-    KeyRound
+    KeyRound,
+    Receipt
 } from "lucide-react";
 
 import ROLES from "./roles";
@@ -498,6 +499,29 @@ const sidebarMenu = [
         title: "Fee Management",
         icon: Wallet,
         path: "/admin/fees",
+
+        roles: [
+            ADMIN
+        ],
+
+        adminTypes: [
+            PROPRIETOR,
+            PRINCIPAL,
+            BURSAR
+        ]
+    },
+
+
+    /*
+    -----------------------------------------
+    EXPENSES
+    -----------------------------------------
+    */
+
+    {
+        title: "Expenses",
+        icon: Receipt,
+        path: "/expenses",
 
         roles: [
             ADMIN
