@@ -10,6 +10,7 @@ router.use(authenticate, requireSuperAdmin);
 router.get("/", controller.getSchools);
 router.get("/:id", controller.getSchool);
 router.post("/", controller.createSchool);
+router.post("/:id/administrator", controller.createSchoolAdministrator);
 router.put("/:id", controller.updateSchool);
 router.patch("/:id/status", controller.setSchoolStatus);
 
