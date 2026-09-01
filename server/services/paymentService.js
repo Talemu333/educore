@@ -12,7 +12,7 @@ const requireSchool = (schoolId) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
 };
 
-const validatePaymentContext = async (data, schoolId, receivedBy) => {
+const validatePaymentContext = async (data, schoolId) => {
     requireSchool(schoolId);
     const student = await studentModel.getStudentById(data.student_id, schoolId);
     if (!student) throw new ApiError(404, "Student not found.");
@@ -25,7 +25,7 @@ const validatePaymentContext = async (data, schoolId, receivedBy) => {
 };
 
 const createPayment = async (data, receivedBy, schoolId) => {
-    const student = await validatePaymentContext(data, schoolId, receivedBy);
+    const student = await validatePaymentContext(data, schoolId);
     const paymentAmount = Number(data.amount_paid);
     if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) throw new ApiError(400, "Payment amount must be greater than zero.");
 
@@ -44,6 +44,7 @@ const createPayment = async (data, receivedBy, schoolId) => {
 
         await notificationService.createNotification({
             user_id: receivedBy,
+            school_id: schoolId,
             title: "Payment Received",
             message: `Payment of ₦${payment.amount_paid} has been recorded successfully.`,
             type: NOTIFICATION_TYPES.PAYMENT
@@ -59,7 +60,6 @@ const getStudentFinancialSummary = async (studentId, sessionId, termId, schoolId
     if (!session) throw new ApiError(404, "Academic session not found.");
     const term = await termModel.getTermById(termId, schoolId);
     if (!term || Number(term.session_id) !== Number(sessionId)) throw new ApiError(404, "Academic term not found.");
-
     const totalFees = await feeStructureModel.getTotalFeesForClass(sessionId, termId, student.class_id, schoolId);
     const totalPaid = await paymentModel.getTotalPaid(studentId, sessionId, termId, schoolId);
     const balance = totalFees - totalPaid;
@@ -77,37 +77,18 @@ const getDailyRevenue = async (date, schoolId) => {
     requireSchool(schoolId);
     return paymentModel.getDailyRevenue(date, schoolId);
 };
-
 const getReceipt = async (receiptNumber, schoolId) => {
     requireSchool(schoolId);
     const receipt = await paymentModel.getReceiptByNumber(receiptNumber, schoolId);
     if (!receipt) throw new ApiError(404, "Receipt not found.");
     return receipt;
 };
-
 const verifyReceipt = async (receiptNumber, schoolId) => {
     requireSchool(schoolId);
     const receipt = await paymentModel.getReceiptByNumber(receiptNumber, schoolId);
     return { valid: !!receipt, receipt };
 };
+const getPaymentReport = async (filters, schoolId) => { requireSchool(schoolId); return paymentModel.getPaymentReport(filters, schoolId); };
+const getPaymentReportSummary = async (filters, schoolId) => { requireSchool(schoolId); return paymentModel.getPaymentReportSummary(filters, schoolId); };
 
-const getPaymentReport = async (filters, schoolId) => {
-    requireSchool(schoolId);
-    return paymentModel.getPaymentReport(filters, schoolId);
-};
-
-const getPaymentReportSummary = async (filters, schoolId) => {
-    requireSchool(schoolId);
-    return paymentModel.getPaymentReportSummary(filters, schoolId);
-};
-
-module.exports = {
-    createPayment,
-    getStudentFinancialSummary,
-    getStudentPayments,
-    getDailyRevenue,
-    getReceipt,
-    verifyReceipt,
-    getPaymentReport,
-    getPaymentReportSummary
-};
+module.exports = { createPayment, getStudentFinancialSummary, getStudentPayments, getDailyRevenue, getReceipt, verifyReceipt, getPaymentReport, getPaymentReportSummary };
