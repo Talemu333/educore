@@ -3,7 +3,8 @@ import {
     Routes,
     Route,
     Navigate,
-    useLocation
+    useLocation,
+    useParams
 } from "react-router-dom";
 
 import PublicLayout from "@/layouts/PublicLayout";
@@ -17,6 +18,15 @@ import News from "@/pages/public/News";
 import NewsDetails from "@/pages/public/NewsDetails";
 import Events from "@/pages/public/Events";
 import EventDetails from "@/pages/public/EventDetails";
+
+function SchoolLayoutBridge() {
+    const { schoolSlug } = useParams();
+
+    if (!schoolSlug) return <Navigate to="/" replace />;
+
+    sessionStorage.setItem("educore_public_school_slug", schoolSlug);
+    return <PublicLayout />;
+}
 
 function LegacyWebsiteRedirect() {
     const location = useLocation();
@@ -32,7 +42,7 @@ export default function SchoolWebsiteRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/:schoolSlug" element={<PublicLayout />}>
+                <Route path="/:schoolSlug" element={<SchoolLayoutBridge />}>
                     <Route index element={<Home />} />
                     <Route path="about" element={<About />} />
                     <Route path="contact" element={<Contact />} />
@@ -44,9 +54,6 @@ export default function SchoolWebsiteRouter() {
                     <Route path="events" element={<Events />} />
                     <Route path="events/:slug" element={<EventDetails />} />
                 </Route>
-
-                {/* Legacy links inside existing website content are redirected
-                    to the current school's canonical URL. */}
                 <Route path="/website/*" element={<LegacyWebsiteRedirect />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
