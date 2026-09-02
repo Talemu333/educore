@@ -77,7 +77,7 @@ function DashboardPage() {
     ];
 
     return (
-        <div className="w-full min-w-0 space-y-4 sm:space-y-5">
+        <div className="w-full min-w-0 space-y-0">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
                     <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
