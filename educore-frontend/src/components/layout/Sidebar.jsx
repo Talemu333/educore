@@ -109,10 +109,10 @@ function Sidebar({
 
         <aside
             className={`
-                fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col
+                fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] flex-col
                 border-r border-slate-800 bg-slate-950 text-slate-100
                 shadow-2xl transition-transform duration-300
-                lg:static lg:z-auto lg:translate-x-0 lg:shadow-none
+                lg:translate-x-0 lg:shadow-none
                 ${
                     isOpen
                         ? "translate-x-0"
@@ -165,7 +165,7 @@ function Sidebar({
 
             </div>
 
-            <nav className="flex-1 overflow-y-auto px-3 py-4">
+            <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
 
                 <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
                     Main Menu
