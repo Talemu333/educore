@@ -1,7 +1,15 @@
 const websiteService=require("../services/websiteService");
+const publicWebsiteModel=require("../models/publicWebsiteModel");
 const asyncHandler=require("../middlewares/asyncHandler");
 
-const publicSchool=async req=>websiteService.resolveDomain(req.hostname);
+const publicSchool=async req=>{
+    if(req.query.schoolSlug){
+        const school=await publicWebsiteModel.getSchoolBySlug(req.query.schoolSlug);
+        if(!school) throw new (require("../utils/ApiError"))(404,"School website not found.");
+        return school.school_id;
+    }
+    return websiteService.resolveDomain(req.hostname);
+};
 const adminSchool=req=>req.user?.school_id;
 const send=(res,data,message,status=200)=>res.status(status).json({success:true,...(message?{message}:{}),data});
 
