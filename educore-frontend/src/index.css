@@ -191,6 +191,33 @@ textarea:focus {
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
+/* Professionalise older card markup without changing its React API */
+.rounded-xl.border.bg-background.shadow-sm {
+    border-color: #e2e8f0;
+    background: #ffffff;
+    border-radius: 0.9rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.rounded-xl.border.bg-background.shadow-sm > .border-b {
+    border-color: #eef2f7;
+}
+
+.rounded-xl.border.bg-background.shadow-sm h2 {
+    color: #0f172a;
+}
+
+.rounded-xl.border.bg-background.shadow-sm label {
+    color: #475569;
+    font-weight: 600;
+}
+
+/* Improve common empty states */
+.border-dashed {
+    border-color: #cbd5e1;
+    background: rgba(248, 250, 252, 0.65);
+}
+
 /* Small-screen data tables remain usable instead of forcing page overflow */
 .overflow-x-auto {
     scrollbar-width: thin;
