@@ -1,9 +1,25 @@
 import AppRouter from "./routes/AppRouter";
+import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
+
+const RESERVED_PUBLIC_PREFIXES = new Set([
+    "website", "dashboard", "students", "teachers", "parents",
+    "attendance", "results", "timetable", "payments", "announcements",
+    "settings", "administrators", "student-promotion", "promotion-history",
+    "class-subjects", "admin", "login"
+]);
 
 function App() {
+    const firstSegment = window.location.pathname
+        .split("/")
+        .filter(Boolean)[0] || "";
 
-    return <AppRouter />;
+    const isSchoolWebsite =
+        firstSegment &&
+        !RESERVED_PUBLIC_PREFIXES.has(firstSegment);
 
+    return isSchoolWebsite
+        ? <SchoolWebsiteRouter />
+        : <AppRouter />;
 }
 
 export default App;
