@@ -1,5 +1,6 @@
 import AppRouter from "./routes/AppRouter";
 import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
+import EduCoreLandingPage from "./pages/public/EduCoreLandingPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "website", "dashboard", "students", "teachers", "parents",
@@ -12,6 +13,10 @@ function App() {
     const firstSegment = window.location.pathname
         .split("/")
         .filter(Boolean)[0] || "";
+
+    if (window.location.pathname === "/educore") {
+        return <EduCoreLandingPage />;
+    }
 
     const isSchoolWebsite =
         firstSegment &&
