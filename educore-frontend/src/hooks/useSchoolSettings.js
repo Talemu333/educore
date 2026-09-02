@@ -7,16 +7,29 @@ import {
 } from "@/api/schoolSettingsApi";
 
 
+const getPublicSchoolSlug = () =>
+    window.location.pathname
+        .split("/")
+        .filter(Boolean)[0] || "";
+
+
 export function useSchoolSettings() {
+
+    const schoolSlug =
+        getPublicSchoolSlug();
 
     return useQuery({
 
         queryKey: [
-            "schoolSettings"
+            "schoolSettings",
+            schoolSlug
         ],
 
         queryFn:
-            getSchoolSettings
+            getSchoolSettings,
+
+        enabled:
+            !!schoolSlug
 
     });
 
