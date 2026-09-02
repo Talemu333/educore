@@ -107,13 +107,17 @@ function SchoolWebsiteNavigationBridge() {
             const nextPath = `/${firstSegment}${suffix || ""}`;
 
             event.preventDefault();
+            event.stopPropagation();
             navigate(nextPath);
         };
 
-        document.addEventListener("click", handleClick);
+        // Capture phase is intentional. Most existing public-page components
+        // still contain legacy /website links, and React Router's delegated
+        // click handler would otherwise navigate before the bridge sees them.
+        document.addEventListener("click", handleClick, true);
 
         return () => {
-            document.removeEventListener("click", handleClick);
+            document.removeEventListener("click", handleClick, true);
         };
     }, [location.pathname, navigate]);
 
