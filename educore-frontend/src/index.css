@@ -43,8 +43,8 @@ a {
     color: #1e3a8a;
 }
 
-/* Consistent application surfaces */
-main section {
+/* Keep the dashboard shell full-height without forcing nested dashboard sections to full viewport height. */
+main > section {
     min-height: calc(100vh - 72px);
 }
 
