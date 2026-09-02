@@ -163,9 +163,9 @@ function SuperAdminSchoolManagement() {
                 <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+                    className="group inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition-all duration-200 hover:border-red-600 hover:bg-red-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:ring-offset-2 active:scale-[0.98]"
                 >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
                     Logout
                 </button>
             </div>
