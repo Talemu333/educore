@@ -1,4 +1,7 @@
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useAuth } from "@/context/AuthContext";
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("en-NG", {
@@ -19,13 +22,26 @@ function formatDate(date) {
 
 function DashboardPage() {
     const { data, isLoading, isError, error } = useDashboard();
+    const { logoutUser } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await logoutUser();
+        navigate("/", { replace: true });
+    };
 
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
-                    <p className="mt-1.5 text-sm text-slate-500 sm:text-base">Loading school overview...</p>
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
+                        <p className="mt-1.5 text-sm text-slate-500 sm:text-base">Loading school overview...</p>
+                    </div>
+                    <button type="button" onClick={handleLogout} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
+                        <LogOut size={17} />
+                        Logout
+                    </button>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                     {[1, 2, 3, 4, 5].map(item => <div key={item} className="h-24 animate-pulse rounded-2xl bg-slate-200 sm:h-28" />)}
@@ -36,9 +52,17 @@ function DashboardPage() {
 
     if (isError) {
         return (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-6">
-                <h2 className="font-bold text-red-700">Unable to load dashboard</h2>
-                <p className="mt-2 break-words text-sm text-red-600">{error?.response?.data?.message || error?.message || "Something went wrong."}</p>
+            <div className="space-y-4">
+                <div className="flex justify-end">
+                    <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
+                        <LogOut size={17} />
+                        Logout
+                    </button>
+                </div>
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-6">
+                    <h2 className="font-bold text-red-700">Unable to load dashboard</h2>
+                    <p className="mt-2 break-words text-sm text-red-600">{error?.response?.data?.message || error?.message || "Something went wrong."}</p>
+                </div>
             </div>
         );
     }
@@ -80,7 +104,13 @@ function DashboardPage() {
         <div className="w-full min-w-0 space-y-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
-                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
+                        <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
+                            <LogOut size={17} strokeWidth={2} />
+                            Logout
+                        </button>
+                    </div>
                     <p className="mt-1.5 text-sm text-slate-500 sm:text-base">Welcome to EDUCORE. Here is your school overview.</p>
                 </div>
                 <div className="w-full rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 sm:w-auto sm:px-5">
@@ -102,10 +132,7 @@ function DashboardPage() {
             </div>
 
             <section>
-                <div className="mb-2">
-                    <h2 className="text-xl font-bold text-slate-900">Finance Overview</h2>
-                    <p className="mt-0.5 text-sm text-slate-500">Current session and term fee collection.</p>
-                </div>
+                <div className="mb-2"><h2 className="text-xl font-bold text-slate-900">Finance Overview</h2><p className="mt-0.5 text-sm text-slate-500">Current session and term fee collection.</p></div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-sm font-medium text-slate-500">Expected Fees</p><p className="mt-1.5 break-words text-xl font-bold text-slate-900 sm:text-2xl">{formatCurrency(expected_fees)}</p></div>
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"><p className="text-sm font-medium text-emerald-700">Total Payments</p><p className="mt-1.5 break-words text-xl font-bold text-emerald-800 sm:text-2xl">{formatCurrency(total_payments)}</p></div>
@@ -115,10 +142,7 @@ function DashboardPage() {
             </section>
 
             <section>
-                <div className="mb-2">
-                    <h2 className="text-xl font-bold text-slate-900">Today's Attendance</h2>
-                    <p className="mt-0.5 text-sm text-slate-500">Attendance recorded for today.</p>
-                </div>
+                <div className="mb-2"><h2 className="text-xl font-bold text-slate-900">Today's Attendance</h2><p className="mt-0.5 text-sm text-slate-500">Attendance recorded for today.</p></div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><p className="text-sm font-medium text-blue-700">Attendance Rate</p><p className="mt-1.5 text-2xl font-bold text-blue-900 sm:text-3xl">{attendance_today}%</p></div>
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"><p className="text-sm font-medium text-emerald-700">Present</p><p className="mt-1.5 text-2xl font-bold text-emerald-900 sm:text-3xl">{attendance_present}</p></div>
