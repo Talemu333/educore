@@ -3,7 +3,7 @@ import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
 import EduCoreLandingPage from "./pages/public/EduCoreLandingPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
-    "website", "dashboard", "students", "teachers", "parents",
+    "dashboard", "students", "teachers", "parents",
     "attendance", "results", "timetable", "payments", "announcements",
     "settings", "administrators", "student-promotion", "promotion-history",
     "class-subjects", "admin", "login"
