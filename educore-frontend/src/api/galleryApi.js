@@ -1,5 +1,9 @@
 import api from "./axios";
 
+const publicSchoolParams = () => ({
+    schoolSlug: window.location.pathname.split("/").filter(Boolean)[0] || ""
+});
+
 
 /*
 =========================================
@@ -11,7 +15,10 @@ export const getPublishedGallery = async () => {
 
     const response =
         await api.get(
-            "/website/gallery"
+            "/website/gallery",
+            {
+                params: publicSchoolParams()
+            }
         );
 
     return response.data.data;
