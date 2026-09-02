@@ -55,6 +55,7 @@ const getSchoolSettingsBySlug = async (slug) => {
                   )
               ) = LOWER(TRIM($1))
               OR LOWER('school-' || ss.school_id::text) = LOWER(TRIM($1))
+              OR LOWER('school' || ss.school_id::text) = LOWER(TRIM($1))
           )
         LIMIT 1;
     `, [slug]);
