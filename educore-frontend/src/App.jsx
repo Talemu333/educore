@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 
 import AppRouter from "./routes/AppRouter";
 import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
+import LegacyWebsiteRedirect from "./routes/LegacyWebsiteRedirect";
 import EduCoreLandingPage from "./pages/public/EduCoreLandingPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents",
     "attendance", "results", "timetable", "payments", "announcements",
     "settings", "administrators", "student-promotion", "promotion-history",
-    "class-subjects", "admin", "login"
+    "class-subjects", "admin", "login", "website"
 ]);
 
 function useAppPathname() {
@@ -53,6 +54,10 @@ function App() {
 
     if (pathname === "/educore") {
         return <EduCoreLandingPage />;
+    }
+
+    if (firstSegment === "website") {
+        return <LegacyWebsiteRedirect />;
     }
 
     const isSchoolWebsite =
