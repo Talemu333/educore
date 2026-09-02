@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -29,7 +30,7 @@ const initialAdminForm = {
 };
 
 function SuperAdminSchoolManagement() {
-    const { user } = useAuth();
+    const { user, logoutUser } = useAuth();
     const navigate = useNavigate();
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,6 +61,11 @@ function SuperAdminSchoolManagement() {
     }, [isSuperAdmin]);
 
     if (!isSuperAdmin) return null;
+
+    const handleLogout = async () => {
+        await logoutUser();
+        navigate("/", { replace: true });
+    };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -147,11 +153,21 @@ function SuperAdminSchoolManagement() {
 
     return (
         <section className="space-y-6">
-            <div>
-                <h2 className="text-xl font-semibold">EduCore School Management</h2>
-                <p className="text-sm text-muted-foreground">
-                    Platform-level management. Each school has its own administrator accounts and school data.
-                </p>
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h2 className="text-xl font-semibold">EduCore School Management</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Platform-level management. Each school has its own administrator accounts and school data.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+                >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                </button>
             </div>
 
             {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
