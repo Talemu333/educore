@@ -22,8 +22,9 @@ function formatDate(date) {
 
 function DashboardPage() {
     const { data, isLoading, isError, error } = useDashboard();
-    const { logoutUser } = useAuth();
+    const { logoutUser, user } = useAuth();
     const navigate = useNavigate();
+    const isSuperAdmin = user?.role_name === "Super Admin";
 
     const handleLogout = async () => {
         await logoutUser();
@@ -38,10 +39,12 @@ function DashboardPage() {
                         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
                         <p className="mt-1.5 text-sm text-slate-500 sm:text-base">Loading school overview...</p>
                     </div>
-                    <button type="button" onClick={handleLogout} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
-                        <LogOut size={17} />
-                        Logout
-                    </button>
+                    {isSuperAdmin && (
+                        <button type="button" onClick={handleLogout} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
+                            <LogOut size={17} />
+                            Logout
+                        </button>
+                    )}
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                     {[1, 2, 3, 4, 5].map(item => <div key={item} className="h-24 animate-pulse rounded-2xl bg-slate-200 sm:h-28" />)}
@@ -53,12 +56,14 @@ function DashboardPage() {
     if (isError) {
         return (
             <div className="space-y-4">
-                <div className="flex justify-end">
-                    <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
-                        <LogOut size={17} />
-                        Logout
-                    </button>
-                </div>
+                {isSuperAdmin && (
+                    <div className="flex justify-end">
+                        <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
+                            <LogOut size={17} />
+                            Logout
+                        </button>
+                    </div>
+                )}
                 <div className="rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-6">
                     <h2 className="font-bold text-red-700">Unable to load dashboard</h2>
                     <p className="mt-2 break-words text-sm text-red-600">{error?.response?.data?.message || error?.message || "Something went wrong."}</p>
@@ -106,10 +111,12 @@ function DashboardPage() {
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
                         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dashboard</h1>
-                        <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
-                            <LogOut size={17} strokeWidth={2} />
-                            Logout
-                        </button>
+                        {isSuperAdmin && (
+                            <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700" aria-label="Logout">
+                                <LogOut size={17} strokeWidth={2} />
+                                Logout
+                            </button>
+                        )}
                     </div>
                     <p className="mt-1.5 text-sm text-slate-500 sm:text-base">Welcome to EDUCORE. Here is your school overview.</p>
                 </div>
