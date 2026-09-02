@@ -2,14 +2,14 @@ const pool = require("../config/database");
 
 const getSchools = async () => {
     const result = await pool.query(`
-        SELECT ss.school_id, ss.school_name, ss.admission_prefix,
+        SELECT ss.school_id, ss.school_name, ss.website_slug, ss.admission_prefix,
                ss.school_email, ss.school_phone, ss.school_address,
                ss.school_logo, ss.school_level, ss.school_motto,
                ss.is_active, ss.created_at, ss.updated_at,
                COUNT(u.id)::INTEGER AS user_count
         FROM school_settings ss
         LEFT JOIN users u ON u.school_id = ss.school_id
-        GROUP BY ss.school_id, ss.school_name, ss.admission_prefix,
+        GROUP BY ss.school_id, ss.school_name, ss.website_slug, ss.admission_prefix,
                  ss.school_email, ss.school_phone, ss.school_address,
                  ss.school_logo, ss.school_level, ss.school_motto,
                  ss.is_active, ss.created_at, ss.updated_at
@@ -40,12 +40,14 @@ const createSchool = async (school, admin, hashedPassword) => {
                 SELECT nextval(pg_get_serial_sequence('school_settings', 'id')) AS id
             )
             INSERT INTO school_settings (
-                id, school_id, school_name, admission_prefix,
+                id, school_id, school_name, website_slug, admission_prefix,
                 school_email, school_phone, school_address,
                 school_motto, school_level, is_active,
                 created_at, updated_at
             )
-            SELECT id, id, $1, $2, $3, $4, $5, $6, $7, TRUE,
+            SELECT id, id, $1,
+                   COALESCE(NULLIF(regexp_replace(regexp_replace(lower(trim($1)), '[^a-z0-9]+', '-', 'g'), '(^-|-$)', '', 'g'), ''), 'school-' || id::text),
+                   $2, $3, $4, $5, $6, $7, TRUE,
                    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
             FROM next_school
             RETURNING *;
@@ -56,19 +58,15 @@ const createSchool = async (school, admin, hashedPassword) => {
 
         const createdSchool = schoolResult.rows[0];
 
-        const roleResult = await client.query(`
-            SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1;
-        `);
+        const roleResult = await client.query(`SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1;`);
         if (!roleResult.rows[0]) throw new Error("Admin role does not exist.");
 
         const adminResult = await client.query(`
-            INSERT INTO users (
-                username, email, password, role_id, school_id,
-                admin_type, must_change_password, is_active
-            ) VALUES ($1, $2, $3, $4, $5, 'proprietor', TRUE, TRUE)
-            RETURNING id, username, email, role_id, school_id,
-                      admin_type, is_active, must_change_password,
-                      created_at, updated_at;
+            INSERT INTO users (username, email, password, role_id, school_id,
+                               admin_type, must_change_password, is_active)
+            VALUES ($1, $2, $3, $4, $5, 'proprietor', TRUE, TRUE)
+            RETURNING id, username, email, role_id, school_id, admin_type,
+                      is_active, must_change_password, created_at, updated_at;
         `, [admin.username, admin.email || null, hashedPassword,
             roleResult.rows[0].id, createdSchool.school_id]);
 
@@ -86,19 +84,15 @@ const createSchoolAdministrator = async (schoolId, admin, hashedPassword, adminT
     const school = await getSchoolById(schoolId);
     if (!school) return null;
 
-    const roleResult = await pool.query(`
-        SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1;
-    `);
+    const roleResult = await pool.query(`SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1;`);
     if (!roleResult.rows[0]) throw new Error("Admin role does not exist.");
 
     const result = await pool.query(`
-        INSERT INTO users (
-            username, email, password, role_id, school_id,
-            admin_type, must_change_password, is_active
-        ) VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE)
-        RETURNING id, username, email, role_id, school_id,
-                  admin_type, is_active, must_change_password,
-                  created_at, updated_at;
+        INSERT INTO users (username, email, password, role_id, school_id,
+                           admin_type, must_change_password, is_active)
+        VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE)
+        RETURNING id, username, email, role_id, school_id, admin_type,
+                  is_active, must_change_password, created_at, updated_at;
     `, [admin.username, admin.email || null, hashedPassword,
         roleResult.rows[0].id, schoolId, adminType]);
 
@@ -129,11 +123,4 @@ const setSchoolStatus = async (schoolId, isActive) => {
     return result.rows[0];
 };
 
-module.exports = {
-    getSchools,
-    getSchoolById,
-    createSchool,
-    createSchoolAdministrator,
-    updateSchool,
-    setSchoolStatus
-};
+module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator, updateSchool, setSchoolStatus };
