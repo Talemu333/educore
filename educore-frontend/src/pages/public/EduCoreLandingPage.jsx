@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-
 export default function EduCoreLandingPage() {
     return (
         <div className="min-h-screen bg-slate-950 text-white">
@@ -12,9 +10,9 @@ export default function EduCoreLandingPage() {
                             <p className="text-[11px] text-slate-400">School Management Platform</p>
                         </div>
                     </div>
-                    <Link to="/" className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/10">
+                    <a href="/" className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/10">
                         School Sign In
-                    </Link>
+                    </a>
                 </div>
             </header>
 
@@ -22,29 +20,18 @@ export default function EduCoreLandingPage() {
                 <section className="relative overflow-hidden px-6 py-24 sm:py-32 lg:px-8">
                     <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-blue-600/20" />
                     <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-indigo-500/10" />
-
                     <div className="relative mx-auto max-w-5xl text-center">
-                        <span className="inline-flex rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-300">
-                            Built for modern schools
-                        </span>
-
+                        <span className="inline-flex rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-300">Built for modern schools</span>
                         <h1 className="mt-7 text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
                             One platform for your
                             <span className="block text-blue-400">entire school.</span>
                         </h1>
-
                         <p className="mx-auto mt-7 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
-                            EduCore helps schools manage students, teachers, parents, academics,
-                            attendance, results, payments and their public school website from one place.
+                            EduCore helps schools manage students, teachers, parents, academics, attendance, results, payments and their public school website from one place.
                         </p>
-
                         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-                            <Link to="/" className="rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-500">
-                                Sign In to EduCore
-                            </Link>
-                            <a href="#features" className="rounded-xl border border-white/15 px-7 py-3.5 text-sm font-semibold transition hover:bg-white/10">
-                                Explore the Platform
-                            </a>
+                            <a href="/" className="rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-500">Sign In to EduCore</a>
+                            <a href="#features" className="rounded-xl border border-white/15 px-7 py-3.5 text-sm font-semibold transition hover:bg-white/10">Explore the Platform</a>
                         </div>
                     </div>
                 </section>
@@ -56,7 +43,6 @@ export default function EduCoreLandingPage() {
                             <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Everything your school needs</h2>
                             <p className="mt-4 leading-7 text-slate-600">A single platform designed to keep school operations connected, organized and easy to manage.</p>
                         </div>
-
                         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                             {[
                                 ["🎓", "Academic Management", "Students, classes, subjects, results, grading and promotion."],
@@ -80,9 +66,7 @@ export default function EduCoreLandingPage() {
                     <div className="mx-auto max-w-5xl rounded-3xl bg-slate-950 px-7 py-12 text-center text-white shadow-xl sm:px-12">
                         <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">Your school. Your identity.</p>
                         <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Powered by EduCore.</h2>
-                        <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-300">
-                            Schools keep their own name, logo, colours and website content while EduCore quietly provides the technology underneath.
-                        </p>
+                        <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-300">Schools keep their own name, logo, colours and website content while EduCore quietly provides the technology underneath.</p>
                     </div>
                 </section>
             </main>
