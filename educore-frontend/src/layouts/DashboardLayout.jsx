@@ -7,7 +7,7 @@ function DashboardLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="flex min-h-screen bg-slate-50 text-slate-900">
+        <div className="min-h-screen bg-slate-50 text-slate-900">
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[1px] lg:hidden"
@@ -20,7 +20,7 @@ function DashboardLayout() {
                 onClose={() => setSidebarOpen(false)}
             />
 
-            <main className="min-w-0 flex-1">
+            <main className="min-w-0 lg:ml-[272px]">
                 <Navbar
                     onMenuClick={() => setSidebarOpen(true)}
                 />
