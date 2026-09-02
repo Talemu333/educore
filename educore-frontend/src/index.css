@@ -62,14 +62,28 @@ thead th {
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    white-space: nowrap;
+}
+
+thead th:first-child {
+    border-top-left-radius: 0.65rem;
+}
+
+thead th:last-child {
+    border-top-right-radius: 0.65rem;
 }
 
 tbody tr {
-    transition: background-color 160ms ease;
+    transition: background-color 160ms ease, box-shadow 160ms ease;
 }
 
 tbody tr:hover {
     background: #f8fafc;
+}
+
+tbody td {
+    color: #334155;
+    vertical-align: middle;
 }
 
 /* Better scrollbar for long navigation and data pages */
@@ -96,6 +110,38 @@ input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
     border-radius: 0.65rem;
+    border-color: #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):hover,
+select:hover,
+textarea:hover {
+    border-color: #94a3b8;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #94a3b8;
+}
+
+select {
+    min-height: 42px;
+    cursor: pointer;
+}
+
+input[type="date"] {
+    min-height: 42px;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    cursor: not-allowed;
+    background: #f8fafc;
+    color: #94a3b8;
 }
 
 input:focus,
@@ -105,6 +151,14 @@ button:focus-visible,
 a:focus-visible {
     outline: 2px solid #93c5fd;
     outline-offset: 2px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14);
+    outline: none;
 }
 
 /* Reusable page/card helpers for existing and future screens */
@@ -126,6 +180,32 @@ a:focus-visible {
     border: 1px solid #e2e8f0;
     border-radius: 0.9rem;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.app-surface-hover {
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.app-surface-hover:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+/* Small-screen data tables remain usable instead of forcing page overflow */
+.overflow-x-auto {
+    scrollbar-width: thin;
+}
+
+@media (max-width: 640px) {
+    table {
+        min-width: 680px;
+    }
+
+    thead th,
+    tbody td {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
 }
 
 @media print {
