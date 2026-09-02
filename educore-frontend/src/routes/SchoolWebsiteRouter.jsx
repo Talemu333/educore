@@ -4,6 +4,7 @@ import {
     Route,
     Navigate,
     useLocation,
+    useNavigate,
     useParams
 } from "react-router-dom";
 
@@ -43,7 +44,7 @@ function LegacyWebsiteRedirect() {
 
             if (storedSlug) {
                 const suffix = location.pathname.replace(/^\/website/, "");
-                if (active) setTarget(`/${storedSlug}${suffix || ""}${location.search}`);
+                if (active) setTarget(`/${storedSlug}${suffix || ""}${location.search}${location.hash}`);
                 return;
             }
 
@@ -54,7 +55,7 @@ function LegacyWebsiteRedirect() {
                 if (slug) {
                     sessionStorage.setItem("educore_public_school_slug", slug);
                     const suffix = location.pathname.replace(/^\/website/, "");
-                    if (active) setTarget(`/${slug}${suffix || ""}${location.search}`);
+                    if (active) setTarget(`/${slug}${suffix || ""}${location.search}${location.hash}`);
                     return;
                 }
             } catch {
@@ -69,7 +70,7 @@ function LegacyWebsiteRedirect() {
         return () => {
             active = false;
         };
-    }, [location.pathname, location.search]);
+    }, [location.pathname, location.search, location.hash]);
 
     if (!target) {
         return (
@@ -82,9 +83,48 @@ function LegacyWebsiteRedirect() {
     return <Navigate to={target} replace />;
 }
 
+function SchoolWebsiteNavigationBridge() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleClick = (event) => {
+            const anchor = event.target.closest("a");
+
+            if (!anchor) return;
+
+            const href = anchor.getAttribute("href");
+
+            if (!href || !href.startsWith("/website")) return;
+
+            const firstSegment = location.pathname
+                .split("/")
+                .filter(Boolean)[0];
+
+            if (!firstSegment || firstSegment === "website") return;
+
+            const suffix = href.replace(/^\/website/, "");
+            const nextPath = `/${firstSegment}${suffix || ""}`;
+
+            event.preventDefault();
+            navigate(nextPath);
+        };
+
+        document.addEventListener("click", handleClick);
+
+        return () => {
+            document.removeEventListener("click", handleClick);
+        };
+    }, [location.pathname, navigate]);
+
+    return null;
+}
+
 export default function SchoolWebsiteRouter() {
     return (
         <BrowserRouter>
+            <SchoolWebsiteNavigationBridge />
+
             <Routes>
                 <Route path="/:schoolSlug" element={<SchoolLayoutBridge />}>
                     <Route index element={<Home />} />
@@ -98,6 +138,7 @@ export default function SchoolWebsiteRouter() {
                     <Route path="events" element={<Events />} />
                     <Route path="events/:slug" element={<EventDetails />} />
                 </Route>
+
                 <Route path="/website/*" element={<LegacyWebsiteRedirect />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
