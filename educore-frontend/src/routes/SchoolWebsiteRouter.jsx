@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import api from "@/api/axios";
 import PublicLayout from "@/layouts/PublicLayout";
@@ -25,6 +26,28 @@ import EventDetails from "@/pages/public/EventDetails";
 
 function SchoolLayoutBridge() {
     const { schoolSlug } = useParams();
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (!schoolSlug) return;
+
+        // Public website queries are currently shared by page type. Clear
+        // them whenever the tenant changes so School B cannot momentarily
+        // display School A's cached public content.
+        const publicQueryKeys = [
+            ["website-pages"],
+            ["website-page"],
+            ["website-news"],
+            ["website-events"],
+            ["website-event"],
+            ["website-gallery"],
+            ["schoolSettings"]
+        ];
+
+        publicQueryKeys.forEach(queryKey => {
+            queryClient.removeQueries({ queryKey });
+        });
+    }, [schoolSlug, queryClient]);
 
     if (!schoolSlug) return <Navigate to="/" replace />;
 
