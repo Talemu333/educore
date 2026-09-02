@@ -42,6 +42,10 @@ import {
 } from "@/api/galleryApi";
 
 
+const getPublicSchoolSlug = () =>
+    window.location.pathname
+        .split("/")
+        .filter(Boolean)[0] || "";
 
 
 /*
@@ -52,14 +56,21 @@ PUBLIC: GET ALL PUBLISHED PAGES
 
 export function useWebsitePages() {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
-            "website-pages"
+            "website-pages",
+            schoolSlug
         ],
 
         queryFn:
-            getPublishedPages
+            getPublishedPages,
+
+        enabled:
+            !!schoolSlug
 
     });
 
@@ -76,10 +87,14 @@ export function useWebsitePage(
     slug
 ) {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
             "website-page",
+            schoolSlug,
             slug
         ],
 
@@ -87,7 +102,7 @@ export function useWebsitePage(
             getWebsitePage(slug),
 
         enabled:
-            !!slug
+            !!slug && !!schoolSlug
 
     });
 
@@ -142,10 +157,6 @@ export function useUpdateWebsitePage() {
             updatedPage
         ) => {
 
-            /*
-            Refresh admin page list
-            */
-
             queryClient.invalidateQueries({
 
                 queryKey: [
@@ -154,24 +165,13 @@ export function useUpdateWebsitePage() {
 
             });
 
-
-            /*
-            Refresh public page
-            */
-
             queryClient.invalidateQueries({
 
                 queryKey: [
-                    "website-page",
-                    updatedPage.page_slug
+                    "website-page"
                 ]
 
             });
-
-
-            /*
-            Refresh published page list
-            */
 
             queryClient.invalidateQueries({
 
@@ -340,14 +340,21 @@ export function useDeleteWebsiteSection() {
 
 export function usePublishedNews() {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
-            "website-news"
+            "website-news",
+            schoolSlug
         ],
 
         queryFn:
-            getPublishedNews
+            getPublishedNews,
+
+        enabled:
+            !!schoolSlug
 
     });
 
@@ -355,10 +362,14 @@ export function usePublishedNews() {
 
 export function useNewsBySlug(slug) {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
             "website-news",
+            schoolSlug,
             slug
         ],
 
@@ -366,7 +377,7 @@ export function useNewsBySlug(slug) {
             getNewsBySlug(slug),
 
         enabled:
-            !!slug
+            !!slug && !!schoolSlug
 
     });
 
@@ -514,14 +525,21 @@ PUBLIC: GET PUBLISHED EVENTS
 
 export function usePublishedEvents() {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
-            "website-events"
+            "website-events",
+            schoolSlug
         ],
 
         queryFn:
-            getPublishedEvents
+            getPublishedEvents,
+
+        enabled:
+            !!schoolSlug
 
     });
 
@@ -538,10 +556,14 @@ export function useEventBySlug(
     slug
 ) {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
             "website-event",
+            schoolSlug,
             slug
         ],
 
@@ -549,7 +571,7 @@ export function useEventBySlug(
             getEventBySlug(slug),
 
         enabled:
-            !!slug
+            !!slug && !!schoolSlug
 
     });
 
@@ -624,10 +646,6 @@ export function useCreateEvent() {
 
         onSuccess: () => {
 
-            /*
-            Refresh admin event list
-            */
-
             queryClient.invalidateQueries({
 
                 queryKey: [
@@ -635,11 +653,6 @@ export function useCreateEvent() {
                 ]
 
             });
-
-
-            /*
-            Refresh public events
-            */
 
             queryClient.invalidateQueries({
 
@@ -680,10 +693,6 @@ export function useUpdateEvent() {
             updatedEvent
         ) => {
 
-            /*
-            Refresh admin event list
-            */
-
             queryClient.invalidateQueries({
 
                 queryKey: [
@@ -691,11 +700,6 @@ export function useUpdateEvent() {
                 ]
 
             });
-
-
-            /*
-            Refresh public events
-            */
 
             queryClient.invalidateQueries({
 
@@ -705,11 +709,6 @@ export function useUpdateEvent() {
 
             });
 
-
-            /*
-            Refresh event details
-            */
-
             if (
                 updatedEvent?.slug
             ) {
@@ -717,8 +716,7 @@ export function useUpdateEvent() {
                 queryClient.invalidateQueries({
 
                     queryKey: [
-                        "website-event",
-                        updatedEvent.slug
+                        "website-event"
                     ]
 
                 });
@@ -759,7 +757,6 @@ export function useDeleteEvent() {
 
             });
 
-
             queryClient.invalidateQueries({
 
                 queryKey: [
@@ -782,14 +779,21 @@ GALLERY: GET PUBLISHED
 
 export function usePublishedGallery() {
 
+    const schoolSlug =
+        getPublicSchoolSlug();
+
     return useQuery({
 
         queryKey: [
-            "website-gallery"
+            "website-gallery",
+            schoolSlug
         ],
 
         queryFn:
-            getPublishedGallery
+            getPublishedGallery,
+
+        enabled:
+            !!schoolSlug
 
     });
 
@@ -831,7 +835,7 @@ export function useGalleryById(
     return useQuery({
 
         queryKey: [
-            "website-gallery",
+            "website-admin-gallery-item",
             id
         ],
 
