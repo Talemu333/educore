@@ -1,40 +1,28 @@
-import { Button } from "@/components/ui/Button";
 function PageHeader({
-
     title,
-
     description,
-
     action
-
 }) {
-
     return (
-
-        <div className="flex justify-between items-center mb-6">
-
-            <div>
-
-                <h1 className="text-3xl font-bold">
-
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                     {title}
-
                 </h1>
-
-                <p className="text-gray-500 mt-1">
-
-                    {description}
-
-                </p>
-
+                {description && (
+                    <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">
+                        {description}
+                    </p>
+                )}
             </div>
 
-            {action}
-
+            {action && (
+                <div className="shrink-0">
+                    {action}
+                </div>
+            )}
         </div>
-
     );
-
 }
 
 export default PageHeader;
