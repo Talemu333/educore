@@ -17,6 +17,24 @@ const getSchoolSettings = async (schoolId) => {
     return result.rows[0];
 };
 
+const getSchoolSettingsBySlug = async (slug) => {
+    const result = await pool.query(`
+        SELECT ss.*, ac.session_name, tr.term_name
+        FROM school_settings ss
+        LEFT JOIN academic_sessions ac
+            ON ss.current_session_id = ac.id
+           AND ac.school_id = ss.school_id
+        LEFT JOIN terms tr
+            ON ss.current_term_id = tr.id
+           AND tr.school_id = ss.school_id
+        WHERE LOWER(ss.website_slug) = LOWER($1)
+          AND ss.is_active = TRUE
+        LIMIT 1;
+    `, [slug]);
+
+    return result.rows[0];
+};
+
 const updateSchoolSettings = async (data) => {
     const query = `
         UPDATE school_settings
@@ -71,4 +89,8 @@ const updateSchoolSettings = async (data) => {
     return result.rows[0];
 };
 
-module.exports = { getSchoolSettings, updateSchoolSettings };
+module.exports = {
+    getSchoolSettings,
+    getSchoolSettingsBySlug,
+    updateSchoolSettings
+};
