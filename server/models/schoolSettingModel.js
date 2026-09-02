@@ -13,13 +13,60 @@ const getSchoolSettings = async (schoolId) => {
 
 const getSchoolSettingsBySlug = async (slug) => {
     const result = await pool.query(`
-        SELECT ss.*, ac.session_name, tr.term_name
+        SELECT
+            ss.*,
+            ac.session_name,
+            tr.term_name,
+            COALESCE(
+                NULLIF(TRIM(ss.website_slug), ''),
+                NULLIF(
+                    regexp_replace(
+                        regexp_replace(
+                            lower(trim(ss.school_name)),
+                            '[^a-z0-9]+',
+                            '-',
+                            'g'
+                        ),
+                        '(^-|-$)',
+                        '',
+                        'g'
+                    ),
+                    ''
+                ),
+                'school-' || ss.school_id::text
+            ) AS resolved_website_slug
         FROM school_settings ss
         LEFT JOIN academic_sessions ac ON ss.current_session_id = ac.id AND ac.school_id = ss.school_id
         LEFT JOIN terms tr ON ss.current_term_id = tr.id AND tr.school_id = ss.school_id
-        WHERE LOWER(ss.website_slug) = LOWER($1) AND ss.is_active = TRUE LIMIT 1;
+        WHERE ss.is_active = TRUE
+          AND (
+              LOWER(TRIM(COALESCE(ss.website_slug, ''))) = LOWER(TRIM($1))
+              OR LOWER(
+                  regexp_replace(
+                      regexp_replace(
+                          lower(trim(ss.school_name)),
+                          '[^a-z0-9]+',
+                          '-',
+                          'g'
+                      ),
+                      '(^-|-$)',
+                      '',
+                      'g'
+                  )
+              ) = LOWER(TRIM($1))
+              OR LOWER('school-' || ss.school_id::text) = LOWER(TRIM($1))
+          )
+        LIMIT 1;
     `, [slug]);
-    return result.rows[0];
+
+    const settings = result.rows[0];
+
+    if (!settings) return null;
+
+    settings.website_slug = settings.resolved_website_slug;
+    delete settings.resolved_website_slug;
+
+    return settings;
 };
 
 const updateSchoolSettings = async (data) => {
