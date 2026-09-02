@@ -16,24 +16,16 @@ function DashboardLayout() {
 
     return (
 
-        <div className="flex min-h-screen bg-gray-100">
-
-
-            {/* MOBILE OVERLAY */}
+        <div className="flex min-h-screen bg-slate-50 text-slate-900">
 
             {sidebarOpen && (
-
                 <div
-                    className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                    className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[1px] lg:hidden"
                     onClick={() =>
                         setSidebarOpen(false)
                     }
                 />
-
             )}
-
-
-            {/* SIDEBAR */}
 
             <Sidebar
                 isOpen={sidebarOpen}
@@ -42,11 +34,7 @@ function DashboardLayout() {
                 }
             />
 
-
-            {/* MAIN CONTENT */}
-
             <main className="min-w-0 flex-1">
-
 
                 <Navbar
                     onMenuClick={() =>
@@ -54,11 +42,8 @@ function DashboardLayout() {
                     }
                 />
 
-
-                <section className="w-full p-4 sm:p-5 md:p-6 lg:p-8">
-
+                <section className="mx-auto w-full max-w-[1600px] p-4 sm:p-5 md:p-6 lg:p-8">
                     <Outlet />
-
                 </section>
 
             </main>
@@ -71,35 +56,3 @@ function DashboardLayout() {
 
 
 export default DashboardLayout;
-
-// import { Outlet } from "react-router-dom";
-// import Sidebar from "../components/layout/Sidebar";
-// import Navbar from "../components/layout/Navbar";
-
-// function DashboardLayout({ children }) {
-
-//     return (
-
-//         <div className="min-h-screen flex bg-gray-100">
-
-//             <Sidebar />
-
-//             <main className="flex-1">
-
-//                 <Navbar />
-
-//                 <section className="p-8">
-
-//                     <Outlet />
-
-//                 </section>
-
-//             </main>
-
-//         </div>
-
-//     );
-
-// }
-
-// export default DashboardLayout;
