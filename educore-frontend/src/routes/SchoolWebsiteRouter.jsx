@@ -7,6 +7,9 @@ import {
     useParams
 } from "react-router-dom";
 
+import { useEffect, useState } from "react";
+
+import api from "@/api/axios";
 import PublicLayout from "@/layouts/PublicLayout";
 import Home from "@/pages/public/Home";
 import About from "@/pages/public/About";
@@ -30,12 +33,53 @@ function SchoolLayoutBridge() {
 
 function LegacyWebsiteRedirect() {
     const location = useLocation();
-    const schoolSlug = sessionStorage.getItem("educore_public_school_slug");
+    const [target, setTarget] = useState(null);
 
-    if (!schoolSlug) return <Navigate to="/" replace />;
+    useEffect(() => {
+        let active = true;
 
-    const suffix = location.pathname.replace(/^\/website/, "");
-    return <Navigate to={`/${schoolSlug}${suffix || ""}${location.search}`} replace />;
+        const redirect = async () => {
+            const storedSlug = sessionStorage.getItem("educore_public_school_slug");
+
+            if (storedSlug) {
+                const suffix = location.pathname.replace(/^\/website/, "");
+                if (active) setTarget(`/${storedSlug}${suffix || ""}${location.search}`);
+                return;
+            }
+
+            try {
+                const response = await api.get("/school-settings");
+                const slug = response?.data?.data?.website_slug;
+
+                if (slug) {
+                    sessionStorage.setItem("educore_public_school_slug", slug);
+                    const suffix = location.pathname.replace(/^\/website/, "");
+                    if (active) setTarget(`/${slug}${suffix || ""}${location.search}`);
+                    return;
+                }
+            } catch {
+                // The legacy URL has no school context when opened publicly.
+            }
+
+            if (active) setTarget("/");
+        };
+
+        redirect();
+
+        return () => {
+            active = false;
+        };
+    }, [location.pathname, location.search]);
+
+    if (!target) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-white px-6">
+                <p className="text-sm text-slate-500">Opening school website...</p>
+            </div>
+        );
+    }
+
+    return <Navigate to={target} replace />;
 }
 
 export default function SchoolWebsiteRouter() {
