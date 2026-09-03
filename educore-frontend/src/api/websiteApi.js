@@ -1,8 +1,21 @@
 import api from "./axios";
 
-const publicParams = () => ({
-    schoolSlug: window.location.pathname.split("/").filter(Boolean)[0] || ""
-});
+const publicParams = () => {
+    const firstSegment =
+        window.location.pathname
+            .split("/")
+            .filter(Boolean)[0] || "";
+
+    // Legacy /website/* routes are resolved by the request hostname.
+    // School-specific routes use the first URL segment as the school slug.
+    if (!firstSegment || firstSegment === "website") {
+        return {};
+    }
+
+    return {
+        schoolSlug: firstSegment
+    };
+};
 
 export const getPublishedPages = async () => (await api.get("/website/pages", { params: publicParams() })).data.data;
 export const getWebsitePage = async (slug) => (await api.get(`/website/pages/${slug}`, { params: publicParams() })).data.data;
@@ -24,4 +37,4 @@ export const getAllEvents = async () => (await api.get("/website/admin/events"))
 export const getEventById = async (id) => (await api.get(`/website/admin/events/${id}`)).data.data;
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
 export const updateEvent = async (id, data) => (await api.put(`/website/admin/events/${id}`, data)).data.data;
-export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data;
+export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data.data;
