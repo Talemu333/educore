@@ -8,7 +8,7 @@ import {
     useParams
 } from "react-router-dom";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import api from "@/api/axios";
@@ -24,12 +24,20 @@ import NewsDetails from "@/pages/public/NewsDetails";
 import Events from "@/pages/public/Events";
 import EventDetails from "@/pages/public/EventDetails";
 
+const PUBLIC_SCHOOL_STORAGE_KEY = "educore_public_school_slug";
+
 function SchoolLayoutBridge() {
     const { schoolSlug } = useParams();
     const queryClient = useQueryClient();
 
     useEffect(() => {
         if (!schoolSlug) return;
+
+        // Keep the current tenant available to same-origin tabs/windows as
+        // well as the current tab. This also lets legacy /website links opened
+        // in a new tab resolve to the school the user was viewing.
+        sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
+        localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
 
         // Public website queries are currently shared by page type. Clear
         // them whenever the tenant changes so School B cannot momentarily
@@ -51,19 +59,20 @@ function SchoolLayoutBridge() {
 
     if (!schoolSlug) return <Navigate to="/" replace />;
 
-    sessionStorage.setItem("educore_public_school_slug", schoolSlug);
     return <PublicLayout />;
 }
 
 function LegacyWebsiteRedirect() {
     const location = useLocation();
-    const [target, setTarget] = useState(null);
+    const [target, setTarget] = require("react").useState(null);
 
     useEffect(() => {
         let active = true;
 
         const redirect = async () => {
-            const storedSlug = sessionStorage.getItem("educore_public_school_slug");
+            const storedSlug =
+                sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
+                localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
 
             if (storedSlug) {
                 const suffix = location.pathname.replace(/^\/website/, "");
@@ -76,7 +85,8 @@ function LegacyWebsiteRedirect() {
                 const slug = response?.data?.data?.website_slug;
 
                 if (slug) {
-                    sessionStorage.setItem("educore_public_school_slug", slug);
+                    sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, slug);
+                    localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, slug);
                     const suffix = location.pathname.replace(/^\/website/, "");
                     if (active) setTarget(`/${slug}${suffix || ""}${location.search}${location.hash}`);
                     return;
@@ -85,7 +95,7 @@ function LegacyWebsiteRedirect() {
                 // The legacy URL has no school context when opened publicly.
             }
 
-            if (active) setTarget("/");
+            if (active) setTarget("/educore");
         };
 
         redirect();
