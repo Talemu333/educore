@@ -1,10 +1,23 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
+import ContactMessagesPage from "../pages/dashboard/ContactMessagesPage";
+import { useAuth } from "@/context/AuthContext";
 
 function DashboardLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const location = useLocation();
+    const { user } = useAuth();
+
+    const isContactMessagesPage =
+        location.pathname === "/contact-messages";
+
+    const canViewContactMessages =
+        user?.role_name?.trim()?.toLowerCase() === "admin" &&
+        ["proprietor", "principal"].includes(
+            user?.admin_type?.trim()?.toLowerCase()
+        );
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -26,7 +39,11 @@ function DashboardLayout({ children }) {
                 />
 
                 <section className="mx-auto w-full max-w-[1600px] p-4 sm:p-5 md:p-6 lg:p-8">
-                    {children || <Outlet />}
+                    {isContactMessagesPage && canViewContactMessages ? (
+                        <ContactMessagesPage />
+                    ) : (
+                        children || <Outlet />
+                    )}
                 </section>
             </main>
         </div>
