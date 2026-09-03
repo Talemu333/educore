@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "@/api/axios";
 
+const PUBLIC_SCHOOL_STORAGE_KEY = "educore_public_school_slug";
+
 export default function LegacyWebsiteRedirect() {
     const [target, setTarget] = useState(null);
 
@@ -12,7 +14,9 @@ export default function LegacyWebsiteRedirect() {
             const suffix = pathname.replace(/^\/website/, "");
             const search = window.location.search;
             const hash = window.location.hash;
-            const storedSlug = sessionStorage.getItem("educore_public_school_slug");
+            const storedSlug =
+                sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
+                localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
 
             if (storedSlug) {
                 if (active) {
@@ -26,7 +30,8 @@ export default function LegacyWebsiteRedirect() {
                 const slug = response?.data?.data?.website_slug;
 
                 if (slug) {
-                    sessionStorage.setItem("educore_public_school_slug", slug);
+                    sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, slug);
+                    localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, slug);
                     if (active) {
                         setTarget(`/${slug}${suffix || ""}${search}${hash}`);
                     }
