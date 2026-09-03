@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import api from "@/api/axios";
 
 export default function LegacyWebsiteRedirect() {
     const [target, setTarget] = useState(null);
@@ -21,11 +22,8 @@ export default function LegacyWebsiteRedirect() {
             }
 
             try {
-                const response = await fetch("/api/school-settings", {
-                    credentials: "include"
-                });
-                const payload = await response.json();
-                const slug = payload?.data?.website_slug;
+                const response = await api.get("/school-settings");
+                const slug = response?.data?.data?.website_slug;
 
                 if (slug) {
                     sessionStorage.setItem("educore_public_school_slug", slug);
@@ -52,6 +50,7 @@ export default function LegacyWebsiteRedirect() {
 
     useEffect(() => {
         if (!target) return;
+
         window.history.replaceState({}, "", target);
         window.dispatchEvent(new PopStateEvent("popstate"));
     }, [target]);
