@@ -39,6 +39,7 @@ const websiteRoutes = require("./routes/websiteRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const promotionHistoryRoutes = require("./routes/promotionHistoryRoutes");
 const superAdminSchoolRoutes = require("./routes/superAdminSchoolRoutes");
+const contactMessageRoutes = require("./routes/contactMessageRoutes");
 
 const app = express();
 
@@ -101,10 +102,11 @@ app.use("/api/parents", parentRoutes);
 app.use("/api/relationships",relationshipRoutes);
 app.use("/api/departments",departmentRoutes);
 app.use("/api/qualifications", qualificationRoutes);
-app.use("/api/class-subjects", classSubjectRoutes);
+app.use("/api/class-subjects",classSubjectRoutes);
 app.use("/api/school-settings", schoolSettingRoutes);
-app.use("/api/grading-scales", gradingSystemRoutes);
+app.use("/api/grading-scales",gradingSystemRoutes);
 app.use("/api/website",websiteRoutes);
+app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/promotion-history",promotionHistoryRoutes);
 app.use("/api/super-admin/schools", superAdminSchoolRoutes);
