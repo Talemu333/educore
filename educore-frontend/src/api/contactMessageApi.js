@@ -20,3 +20,23 @@ export const submitContactMessage = async (data) => {
 
     return response.data;
 };
+
+export const getContactMessages = async () => {
+    const response = await api.get(
+        "/contact-messages/admin"
+    );
+
+    return response.data.data;
+};
+
+export const updateContactMessageStatus = async (
+    id,
+    status
+) => {
+    const response = await api.patch(
+        `/contact-messages/admin/${id}/status`,
+        { status }
+    );
+
+    return response.data.data;
+};
