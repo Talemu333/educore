@@ -8,10 +8,8 @@ import {
     useParams
 } from "react-router-dom";
 
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
-import api from "@/api/axios";
 import PublicLayout from "@/layouts/PublicLayout";
 import Home from "@/pages/public/Home";
 import About from "@/pages/public/About";
@@ -28,89 +26,96 @@ const PUBLIC_SCHOOL_STORAGE_KEY = "educore_public_school_slug";
 
 function SchoolLayoutBridge() {
     const { schoolSlug } = useParams();
-    const queryClient = useQueryClient();
 
     useEffect(() => {
         if (!schoolSlug) return;
 
-        // Keep the current tenant available to same-origin tabs/windows as
-        // well as the current tab. This also lets legacy /website links opened
-        // in a new tab resolve to the school the user was viewing.
-        sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
-        localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
+        sessionStorage.setItem(
+            PUBLIC_SCHOOL_STORAGE_KEY,
+            schoolSlug
+        );
 
-        // Public queries already include schoolSlug in their query keys.
-        // Do not remove them on mount: doing so races with the initial fetch
-        // during a hard refresh and can leave the public page permanently in
-        // its loading state. Tenant-specific query keys already prevent one
-        // school's cached content from being reused for another school.
+        localStorage.setItem(
+            PUBLIC_SCHOOL_STORAGE_KEY,
+            schoolSlug
+        );
     }, [schoolSlug]);
 
-    if (!schoolSlug) return <Navigate to="/" replace />;
+    if (!schoolSlug) {
+        return <Navigate to="/" replace />;
+    }
 
     return <PublicLayout />;
 }
 
 function LegacyWebsiteRedirect() {
     const location = useLocation();
-    const [target, setTarget] = useState(null);
 
     useEffect(() => {
-        let active = true;
+        const storedSlug =
+            sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
+            localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
 
-        const redirect = async () => {
-            const storedSlug =
-                sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
-                localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
+        if (!storedSlug) return;
 
-            if (storedSlug) {
-                const suffix = location.pathname.replace(/^\/website/, "");
-                if (active) setTarget(`/${storedSlug}${suffix || ""}${location.search}${location.hash}`);
-                return;
-            }
+        const suffix = location.pathname.replace(/^\/website/, "");
+        const target =
+            `/${storedSlug}${suffix || ""}${location.search}${location.hash}`;
 
-            try {
-                const response = await api.get("/school-settings");
-                const slug = response?.data?.data?.website_slug;
-
-                if (slug) {
-                    sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, slug);
-                    localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, slug);
-                    const suffix = location.pathname.replace(/^\/website/, "");
-                    if (active) setTarget(`/${slug}${suffix || ""}${location.search}${location.hash}`);
-                    return;
-                }
-            } catch {
-                // The legacy URL has no school context when opened publicly.
-            }
-
-            if (active) setTarget("/educore");
-        };
-
-        redirect();
-
-        return () => {
-            active = false;
-        };
+        window.history.replaceState({}, "", target);
+        window.dispatchEvent(new PopStateEvent("popstate"));
     }, [location.pathname, location.search, location.hash]);
 
-    if (!target) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-white px-6">
-                <p className="text-sm text-slate-500">Opening school website...</p>
-            </div>
-        );
-    }
-
-    return <Navigate to={target} replace />;
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-white px-6">
+            <p className="text-sm text-slate-500">
+                Opening school website...
+            </p>
+        </div>
+    );
 }
 
 function SchoolWebsiteNavigationBridge() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { schoolSlug } = useParams();
 
     useEffect(() => {
-        const handleClick = (event) => {
+        if (!schoolSlug) return;
+
+        const toSchoolPath = href => {
+            if (!href || !href.startsWith("/website")) {
+                return href;
+            }
+
+            const suffix = href.replace(/^\/website/, "");
+            return `/${schoolSlug}${suffix || ""}`;
+        };
+
+        const rewriteLinks = () => {
+            document
+                .querySelectorAll('a[href^="/website"]')
+                .forEach(anchor => {
+                    const href = anchor.getAttribute("href");
+                    const nextHref = toSchoolPath(href);
+
+                    if (nextHref && nextHref !== href) {
+                        anchor.setAttribute("href", nextHref);
+                    }
+                });
+        };
+
+        rewriteLinks();
+
+        const observer = new MutationObserver(rewriteLinks);
+        observer.observe(document.body, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ["href"]
+        });
+
+        const handleClick = event => {
             const anchor = event.target.closest("a");
 
             if (!anchor) return;
@@ -119,29 +124,19 @@ function SchoolWebsiteNavigationBridge() {
 
             if (!href || !href.startsWith("/website")) return;
 
-            const firstSegment = location.pathname
-                .split("/")
-                .filter(Boolean)[0];
-
-            if (!firstSegment || firstSegment === "website") return;
-
-            const suffix = href.replace(/^\/website/, "");
-            const nextPath = `/${firstSegment}${suffix || ""}`;
-
             event.preventDefault();
             event.stopPropagation();
-            navigate(nextPath);
+
+            navigate(toSchoolPath(href));
         };
 
-        // Capture phase is intentional. Most existing public-page components
-        // still contain legacy /website links, and React Router's delegated
-        // click handler would otherwise navigate before the bridge sees them.
         document.addEventListener("click", handleClick, true);
 
         return () => {
+            observer.disconnect();
             document.removeEventListener("click", handleClick, true);
         };
-    }, [location.pathname, navigate]);
+    }, [schoolSlug, navigate, location.pathname]);
 
     return null;
 }
@@ -149,10 +144,11 @@ function SchoolWebsiteNavigationBridge() {
 export default function SchoolWebsiteRouter() {
     return (
         <BrowserRouter>
-            <SchoolWebsiteNavigationBridge />
-
             <Routes>
-                <Route path="/:schoolSlug" element={<SchoolLayoutBridge />}>
+                <Route
+                    path="/:schoolSlug"
+                    element={<SchoolLayoutBridge />}
+                >
                     <Route index element={<Home />} />
                     <Route path="about" element={<About />} />
                     <Route path="contact" element={<Contact />} />
@@ -165,8 +161,15 @@ export default function SchoolWebsiteRouter() {
                     <Route path="events/:slug" element={<EventDetails />} />
                 </Route>
 
-                <Route path="/website/*" element={<LegacyWebsiteRedirect />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route
+                    path="/website/*"
+                    element={<LegacyWebsiteRedirect />}
+                />
+
+                <Route
+                    path="*"
+                    element={<Navigate to="/" replace />}
+                />
             </Routes>
         </BrowserRouter>
     );
