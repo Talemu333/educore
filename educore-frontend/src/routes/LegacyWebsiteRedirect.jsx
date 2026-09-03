@@ -1,41 +1,46 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import api from "@/api/axios";
 
 export default function LegacyWebsiteRedirect() {
-    const location = useLocation();
     const [target, setTarget] = useState(null);
 
     useEffect(() => {
         let active = true;
 
         const redirect = async () => {
+            const pathname = window.location.pathname;
+            const suffix = pathname.replace(/^\/website/, "");
+            const search = window.location.search;
+            const hash = window.location.hash;
             const storedSlug = sessionStorage.getItem("educore_public_school_slug");
-            const suffix = location.pathname.replace(/^\/website/, "");
 
             if (storedSlug) {
                 if (active) {
-                    setTarget(`/${storedSlug}${suffix || ""}${location.search}${location.hash}`);
+                    setTarget(`/${storedSlug}${suffix || ""}${search}${hash}`);
                 }
                 return;
             }
 
             try {
-                const response = await api.get("/school-settings");
-                const slug = response?.data?.data?.website_slug;
+                const response = await fetch("/api/school-settings", {
+                    credentials: "include"
+                });
+                const payload = await response.json();
+                const slug = payload?.data?.website_slug;
 
                 if (slug) {
                     sessionStorage.setItem("educore_public_school_slug", slug);
                     if (active) {
-                        setTarget(`/${slug}${suffix || ""}${location.search}${location.hash}`);
+                        setTarget(`/${slug}${suffix || ""}${search}${hash}`);
                     }
                     return;
                 }
             } catch {
-                // The legacy URL has no school context when opened publicly.
+                // A legacy URL has no reliable school context when opened publicly.
             }
 
-            if (active) setTarget("/educore");
+            if (active) {
+                setTarget("/educore");
+            }
         };
 
         redirect();
@@ -43,7 +48,13 @@ export default function LegacyWebsiteRedirect() {
         return () => {
             active = false;
         };
-    }, [location.pathname, location.search, location.hash]);
+    }, []);
+
+    useEffect(() => {
+        if (!target) return;
+        window.history.replaceState({}, "", target);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+    }, [target]);
 
     if (!target) {
         return (
@@ -53,5 +64,5 @@ export default function LegacyWebsiteRedirect() {
         );
     }
 
-    return <Navigate to={target} replace />;
+    return null;
 }
