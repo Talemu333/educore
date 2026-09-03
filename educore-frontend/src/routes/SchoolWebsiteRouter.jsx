@@ -8,7 +8,7 @@ import {
     useParams
 } from "react-router-dom";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import api from "@/api/axios";
@@ -64,7 +64,7 @@ function SchoolLayoutBridge() {
 
 function LegacyWebsiteRedirect() {
     const location = useLocation();
-    const [target, setTarget] = require("react").useState(null);
+    const [target, setTarget] = useState(null);
 
     useEffect(() => {
         let active = true;
