@@ -4,13 +4,16 @@ import AppRouter from "./routes/AppRouter";
 import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
 import LegacyWebsiteRedirect from "./routes/LegacyWebsiteRedirect";
 import EduCoreLandingPage from "./pages/public/EduCoreLandingPage";
+import DashboardLayout from "./layouts/DashboardLayout";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents",
     "attendance", "results", "timetable", "payments", "announcements",
     "settings", "administrators", "student-promotion", "promotion-history",
     "class-subjects", "admin", "login", "website", "change-password",
-    "logout"
+    "logout", "contact-messages"
 ]);
 
 function useAppPathname() {
@@ -59,6 +62,19 @@ function App() {
 
     if (firstSegment === "website") {
         return <LegacyWebsiteRedirect />;
+    }
+
+    if (pathname === "/contact-messages") {
+        return (
+            <ProtectedRoute
+                allowedRoles={["Admin"]}
+                allowedAdminTypes={["proprietor", "principal"]}
+            >
+                <DashboardLayout>
+                    <ContactMessagesPage />
+                </DashboardLayout>
+            </ProtectedRoute>
+        );
     }
 
     const isSchoolWebsite =
