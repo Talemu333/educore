@@ -1,8 +1,21 @@
 import api from "./axios";
 
-const publicSchoolParams = () => ({
-    schoolSlug: window.location.pathname.split("/").filter(Boolean)[0] || ""
-});
+const publicSchoolParams = () => {
+    const firstSegment =
+        window.location.pathname
+            .split("/")
+            .filter(Boolean)[0] || "";
+
+    // Legacy /website/* routes are resolved by hostname.
+    // School-specific routes use the first URL segment as the school slug.
+    if (!firstSegment || firstSegment === "website") {
+        return {};
+    }
+
+    return {
+        schoolSlug: firstSegment
+    };
+};
 
 export const getSchoolSettings = async () => {
     const response = await api.get("/school-settings", {
