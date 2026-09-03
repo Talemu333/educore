@@ -126,6 +126,12 @@ const sidebarMenu = [
     =========================================
     */
 
+    /*
+    -----------------------------------------
+    STUDENTS
+    -----------------------------------------
+    */
+
     {
         title: "Students",
         icon: GraduationCap,
@@ -210,6 +216,22 @@ const sidebarMenu = [
     -----------------------------------------
     */
 
+
+    // {
+    //     title: "Parents",
+    //     icon: Users,
+    //     path: "/parents",
+
+    //     roles: [
+    //         ADMIN
+    //     ],
+
+    //     adminTypes: [
+    //         PROPRIETOR,
+    //         PRINCIPAL,
+    //         VICE_PRINCIPAL
+    //     ]
+    // },
     {
         title: "My Payments",
         icon: CreditCard,
@@ -298,6 +320,13 @@ const sidebarMenu = [
         ],
 
         children: [
+
+            /*
+            ---------------------------------
+            RESULT ENTRY
+            ---------------------------------
+            */
+
             {
                 title: "Result Entry",
                 path: "/results",
@@ -313,6 +342,14 @@ const sidebarMenu = [
                     VICE_PRINCIPAL
                 ]
             },
+
+
+            /*
+            ---------------------------------
+            CLASS RESULT SHEET
+            ---------------------------------
+            */
+
             {
                 title: "Class Result Sheet",
                 path: "/results/class-sheet",
@@ -327,6 +364,14 @@ const sidebarMenu = [
                     VICE_PRINCIPAL
                 ]
             },
+
+
+            /*
+            ---------------------------------
+            DETAILED CLASS RESULT SHEET
+            ---------------------------------
+            */
+
             {
                 title: "Detailed Class Result Sheet",
                 path: "/results/detailed-class-sheet",
@@ -340,6 +385,7 @@ const sidebarMenu = [
                     PRINCIPAL
                 ]
             }
+
         ]
     },
 
@@ -356,8 +402,37 @@ const sidebarMenu = [
 
     /*
     =========================================
+    TIMETABLE
+    =========================================
+    */
+
+    // {
+    //     title: "Timetable",
+    //     icon: Calendar,
+    //     path: "/timetable",
+
+    //     roles: [
+    //         ADMIN
+    //     ],
+
+    //     adminTypes: [
+    //         PROPRIETOR,
+    //         PRINCIPAL,
+    //         VICE_PRINCIPAL
+    //     ]
+    // },
+
+
+    /*
+    =========================================
     FINANCE
     =========================================
+    */
+
+    /*
+    -----------------------------------------
+    PAYMENTS
+    -----------------------------------------
     */
 
     {
@@ -371,6 +446,7 @@ const sidebarMenu = [
 
         adminTypes: [
             PROPRIETOR,
+            PRINCIPAL,
             BURSAR
         ]
     },
@@ -390,6 +466,13 @@ const sidebarMenu = [
         ]
     },
 
+
+    /*
+    -----------------------------------------
+    PAYMENT REPORTS
+    -----------------------------------------
+    */
+
     {
         title: "Payment Reports",
         icon: FileText,
@@ -401,9 +484,17 @@ const sidebarMenu = [
 
         adminTypes: [
             PROPRIETOR,
+            PRINCIPAL,
             BURSAR
         ]
     },
+
+
+    /*
+    -----------------------------------------
+    FEE MANAGEMENT
+    -----------------------------------------
+    */
 
     {
         title: "Fee Management",
@@ -416,9 +507,17 @@ const sidebarMenu = [
 
         adminTypes: [
             PROPRIETOR,
+            PRINCIPAL,
             BURSAR
         ]
     },
+
+
+    /*
+    -----------------------------------------
+    EXPENSES
+    -----------------------------------------
+    */
 
     {
         title: "Expenses",
@@ -435,6 +534,29 @@ const sidebarMenu = [
             BURSAR
         ]
     },
+
+
+    /*
+    =========================================
+    ANNOUNCEMENTS
+    =========================================
+    */
+
+    // {
+    //     title: "Announcements",
+    //     icon: Bell,
+    //     path: "/announcements",
+
+    //     roles: [
+    //         ADMIN
+    //     ],
+
+    //     adminTypes: [
+    //         PROPRIETOR,
+    //         PRINCIPAL,
+    //         VICE_PRINCIPAL
+    //     ]
+    // },
 
 
     /*
@@ -494,6 +616,13 @@ const sidebarMenu = [
         ],
 
         children: [
+
+            /*
+            ---------------------------------
+            SCHOOL SETTINGS
+            ---------------------------------
+            */
+
             {
                 title: "School Settings",
                 path: "/settings",
@@ -507,6 +636,14 @@ const sidebarMenu = [
                     PRINCIPAL
                 ]
             },
+
+
+            /*
+            ---------------------------------
+            GRADING SCALES
+            ---------------------------------
+            */
+
             {
                 title: "Grading Scales",
                 path: "/settings/grading-scales",
@@ -520,6 +657,7 @@ const sidebarMenu = [
                     PRINCIPAL
                 ]
             }
+
         ]
     },
 
