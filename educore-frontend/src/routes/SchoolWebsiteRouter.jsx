@@ -39,23 +39,12 @@ function SchoolLayoutBridge() {
         sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
         localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
 
-        // Public website queries are currently shared by page type. Clear
-        // them whenever the tenant changes so School B cannot momentarily
-        // display School A's cached public content.
-        const publicQueryKeys = [
-            ["website-pages"],
-            ["website-page"],
-            ["website-news"],
-            ["website-events"],
-            ["website-event"],
-            ["website-gallery"],
-            ["schoolSettings"]
-        ];
-
-        publicQueryKeys.forEach(queryKey => {
-            queryClient.removeQueries({ queryKey });
-        });
-    }, [schoolSlug, queryClient]);
+        // Public queries already include schoolSlug in their query keys.
+        // Do not remove them on mount: doing so races with the initial fetch
+        // during a hard refresh and can leave the public page permanently in
+        // its loading state. Tenant-specific query keys already prevent one
+        // school's cached content from being reused for another school.
+    }, [schoolSlug]);
 
     if (!schoolSlug) return <Navigate to="/" replace />;
 
