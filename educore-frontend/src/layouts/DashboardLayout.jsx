@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
 
-function DashboardLayout() {
+function DashboardLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
@@ -26,7 +26,7 @@ function DashboardLayout() {
                 />
 
                 <section className="mx-auto w-full max-w-[1600px] p-4 sm:p-5 md:p-6 lg:p-8">
-                    <Outlet />
+                    {children || <Outlet />}
                 </section>
             </main>
         </div>
