@@ -9,8 +9,8 @@ const createTeacher = asyncHandler(async (req, res) => {
 });
 
 const getTeachers = asyncHandler(async (req, res) => {
-    const teachers = await teacherService.getTeachers(getSchoolId(req));
-    res.json({ success: true, count: teachers.length, data: teachers });
+    const result = await teacherService.getTeachers(req.query, getSchoolId(req));
+    res.json({ success: true, ...result });
 });
 
 const getTeacherById = asyncHandler(async (req, res) => {
