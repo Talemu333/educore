@@ -157,7 +157,45 @@ const deleteExpense = async (expenseId, schoolId) => {
 };
 
 const getExpenseSummary = async (filters = {}, schoolId) => {
-    const { dateFrom = "", dateTo = "", category = "", paymentMethod = "" } = filters;
+    const {
+        dateFrom = "",
+        dateTo = "",
+        category = "",
+        paymentMethod = ""
+    } = filters;
+
+    // Expenses are recorded by date, so session/term membership is derived
+    // from the configured academic period instead of duplicating session/term
+    // foreign keys on every expense record.
+    const currentPeriodResult = await pool.query(`
+        SELECT
+            s.id AS session_id,
+            s.session_name,
+            s.start_date AS session_start_date,
+            s.end_date AS session_end_date,
+            t.id AS term_id,
+            t.term_name,
+            t.start_date AS term_start_date,
+            t.end_date AS term_end_date
+        FROM academic_sessions s
+        LEFT JOIN terms t
+            ON t.session_id = s.id
+           AND t.school_id = s.school_id
+           AND t.is_current = TRUE
+        WHERE s.school_id = $1
+          AND s.is_current = TRUE
+        LIMIT 1;
+    `, [schoolId]);
+
+    const currentPeriod = currentPeriodResult.rows[0] || null;
+
+    // When the user has not supplied an explicit date range, the summary is
+    // for the current term. If no current term exists, fall back to the
+    // current academic session. This keeps the dashboard meaningful while
+    // still allowing explicit date filters to override the period.
+    const effectiveDateFrom = dateFrom || currentPeriod?.term_start_date || currentPeriod?.session_start_date || "";
+    const effectiveDateTo = dateTo || currentPeriod?.term_end_date || currentPeriod?.session_end_date || "";
+
     const conditions = ["school_id = $1"];
     const values = [schoolId];
     let index = 2;
@@ -168,8 +206,8 @@ const getExpenseSummary = async (filters = {}, schoolId) => {
         index += 1;
     };
 
-    if (dateFrom) add("expense_date >= $X", dateFrom);
-    if (dateTo) add("expense_date <= $X", dateTo);
+    if (effectiveDateFrom) add("expense_date >= $X", effectiveDateFrom);
+    if (effectiveDateTo) add("expense_date <= $X", effectiveDateTo);
     if (category) add("category = $X", category);
     if (paymentMethod) add("payment_method = $X", paymentMethod);
 
@@ -183,7 +221,28 @@ const getExpenseSummary = async (filters = {}, schoolId) => {
         WHERE ${conditions.join(" AND ")};
     `, values);
 
-    return result.rows[0];
+    return {
+        ...result.rows[0],
+        period: currentPeriod
+            ? {
+                session_id: currentPeriod.session_id,
+                session_name: currentPeriod.session_name,
+                session_start_date: currentPeriod.session_start_date,
+                session_end_date: currentPeriod.session_end_date,
+                term_id: currentPeriod.term_id,
+                term_name: currentPeriod.term_name,
+                term_start_date: currentPeriod.term_start_date,
+                term_end_date: currentPeriod.term_end_date
+            }
+            : null,
+        period_scope: dateFrom || dateTo
+            ? "custom"
+            : currentPeriod?.term_id
+                ? "current_term"
+                : currentPeriod?.session_id
+                    ? "current_session"
+                    : "all_time"
+    };
 };
 
 module.exports = {
