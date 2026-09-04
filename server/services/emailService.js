@@ -18,6 +18,7 @@ function getTransporter() {
         host,
         port,
         secure: port === 465,
+        family: 4,
         auth: { user, pass },
     });
 
