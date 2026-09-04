@@ -2,6 +2,7 @@ const passport = require("passport");
 const authModel = require("../models/authModel");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { sendPasswordResetEmail } = require("../services/emailService");
 
 const login = (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
@@ -47,7 +48,7 @@ const requestPasswordReset = async (req, res, next) => {
     try {
         const email = String(req.body.email || "").trim();
         if (!email) return res.status(400).json({ success: false, message: "Email is required." });
-        const generic = "If an account exists for that email, a password reset link has been generated.";
+        const generic = "If an account exists for that email, a password reset link has been sent.";
         const user = await authModel.findUserByEmail(email);
         if (!user || user.is_active === false) return res.json({ success: true, message: generic });
 
@@ -58,14 +59,24 @@ const requestPasswordReset = async (req, res, next) => {
 
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
         const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
-        console.log(`Password reset link for ${email}: ${resetUrl}`);
 
-        // Until an SMTP provider is configured, return the link in non-production
-        // environments so the feature can be tested without exposing it publicly.
+        if (process.env.NODE_ENV === "production") {
+            await sendPasswordResetEmail({
+                to: user.email,
+                name: user.full_name || user.username,
+                resetUrl,
+            });
+        } else {
+            console.log(`Password reset link for ${email}: ${resetUrl}`);
+        }
+
         const payload = { success: true, message: generic };
         if (process.env.NODE_ENV !== "production") payload.reset_url = resetUrl;
         res.json(payload);
-    } catch (error) { next(error); }
+    } catch (error) {
+        console.error("Password reset email error:", error);
+        next(error);
+    }
 };
 
 const resetPassword = async (req, res, next) => {
