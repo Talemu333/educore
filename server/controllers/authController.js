@@ -2,6 +2,7 @@ const passport = require("passport");
 const authModel = require("../models/authModel");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { sendPasswordResetEmail } = require("../services/emailService");
 
 const login = (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
@@ -47,23 +48,39 @@ const requestPasswordReset = async (req, res, next) => {
     try {
         const email = String(req.body.email || "").trim();
         if (!email) return res.status(400).json({ success: false, message: "Email is required." });
-        const generic = "If an account exists for that email, a password reset link has been generated.";
+
+        const generic = "If an account exists for that email, a password reset link has been sent.";
         const user = await authModel.findUserByEmail(email);
         if (!user || user.is_active === false) return res.json({ success: true, message: generic });
 
         const rawToken = crypto.randomBytes(32).toString("hex");
         const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+        const expiryMinutes = Math.max(5, Number(process.env.PASSWORD_RESET_EXPIRY_MINUTES || 30));
+        const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
         await authModel.savePasswordResetToken(user.id, tokenHash, expiresAt);
 
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
         const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
-        console.log(`Password reset link for ${email}: ${resetUrl}`);
 
-        // Until an SMTP provider is configured, return the link in non-production
-        // environments so the feature can be tested without exposing it publicly.
+        try {
+            await sendPasswordResetEmail({
+                to: user.email,
+                resetUrl,
+                username: user.username,
+            });
+            console.log(`Password reset email sent to ${user.email}.`);
+        } catch (emailError) {
+            // Keep the response generic so the endpoint cannot be used to
+            // discover whether an email address belongs to a user account.
+            console.error("Password reset email could not be sent:", emailError);
+        }
+
+        // Keep returning the link locally when an email provider is not configured.
+        // Never expose the reset token in production.
         const payload = { success: true, message: generic };
-        if (process.env.NODE_ENV !== "production") payload.reset_url = resetUrl;
+        if (process.env.NODE_ENV !== "production" && !process.env.RESEND_API_KEY) {
+            payload.reset_url = resetUrl;
+        }
         res.json(payload);
     } catch (error) { next(error); }
 };
