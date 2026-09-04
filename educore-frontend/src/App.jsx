@@ -18,7 +18,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "settings", "administrators", "student-promotion", "promotion-history",
     "class-subjects", "admin", "login", "website", "change-password",
     "logout", "contact-messages", "expenses", "parent-overview",
-    "forgot-password", "reset-password"
+    "parent", "forgot-password", "reset-password"
 ]);
 
 function useAppPathname() {
