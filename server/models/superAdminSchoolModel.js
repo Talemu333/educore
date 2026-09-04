@@ -45,7 +45,7 @@ const createSchool = async (school, admin, hashedPassword) => {
                 school_motto, school_level, is_active,
                 created_at, updated_at
             )
-            SELECT id, id, $1,
+            SELECT id, id, $1::text,
                    COALESCE(
                        NULLIF(
                            regexp_replace(
@@ -108,28 +108,9 @@ const createSchoolAdministrator = async (schoolId, admin, hashedPassword, adminT
     return result.rows[0];
 };
 
-const updateSchool = async (schoolId, data) => {
-    const result = await pool.query(`
-        UPDATE school_settings
-        SET school_name = COALESCE($1, school_name),
-            admission_prefix = COALESCE($2, admission_prefix),
-            school_email = $3, school_phone = $4, school_address = $5,
-            school_motto = $6, school_level = $7,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE school_id = $8 RETURNING *;
-    `, [data.school_name || null, data.admission_prefix || null,
-        data.school_email || null, data.school_phone || null,
-        data.school_address || null, data.school_motto || null,
-        data.school_level || null, schoolId]);
-    return result.rows[0];
+module.exports = {
+    getSchools,
+    getSchoolById,
+    createSchool,
+    createSchoolAdministrator
 };
-
-const setSchoolStatus = async (schoolId, isActive) => {
-    const result = await pool.query(`
-        UPDATE school_settings SET is_active = $1,
-        updated_at = CURRENT_TIMESTAMP WHERE school_id = $2 RETURNING *;
-    `, [isActive, schoolId]);
-    return result.rows[0];
-};
-
-module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator, updateSchool, setSchoolStatus };
