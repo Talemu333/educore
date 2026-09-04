@@ -46,7 +46,16 @@ const createSchool = async (school, admin, hashedPassword) => {
                 created_at, updated_at
             )
             SELECT id, id, $1,
-                   COALESCE(NULLIF(regexp_replace(regexp_replace(lower(trim($1)), '[^a-z0-9]+', '-', 'g'), '(^-|-$)', '', 'g'), ''), 'school-' || id::text),
+                   COALESCE(
+                       NULLIF(
+                           regexp_replace(
+                               regexp_replace(lower(trim($1::text)), '[^a-z0-9]+', '-', 'g'),
+                               '(^-|-$)', '', 'g'
+                           ),
+                           ''
+                       ),
+                       'school-' || id::text
+                   ),
                    $2, $3, $4, $5, $6, $7, TRUE,
                    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
             FROM next_school
