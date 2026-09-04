@@ -18,93 +18,226 @@ jobs:
           ref: multischool-migration
           fetch-depth: 0
 
-      - name: Patch dashboard tables
+      - name: Apply pagination
         shell: python
         run: |
           from pathlib import Path
-          import re
 
           parent_path = Path("educore-frontend/src/pages/admin/ParentFinancialOverviewPage.jsx")
           payment_path = Path("educore-frontend/src/pages/payments/PaymentReportsPage.jsx")
 
-          def add_once(text, needle, replacement, label):
-              if replacement in text:
-                  return text
+          def require(text, needle, label):
               if needle not in text:
-                  raise SystemExit(f"Could not find {label} anchor")
-              return text.replace(needle, replacement, 1)
+                  raise SystemExit(f"Missing {label} anchor")
 
-          # ---------------- Parent Financial Overview ----------------
+          def insert_after_once(text, needle, insertion, label):
+              if insertion.strip() in text:
+                  return text
+              require(text, needle, label)
+              return text.replace(needle, needle + insertion, 1)
+
+          # Parent Financial Overview
           text = parent_path.read_text(encoding="utf-8")
-          text = add_once(
-              text,
-              'import { Button } from "@/components/ui/Button";\n',
-              'import { Button } from "@/components/ui/Button";\n\nimport Pagination from "@/components/common/Pagination";\n',
-              "parent Pagination import",
-          )
+          if "PARENT_PAGE_SIZE" not in text:
+              text = insert_after_once(
+                  text,
+                  'import { Button } from "@/components/ui/Button";',
+                  '\n\nimport Pagination from "@/components/common/Pagination";',
+                  "parent Pagination import",
+              )
 
-          state_anchor = '''    const [\n        statusFilter,\n        setStatusFilter\n    ] = useState("ALL");\n'''
-          state_replacement = state_anchor + '''\n    const [\n        parentPage,\n        setParentPage\n    ] = useState(1);\n\n    const PARENT_PAGE_SIZE = 10;\n'''
-          text = add_once(text, state_anchor, state_replacement, "parent pagination state")
+              state_anchor = '''    const [
+        statusFilter,
+        setStatusFilter
+    ] = useState("ALL");'''
+              state_insert = '''
 
-          totals_anchor = '''    /*\n    |--------------------------------------------------------------------------\n    | TOTALS\n    |--------------------------------------------------------------------------\n    */\n'''
-          pagination_logic = '''    /*\n    |--------------------------------------------------------------------------\n    | PAGINATION\n    |--------------------------------------------------------------------------\n    */\n\n    const parentTotalPages = Math.max(\n        1,\n        Math.ceil(\n            filteredParents.length /\n            PARENT_PAGE_SIZE\n        )\n    );\n\n    const paginatedParents = useMemo(() => {\n        const start =\n            (parentPage - 1) *\n            PARENT_PAGE_SIZE;\n\n        return filteredParents.slice(\n            start,\n            start + PARENT_PAGE_SIZE\n        );\n    }, [\n        filteredParents,\n        parentPage\n    ]);\n\n    useEffect(() => {\n        setParentPage(1);\n    }, [\n        selectedSessionId,\n        selectedTermId,\n        search,\n        statusFilter\n    ]);\n\n    useEffect(() => {\n        if (parentPage > parentTotalPages) {\n            setParentPage(parentTotalPages);\n        }\n    }, [\n        parentPage,\n        parentTotalPages\n    ]);\n\n\n'''
-          text = add_once(text, totals_anchor, pagination_logic + totals_anchor, "parent pagination logic")
+    const [
+        parentPage,
+        setParentPage
+    ] = useState(1);
 
-          if "filteredParents.map(" not in text:
-              raise SystemExit("Could not find parent table map")
-          text = text.replace("filteredParents.map(", "paginatedParents.map(", 1)
+    const PARENT_PAGE_SIZE = 10;'''
+              text = insert_after_once(text, state_anchor, state_insert, "parent pagination state")
 
-          # Insert controls immediately after the table that contains the parent rows.
-          parent_map_pos = text.find("paginatedParents.map(")
-          table_end = text.find("</table>", parent_map_pos)
-          if table_end == -1:
-              raise SystemExit("Could not find parent table closing tag")
-          pagination_markup = '''</table>\n\n                    <Pagination\n                        page={parentPage}\n                        totalPages={parentTotalPages}\n                        total={filteredParents.length}\n                        limit={PARENT_PAGE_SIZE}\n                        onPageChange={setParentPage}\n                        disabled={isFetching}\n                    />'''
-          text = text[:table_end] + pagination_markup + text[table_end + len("</table>"):]
-          parent_path.write_text(text, encoding="utf-8")
+              totals_anchor = '''    /*
+    |--------------------------------------------------------------------------
+    | TOTALS
+    |--------------------------------------------------------------------------
+    */'''
+              logic = '''
 
-          # ---------------- Payment Reports ----------------
+    /*
+    |--------------------------------------------------------------------------
+    | PAGINATION
+    |--------------------------------------------------------------------------
+    */
+
+    const parentTotalPages = Math.max(
+        1,
+        Math.ceil(
+            filteredParents.length /
+            PARENT_PAGE_SIZE
+        )
+    );
+
+    const paginatedParents = useMemo(() => {
+        const start =
+            (parentPage - 1) *
+            PARENT_PAGE_SIZE;
+
+        return filteredParents.slice(
+            start,
+            start + PARENT_PAGE_SIZE
+        );
+    }, [
+        filteredParents,
+        parentPage
+    ]);
+
+    useEffect(() => {
+        setParentPage(1);
+    }, [
+        selectedSessionId,
+        selectedTermId,
+        search,
+        statusFilter
+    ]);
+
+    useEffect(() => {
+        if (parentPage > parentTotalPages) {
+            setParentPage(parentTotalPages);
+        }
+    }, [
+        parentPage,
+        parentTotalPages
+    ]);
+
+'''
+              text = insert_after_once(text, totals_anchor, logic, "parent pagination logic")
+              require(text, "filteredParents.map(", "parent table map")
+              text = text.replace("filteredParents.map(", "paginatedParents.map(", 1)
+
+              map_pos = text.find("paginatedParents.map(")
+              table_end = text.find("</table>", map_pos)
+              if table_end == -1:
+                  raise SystemExit("Missing parent table closing tag")
+
+              markup = '''</table>
+
+                    <Pagination
+                        page={parentPage}
+                        totalPages={parentTotalPages}
+                        total={filteredParents.length}
+                        limit={PARENT_PAGE_SIZE}
+                        onPageChange={setParentPage}
+                        disabled={isFetching}
+                    />'''
+              text = text[:table_end] + markup + text[table_end + len("</table>"):]
+
+              parent_path.write_text(text, encoding="utf-8")
+
+          # Payment Reports
           text = payment_path.read_text(encoding="utf-8")
-          text = add_once(
-              text,
-              'import Loading from "@/components/common/Loading";\n',
-              'import Loading from "@/components/common/Loading";\n\nimport Pagination from "@/components/common/Pagination";\n',
-              "payment Pagination import",
-          )
+          if "REPORT_PAGE_SIZE" not in text:
+              text = insert_after_once(
+                  text,
+                  'import Loading from "@/components/common/Loading";',
+                  '\n\nimport Pagination from "@/components/common/Pagination";',
+                  "payment Pagination import",
+              )
 
-          search_anchor = '''    const [\n        search,\n        setSearch\n    ] = useState("");\n'''
-          search_replacement = search_anchor + '''\n    const [\n        reportPage,\n        setReportPage\n    ] = useState(1);\n\n    const REPORT_PAGE_SIZE = 10;\n'''
-          text = add_once(text, search_anchor, search_replacement, "payment pagination state")
+              search_anchor = '''    const [
+        search,
+        setSearch
+    ] = useState("");'''
+              search_insert = '''
 
-          report_anchor = '''    const summary =\n        reportData?.summary || {};\n'''
-          report_logic = report_anchor + '''\n\n    const reportTotalPages = Math.max(\n        1,\n        Math.ceil(\n            report.length /\n            REPORT_PAGE_SIZE\n        )\n    );\n\n    const paginatedReport = useMemo(() => {\n        const start =\n            (reportPage - 1) *\n            REPORT_PAGE_SIZE;\n\n        return report.slice(\n            start,\n            start + REPORT_PAGE_SIZE\n        );\n    }, [\n        report,\n        reportPage\n    ]);\n\n    useEffect(() => {\n        setReportPage(1);\n    }, [\n        sessionId,\n        termId,\n        classId,\n        paymentMethod,\n        dateFrom,\n        dateTo,\n        search\n    ]);\n\n    useEffect(() => {\n        if (reportPage > reportTotalPages) {\n            setReportPage(reportTotalPages);\n        }\n    }, [\n        reportPage,\n        reportTotalPages\n    ]);\n'''
-          text = add_once(text, report_anchor, report_logic, "payment pagination logic")
+    const [
+        reportPage,
+        setReportPage
+    ] = useState(1);
 
-          if "report.map(" not in text:
-              raise SystemExit("Could not find payment report table map")
-          text = text.replace("report.map(", "paginatedReport.map(", 1)
+    const REPORT_PAGE_SIZE = 10;'''
+              text = insert_after_once(text, search_anchor, search_insert, "payment pagination state")
 
-          report_map_pos = text.find("paginatedReport.map(")
-          table_end = text.find("</table>", report_map_pos)
-          if table_end == -1:
-              raise SystemExit("Could not find payment report table closing tag")
-          payment_pagination_markup = '''</table>\n\n                <Pagination\n                    page={reportPage}\n                    totalPages={reportTotalPages}\n                    total={report.length}\n                    limit={REPORT_PAGE_SIZE}\n                    onPageChange={setReportPage}\n                    disabled={isReportLoading}\n                />'''
-          text = text[:table_end] + payment_pagination_markup + text[table_end + len("</table>"):]
-          payment_path.write_text(text, encoding="utf-8")
+              report_anchor = '''    const summary =
+        reportData?.summary || {};'''
+              logic = '''
 
-          print("Dashboard pagination patch applied successfully.")
+    const reportTotalPages = Math.max(
+        1,
+        Math.ceil(
+            report.length /
+            REPORT_PAGE_SIZE
+        )
+    );
 
-      - name: Validate changes
-        working-directory: educore-frontend
-        run: |
-          npm ci
-          npm run build
+    const paginatedReport = useMemo(() => {
+        const start =
+            (reportPage - 1) *
+            REPORT_PAGE_SIZE;
 
-      - name: Commit changes and remove patch workflow
+        return report.slice(
+            start,
+            start + REPORT_PAGE_SIZE
+        );
+    }, [
+        report,
+        reportPage
+    ]);
+
+    useEffect(() => {
+        setReportPage(1);
+    }, [
+        sessionId,
+        termId,
+        classId,
+        paymentMethod,
+        dateFrom,
+        dateTo,
+        search
+    ]);
+
+    useEffect(() => {
+        if (reportPage > reportTotalPages) {
+            setReportPage(reportTotalPages);
+        }
+    }, [
+        reportPage,
+        reportTotalPages
+    ]);
+'''
+              text = insert_after_once(text, report_anchor, logic, "payment pagination logic")
+              require(text, "report.map(", "payment report table map")
+              text = text.replace("report.map(", "paginatedReport.map(", 1)
+
+              map_pos = text.find("paginatedReport.map(")
+              table_end = text.find("</table>", map_pos)
+              if table_end == -1:
+                  raise SystemExit("Missing payment table closing tag")
+
+              markup = '''</table>
+
+                                <Pagination
+                                    page={reportPage}
+                                    totalPages={reportTotalPages}
+                                    total={report.length}
+                                    limit={REPORT_PAGE_SIZE}
+                                    onPageChange={setReportPage}
+                                    disabled={isReportLoading}
+                                />'''
+              text = text[:table_end] + markup + text[table_end + len("</table>"):]
+
+              payment_path.write_text(text, encoding="utf-8")
+
+          print("Dashboard pagination applied.")
+
+      - name: Commit and remove temporary workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add educore-frontend/src/pages/admin/ParentFinancialOverviewPage.jsx educore-frontend/src/pages/payments/PaymentReportsPage.jsx .github/workflows/apply-dashboard-pagination.yml
+          git rm -f .github/workflows/apply-dashboard-pagination.yml
+          git add educore-frontend/src/pages/admin/ParentFinancialOverviewPage.jsx educore-frontend/src/pages/payments/PaymentReportsPage.jsx
           git commit -m "Add pagination to financial dashboard tables"
           git push origin multischool-migration
