@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useExpenseSummary } from "@/hooks/useExpenses";
 import { useAuth } from "@/context/AuthContext";
 
 function formatCurrency(value) {
@@ -22,6 +23,7 @@ function formatDate(date) {
 
 function DashboardPage() {
     const { data, isLoading, isError, error } = useDashboard();
+    const { data: expenseSummary, isLoading: isExpenseSummaryLoading } = useExpenseSummary();
     const { logoutUser, user } = useAuth();
     const navigate = useNavigate();
     const isSuperAdmin = user?.role_name === "Super Admin";
@@ -146,6 +148,42 @@ function DashboardPage() {
                     <div className="rounded-2xl border border-red-100 bg-red-50 p-4"><p className="text-sm font-medium text-red-700">Outstanding Fees</p><p className="mt-1.5 break-words text-xl font-bold text-red-800 sm:text-2xl">{formatCurrency(outstanding_fees)}</p></div>
                     <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><p className="text-sm font-medium text-blue-700">Students With Payments</p><p className="mt-1.5 text-xl font-bold text-blue-800 sm:text-2xl">{students_with_payments}</p></div>
                 </div>
+            </section>
+
+            <section>
+                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900">Expenses Overview</h2>
+                        <p className="mt-0.5 text-sm text-slate-500">Summary of expenses recorded for this school.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/expenses")}
+                        className="inline-flex w-fit items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                        View Expenses
+                    </button>
+                </div>
+                {isExpenseSummaryLoading ? (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map(item => <div key={item} className="h-24 animate-pulse rounded-2xl bg-slate-200" />)}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
+                            <p className="text-sm font-medium text-red-700">Total Expenses</p>
+                            <p className="mt-1.5 break-words text-xl font-bold text-red-800 sm:text-2xl">{formatCurrency(expenseSummary?.total_amount)}</p>
+                        </div>
+                        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                            <p className="text-sm font-medium text-amber-700">Transactions</p>
+                            <p className="mt-1.5 text-xl font-bold text-amber-800 sm:text-2xl">{Number(expenseSummary?.transaction_count || 0).toLocaleString()}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <p className="text-sm font-medium text-slate-500">Average Expense</p>
+                            <p className="mt-1.5 break-words text-xl font-bold text-slate-900 sm:text-2xl">{formatCurrency(expenseSummary?.average_amount)}</p>
+                        </div>
+                    </div>
+                )}
             </section>
 
             <section>
