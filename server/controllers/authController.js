@@ -63,7 +63,7 @@ const requestPasswordReset = async (req, res, next) => {
         if (process.env.NODE_ENV === "production") {
             await sendPasswordResetEmail({
                 to: user.email,
-                name: user.full_name || user.username,
+                name: user.username,
                 resetUrl,
             });
         } else {
