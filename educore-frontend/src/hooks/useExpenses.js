@@ -19,7 +19,7 @@ export const useExpenses = (filters = {}) => {
     });
 };
 
-export const useExpenseSummary = (filters = {}) => {
+export const useExpenseSummary = (filters = {}, options = {}) => {
     return useQuery({
         queryKey: ["expense-summary", {
             dateFrom: filters.dateFrom || "",
@@ -27,7 +27,8 @@ export const useExpenseSummary = (filters = {}) => {
             category: filters.category || "",
             paymentMethod: filters.paymentMethod || ""
         }],
-        queryFn: () => getExpenseSummary(filters)
+        queryFn: () => getExpenseSummary(filters),
+        enabled: options.enabled !== false
     });
 };
 
