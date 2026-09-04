@@ -35,37 +35,63 @@ const createSchool = async (school, admin, hashedPassword) => {
     try {
         await client.query("BEGIN");
 
+        // school_settings.school_id is a foreign key to schools.id.
+        // Create the parent school first, then create its settings row.
         const schoolResult = await client.query(`
-            WITH next_school AS (
-                SELECT nextval(pg_get_serial_sequence('school_settings', 'id')) AS id
+            INSERT INTO schools (
+                school_name,
+                school_code,
+                email,
+                phone,
+                address
             )
+            VALUES ($1::text, $2::text, $3, $4, $5)
+            RETURNING id;
+        `, [
+            school.school_name,
+            school.admission_prefix,
+            school.school_email || null,
+            school.school_phone || null,
+            school.school_address || null
+        ]);
+
+        const schoolId = schoolResult.rows[0].id;
+
+        const settingsResult = await client.query(`
             INSERT INTO school_settings (
-                id, school_id, school_name, website_slug, admission_prefix,
+                school_id, school_name, website_slug, admission_prefix,
                 school_email, school_phone, school_address,
                 school_motto, school_level, is_active,
                 created_at, updated_at
             )
-            SELECT id, id, $1::text,
-                   COALESCE(
-                       NULLIF(
-                           regexp_replace(
-                               regexp_replace(lower(trim($1::text)), '[^a-z0-9]+', '-', 'g'),
-                               '(^-|-$)', '', 'g'
-                           ),
-                           ''
-                       ),
-                       'school-' || id::text
-                   ),
-                   $2, $3, $4, $5, $6, $7, TRUE,
-                   CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-            FROM next_school
+            VALUES (
+                $1, $2::text,
+                COALESCE(
+                    NULLIF(
+                        regexp_replace(
+                            regexp_replace(lower(trim($2::text)), '[^a-z0-9]+', '-', 'g'),
+                            '(^-|-$)', '', 'g'
+                        ),
+                        ''
+                    ),
+                    'school-' || $1::text
+                ),
+                $3, $4, $5, $6, $7, $8, TRUE,
+                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            )
             RETURNING *;
-        `, [school.school_name, school.admission_prefix,
-            school.school_email || null, school.school_phone || null,
-            school.school_address || null, school.school_motto || null,
-            school.school_level || null]);
+        `, [
+            schoolId,
+            school.school_name,
+            school.admission_prefix,
+            school.school_email || null,
+            school.school_phone || null,
+            school.school_address || null,
+            school.school_motto || null,
+            school.school_level || null
+        ]);
 
-        const createdSchool = schoolResult.rows[0];
+        const createdSchool = settingsResult.rows[0];
 
         const roleResult = await client.query(`SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1;`);
         if (!roleResult.rows[0]) throw new Error("Admin role does not exist.");
@@ -77,7 +103,7 @@ const createSchool = async (school, admin, hashedPassword) => {
             RETURNING id, username, email, role_id, school_id, admin_type,
                       is_active, must_change_password, created_at, updated_at;
         `, [admin.username, admin.email || null, hashedPassword,
-            roleResult.rows[0].id, createdSchool.school_id]);
+            roleResult.rows[0].id, schoolId]);
 
         await client.query("COMMIT");
         return { school: createdSchool, administrator: adminResult.rows[0] };
