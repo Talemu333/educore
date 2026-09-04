@@ -45,7 +45,12 @@ function SchoolLayoutBridge() {
         return <Navigate to="/" replace />;
     }
 
-    return <PublicLayout />;
+    return (
+        <>
+            <SchoolWebsiteNavigationBridge />
+            <PublicLayout />
+        </>
+    );
 }
 
 function LegacyWebsiteRedirect() {
@@ -56,7 +61,11 @@ function LegacyWebsiteRedirect() {
             sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
             localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
 
-        if (!storedSlug) return;
+        if (!storedSlug) {
+            window.history.replaceState({}, "", "/");
+            window.dispatchEvent(new PopStateEvent("popstate"));
+            return;
+        }
 
         const suffix = location.pathname.replace(/^\/website/, "");
         const target =
