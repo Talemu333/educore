@@ -62,7 +62,7 @@ function TablePager({ table, target }) {
         if (tbody) {
             observer.observe(tbody, {
                 childList: true,
-                subtree: true,
+                subtree: false,
             });
         }
 
