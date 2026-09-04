@@ -8,13 +8,17 @@ import EduCoreLandingPage from "./pages/public/EduCoreLandingPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
+import ExpensesPage from "./pages/expenses/ExpensesPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents",
     "attendance", "results", "timetable", "payments", "announcements",
     "settings", "administrators", "student-promotion", "promotion-history",
     "class-subjects", "admin", "login", "website", "change-password",
-    "logout", "contact-messages"
+    "logout", "contact-messages", "expenses", "parent-overview",
+    "forgot-password", "reset-password"
 ]);
 
 function useAppPathname() {
@@ -65,6 +69,22 @@ function App() {
         return <LegacyWebsiteRedirect />;
     }
 
+    if (pathname === "/forgot-password") {
+        return (
+            <BrowserRouter>
+                <ForgotPasswordPage />
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/reset-password") {
+        return (
+            <BrowserRouter>
+                <ResetPasswordPage />
+            </BrowserRouter>
+        );
+    }
+
     if (pathname === "/contact-messages") {
         return (
             <BrowserRouter>
@@ -74,6 +94,21 @@ function App() {
                 >
                     <DashboardLayout>
                         <ContactMessagesPage />
+                    </DashboardLayout>
+                </ProtectedRoute>
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/expenses") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute
+                    allowedRoles={["Admin"]}
+                    allowedAdminTypes={["proprietor", "principal", "bursar"]}
+                >
+                    <DashboardLayout>
+                        <ExpensesPage />
                     </DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
