@@ -26,7 +26,40 @@ const getNextTeacherId = async (client) => {
     return result.rows[0].id;
 };
 
-const getTeachers = async (schoolId) => {
+const buildTeacherFilters = (schoolId, options = {}) => {
+    const { search = "", departmentId = "", status = "" } = options;
+    const values = [schoolId];
+    const conditions = ["t.school_id = $1"];
+
+    if (search.trim()) {
+        values.push(`%${search.trim()}%`);
+        const index = values.length;
+        conditions.push(`(
+            t.staff_number ILIKE $${index}
+            OR CONCAT(t.surname, ' ', t.first_name, ' ', COALESCE(t.middle_name, '')) ILIKE $${index}
+            OR COALESCE(t.phone_number, '') ILIKE $${index}
+        )`);
+    }
+
+    if (departmentId) {
+        values.push(Number(departmentId));
+        conditions.push(`t.department_id = $${values.length}`);
+    }
+
+    if (status === "true" || status === "false") {
+        values.push(status === "true");
+        conditions.push(`t.status = $${values.length}`);
+    }
+
+    return { conditions, values };
+};
+
+const getTeachers = async (schoolId, options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const { conditions, values } = buildTeacherFilters(schoolId, options);
+    const limitIndex = values.length + 1;
+    const offsetIndex = values.length + 2;
+
     const result = await pool.query(`
         SELECT t.id, t.department_id, t.qualification_id, t.staff_number,
                CONCAT(t.surname, ' ', t.first_name, ' ', COALESCE(t.middle_name,'')) AS full_name,
@@ -34,10 +67,22 @@ const getTeachers = async (schoolId) => {
         FROM teachers t
         LEFT JOIN departments d ON d.id = t.department_id
         LEFT JOIN qualifications q ON q.id = t.qualification_id
-        WHERE t.school_id = $1 AND t.status = 'Active'
-        ORDER BY t.surname, t.first_name;
-    `, [schoolId]);
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY t.surname, t.first_name
+        LIMIT $${limitIndex} OFFSET $${offsetIndex};
+    `, [...values, limit, offset]);
+
     return result.rows;
+};
+
+const countTeachers = async (schoolId, options = {}) => {
+    const { conditions, values } = buildTeacherFilters(schoolId, options);
+    const result = await pool.query(`
+        SELECT COUNT(*)::INTEGER AS total
+        FROM teachers t
+        WHERE ${conditions.join(" AND ")};
+    `, values);
+    return result.rows[0].total;
 };
 
 const getTeacherById = async (id, schoolId) => {
@@ -94,4 +139,13 @@ const getTeacherByUserId = async (userId, schoolId) => {
     return result.rows[0];
 };
 
-module.exports = { createTeacher, getNextTeacherId, getTeachers, getTeacherById, updateTeacher, deactivateTeacher, getTeacherByUserId };
+module.exports = {
+    createTeacher,
+    getNextTeacherId,
+    getTeachers,
+    countTeachers,
+    getTeacherById,
+    updateTeacher,
+    deactivateTeacher,
+    getTeacherByUserId
+};
