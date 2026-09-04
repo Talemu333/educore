@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const ApiError = require("../utils/ApiError");
+const getPagination = require("../utils/pagination");
 const { withTransaction } = require("./transactionService");
 const teacherModel = require("../models/teacherModel");
 const userModel = require("../models/userModel");
@@ -61,9 +62,30 @@ const createTeacher = async (teacherData, schoolId) => {
     });
 };
 
-const getTeachers = async (schoolId) => {
+const getTeachers = async (query, schoolId) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
-    return teacherModel.getTeachers(schoolId);
+
+    const { page, limit, offset } = getPagination(query);
+    const options = {
+        search: query.search?.trim() || "",
+        departmentId: query.department_id || "",
+        status: query.status || "",
+        limit,
+        offset
+    };
+
+    const [teachers, total] = await Promise.all([
+        teacherModel.getTeachers(schoolId, options),
+        teacherModel.countTeachers(schoolId, options)
+    ]);
+
+    return {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        data: teachers
+    };
 };
 
 const getTeacherById = async (id, schoolId) => {
@@ -94,4 +116,4 @@ const deactivateTeacher = async (id, schoolId) => {
     });
 };
 
-module.exports = { createTeacher, getTeachers, getTeacherById, updateTeacher, deactivateTeacher };
+module.exports = { createTeacher, getTeachers, getTeacherById, updateTeacher, deactivateTeacher }; 
