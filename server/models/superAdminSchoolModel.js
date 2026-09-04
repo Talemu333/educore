@@ -57,6 +57,15 @@ const createSchool = async (school, admin, hashedPassword) => {
 
         const schoolId = schoolResult.rows[0].id;
 
+        // Generate the slug in application code so the school ID parameter is
+        // used only as an integer for school_settings.school_id. This avoids
+        // PostgreSQL inferring the same parameter as both integer and text.
+        const schoolSlug = String(school.school_name || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "") || `school-${schoolId}`;
+
         const settingsResult = await client.query(`
             INSERT INTO school_settings (
                 school_id, school_name, website_slug, admission_prefix,
@@ -64,25 +73,13 @@ const createSchool = async (school, admin, hashedPassword) => {
                 school_motto, school_level, is_active,
                 created_at, updated_at
             )
-            VALUES (
-                $1, $2::text,
-                COALESCE(
-                    NULLIF(
-                        regexp_replace(
-                            regexp_replace(lower(trim($2::text)), '[^a-z0-9]+', '-', 'g'),
-                            '(^-|-$)', '', 'g'
-                        ),
-                        ''
-                    ),
-                    'school-' || $1::text
-                ),
-                $3, $4, $5, $6, $7, $8, TRUE,
-                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE,
+                    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             RETURNING *;
         `, [
             schoolId,
             school.school_name,
+            schoolSlug,
             school.admission_prefix,
             school.school_email || null,
             school.school_phone || null,
