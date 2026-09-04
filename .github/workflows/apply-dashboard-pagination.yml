@@ -134,7 +134,6 @@ jobs:
                         disabled={isFetching}
                     />'''
               text = text[:table_end] + markup + text[table_end + len("</table>"):]
-
               parent_path.write_text(text, encoding="utf-8")
 
           # Payment Reports
@@ -228,10 +227,15 @@ jobs:
                                     disabled={isReportLoading}
                                 />'''
               text = text[:table_end] + markup + text[table_end + len("</table>"):]
-
               payment_path.write_text(text, encoding="utf-8")
 
           print("Dashboard pagination applied.")
+
+      - name: Validate changes
+        working-directory: educore-frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Commit and remove temporary workflow
         run: |
