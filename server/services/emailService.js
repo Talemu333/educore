@@ -37,7 +37,7 @@ async function sendPasswordResetEmail({ to, name, resetUrl }) {
         text: [
             `Hello ${name || "there"},`,
             "",
-            "We received a request to reset your EDUCORE password.",
+            `We received a request to reset your ${appName} password.`,
             "",
             `Reset your password using this link: ${resetUrl}`,
             "",
