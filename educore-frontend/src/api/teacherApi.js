@@ -1,23 +1,8 @@
 import api from "./axios";
 
-export const getTeachers = async ({
-    search = "",
-    departmentId = "",
-    status = "",
-    page = 1,
-    limit = 10
-} = {}) => {
-    const response = await api.get("/teachers", {
-        params: {
-            search,
-            department_id: departmentId,
-            status,
-            page,
-            limit
-        }
-    });
-
-    return response.data;
+export const getTeachers = async () => {
+    const response = await api.get("/teachers");
+    return response.data.data;
 };
 
 export const getTeacher = async (id) => {
