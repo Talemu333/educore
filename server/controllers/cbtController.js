@@ -20,11 +20,16 @@ const getExams = async (req, res) => {
 };
 
 const getAvailableStudentExams = async (req, res) => {
+    try { return res.json({ success: true, data: await cbtModel.getAvailableStudentExams(studentId(req), schoolId(req)) }); }
+    catch (error) { return sendError(res, error); }
+};
+
+const getStudentExam = async (req, res) => {
     try {
-        return res.json({
-            success: true,
-            data: await cbtModel.getAvailableStudentExams(studentId(req), schoolId(req))
-        });
+        const exams = await cbtModel.getAvailableStudentExams(studentId(req), schoolId(req));
+        const exam = exams.find((item) => Number(item.id) === Number(req.params.id));
+        if (!exam) return res.status(404).json({ success: false, message: "This examination is not available to you." });
+        return res.json({ success: true, data: { ...exam, questions: await cbtModel.getQuestions(exam.id, schoolId(req)) } });
     } catch (error) { return sendError(res, error); }
 };
 
@@ -107,4 +112,4 @@ const getMyAttempts = async (req, res) => {
     catch (error) { return sendError(res, error); }
 };
 
-module.exports = { getExams, getAvailableStudentExams, getExam, createExam, updateExam, deleteExam, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getMyAttempts };
+module.exports = { getExams, getAvailableStudentExams, getStudentExam, getExam, createExam, updateExam, deleteExam, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getMyAttempts };
