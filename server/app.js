@@ -41,6 +41,7 @@ const promotionHistoryRoutes = require("./routes/promotionHistoryRoutes");
 const superAdminSchoolRoutes = require("./routes/superAdminSchoolRoutes");
 const contactMessageRoutes = require("./routes/contactMessageRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
+const cbtRoutes = require("./routes/cbtRoutes");
 
 const app = express();
 
@@ -57,11 +58,9 @@ const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow non-browser requests (health checks, curl, server-to-server requests).
         if (!origin || allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
-
         return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -124,6 +123,7 @@ app.use("/api/admins", adminRoutes);
 app.use("/api/promotion-history", promotionHistoryRoutes);
 app.use("/api/super-admin/schools", superAdminSchoolRoutes);
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/cbt", cbtRoutes);
 
 app.use(errorHandler);
 module.exports = app;
