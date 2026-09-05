@@ -13,52 +13,23 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import StudentDashboardPage from "./pages/students/StudentDashboardPage";
+import StudentCBTPage from "./pages/students/StudentCBTPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
-    "dashboard",
-    "students",
-    "teachers",
-    "parents",
-    "attendance",
-    "results",
-    "timetable",
-    "payments",
-    "announcements",
-    "settings",
-    "administrators",
-    "student-promotion",
-    "promotion-history",
-    "class-subjects",
-    "admin",
-    "login",
-    "website",
-    "change-password",
-    "logout",
-    "contact-messages",
-    "expenses",
-    "parent-overview",
-    "parent",
-    "parent-dashboard",
-    "parent-results",
-    "parent-attendance",
-    "teacher-dashboard",
-    "teacher-students",
-    "forgot-password",
-    "reset-password",
-    "student-dashboard",
-    "student-cbt",
-    "student-results",
-    "student-subjects"
+    "dashboard", "students", "teachers", "parents", "attendance", "results",
+    "timetable", "payments", "announcements", "settings", "administrators",
+    "student-promotion", "promotion-history", "class-subjects", "admin", "login",
+    "website", "change-password", "logout", "contact-messages", "expenses",
+    "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
+    "teacher-dashboard", "teacher-students", "forgot-password", "reset-password",
+    "student-dashboard", "student-cbt", "student-results", "student-subjects"
 ]);
 
 function useAppPathname() {
     const [pathname, setPathname] = useState(() => window.location.pathname);
 
     useEffect(() => {
-        const updatePathname = () => {
-            setPathname(window.location.pathname);
-        };
-
+        const updatePathname = () => setPathname(window.location.pathname);
         const originalPushState = window.history.pushState;
         const originalReplaceState = window.history.replaceState;
 
@@ -66,12 +37,10 @@ function useAppPathname() {
             originalPushState.apply(this, args);
             updatePathname();
         };
-
         window.history.replaceState = function (...args) {
             originalReplaceState.apply(this, args);
             updatePathname();
         };
-
         window.addEventListener("popstate", updatePathname);
 
         return () => {
@@ -86,44 +55,24 @@ function useAppPathname() {
 
 function App() {
     const pathname = useAppPathname();
+    const firstSegment = pathname.split("/").filter(Boolean)[0] || "";
 
-    const firstSegment = pathname
-        .split("/")
-        .filter(Boolean)[0] || "";
-
-    if (pathname === "/educore") {
-        return <EduCoreLandingPage />;
-    }
-
-    if (firstSegment === "website") {
-        return <LegacyWebsiteRedirect />;
-    }
+    if (pathname === "/educore") return <EduCoreLandingPage />;
+    if (firstSegment === "website") return <LegacyWebsiteRedirect />;
 
     if (pathname === "/forgot-password") {
-        return (
-            <BrowserRouter>
-                <ForgotPasswordPage />
-            </BrowserRouter>
-        );
+        return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     }
 
     if (pathname === "/reset-password") {
-        return (
-            <BrowserRouter>
-                <ResetPasswordPage />
-            </BrowserRouter>
-        );
+        return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     }
 
     if (pathname === "/change-password") {
         return (
             <BrowserRouter>
-                <ProtectedRoute
-                    allowedRoles={["Admin", "Teacher", "Parent", "Student"]}
-                >
-                    <DashboardLayout>
-                        <ChangePasswordPage />
-                    </DashboardLayout>
+                <ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}>
+                    <DashboardLayout><ChangePasswordPage /></DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
         );
@@ -133,9 +82,17 @@ function App() {
         return (
             <BrowserRouter>
                 <ProtectedRoute allowedRoles={["Student"]}>
-                    <DashboardLayout>
-                        <StudentDashboardPage />
-                    </DashboardLayout>
+                    <DashboardLayout><StudentDashboardPage /></DashboardLayout>
+                </ProtectedRoute>
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/student-cbt") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute allowedRoles={["Student"]}>
+                    <DashboardLayout><StudentCBTPage /></DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
         );
@@ -144,13 +101,8 @@ function App() {
     if (pathname === "/contact-messages") {
         return (
             <BrowserRouter>
-                <ProtectedRoute
-                    allowedRoles={["Admin"]}
-                    allowedAdminTypes={["proprietor", "principal"]}
-                >
-                    <DashboardLayout>
-                        <ContactMessagesPage />
-                    </DashboardLayout>
+                <ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}>
+                    <DashboardLayout><ContactMessagesPage /></DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
         );
@@ -159,25 +111,15 @@ function App() {
     if (pathname === "/expenses") {
         return (
             <BrowserRouter>
-                <ProtectedRoute
-                    allowedRoles={["Admin"]}
-                    allowedAdminTypes={["proprietor", "principal", "bursar"]}
-                >
-                    <DashboardLayout>
-                        <ExpensesPage />
-                    </DashboardLayout>
+                <ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}>
+                    <DashboardLayout><ExpensesPage /></DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
         );
     }
 
-    const isSchoolWebsite =
-        firstSegment &&
-        !RESERVED_PUBLIC_PREFIXES.has(firstSegment);
-
-    return isSchoolWebsite
-        ? <SchoolWebsiteRouter />
-        : <AppRouter />;
+    const isSchoolWebsite = firstSegment && !RESERVED_PUBLIC_PREFIXES.has(firstSegment);
+    return isSchoolWebsite ? <SchoolWebsiteRouter /> : <AppRouter />;
 }
 
 export default App;
