@@ -15,7 +15,8 @@ import {
     LogOut,
     KeyRound,
     Receipt,
-    Mail
+    Mail,
+    BarChart3
 } from "lucide-react";
 
 import ROLES from "./roles";
@@ -69,6 +70,20 @@ const sidebarMenu = [
         icon: BookOpen,
         path: "/student-subjects",
         roles: [ROLES.STUDENT]
+    },
+    {
+        title: "CBT Management",
+        icon: ClipboardList,
+        path: "/cbt-management",
+        roles: [ADMIN, ROLES.TEACHER],
+        adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL]
+    },
+    {
+        title: "CBT Results",
+        icon: BarChart3,
+        path: "/cbt-results",
+        roles: [ADMIN, ROLES.TEACHER],
+        adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL]
     },
     {
         title: "Administrators",
@@ -221,6 +236,7 @@ const sidebarMenu = [
     {
         title: "Settings",
         icon: Settings,
+        path: "/settings",
         roles: [ADMIN],
         adminTypes: [PROPRIETOR, PRINCIPAL],
         children: [
@@ -248,6 +264,7 @@ const sidebarMenu = [
     {
         title: "Logout",
         icon: LogOut,
+        path: "/logout",
         roles: [ADMIN, ROLES.TEACHER, ROLES.PARENT, ROLES.STUDENT],
         adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL, BURSAR]
     }
