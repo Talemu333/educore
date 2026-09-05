@@ -60,22 +60,24 @@ const requestPasswordReset = async (req, res, next) => {
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
         const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
-        // Send the email whenever SMTP is configured. This allows the same code
-        // to be tested locally and used in production without relying on NODE_ENV.
-        const smtpConfigured = Boolean(
-            process.env.SMTP_HOST &&
-            process.env.SMTP_USER &&
-            process.env.SMTP_PASS
+        // Send the email when either Resend or SMTP is configured.
+        const emailConfigured = Boolean(
+            process.env.RESEND_API_KEY ||
+            (
+                process.env.SMTP_HOST &&
+                process.env.SMTP_USER &&
+                process.env.SMTP_PASS
+            )
         );
 
-        if (smtpConfigured) {
+        if (emailConfigured) {
             await sendPasswordResetEmail({
                 to: user.email,
                 name: user.username,
                 resetUrl,
             });
         } else {
-            console.log(`Password reset email not sent because SMTP is not configured. Reset link for ${email}: ${resetUrl}`);
+            console.log(`Password reset email not sent because no email provider is configured. Reset link for ${email}: ${resetUrl}`);
         }
 
         const payload = { success: true, message: generic };
