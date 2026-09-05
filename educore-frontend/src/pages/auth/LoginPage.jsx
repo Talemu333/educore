@@ -22,6 +22,8 @@ function LoginPage() {
                 navigate("/parent-dashboard");
             } else if (response.user.role_name === ROLES.TEACHER) {
                 navigate("/teacher-dashboard");
+            } else if (response.user.role_name === ROLES.STUDENT) {
+                navigate("/student-dashboard");
             } else {
                 navigate("/dashboard");
             }
