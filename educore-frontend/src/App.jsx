@@ -11,6 +11,8 @@ import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
+import StudentDashboardPage from "./pages/students/StudentDashboardPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard",
@@ -42,7 +44,11 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "teacher-dashboard",
     "teacher-students",
     "forgot-password",
-    "reset-password"
+    "reset-password",
+    "student-dashboard",
+    "student-cbt",
+    "student-results",
+    "student-subjects"
 ]);
 
 function useAppPathname() {
@@ -105,6 +111,32 @@ function App() {
         return (
             <BrowserRouter>
                 <ResetPasswordPage />
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/change-password") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute
+                    allowedRoles={["Admin", "Teacher", "Parent", "Student"]}
+                >
+                    <DashboardLayout>
+                        <ChangePasswordPage />
+                    </DashboardLayout>
+                </ProtectedRoute>
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/student-dashboard") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute allowedRoles={["Student"]}>
+                    <DashboardLayout>
+                        <StudentDashboardPage />
+                    </DashboardLayout>
+                </ProtectedRoute>
             </BrowserRouter>
         );
     }
