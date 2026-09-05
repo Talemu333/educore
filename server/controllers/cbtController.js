@@ -1,10 +1,18 @@
 const cbtModel = require("../models/cbtModel");
+const ApiError = require("../utils/ApiError");
 
 const schoolId = (req) => Number(req.user.school_id);
 const userId = (req) => Number(req.user.id);
-const studentId = (req) => Number(req.user.student_id || req.user.studentId || req.user.id);
 
-const sendError = (res, error) => res.status(400).json({ success: false, message: error.message || "Unable to process CBT request." });
+const studentId = (req) => {
+    const id = Number(req.user.student_id);
+    if (!Number.isInteger(id) || id < 1) {
+        throw new ApiError(403, "This student account is not linked to a student record.");
+    }
+    return id;
+};
+
+const sendError = (res, error) => res.status(error.statusCode || 400).json({ success: false, message: error.message || "Unable to process CBT request." });
 
 const getExams = async (req, res) => {
     try { return res.json({ success: true, data: await cbtModel.getExams(schoolId(req), req.query) }); }
@@ -67,8 +75,14 @@ const startAttempt = async (req, res) => {
 };
 
 const saveAnswer = async (req, res) => {
-    try { return res.json({ success: true, data: await cbtModel.saveAnswer(Number(req.params.attemptId), Number(req.body.question_id), req.body.selected_option_id ? Number(req.body.selected_option_id) : null, schoolId(req)) }); }
-    catch (error) { return sendError(res, error); }
+    try {
+        const attemptStudentId = studentId(req);
+        const attempt = await cbtModel.getStudentAttempts(attemptStudentId, schoolId(req));
+        if (!attempt.some((item) => Number(item.id) === Number(req.params.attemptId))) {
+            return res.status(404).json({ success: false, message: "Attempt not found." });
+        }
+        return res.json({ success: true, data: await cbtModel.saveAnswer(Number(req.params.attemptId), Number(req.body.question_id), req.body.selected_option_id ? Number(req.body.selected_option_id) : null, schoolId(req)) });
+    } catch (error) { return sendError(res, error); }
 };
 
 const submitAttempt = async (req, res) => {
