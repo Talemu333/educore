@@ -17,6 +17,7 @@ import StudentCBTPage from "./pages/students/StudentCBTPage";
 import StudentSubjectsPage from "./pages/students/StudentSubjectsPage";
 import StudentResultsPage from "./pages/students/StudentResultsPage";
 import CBTManagementPage from "./pages/admin/CBTManagementPage";
+import CBTResultsPage from "./pages/admin/CBTResultsPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
@@ -25,7 +26,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "website", "change-password", "logout", "contact-messages", "expenses",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
     "teacher-dashboard", "teacher-students", "forgot-password", "reset-password",
-    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management"
+    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results"
 ]);
 
 function useAppPathname() {
@@ -126,6 +127,16 @@ function App() {
             <BrowserRouter>
                 <ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}>
                     <DashboardLayout><CBTManagementPage /></DashboardLayout>
+                </ProtectedRoute>
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/cbt-results") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}>
+                    <DashboardLayout><CBTResultsPage /></DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
         );
