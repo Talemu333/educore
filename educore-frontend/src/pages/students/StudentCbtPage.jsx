@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ClipboardList, Clock3, ArrowRight, History } from "lucide-react";
-import toast from "react-hot-toast";
+import { ClipboardList, ArrowRight, History } from "lucide-react";
 
 import PageHeader from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +19,6 @@ function StudentCbtPage() {
 
     const exams = examsQuery.data || [];
     const attempts = attemptsQuery.data || [];
-
     const loading = examsQuery.isLoading || attemptsQuery.isLoading;
     const error = examsQuery.error || attemptsQuery.error;
 
