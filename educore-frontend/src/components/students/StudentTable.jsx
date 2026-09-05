@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Eye, Pencil, UserX } from "lucide-react";
+import { Eye, Pencil, UserPlus, UserX } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useStudents } from "../../hooks/useStudents";
 import useDebounce from "../../hooks/useDebounce";
 import { useDeactivateStudent } from "../../hooks/useDeactivateStudent";
+import api from "../../api/axios";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -35,6 +36,7 @@ function StudentTable() {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [studentToDeactivate, setStudentToDeactivate] = useState(null);
+    const [creatingAccountId, setCreatingAccountId] = useState(null);
 
     const debouncedSearch = useDebounce(search);
     const deactivateStudentMutation = useDeactivateStudent();
@@ -64,6 +66,36 @@ function StudentTable() {
     const handleLimitChange = (event) => {
         setLimit(Number(event.target.value));
         setPage(1);
+    };
+
+    const handleCreateAccount = async (student) => {
+        if (!student?.id || creatingAccountId) return;
+
+        setCreatingAccountId(student.id);
+
+        try {
+            const response = await api.post(`/students/${student.id}/account`);
+            const account = response.data?.data;
+
+            if (account?.username && account?.temporary_password) {
+                alert(
+                    `Student account created successfully.\n\n` +
+                    `Student: ${student.surname} ${student.first_name}\n` +
+                    `Username: ${account.username}\n` +
+                    `Temporary Password: ${account.temporary_password}\n\n` +
+                    `Please give these credentials to the student. They will be required to change the password on first login.`
+                );
+            } else {
+                toast.success("Student account created successfully.");
+            }
+        } catch (err) {
+            toast.error(
+                err.response?.data?.message ||
+                "Failed to create student account."
+            );
+        } finally {
+            setCreatingAccountId(null);
+        }
     };
 
     if (error) {
@@ -120,7 +152,7 @@ function StudentTable() {
                     </div>
                 ) : (
                     <div className="w-full overflow-x-auto rounded-lg border">
-                        <Table className="min-w-[850px]">
+                        <Table className="min-w-[950px]">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="whitespace-nowrap">Admission No</TableHead>
@@ -147,6 +179,15 @@ function StudentTable() {
                                         <TableCell className="whitespace-nowrap">{student.arm_name}</TableCell>
                                         <TableCell className="whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon-sm"
+                                                    title="Create Student Login"
+                                                    disabled={creatingAccountId === student.id}
+                                                    onClick={() => handleCreateAccount(student)}
+                                                >
+                                                    <UserPlus className="h-4 w-4" />
+                                                </Button>
                                                 <Button asChild variant="outline" size="icon-sm" title="View Student">
                                                     <Link to={`/students/${student.id}`}>
                                                         <Eye className="h-4 w-4" />
