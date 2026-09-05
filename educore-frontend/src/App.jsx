@@ -14,6 +14,8 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import StudentDashboardPage from "./pages/students/StudentDashboardPage";
 import StudentCBTPage from "./pages/students/StudentCBTPage";
+import StudentSubjectsPage from "./pages/students/StudentSubjectsPage";
+import StudentResultsPage from "./pages/students/StudentResultsPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
@@ -93,6 +95,26 @@ function App() {
             <BrowserRouter>
                 <ProtectedRoute allowedRoles={["Student"]}>
                     <DashboardLayout><StudentCBTPage /></DashboardLayout>
+                </ProtectedRoute>
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/student-subjects") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute allowedRoles={["Student"]}>
+                    <DashboardLayout><StudentSubjectsPage /></DashboardLayout>
+                </ProtectedRoute>
+            </BrowserRouter>
+        );
+    }
+
+    if (pathname === "/student-results") {
+        return (
+            <BrowserRouter>
+                <ProtectedRoute allowedRoles={["Student"]}>
+                    <DashboardLayout><StudentResultsPage /></DashboardLayout>
                 </ProtectedRoute>
             </BrowserRouter>
         );
