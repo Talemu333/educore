@@ -13,12 +13,36 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
-    "dashboard", "students", "teachers", "parents",
-    "attendance", "results", "timetable", "payments", "announcements",
-    "settings", "administrators", "student-promotion", "promotion-history",
-    "class-subjects", "admin", "login", "website", "change-password",
-    "logout", "contact-messages", "expenses", "parent-overview",
-    "parent", "forgot-password", "reset-password"
+    "dashboard",
+    "students",
+    "teachers",
+    "parents",
+    "attendance",
+    "results",
+    "timetable",
+    "payments",
+    "announcements",
+    "settings",
+    "administrators",
+    "student-promotion",
+    "promotion-history",
+    "class-subjects",
+    "admin",
+    "login",
+    "website",
+    "change-password",
+    "logout",
+    "contact-messages",
+    "expenses",
+    "parent-overview",
+    "parent",
+    "parent-dashboard",
+    "parent-results",
+    "parent-attendance",
+    "teacher-dashboard",
+    "teacher-students",
+    "forgot-password",
+    "reset-password"
 ]);
 
 function useAppPathname() {
