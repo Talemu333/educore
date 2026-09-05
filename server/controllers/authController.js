@@ -14,7 +14,8 @@ const login = (req, res, next) => {
             return res.json({ success: true, message: "Login successful.", user: {
                 id: user.id, username: user.username, email: user.email,
                 role_name: user.role_name, must_change_password: user.must_change_password,
-                school_id: user.school_id, admin_type: user.admin_type
+                school_id: user.school_id, student_id: user.student_id || null,
+                admin_type: user.admin_type
             }});
         });
     })(req, res, next);
@@ -60,7 +61,6 @@ const requestPasswordReset = async (req, res, next) => {
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
         const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
-        // Send the email when either Resend or SMTP is configured.
         const emailConfigured = Boolean(
             process.env.RESEND_API_KEY ||
             (
@@ -81,7 +81,6 @@ const requestPasswordReset = async (req, res, next) => {
         }
 
         const payload = { success: true, message: generic };
-        // Keep the reset URL visible only outside production for local testing.
         if (process.env.NODE_ENV !== "production") payload.reset_url = resetUrl;
         res.json(payload);
     } catch (error) {
@@ -98,9 +97,9 @@ const resetPassword = async (req, res, next) => {
         if (new_password.length < 8) return res.status(400).json({ success: false, message: "New password must be at least 8 characters long." });
         const tokenHash = crypto.createHash("sha256").update(String(token)).digest("hex");
         const user = await authModel.findUserByResetTokenHash(tokenHash);
-        if (!user || user.is_active === false) return res.status(400).json({ success: false, message: "This reset link is invalid or has expired." });
+        if (!user || user.is_active === false) return res.status(400).json({ success: false, message: "Invalid or expired reset token." });
         await authModel.resetPassword(user.id, await bcrypt.hash(new_password, 10));
-        res.json({ success: true, message: "Password reset successfully. You can now log in." });
+        res.json({ success: true, message: "Password reset successfully." });
     } catch (error) { next(error); }
 };
 
