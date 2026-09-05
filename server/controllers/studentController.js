@@ -19,6 +19,11 @@ const getStudentById = asyncHandler(async (req, res) => {
     res.json({ success: true, data: student });
 });
 
+const getMyStudentProfile = asyncHandler(async (req, res) => {
+    const student = await studentService.getStudentByUserId(req.user.id, schoolId(req));
+    res.json({ success: true, data: student });
+});
+
 const updateStudent = asyncHandler(async (req, res) => {
     const student = await studentService.updateStudent(req.params.id, req.body, schoolId(req));
     res.json({ success: true, message: "Student updated successfully.", data: student });
@@ -41,11 +46,7 @@ const getStudentParents = asyncHandler(async (req, res) => {
 
 const createStudentAccount = asyncHandler(async (req, res) => {
     const account = await studentAccountService.createStudentAccount(req.params.id, schoolId(req));
-    res.status(201).json({
-        success: true,
-        message: "Student login account created successfully.",
-        data: account
-    });
+    res.status(201).json({ success: true, message: "Student login account created successfully.", data: account });
 });
 
 const getStudentAccount = asyncHandler(async (req, res) => {
@@ -53,14 +54,4 @@ const getStudentAccount = asyncHandler(async (req, res) => {
     res.json({ success: true, data: account });
 });
 
-module.exports = {
-    createStudent,
-    getAllStudents,
-    getStudentById,
-    updateStudent,
-    searchStudents,
-    deactivateStudent,
-    getStudentParents,
-    createStudentAccount,
-    getStudentAccount
-};
+module.exports = { createStudent, getAllStudents, getStudentById, getMyStudentProfile, updateStudent, searchStudents, deactivateStudent, getStudentParents, createStudentAccount, getStudentAccount };
