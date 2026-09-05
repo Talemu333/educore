@@ -22,6 +22,37 @@ const getExams = async (schoolId, filters = {}) => {
     return result.rows;
 };
 
+const getAvailableStudentExams = async (studentId, schoolId) => {
+    const result = await pool.query(`
+        SELECT e.id, e.title, e.description, e.duration_minutes, e.total_marks,
+               e.pass_mark, e.max_attempts, e.randomize_questions,
+               e.randomize_options, e.show_result_immediately, e.starts_at,
+               e.ends_at, s.subject_name, c.class_name, a.arm_name,
+               COALESCE(att.attempt_count, 0) AS attempt_count
+        FROM cbt_exams e
+        JOIN students st
+          ON st.id = $1
+         AND st.school_id = $2
+         AND st.class_id = e.class_id
+         AND (e.arm_id IS NULL OR e.arm_id = st.arm_id)
+        JOIN subjects s ON s.id = e.subject_id AND s.school_id = e.school_id
+        JOIN classes c ON c.id = e.class_id AND c.school_id = e.school_id
+        LEFT JOIN arms a ON a.id = e.arm_id AND a.school_id = e.school_id
+        LEFT JOIN (
+            SELECT exam_id, COUNT(*)::int AS attempt_count
+            FROM cbt_attempts
+            WHERE student_id = $1 AND school_id = $2
+            GROUP BY exam_id
+        ) att ON att.exam_id = e.id
+        WHERE e.school_id = $2
+          AND e.status = 'published'
+          AND (e.starts_at IS NULL OR e.starts_at <= CURRENT_TIMESTAMP)
+          AND (e.ends_at IS NULL OR e.ends_at >= CURRENT_TIMESTAMP)
+        ORDER BY e.starts_at NULLS FIRST, e.created_at DESC, e.id DESC;
+    `, [studentId, schoolId]);
+    return result.rows;
+};
+
 const getExamById = async (examId, schoolId) => {
     const result = await pool.query(`
         SELECT e.*, s.subject_name, c.class_name, a.arm_name
@@ -155,11 +186,20 @@ const deleteQuestion = async (questionId, schoolId) => {
 const startAttempt = async (examId, studentId, schoolId) => {
     const exam = await getExamById(examId, schoolId);
     if (!exam) throw new Error("Examination not found.");
-    const student = await pool.query("SELECT id FROM students WHERE id=$1 AND school_id=$2", [studentId, schoolId]);
+    if (exam.status !== "published") throw new Error("This examination is not available.");
+    if (exam.starts_at && new Date(exam.starts_at) > new Date()) throw new Error("This examination has not started yet.");
+    if (exam.ends_at && new Date(exam.ends_at) < new Date()) throw new Error("This examination has ended.");
+
+    const student = await pool.query("SELECT id, class_id, arm_id FROM students WHERE id=$1 AND school_id=$2", [studentId, schoolId]);
     if (!student.rows[0]) throw new Error("Student not found for this school.");
+    if (Number(student.rows[0].class_id) !== Number(exam.class_id) || (exam.arm_id && Number(student.rows[0].arm_id) !== Number(exam.arm_id))) {
+        throw new Error("This examination is not assigned to your class.");
+    }
+
     const count = await pool.query("SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND student_id=$2 AND school_id=$3", [examId, studentId, schoolId]);
     const attemptNumber = count.rows[0].count + 1;
     if (attemptNumber > exam.max_attempts) throw new Error("Maximum attempts reached.");
+
     const result = await pool.query(`
         INSERT INTO cbt_attempts (school_id,exam_id,student_id,attempt_number,expires_at)
         VALUES ($1,$2,$3,$4,CURRENT_TIMESTAMP + ($5 || ' minutes')::interval) RETURNING *;
@@ -219,4 +259,4 @@ const getStudentAttempts = async (studentId, schoolId) => {
     return result.rows;
 };
 
-module.exports = { getExams, getExamById, createExam, updateExam, deleteExam, getQuestions, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getStudentAttempts };
+module.exports = { getExams, getAvailableStudentExams, getExamById, createExam, updateExam, deleteExam, getQuestions, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getStudentAttempts };
