@@ -29,7 +29,23 @@ const getStudentExam = async (req, res) => {
         const exams = await cbtModel.getAvailableStudentExams(studentId(req), schoolId(req));
         const exam = exams.find((item) => Number(item.id) === Number(req.params.id));
         if (!exam) return res.status(404).json({ success: false, message: "This examination is not available to you." });
-        return res.json({ success: true, data: { ...exam, questions: await cbtModel.getQuestions(exam.id, schoolId(req)) } });
+
+        const questions = await cbtModel.getQuestions(exam.id, schoolId(req));
+        const safeQuestions = questions.map((question) => ({
+            id: question.id,
+            question_text: question.question_text,
+            image_url: question.image_url,
+            marks: question.marks,
+            question_order: question.question_order,
+            options: (question.options || []).map((option) => ({
+                id: option.id,
+                option_text: option.option_text,
+                option_image_url: option.option_image_url,
+                option_order: option.option_order
+            }))
+        }));
+
+        return res.json({ success: true, data: { ...exam, questions: safeQuestions } });
     } catch (error) { return sendError(res, error); }
 };
 
