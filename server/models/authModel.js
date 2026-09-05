@@ -4,7 +4,7 @@ const findUser = async (login) => {
     const query = `
         SELECT users.id, users.username, users.email, users.password,
                users.must_change_password, users.last_login, users.admin_type,
-               users.school_id, roles.role_name
+               users.school_id, users.student_id, users.is_active, roles.role_name
         FROM users JOIN roles ON users.role_id = roles.id
         WHERE username = $1 OR email = $1;
     `;
@@ -15,7 +15,8 @@ const findUser = async (login) => {
 const findUserById = async (id) => {
     const query = `
         SELECT users.id, users.username, users.email, users.must_change_password,
-               users.last_login, users.admin_type, users.school_id, roles.role_name
+               users.last_login, users.admin_type, users.school_id,
+               users.student_id, users.is_active, roles.role_name
         FROM users JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1;
     `;
@@ -38,7 +39,7 @@ const updatePassword = async (userId, hashedPassword) => {
 
 const findUserByEmail = async (email) => {
     const result = await pool.query(`
-        SELECT id, username, email, school_id, is_active
+        SELECT id, username, email, school_id, student_id, is_active
         FROM users
         WHERE LOWER(email) = LOWER($1)
         LIMIT 1;
@@ -58,7 +59,7 @@ const savePasswordResetToken = async (userId, tokenHash, expiresAt) => {
 
 const findUserByResetTokenHash = async (tokenHash) => {
     const result = await pool.query(`
-        SELECT id, username, email, school_id, is_active
+        SELECT id, username, email, school_id, student_id, is_active
         FROM users
         WHERE password_reset_token_hash = $1
           AND password_reset_expires_at > CURRENT_TIMESTAMP
