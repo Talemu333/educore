@@ -14,10 +14,17 @@ function LoginPage() {
             const response = await login(data);
             await loginUser(response.user);
 
-            if (response.user.must_change_password) navigate("/change-password");
-            else if (response.user.role_name === ROLES.SUPER_ADMIN) navigate("/settings");
-            else if (response.user.role_name === ROLES.PARENT) navigate("/parent-dashboard");
-            else navigate("/dashboard");
+            if (response.user.must_change_password) {
+                navigate("/change-password");
+            } else if (response.user.role_name === ROLES.SUPER_ADMIN) {
+                navigate("/settings");
+            } else if (response.user.role_name === ROLES.PARENT) {
+                navigate("/parent-dashboard");
+            } else if (response.user.role_name === ROLES.TEACHER) {
+                navigate("/teacher-dashboard");
+            } else {
+                navigate("/dashboard");
+            }
         } catch (error) {
             console.error(error);
             alert(error.response?.data?.message || "Login failed.");
