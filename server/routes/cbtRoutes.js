@@ -4,6 +4,7 @@ const authenticate = require("../middlewares/authenticate");
 const authorize = require("../middlewares/authorize");
 const ROLES = require("../config/roles");
 const controller = require("../controllers/cbtController");
+const reportController = require("../controllers/cbtReportController");
 
 const staffRoles = [ROLES.ADMIN, ROLES.TEACHER, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL];
 
@@ -26,5 +27,8 @@ router.delete("/exams/:id", authorize(...staffRoles), controller.deleteExam);
 router.post("/exams/:examId/questions", authorize(...staffRoles), controller.createQuestion);
 router.put("/questions/:id", authorize(...staffRoles), controller.updateQuestion);
 router.delete("/questions/:id", authorize(...staffRoles), controller.deleteQuestion);
+router.get("/reports/attempts", authorize(...staffRoles), reportController.getAttempts);
+router.get("/reports/attempts/:id", authorize(...staffRoles), reportController.getAttempt);
+router.get("/reports/exams/:examId/performance", authorize(...staffRoles), reportController.getPerformance);
 
 module.exports = router;
