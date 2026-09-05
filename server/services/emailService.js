@@ -11,7 +11,9 @@ function getTransporter() {
     const pass = process.env.SMTP_PASS;
 
     if (!host || !user || !pass) {
-        throw new Error("SMTP email configuration is missing. Set SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS.");
+        throw new Error(
+            "SMTP email configuration is missing. Set SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS."
+        );
     }
 
     transporter = nodemailer.createTransport({
@@ -25,18 +27,25 @@ function getTransporter() {
     return transporter;
 }
 
-async function sendPasswordResetEmail({ to, name, resetUrl }) {
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+function buildPasswordResetMessage({ to, name, resetUrl }) {
     const appName = process.env.APP_NAME || "EDUCORE";
+    const from =
+        process.env.RESEND_FROM || process.env.MAIL_FROM || process.env.SMTP_USER;
 
-    if (!from) throw new Error("MAIL_FROM or SMTP_USER must be configured.");
+    if (!from) {
+        throw new Error(
+            "RESEND_FROM, MAIL_FROM or SMTP_USER must be configured."
+        );
+    }
 
-    return getTransporter().sendMail({
+    const greeting = name || "there";
+
+    return {
         from,
         to,
         subject: `${appName} - Reset your password`,
         text: [
-            `Hello ${name || "there"},`,
+            `Hello ${greeting},`,
             "",
             `We received a request to reset your ${appName} password.`,
             "",
@@ -55,7 +64,7 @@ async function sendPasswordResetEmail({ to, name, resetUrl }) {
                     </div>
                     <div style="padding:28px">
                         <h2 style="margin:0 0 12px;font-size:20px">Reset your password</h2>
-                        <p style="line-height:1.6">Hello ${name || "there"},</p>
+                        <p style="line-height:1.6">Hello ${greeting},</p>
                         <p style="line-height:1.6">We received a request to reset your password. Click the button below to create a new password.</p>
                         <p style="margin:28px 0;text-align:center">
                             <a href="${resetUrl}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700">Reset Password</a>
@@ -66,7 +75,49 @@ async function sendPasswordResetEmail({ to, name, resetUrl }) {
                 </div>
             </div>
         `,
+    };
+}
+
+async function sendWithResend(message) {
+    const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
     });
+
+    const responseText = await response.text();
+    let responseBody;
+
+    try {
+        responseBody = responseText ? JSON.parse(responseText) : {};
+    } catch {
+        responseBody = { message: responseText };
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            `Resend email failed (${response.status}): ${
+                responseBody.message || "Unknown error"
+            }`
+        );
+    }
+
+    return responseBody;
+}
+
+async function sendPasswordResetEmail({ to, name, resetUrl }) {
+    const message = buildPasswordResetMessage({ to, name, resetUrl });
+
+    // Use Resend when RESEND_API_KEY is configured. This is recommended for
+    // production deployments such as Render because it avoids SMTP port limits.
+    if (process.env.RESEND_API_KEY) {
+        return sendWithResend(message);
+    }
+
+    return getTransporter().sendMail(message);
 }
 
 module.exports = { sendPasswordResetEmail };
