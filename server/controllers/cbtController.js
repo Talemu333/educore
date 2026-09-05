@@ -19,6 +19,15 @@ const getExams = async (req, res) => {
     catch (error) { return sendError(res, error); }
 };
 
+const getAvailableStudentExams = async (req, res) => {
+    try {
+        return res.json({
+            success: true,
+            data: await cbtModel.getAvailableStudentExams(studentId(req), schoolId(req))
+        });
+    } catch (error) { return sendError(res, error); }
+};
+
 const getExam = async (req, res) => {
     try {
         const exam = await cbtModel.getExamById(Number(req.params.id), schoolId(req));
@@ -98,4 +107,4 @@ const getMyAttempts = async (req, res) => {
     catch (error) { return sendError(res, error); }
 };
 
-module.exports = { getExams, getExam, createExam, updateExam, deleteExam, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getMyAttempts };
+module.exports = { getExams, getAvailableStudentExams, getExam, createExam, updateExam, deleteExam, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getMyAttempts };
