@@ -11,6 +11,7 @@ router.use(authenticate);
 
 // Student routes
 router.get("/exams/available", authorize(ROLES.STUDENT), controller.getAvailableStudentExams);
+router.get("/exams/available/:id", authorize(ROLES.STUDENT), controller.getStudentExam);
 router.get("/my-attempts", authorize(ROLES.STUDENT), controller.getMyAttempts);
 router.post("/exams/:examId/start", authorize(ROLES.STUDENT), controller.startAttempt);
 router.post("/attempts/:attemptId/answers", authorize(ROLES.STUDENT), controller.saveAnswer);
