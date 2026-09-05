@@ -44,13 +44,26 @@ const expenseRoutes = require("./routes/expenseRoutes");
 
 const app = express();
 
-const allowedOrigins = [
+const defaultOrigins = [
     "http://localhost:5173",
     "https://educore-ivory.vercel.app",
 ];
 
+const configuredOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
+    : [];
+
+const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
+
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        // Allow non-browser requests (health checks, curl, server-to-server requests).
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
 }));
 
