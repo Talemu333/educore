@@ -10,6 +10,7 @@ const staffRoles = [ROLES.ADMIN, ROLES.TEACHER, ROLES.PRINCIPAL, ROLES.VICE_PRIN
 router.use(authenticate);
 
 // Student routes
+router.get("/exams/available", authorize(ROLES.STUDENT), controller.getAvailableStudentExams);
 router.get("/my-attempts", authorize(ROLES.STUDENT), controller.getMyAttempts);
 router.post("/exams/:examId/start", authorize(ROLES.STUDENT), controller.startAttempt);
 router.post("/attempts/:attemptId/answers", authorize(ROLES.STUDENT), controller.saveAnswer);
