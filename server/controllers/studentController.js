@@ -1,4 +1,5 @@
 const studentService = require("../services/studentService");
+const studentAccountService = require("../services/studentAccountService");
 const asyncHandler = require("../middlewares/asyncHandler");
 
 const schoolId = (req) => req.user?.school_id;
@@ -38,4 +39,28 @@ const getStudentParents = asyncHandler(async (req, res) => {
     res.json({ success: true, data: parents });
 });
 
-module.exports = { createStudent, getAllStudents, getStudentById, updateStudent, searchStudents, deactivateStudent, getStudentParents };
+const createStudentAccount = asyncHandler(async (req, res) => {
+    const account = await studentAccountService.createStudentAccount(req.params.id, schoolId(req));
+    res.status(201).json({
+        success: true,
+        message: "Student login account created successfully.",
+        data: account
+    });
+});
+
+const getStudentAccount = asyncHandler(async (req, res) => {
+    const account = await studentAccountService.getStudentAccount(req.params.id, schoolId(req));
+    res.json({ success: true, data: account });
+});
+
+module.exports = {
+    createStudent,
+    getAllStudents,
+    getStudentById,
+    updateStudent,
+    searchStudents,
+    deactivateStudent,
+    getStudentParents,
+    createStudentAccount,
+    getStudentAccount
+};
