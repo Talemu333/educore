@@ -8,11 +8,39 @@ import PageHeader from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 
+const ACTIVE_ATTEMPT_KEY = "educore_active_cbt_attempt";
+
 function formatTime(seconds) {
     const safe = Math.max(0, Number(seconds) || 0);
     const minutes = Math.floor(safe / 60);
     const remaining = safe % 60;
     return `${String(minutes).padStart(2, "0")}:${String(remaining).padStart(2, "0")}`;
+}
+
+function readSavedAttemptId() {
+    try {
+        const value = window.localStorage.getItem(ACTIVE_ATTEMPT_KEY);
+        const id = Number(value);
+        return Number.isInteger(id) && id > 0 ? id : null;
+    } catch {
+        return null;
+    }
+}
+
+function saveActiveAttempt(attemptId) {
+    try {
+        window.localStorage.setItem(ACTIVE_ATTEMPT_KEY, String(attemptId));
+    } catch {
+        // Local storage may be unavailable; the server remains authoritative.
+    }
+}
+
+function clearActiveAttempt() {
+    try {
+        window.localStorage.removeItem(ACTIVE_ATTEMPT_KEY);
+    } catch {
+        // Ignore storage failures.
+    }
 }
 
 function StudentCBTPage() {
@@ -39,8 +67,77 @@ function StudentCBTPage() {
         }
     };
 
+    const loadAttempt = async (attemptId) => {
+        try {
+            const attemptsResponse = await api.get("/cbt/my-attempts");
+            const attempts = attemptsResponse.data?.data || [];
+            const savedAttempt = attempts.find(
+                (item) => Number(item.id) === Number(attemptId) && item.status === "in_progress"
+            );
+
+            if (!savedAttempt) {
+                clearActiveAttempt();
+                return false;
+            }
+
+            if (savedAttempt.expires_at && new Date(savedAttempt.expires_at) <= new Date()) {
+                try {
+                    await api.post(`/cbt/attempts/${savedAttempt.id}/submit`);
+                } catch {
+                    // The backend will remain authoritative about an expired attempt.
+                }
+                clearActiveAttempt();
+                return false;
+            }
+
+            const examResponse = await api.get(
+                `/cbt/exams/available/${savedAttempt.exam_id}?attemptId=${savedAttempt.id}`
+            );
+            const resumedExam = examResponse.data?.data;
+            if (!resumedExam) {
+                clearActiveAttempt();
+                return false;
+            }
+
+            const questionAnswers = {};
+            (attemptsResponse.data?.data || [])
+                .filter((item) => Number(item.id) === Number(savedAttempt.id))
+                .forEach((item) => {
+                    // Answers are loaded separately below; this keeps the state shape explicit.
+                });
+
+            try {
+                const savedAnswersResponse = await api.get(`/cbt/attempts/${savedAttempt.id}/answers`);
+                for (const answer of savedAnswersResponse.data?.data || []) {
+                    if (answer.question_id && answer.selected_option_id) {
+                        questionAnswers[answer.question_id] = answer.selected_option_id;
+                    }
+                }
+            } catch {
+                // Older deployments may not expose the answers endpoint yet. The active attempt can still resume.
+            }
+
+            setAttempt(savedAttempt);
+            setExam(resumedExam);
+            setAnswers(questionAnswers);
+            setCurrentQuestion(0);
+            return true;
+        } catch (error) {
+            clearActiveAttempt();
+            toast.error(error.response?.data?.message || "Unable to resume your CBT attempt.");
+            return false;
+        }
+    };
+
     useEffect(() => {
-        loadExams();
+        const initialize = async () => {
+            await loadExams();
+            const savedAttemptId = readSavedAttemptId();
+            if (savedAttemptId) {
+                await loadAttempt(savedAttemptId);
+            }
+        };
+        initialize();
     }, []);
 
     useEffect(() => {
@@ -72,8 +169,20 @@ function StudentCBTPage() {
     const startExam = async (selectedExam) => {
         setStarting(true);
         try {
+            const attemptsResponse = await api.get("/cbt/my-attempts");
+            const existingAttempt = (attemptsResponse.data?.data || []).find(
+                (item) => Number(item.exam_id) === Number(selectedExam.id) && item.status === "in_progress"
+            );
+
+            if (existingAttempt) {
+                saveActiveAttempt(existingAttempt.id);
+                await loadAttempt(existingAttempt.id);
+                return;
+            }
+
             const attemptResponse = await api.post(`/cbt/exams/${selectedExam.id}/start`);
             const newAttempt = attemptResponse.data?.data;
+            saveActiveAttempt(newAttempt.id);
             const examResponse = await api.get(
                 `/cbt/exams/available/${selectedExam.id}?attemptId=${newAttempt.id}`
             );
@@ -110,6 +219,8 @@ function StudentCBTPage() {
         try {
             const response = await api.post(`/cbt/attempts/${attempt.id}/submit`);
             const result = response.data?.data;
+
+            clearActiveAttempt();
 
             if (autoSubmitted) {
                 alert("Time is up. Your examination has been submitted automatically.");
