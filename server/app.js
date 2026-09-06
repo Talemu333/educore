@@ -126,6 +126,7 @@ app.use("/api/super-admin/schools", superAdminSchoolRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/cbt", cbtRoutes);
 app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
+app.use("/api/cbt-question-bank", cbtQuestionBankRoutes);
 
 app.use(errorHandler);
 module.exports = app;
