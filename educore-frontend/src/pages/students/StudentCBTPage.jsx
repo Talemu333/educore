@@ -73,8 +73,11 @@ function StudentCBTPage() {
         setStarting(true);
         try {
             const attemptResponse = await api.post(`/cbt/exams/${selectedExam.id}/start`);
-            const examResponse = await api.get(`/cbt/exams/available/${selectedExam.id}`);
-            setAttempt(attemptResponse.data?.data);
+            const newAttempt = attemptResponse.data?.data;
+            const examResponse = await api.get(
+                `/cbt/exams/available/${selectedExam.id}?attemptId=${newAttempt.id}`
+            );
+            setAttempt(newAttempt);
             setExam(examResponse.data?.data);
             setAnswers({});
             setCurrentQuestion(0);
