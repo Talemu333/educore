@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 
 const ACTIVE_ATTEMPT_KEY = "educore_active_cbt_attempt";
+const attemptAnswersKey = (attemptId) => `educore_cbt_answers_${attemptId}`;
 
 function formatTime(seconds) {
     const safe = Math.max(0, Number(seconds) || 0);
@@ -38,6 +39,31 @@ function saveActiveAttempt(attemptId) {
 function clearActiveAttempt() {
     try {
         window.localStorage.removeItem(ACTIVE_ATTEMPT_KEY);
+    } catch {
+        // Ignore storage failures.
+    }
+}
+
+function readSavedAnswers(attemptId) {
+    try {
+        const raw = window.localStorage.getItem(attemptAnswersKey(attemptId));
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return {};
+    }
+}
+
+function saveAnswers(attemptId, answers) {
+    try {
+        window.localStorage.setItem(attemptAnswersKey(attemptId), JSON.stringify(answers));
+    } catch {
+        // Server-side answer saving remains authoritative.
+    }
+}
+
+function clearSavedAnswers(attemptId) {
+    try {
+        window.localStorage.removeItem(attemptAnswersKey(attemptId));
     } catch {
         // Ignore storage failures.
     }
@@ -87,6 +113,7 @@ function StudentCBTPage() {
                     // The backend will remain authoritative about an expired attempt.
                 }
                 clearActiveAttempt();
+                clearSavedAnswers(savedAttempt.id);
                 return false;
             }
 
@@ -99,27 +126,9 @@ function StudentCBTPage() {
                 return false;
             }
 
-            const questionAnswers = {};
-            (attemptsResponse.data?.data || [])
-                .filter((item) => Number(item.id) === Number(savedAttempt.id))
-                .forEach((item) => {
-                    // Answers are loaded separately below; this keeps the state shape explicit.
-                });
-
-            try {
-                const savedAnswersResponse = await api.get(`/cbt/attempts/${savedAttempt.id}/answers`);
-                for (const answer of savedAnswersResponse.data?.data || []) {
-                    if (answer.question_id && answer.selected_option_id) {
-                        questionAnswers[answer.question_id] = answer.selected_option_id;
-                    }
-                }
-            } catch {
-                // Older deployments may not expose the answers endpoint yet. The active attempt can still resume.
-            }
-
             setAttempt(savedAttempt);
             setExam(resumedExam);
-            setAnswers(questionAnswers);
+            setAnswers(readSavedAnswers(savedAttempt.id));
             setCurrentQuestion(0);
             return true;
         } catch (error) {
@@ -183,6 +192,7 @@ function StudentCBTPage() {
             const attemptResponse = await api.post(`/cbt/exams/${selectedExam.id}/start`);
             const newAttempt = attemptResponse.data?.data;
             saveActiveAttempt(newAttempt.id);
+            clearSavedAnswers(newAttempt.id);
             const examResponse = await api.get(
                 `/cbt/exams/available/${selectedExam.id}?attemptId=${newAttempt.id}`
             );
@@ -200,7 +210,11 @@ function StudentCBTPage() {
     const chooseAnswer = async (question, optionId) => {
         if (!attempt || !question) return;
 
-        setAnswers((previous) => ({ ...previous, [question.id]: optionId }));
+        setAnswers((previous) => {
+            const next = { ...previous, [question.id]: optionId };
+            saveAnswers(attempt.id, next);
+            return next;
+        });
 
         try {
             await api.post(`/cbt/attempts/${attempt.id}/answers`, {
@@ -221,6 +235,7 @@ function StudentCBTPage() {
             const result = response.data?.data;
 
             clearActiveAttempt();
+            clearSavedAnswers(attempt.id);
 
             if (autoSubmitted) {
                 alert("Time is up. Your examination has been submitted automatically.");
