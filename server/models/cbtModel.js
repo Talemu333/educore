@@ -65,7 +65,37 @@ const getExamById = async (examId, schoolId) => {
     return result.rows[0];
 };
 
+const getQuestionTotalMarks = async (examId, schoolId, client = pool) => {
+    const result = await client.query(
+        `SELECT COALESCE(SUM(marks), 0)::numeric AS total_marks,
+                COUNT(*)::int AS question_count
+         FROM cbt_questions
+         WHERE exam_id=$1 AND school_id=$2`,
+        [examId, schoolId]
+    );
+    return {
+        totalMarks: Number(result.rows[0]?.total_marks || 0),
+        questionCount: Number(result.rows[0]?.question_count || 0)
+    };
+};
+
+const syncExamTotalMarks = async (examId, schoolId, client = pool) => {
+    const totals = await getQuestionTotalMarks(examId, schoolId, client);
+    const result = await client.query(
+        `UPDATE cbt_exams
+         SET total_marks=$3, updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 AND school_id=$2
+         RETURNING *`,
+        [examId, schoolId, totals.totalMarks]
+    );
+    return result.rows[0];
+};
+
 const createExam = async (data, schoolId, userId) => {
+    if (data.status === "published") {
+        throw new Error("Create the examination as a draft, add its questions, then publish it.");
+    }
+
     const result = await pool.query(`
         INSERT INTO cbt_exams (
             school_id, subject_id, class_id, arm_id, title, description,
@@ -77,7 +107,7 @@ const createExam = async (data, schoolId, userId) => {
     `, [
         schoolId, data.subject_id, data.class_id, data.arm_id || null,
         data.title, data.description || null, data.duration_minutes,
-        data.total_marks || 0, data.pass_mark || 0, data.max_attempts || 1,
+        0, data.pass_mark || 0, data.max_attempts || 1,
         Boolean(data.randomize_questions), Boolean(data.randomize_options),
         data.show_result_immediately !== false, data.starts_at || null,
         data.ends_at || null, data.status || "draft", userId
@@ -86,24 +116,46 @@ const createExam = async (data, schoolId, userId) => {
 };
 
 const updateExam = async (examId, data, schoolId) => {
-    const result = await pool.query(`
-        UPDATE cbt_exams SET
-            subject_id=$3, class_id=$4, arm_id=$5, title=$6, description=$7,
-            duration_minutes=$8, total_marks=$9, pass_mark=$10, max_attempts=$11,
-            randomize_questions=$12, randomize_options=$13,
-            show_result_immediately=$14, starts_at=$15, ends_at=$16,
-            status=$17, updated_at=CURRENT_TIMESTAMP
-        WHERE id=$1 AND school_id=$2
-        RETURNING *;
-    `, [
-        examId, schoolId, data.subject_id, data.class_id, data.arm_id || null,
-        data.title, data.description || null, data.duration_minutes,
-        data.total_marks || 0, data.pass_mark || 0, data.max_attempts || 1,
-        Boolean(data.randomize_questions), Boolean(data.randomize_options),
-        data.show_result_immediately !== false, data.starts_at || null,
-        data.ends_at || null, data.status || "draft"
-    ]);
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        const totals = await getQuestionTotalMarks(examId, schoolId, client);
+        if (data.status === "published" && totals.questionCount === 0) {
+            throw new Error("Add at least one question before publishing this examination.");
+        }
+
+        const result = await client.query(`
+            UPDATE cbt_exams SET
+                subject_id=$3, class_id=$4, arm_id=$5, title=$6, description=$7,
+                duration_minutes=$8, total_marks=$9, pass_mark=$10, max_attempts=$11,
+                randomize_questions=$12, randomize_options=$13,
+                show_result_immediately=$14, starts_at=$15, ends_at=$16,
+                status=$17, updated_at=CURRENT_TIMESTAMP
+            WHERE id=$1 AND school_id=$2
+            RETURNING *;
+        `, [
+            examId, schoolId, data.subject_id, data.class_id, data.arm_id || null,
+            data.title, data.description || null, data.duration_minutes,
+            totals.totalMarks, data.pass_mark || 0, data.max_attempts || 1,
+            Boolean(data.randomize_questions), Boolean(data.randomize_options),
+            data.show_result_immediately !== false, data.starts_at || null,
+            data.ends_at || null, data.status || "draft"
+        ]);
+
+        if (!result.rows[0]) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        await client.query("COMMIT");
+        return result.rows[0];
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 const deleteExam = async (examId, schoolId) => {
@@ -152,6 +204,7 @@ const createQuestion = async (data, schoolId) => {
                 VALUES ($1,$2,$3,$4,$5)
             `, [question.rows[0].id, option.option_text, option.option_image_url || null, option.option_order, Boolean(option.is_correct)]);
         }
+        await syncExamTotalMarks(data.exam_id, schoolId, client);
         await client.query("COMMIT");
         return question.rows[0];
     } catch (error) {
@@ -170,13 +223,17 @@ const updateQuestion = async (questionId, data, schoolId) => {
             WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2
             RETURNING q.*;
         `, [questionId, schoolId, data.question_text, data.image_url || null, data.marks || 1, data.question_order, data.explanation || null]);
-        if (!question.rows[0]) return null;
+        if (!question.rows[0]) {
+            await client.query("ROLLBACK");
+            return null;
+        }
         if (Array.isArray(data.options)) {
             await client.query("DELETE FROM cbt_question_options WHERE question_id=$1", [questionId]);
             for (const option of data.options) {
                 await client.query(`INSERT INTO cbt_question_options (question_id,option_text,option_image_url,option_order,is_correct) VALUES ($1,$2,$3,$4,$5)`, [questionId, option.option_text, option.option_image_url || null, option.option_order, Boolean(option.is_correct)]);
             }
         }
+        await syncExamTotalMarks(question.rows[0].exam_id, schoolId, client);
         await client.query("COMMIT");
         return question.rows[0];
     } catch (error) { await client.query("ROLLBACK"); throw error; }
@@ -184,8 +241,24 @@ const updateQuestion = async (questionId, data, schoolId) => {
 };
 
 const deleteQuestion = async (questionId, schoolId) => {
-    const result = await pool.query(`DELETE FROM cbt_questions q USING cbt_exams e WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2 RETURNING q.id`, [questionId, schoolId]);
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const deleted = await client.query(`
+            DELETE FROM cbt_questions q
+            USING cbt_exams e
+            WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2
+            RETURNING q.id, q.exam_id
+        `, [questionId, schoolId]);
+        if (!deleted.rows[0]) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+        await syncExamTotalMarks(deleted.rows[0].exam_id, schoolId, client);
+        await client.query("COMMIT");
+        return { id: deleted.rows[0].id };
+    } catch (error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
 };
 
 const startAttempt = async (examId, studentId, schoolId) => {
@@ -194,6 +267,11 @@ const startAttempt = async (examId, studentId, schoolId) => {
     if (exam.status !== "published") throw new Error("This examination is not available.");
     if (exam.starts_at && new Date(exam.starts_at) > new Date()) throw new Error("This examination has not started yet.");
     if (exam.ends_at && new Date(exam.ends_at) < new Date()) throw new Error("This examination has ended.");
+
+    const questionTotals = await getQuestionTotalMarks(examId, schoolId);
+    if (questionTotals.questionCount === 0 || questionTotals.totalMarks <= 0) {
+        throw new Error("This examination has no valid questions yet.");
+    }
 
     const student = await pool.query("SELECT id, class_id, arm_id FROM students WHERE id=$1 AND school_id=$2", [studentId, schoolId]);
     if (!student.rows[0]) throw new Error("Student not found for this school.");
@@ -228,8 +306,6 @@ const submitAttempt = async (attemptId, studentId, schoolId) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-
-        // Lock the attempt so two simultaneous submit requests cannot both score it.
         const attemptResult = await client.query(
             `SELECT * FROM cbt_attempts WHERE id=$1 AND student_id=$2 AND school_id=$3 FOR UPDATE`,
             [attemptId, studentId, schoolId]
@@ -239,8 +315,6 @@ const submitAttempt = async (attemptId, studentId, schoolId) => {
             await client.query("ROLLBACK");
             return null;
         }
-
-        // Submission is idempotent: once finalized, return the stored result unchanged.
         if (attempt.status !== "in_progress") {
             await client.query("COMMIT");
             return attempt;
@@ -258,34 +332,17 @@ const submitAttempt = async (attemptId, studentId, schoolId) => {
         let score = 0;
         let correct = 0;
         let wrong = 0;
-
         for (const answer of scored.rows) {
             const isCorrect = Boolean(answer.correct);
-            if (isCorrect) {
-                score += Number(answer.marks) || 0;
-                correct += 1;
-            } else {
-                wrong += 1;
-            }
-
-            await client.query(
-                `UPDATE cbt_answers
-                 SET is_correct=$1, marks_awarded=$2
-                 WHERE id=$3`,
-                [isCorrect, isCorrect ? Number(answer.marks) || 0 : 0, answer.answer_id]
-            );
+            if (isCorrect) { score += Number(answer.marks) || 0; correct += 1; }
+            else { wrong += 1; }
+            await client.query(`UPDATE cbt_answers SET is_correct=$1, marks_awarded=$2 WHERE id=$3`, [isCorrect, isCorrect ? Number(answer.marks) || 0 : 0, answer.answer_id]);
         }
 
-        const qcount = await client.query(
-            `SELECT COUNT(*)::int AS total FROM cbt_questions WHERE exam_id=$1 AND school_id=$2`,
-            [attempt.exam_id, schoolId]
-        );
+        const qcount = await client.query(`SELECT COUNT(*)::int AS total FROM cbt_questions WHERE exam_id=$1 AND school_id=$2`, [attempt.exam_id, schoolId]);
         const totalQuestions = Number(qcount.rows[0]?.total || 0);
         const unanswered = Math.max(totalQuestions - correct - wrong, 0);
-        const exam = await client.query(
-            `SELECT total_marks FROM cbt_exams WHERE id=$1 AND school_id=$2`,
-            [attempt.exam_id, schoolId]
-        );
+        const exam = await client.query(`SELECT total_marks FROM cbt_exams WHERE id=$1 AND school_id=$2`, [attempt.exam_id, schoolId]);
         const totalMarks = Number(exam.rows[0]?.total_marks || 0);
         const finalScore = Number(score.toFixed(2));
         const percentage = totalMarks > 0 ? Number(((finalScore / totalMarks) * 100).toFixed(2)) : 0;
@@ -293,14 +350,8 @@ const submitAttempt = async (attemptId, studentId, schoolId) => {
 
         const updated = await client.query(`
             UPDATE cbt_attempts
-            SET status=$4,
-                submitted_at=CURRENT_TIMESTAMP,
-                score=$5,
-                percentage=$6,
-                correct_answers=$7,
-                wrong_answers=$8,
-                unanswered=$9,
-                updated_at=CURRENT_TIMESTAMP
+            SET status=$4, submitted_at=CURRENT_TIMESTAMP, score=$5, percentage=$6,
+                correct_answers=$7, wrong_answers=$8, unanswered=$9, updated_at=CURRENT_TIMESTAMP
             WHERE id=$1 AND student_id=$2 AND school_id=$3 AND status='in_progress'
             RETURNING *;
         `, [attemptId, studentId, schoolId, status, finalScore, percentage, correct, wrong, unanswered]);
@@ -310,9 +361,7 @@ const submitAttempt = async (attemptId, studentId, schoolId) => {
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
-    } finally {
-        client.release();
-    }
+    } finally { client.release(); }
 };
 
 const getStudentAttempts = async (studentId, schoolId) => {
@@ -333,4 +382,4 @@ const getAttemptForStudent = async (attemptId, studentId, schoolId) => {
     return result.rows[0];
 };
 
-module.exports = { getExams, getAvailableStudentExams, getExamById, createExam, updateExam, deleteExam, getQuestions, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getStudentAttempts, getAttemptForStudent };
+module.exports = { getExams, getAvailableStudentExams, getExamById, getQuestions, getQuestionTotalMarks, createExam, updateExam, deleteExam, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getStudentAttempts, getAttemptForStudent };
