@@ -18,6 +18,7 @@ import StudentSubjectsPage from "./pages/students/StudentSubjectsPage";
 import StudentResultsPage from "./pages/students/StudentResultsPage";
 import CBTManagementPage from "./pages/admin/CBTManagementPage";
 import CBTResultsPage from "./pages/admin/CBTResultsPage";
+import CBTQuestionBankPage from "./pages/admin/CBTQuestionBankPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
@@ -26,7 +27,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "website", "change-password", "logout", "contact-messages", "expenses",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
     "teacher-dashboard", "teacher-students", "forgot-password", "reset-password",
-    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results"
+    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank"
 ]);
 
 function useAppPathname() {
@@ -37,14 +38,8 @@ function useAppPathname() {
         const originalPushState = window.history.pushState;
         const originalReplaceState = window.history.replaceState;
 
-        window.history.pushState = function (...args) {
-            originalPushState.apply(this, args);
-            updatePathname();
-        };
-        window.history.replaceState = function (...args) {
-            originalReplaceState.apply(this, args);
-            updatePathname();
-        };
+        window.history.pushState = function (...args) { originalPushState.apply(this, args); updatePathname(); };
+        window.history.replaceState = function (...args) { originalReplaceState.apply(this, args); updatePathname(); };
         window.addEventListener("popstate", updatePathname);
 
         return () => {
@@ -63,104 +58,19 @@ function App() {
 
     if (pathname === "/educore") return <EduCoreLandingPage />;
     if (firstSegment === "website") return <LegacyWebsiteRedirect />;
+    if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
+    if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
 
-    if (pathname === "/forgot-password") {
-        return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
-    }
-
-    if (pathname === "/reset-password") {
-        return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
-    }
-
-    if (pathname === "/change-password") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}>
-                    <DashboardLayout><ChangePasswordPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/student-dashboard") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Student"]}>
-                    <DashboardLayout><StudentDashboardPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/student-cbt") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Student"]}>
-                    <DashboardLayout><StudentCBTPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/student-subjects") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Student"]}>
-                    <DashboardLayout><StudentSubjectsPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/student-results") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Student"]}>
-                    <DashboardLayout><StudentResultsPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/cbt-management") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}>
-                    <DashboardLayout><CBTManagementPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/cbt-results") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}>
-                    <DashboardLayout><CBTResultsPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/contact-messages") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}>
-                    <DashboardLayout><ContactMessagesPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
-
-    if (pathname === "/expenses") {
-        return (
-            <BrowserRouter>
-                <ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}>
-                    <DashboardLayout><ExpensesPage /></DashboardLayout>
-                </ProtectedRoute>
-            </BrowserRouter>
-        );
-    }
+    if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/student-dashboard") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/student-cbt") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentCBTPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/student-subjects") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentSubjectsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/student-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/cbt-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/cbt-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/cbt-question-bank") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTQuestionBankPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
     const isSchoolWebsite = firstSegment && !RESERVED_PUBLIC_PREFIXES.has(firstSegment);
     return isSchoolWebsite ? <SchoolWebsiteRouter /> : <AppRouter />;
