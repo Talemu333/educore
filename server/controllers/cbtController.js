@@ -14,6 +14,33 @@ const studentId = (req) => {
 
 const sendError = (res, error) => res.status(error.statusCode || 400).json({ success: false, message: error.message || "Unable to process CBT request." });
 
+const validateQuestionOptions = (options) => {
+    if (!Array.isArray(options) || options.length < 2) {
+        throw new ApiError(400, "A multiple-choice question must have at least two options.");
+    }
+    const validOptions = options.filter((option) => option && String(option.option_text || "").trim());
+    if (validOptions.length < 2) {
+        throw new ApiError(400, "At least two answer options are required.");
+    }
+    const correctCount = validOptions.filter((option) => Boolean(option.is_correct)).length;
+    if (correctCount !== 1) {
+        throw new ApiError(400, "Each multiple-choice question must have exactly one correct answer.");
+    }
+};
+
+const validateExam = (data) => {
+    if (!String(data.title || "").trim()) throw new ApiError(400, "Examination title is required.");
+    if (!Number.isFinite(Number(data.subject_id)) || !Number.isFinite(Number(data.class_id))) {
+        throw new ApiError(400, "Subject and class are required.");
+    }
+    if (!Number.isFinite(Number(data.duration_minutes)) || Number(data.duration_minutes) <= 0) {
+        throw new ApiError(400, "Examination duration must be greater than zero.");
+    }
+    if (data.status === "published" && (!Number.isFinite(Number(data.total_marks)) || Number(data.total_marks) <= 0)) {
+        throw new ApiError(400, "A published examination must have total marks greater than zero.");
+    }
+};
+
 const getExams = async (req, res) => {
     try { return res.json({ success: true, data: await cbtModel.getExams(schoolId(req), req.query) }); }
     catch (error) { return sendError(res, error); }
@@ -58,12 +85,15 @@ const getExam = async (req, res) => {
 };
 
 const createExam = async (req, res) => {
-    try { return res.status(201).json({ success: true, data: await cbtModel.createExam(req.body, schoolId(req), userId(req)) }); }
-    catch (error) { return sendError(res, error); }
+    try {
+        validateExam(req.body);
+        return res.status(201).json({ success: true, data: await cbtModel.createExam(req.body, schoolId(req), userId(req)) });
+    } catch (error) { return sendError(res, error); }
 };
 
 const updateExam = async (req, res) => {
     try {
+        validateExam(req.body);
         const exam = await cbtModel.updateExam(Number(req.params.id), req.body, schoolId(req));
         if (!exam) return res.status(404).json({ success: false, message: "Examination not found." });
         return res.json({ success: true, data: exam });
@@ -79,12 +109,15 @@ const deleteExam = async (req, res) => {
 };
 
 const createQuestion = async (req, res) => {
-    try { return res.status(201).json({ success: true, data: await cbtModel.createQuestion({ ...req.body, exam_id: Number(req.params.examId) }, schoolId(req)) }); }
-    catch (error) { return sendError(res, error); }
+    try {
+        validateQuestionOptions(req.body.options);
+        return res.status(201).json({ success: true, data: await cbtModel.createQuestion({ ...req.body, exam_id: Number(req.params.examId) }, schoolId(req)) });
+    } catch (error) { return sendError(res, error); }
 };
 
 const updateQuestion = async (req, res) => {
     try {
+        if (Array.isArray(req.body.options)) validateQuestionOptions(req.body.options);
         const question = await cbtModel.updateQuestion(Number(req.params.id), req.body, schoolId(req));
         if (!question) return res.status(404).json({ success: false, message: "Question not found." });
         return res.json({ success: true, data: question });
@@ -100,8 +133,14 @@ const deleteQuestion = async (req, res) => {
 };
 
 const startAttempt = async (req, res) => {
-    try { return res.status(201).json({ success: true, data: await cbtModel.startAttempt(Number(req.params.examId), studentId(req), schoolId(req)) }); }
-    catch (error) { return sendError(res, error); }
+    try {
+        const examId = Number(req.params.examId);
+        const questions = await cbtModel.getQuestions(examId, schoolId(req));
+        if (!questions.length) {
+            return res.status(409).json({ success: false, message: "This examination has no questions yet." });
+        }
+        return res.status(201).json({ success: true, data: await cbtModel.startAttempt(examId, studentId(req), schoolId(req)) });
+    } catch (error) { return sendError(res, error); }
 };
 
 const saveAnswer = async (req, res) => {
