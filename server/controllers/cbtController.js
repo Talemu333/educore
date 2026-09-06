@@ -29,7 +29,6 @@ const validateExam = (data) => {
     if (data.starts_at && data.ends_at && new Date(data.ends_at) <= new Date(data.starts_at)) throw new ApiError(400, "Examination end time must be after the start time.");
 };
 
-// Student result data is only exposed when the examination allows immediate results.
 const maskStudentResult = (attempt, exam) => {
     if (!attempt) return attempt;
     if (exam?.show_result_immediately !== false) return attempt;
@@ -57,9 +56,18 @@ const getStudentExam = async (req, res) => {
             if (exam.ends_at && new Date(exam.ends_at) <= new Date()) { await cbtModel.submitAttempt(attempt.id, student, school); return res.status(409).json({ success: false, message: "This examination has ended." }); }
             if (attempt.expires_at && new Date(attempt.expires_at) <= new Date()) { await cbtModel.submitAttempt(attempt.id, student, school); return res.status(409).json({ success: false, message: "Your examination time has expired." }); }
         }
-        const questions = attempt
+        let questions = attempt
             ? await cbtModel.getAttemptQuestions(attempt.id, school, Boolean(exam.randomize_options))
             : await cbtModel.getQuestions(exam.id, school);
+
+        // Older/incomplete attempts can exist without rows in cbt_attempt_questions.
+        // Reuse startAttempt's self-healing logic to populate the missing question set
+        // without creating a duplicate attempt.
+        if (attempt && attempt.status === "in_progress" && questions.length === 0) {
+            await cbtModel.startAttempt(exam.id, student, school);
+            questions = await cbtModel.getAttemptQuestions(attempt.id, school, Boolean(exam.randomize_options));
+        }
+
         const safeQuestions = questions.map((question) => ({ id: question.id, question_text: question.question_text, image_url: question.image_url, marks: question.marks, question_order: question.attempt_question_order || question.question_order, options: (question.options || []).map((option) => ({ id: option.id, option_text: option.option_text, option_image_url: option.option_image_url, option_order: option.option_order })) }));
         return res.json({ success: true, data: { ...exam, questions: safeQuestions } });
     } catch (error) { return sendError(res, error); }
