@@ -16,7 +16,8 @@ import {
     KeyRound,
     Receipt,
     Mail,
-    BarChart3
+    BarChart3,
+    FileUp
 } from "lucide-react";
 
 import ROLES from "./roles";
@@ -37,6 +38,7 @@ const sidebarMenu = [
     { title: "My Subjects", icon: BookOpen, path: "/student-subjects", roles: [ROLES.STUDENT] },
     { title: "CBT Management", icon: ClipboardList, path: "/cbt-management", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Question Bank", icon: BookOpen, path: "/cbt-question-bank", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "Import Questions (PDF)", icon: FileUp, path: "/cbt-question-bank/import", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "CBT Results", icon: BarChart3, path: "/cbt-results", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Administrators", icon: Users, path: "/administrators", roles: [ADMIN], adminTypes: [PROPRIETOR] },
     { title: "Students", icon: GraduationCap, path: "/students", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
