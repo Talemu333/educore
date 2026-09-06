@@ -141,7 +141,8 @@ const startAttempt=async(examId,studentId,schoolId)=>{
             const attemptExpiry=new Date(attempt.expires_at);
             if(attemptExpiry<=now){
                 await client.query("COMMIT");
-                return await submitAttempt(attempt.id,studentId,schoolId);
+                await submitAttempt(attempt.id,studentId,schoolId);
+                return await startAttempt(examId,studentId,schoolId);
             }
             const selected=await client.query("SELECT COUNT(*)::int AS count FROM cbt_attempt_questions WHERE attempt_id=$1 AND school_id=$2",[attempt.id,schoolId]);
             if(Number(selected.rows[0]?.count||0)===0) await createAttemptQuestionSet(attempt.id,examId,schoolId,selectionCount,Boolean(exam.randomize_questions),client);
