@@ -107,10 +107,22 @@ const startAttempt = async (req, res) => {
 const saveAnswer = async (req, res) => {
     try {
         const attemptStudentId = studentId(req);
-        const attempt = await cbtModel.getStudentAttempts(attemptStudentId, schoolId(req));
-        if (!attempt.some((item) => Number(item.id) === Number(req.params.attemptId))) {
+        const attempts = await cbtModel.getStudentAttempts(attemptStudentId, schoolId(req));
+        const attempt = attempts.find((item) => Number(item.id) === Number(req.params.attemptId));
+
+        if (!attempt) {
             return res.status(404).json({ success: false, message: "Attempt not found." });
         }
+
+        if (attempt.status !== "in_progress") {
+            return res.status(409).json({ success: false, message: "This examination attempt is no longer active." });
+        }
+
+        if (attempt.expires_at && new Date(attempt.expires_at) <= new Date()) {
+            await cbtModel.submitAttempt(Number(req.params.attemptId), attemptStudentId, schoolId(req));
+            return res.status(409).json({ success: false, message: "Your examination time has expired." });
+        }
+
         return res.json({ success: true, data: await cbtModel.saveAnswer(Number(req.params.attemptId), Number(req.body.question_id), req.body.selected_option_id ? Number(req.body.selected_option_id) : null, schoolId(req)) });
     } catch (error) { return sendError(res, error); }
 };
