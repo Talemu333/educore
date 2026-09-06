@@ -42,6 +42,7 @@ const superAdminSchoolRoutes = require("./routes/superAdminSchoolRoutes");
 const contactMessageRoutes = require("./routes/contactMessageRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 const cbtRoutes = require("./routes/cbtRoutes");
+const cbtQuestionBankRoutes = require("./routes/cbtQuestionBankRoutes");
 
 const app = express();
 
@@ -124,6 +125,7 @@ app.use("/api/promotion-history", promotionHistoryRoutes);
 app.use("/api/super-admin/schools", superAdminSchoolRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/cbt", cbtRoutes);
+app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
 
 app.use(errorHandler);
 module.exports = app;
