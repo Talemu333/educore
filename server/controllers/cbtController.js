@@ -24,6 +24,7 @@ const validateExam = (data) => {
     if (!String(data.title || "").trim()) throw new ApiError(400, "Examination title is required.");
     if (!Number.isFinite(Number(data.subject_id)) || !Number.isFinite(Number(data.class_id))) throw new ApiError(400, "Subject and class are required.");
     if (!Number.isFinite(Number(data.duration_minutes)) || Number(data.duration_minutes) <= 0) throw new ApiError(400, "Examination duration must be greater than zero.");
+    if (data.question_selection_count !== undefined && (!Number.isInteger(Number(data.question_selection_count)) || Number(data.question_selection_count) < 0)) throw new ApiError(400, "Questions per attempt must be a whole number of zero or greater.");
     if (data.status === "published" && (!Number.isFinite(Number(data.total_marks)) || Number(data.total_marks) <= 0)) throw new ApiError(400, "A published examination must have total marks greater than zero.");
     if (data.starts_at && data.ends_at && new Date(data.ends_at) <= new Date(data.starts_at)) throw new ApiError(400, "Examination end time must be after the start time.");
 };
@@ -56,9 +57,10 @@ const getStudentExam = async (req, res) => {
             if (exam.ends_at && new Date(exam.ends_at) <= new Date()) { await cbtModel.submitAttempt(attempt.id, student, school); return res.status(409).json({ success: false, message: "This examination has ended." }); }
             if (attempt.expires_at && new Date(attempt.expires_at) <= new Date()) { await cbtModel.submitAttempt(attempt.id, student, school); return res.status(409).json({ success: false, message: "Your examination time has expired." }); }
         }
-        const randomSeed = attempt && (exam.randomize_questions || exam.randomize_options) ? attempt.id : null;
-        const questions = await cbtModel.getQuestions(exam.id, school, randomSeed);
-        const safeQuestions = questions.map((question) => ({ id: question.id, question_text: question.question_text, image_url: question.image_url, marks: question.marks, question_order: question.question_order, options: (question.options || []).map((option) => ({ id: option.id, option_text: option.option_text, option_image_url: option.option_image_url, option_order: option.option_order })) }));
+        const questions = attempt
+            ? await cbtModel.getAttemptQuestions(attempt.id, school, Boolean(exam.randomize_options))
+            : await cbtModel.getQuestions(exam.id, school);
+        const safeQuestions = questions.map((question) => ({ id: question.id, question_text: question.question_text, image_url: question.image_url, marks: question.marks, question_order: question.attempt_question_order || question.question_order, options: (question.options || []).map((option) => ({ id: option.id, option_text: option.option_text, option_image_url: option.option_image_url, option_order: option.option_order })) }));
         return res.json({ success: true, data: { ...exam, questions: safeQuestions } });
     } catch (error) { return sendError(res, error); }
 };
