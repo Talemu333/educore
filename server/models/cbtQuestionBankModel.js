@@ -47,6 +47,35 @@ const create = async (data, schoolId, userId) => {
     } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
 };
 
+const bulkCreate = async (questions, schoolId, userId) => {
+    const client = await pool.connect();
+    const createdIds = [];
+    try {
+        await client.query("BEGIN");
+        for (const data of questions) {
+            const q = await client.query(`INSERT INTO cbt_question_bank(school_id,subject_id,class_id,question_text,image_url,marks,explanation,is_active,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, [schoolId,data.subject_id,data.class_id,data.question_text,data.image_url||null,data.marks||1,data.explanation||null,data.is_active!==false,userId]);
+            const questionId = q.rows[0].id;
+            createdIds.push(questionId);
+            for (const o of data.options || []) {
+                await client.query(`INSERT INTO cbt_question_bank_options(bank_question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`, [questionId,o.option_text,o.option_image_url||null,o.option_order,Boolean(o.is_correct)]);
+            }
+        }
+        await client.query("COMMIT");
+        const result = await pool.query(`
+            SELECT q.*, s.subject_name, c.class_name,
+              COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
+            FROM cbt_question_bank q
+            JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
+            JOIN classes c ON c.id=q.class_id AND c.school_id=q.school_id
+            LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id
+            WHERE q.school_id=$1 AND q.id=ANY($2::int[])
+            GROUP BY q.id,s.subject_name,c.class_name
+            ORDER BY array_position($2::int[],q.id)
+        `, [schoolId, createdIds]);
+        return result.rows;
+    } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
+};
+
 const update = async (id, data, schoolId) => {
     const client = await pool.connect();
     try {
@@ -91,4 +120,4 @@ const copyToExam = async (examId, bankIds, schoolId) => {
     } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
 };
 
-module.exports = { list, getById, create, update, remove, copyToExam };
+module.exports = { list, getById, create, bulkCreate, update, remove, copyToExam };
