@@ -114,20 +114,25 @@ const deleteExam = async (examId, schoolId) => {
     return result.rows[0];
 };
 
-const getQuestions = async (examId, schoolId) => {
+const getQuestions = async (examId, schoolId, randomSeed = null) => {
+    const randomQuestions = randomSeed !== null;
+    const questionOrder = randomQuestions ? "md5(q.id::text || $3::text)" : "q.question_order";
+    const optionOrder = randomQuestions ? "md5(o.id::text || $3::text)" : "o.option_order";
+    const values = randomQuestions ? [examId, schoolId, String(randomSeed)] : [examId, schoolId];
+
     const result = await pool.query(`
         SELECT q.id, q.question_text, q.image_url, q.marks, q.question_order, q.explanation,
                COALESCE(json_agg(
                    json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct)
-                   ORDER BY o.option_order
+                   ORDER BY ${optionOrder}
                ) FILTER (WHERE o.id IS NOT NULL), '[]') AS options
         FROM cbt_questions q
         JOIN cbt_exams e ON e.id=q.exam_id AND e.school_id=$2
         LEFT JOIN cbt_question_options o ON o.question_id=q.id
         WHERE q.exam_id=$1 AND q.school_id=$2
         GROUP BY q.id
-        ORDER BY q.question_order;
-    `, [examId, schoolId]);
+        ORDER BY ${questionOrder};
+    `, values);
     return result.rows;
 };
 
@@ -259,4 +264,12 @@ const getStudentAttempts = async (studentId, schoolId) => {
     return result.rows;
 };
 
-module.exports = { getExams, getAvailableStudentExams, getExamById, createExam, updateExam, deleteExam, getQuestions, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getStudentAttempts };
+const getAttemptForStudent = async (attemptId, studentId, schoolId) => {
+    const result = await pool.query(
+        `SELECT a.* FROM cbt_attempts a WHERE a.id=$1 AND a.student_id=$2 AND a.school_id=$3`,
+        [attemptId, studentId, schoolId]
+    );
+    return result.rows[0];
+};
+
+module.exports = { getExams, getAvailableStudentExams, getExamById, createExam, updateExam, deleteExam, getQuestions, createQuestion, updateQuestion, deleteQuestion, startAttempt, saveAnswer, submitAttempt, getStudentAttempts, getAttemptForStudent };
