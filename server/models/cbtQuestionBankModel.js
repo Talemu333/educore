@@ -52,13 +52,17 @@ const bulkCreate = async (questions, schoolId, userId) => {
     const createdIds = [];
     try {
         await client.query("BEGIN");
+        const subjectIds = [...new Set(questions.map((q) => Number(q.subject_id)))];
+        const classIds = [...new Set(questions.map((q) => Number(q.class_id)))];
+        const subjects = await client.query("SELECT id FROM subjects WHERE school_id=$1 AND id=ANY($2::int[])", [schoolId, subjectIds]);
+        const classes = await client.query("SELECT id FROM classes WHERE school_id=$1 AND id=ANY($2::int[])", [schoolId, classIds]);
+        if (subjects.rows.length !== subjectIds.length || classes.rows.length !== classIds.length) throw new Error("The selected subject or class does not belong to your school.");
+
         for (const data of questions) {
             const q = await client.query(`INSERT INTO cbt_question_bank(school_id,subject_id,class_id,question_text,image_url,marks,explanation,is_active,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, [schoolId,data.subject_id,data.class_id,data.question_text,data.image_url||null,data.marks||1,data.explanation||null,data.is_active!==false,userId]);
             const questionId = q.rows[0].id;
             createdIds.push(questionId);
-            for (const o of data.options || []) {
-                await client.query(`INSERT INTO cbt_question_bank_options(bank_question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`, [questionId,o.option_text,o.option_image_url||null,o.option_order,Boolean(o.is_correct)]);
-            }
+            for (const o of data.options || []) await client.query(`INSERT INTO cbt_question_bank_options(bank_question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`, [questionId,o.option_text,o.option_image_url||null,o.option_order,Boolean(o.is_correct)]);
         }
         await client.query("COMMIT");
         const result = await pool.query(`
