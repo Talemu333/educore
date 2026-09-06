@@ -1,4 +1,5 @@
 const cbtModel = require("../models/cbtModel");
+const pool = require("../config/database");
 const ApiError = require("../utils/ApiError");
 
 const schoolId = (req) => Number(req.user.school_id);
@@ -38,6 +39,9 @@ const validateExam = (data) => {
     }
     if (data.status === "published" && (!Number.isFinite(Number(data.total_marks)) || Number(data.total_marks) <= 0)) {
         throw new ApiError(400, "A published examination must have total marks greater than zero.");
+    }
+    if (data.starts_at && data.ends_at && new Date(data.ends_at) <= new Date(data.starts_at)) {
+        throw new ApiError(400, "Examination end time must be after the start time.");
     }
 };
 
@@ -149,18 +153,36 @@ const deleteQuestion = async (req, res) => {
 const startAttempt = async (req, res) => {
     try {
         const examId = Number(req.params.examId);
-        const questions = await cbtModel.getQuestions(examId, schoolId(req));
+        const school = schoolId(req);
+        const questions = await cbtModel.getQuestions(examId, school);
         if (!questions.length) {
             return res.status(409).json({ success: false, message: "This examination has no questions yet." });
         }
-        return res.status(201).json({ success: true, data: await cbtModel.startAttempt(examId, studentId(req), schoolId(req)) });
+
+        const attempt = await cbtModel.startAttempt(examId, studentId(req), school);
+
+        // The student's timer can never run beyond the examination's closing time.
+        const exam = await cbtModel.getExamById(examId, school);
+        if (exam?.ends_at) {
+            await pool.query(
+                `UPDATE cbt_attempts
+                 SET expires_at = LEAST(expires_at, $1::timestamptz), updated_at=CURRENT_TIMESTAMP
+                 WHERE id=$2 AND student_id=$3 AND school_id=$4 AND status='in_progress'`,
+                [exam.ends_at, attempt.id, studentId(req), school]
+            );
+            const refreshedAttempt = await cbtModel.getAttemptForStudent(attempt.id, studentId(req), school);
+            return res.status(201).json({ success: true, data: refreshedAttempt });
+        }
+
+        return res.status(201).json({ success: true, data: attempt });
     } catch (error) { return sendError(res, error); }
 };
 
 const saveAnswer = async (req, res) => {
     try {
         const attemptStudentId = studentId(req);
-        const attempts = await cbtModel.getStudentAttempts(attemptStudentId, schoolId(req));
+        const school = schoolId(req);
+        const attempts = await cbtModel.getStudentAttempts(attemptStudentId, school);
         const attempt = attempts.find((item) => Number(item.id) === Number(req.params.attemptId));
 
         if (!attempt) {
@@ -171,19 +193,40 @@ const saveAnswer = async (req, res) => {
             return res.status(409).json({ success: false, message: "This examination attempt is no longer active." });
         }
 
+        const exam = await cbtModel.getExamById(Number(attempt.exam_id), school);
+        if (exam?.ends_at && new Date(exam.ends_at) <= new Date()) {
+            await cbtModel.submitAttempt(Number(req.params.attemptId), attemptStudentId, school);
+            return res.status(409).json({ success: false, message: "This examination has ended." });
+        }
+
         if (attempt.expires_at && new Date(attempt.expires_at) <= new Date()) {
-            await cbtModel.submitAttempt(Number(req.params.attemptId), attemptStudentId, schoolId(req));
+            await cbtModel.submitAttempt(Number(req.params.attemptId), attemptStudentId, school);
             return res.status(409).json({ success: false, message: "Your examination time has expired." });
         }
 
-        return res.json({ success: true, data: await cbtModel.saveAnswer(Number(req.params.attemptId), Number(req.body.question_id), req.body.selected_option_id ? Number(req.body.selected_option_id) : null, schoolId(req)) });
+        const saved = await cbtModel.saveAnswer(
+            Number(req.params.attemptId),
+            Number(req.body.question_id),
+            req.body.selected_option_id ? Number(req.body.selected_option_id) : null,
+            school
+        );
+
+        if (!saved) {
+            return res.status(400).json({ success: false, message: "Unable to save this answer." });
+        }
+
+        return res.json({ success: true, data: saved });
     } catch (error) { return sendError(res, error); }
 };
 
 const submitAttempt = async (req, res) => {
     try {
-        const attempt = await cbtModel.submitAttempt(Number(req.params.attemptId), studentId(req), schoolId(req));
-        if (!attempt) return res.status(404).json({ success: false, message: "Attempt not found." });
+        const student = studentId(req);
+        const school = schoolId(req);
+        const existing = await cbtModel.getAttemptForStudent(Number(req.params.attemptId), student, school);
+        if (!existing) return res.status(404).json({ success: false, message: "Attempt not found." });
+
+        const attempt = await cbtModel.submitAttempt(Number(req.params.attemptId), student, school);
         return res.json({ success: true, data: attempt });
     } catch (error) { return sendError(res, error); }
 };
