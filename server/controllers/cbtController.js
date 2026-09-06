@@ -53,11 +53,25 @@ const getAvailableStudentExams = async (req, res) => {
 
 const getStudentExam = async (req, res) => {
     try {
-        const exams = await cbtModel.getAvailableStudentExams(studentId(req), schoolId(req));
+        const student = studentId(req);
+        const school = schoolId(req);
+        const exams = await cbtModel.getAvailableStudentExams(student, school);
         const exam = exams.find((item) => Number(item.id) === Number(req.params.id));
         if (!exam) return res.status(404).json({ success: false, message: "This examination is not available to you." });
 
-        const questions = await cbtModel.getQuestions(exam.id, schoolId(req));
+        const attemptId = Number(req.query.attemptId);
+        const attempt = Number.isInteger(attemptId) && attemptId > 0
+            ? await cbtModel.getAttemptForStudent(attemptId, student, school)
+            : null;
+
+        if (attempt && Number(attempt.exam_id) !== Number(exam.id)) {
+            return res.status(400).json({ success: false, message: "The examination attempt does not match this examination." });
+        }
+
+        const randomSeed = attempt
+            ? (exam.randomize_questions || exam.randomize_options ? attempt.id : null)
+            : null;
+        const questions = await cbtModel.getQuestions(exam.id, school, randomSeed);
         const safeQuestions = questions.map((question) => ({
             id: question.id,
             question_text: question.question_text,
