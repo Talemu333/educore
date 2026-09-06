@@ -43,6 +43,7 @@ const contactMessageRoutes = require("./routes/contactMessageRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 const cbtRoutes = require("./routes/cbtRoutes");
 const cbtQuestionBankRoutes = require("./routes/cbtQuestionBankRoutes");
+const cbtQuestionBankImportRoutes = require("./routes/cbtQuestionBankImportRoutes");
 
 const app = express();
 
@@ -127,6 +128,7 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/cbt", cbtRoutes);
 app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
 app.use("/api/cbt-question-bank", cbtQuestionBankRoutes);
+app.use("/api/cbt-question-bank/import-pdf", cbtQuestionBankImportRoutes);
 
 app.use(errorHandler);
 module.exports = app;
