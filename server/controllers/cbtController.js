@@ -59,17 +59,43 @@ const getStudentExam = async (req, res) => {
     try {
         const student = studentId(req);
         const school = schoolId(req);
-        const exams = await cbtModel.getAvailableStudentExams(student, school);
-        const exam = exams.find((item) => Number(item.id) === Number(req.params.id));
+        const examId = Number(req.params.id);
+        const attemptId = Number(req.query.attemptId);
+
+        let attempt = null;
+        if (Number.isInteger(attemptId) && attemptId > 0) {
+            attempt = await cbtModel.getAttemptForStudent(attemptId, student, school);
+            if (!attempt) {
+                return res.status(404).json({ success: false, message: "Examination attempt not found." });
+            }
+            if (Number(attempt.exam_id) !== examId) {
+                return res.status(400).json({ success: false, message: "The examination attempt does not match this examination." });
+            }
+        }
+
+        // When resuming a known attempt, load the exam directly instead of using
+        // the currently-available list. This lets the server correctly handle an
+        // attempt that reaches the exam closing time while the student is away.
+        const exam = attempt
+            ? await cbtModel.getExamById(examId, school)
+            : (await cbtModel.getAvailableStudentExams(student, school)).find((item) => Number(item.id) === examId);
+
         if (!exam) return res.status(404).json({ success: false, message: "This examination is not available to you." });
 
-        const attemptId = Number(req.query.attemptId);
-        const attempt = Number.isInteger(attemptId) && attemptId > 0
-            ? await cbtModel.getAttemptForStudent(attemptId, student, school)
-            : null;
+        if (attempt) {
+            if (attempt.status !== "in_progress") {
+                return res.status(409).json({ success: false, message: "This examination attempt has already been completed." });
+            }
 
-        if (attempt && Number(attempt.exam_id) !== Number(exam.id)) {
-            return res.status(400).json({ success: false, message: "The examination attempt does not match this examination." });
+            if (exam.ends_at && new Date(exam.ends_at) <= new Date()) {
+                await cbtModel.submitAttempt(attempt.id, student, school);
+                return res.status(409).json({ success: false, message: "This examination has ended." });
+            }
+
+            if (attempt.expires_at && new Date(attempt.expires_at) <= new Date()) {
+                await cbtModel.submitAttempt(attempt.id, student, school);
+                return res.status(409).json({ success: false, message: "Your examination time has expired." });
+            }
         }
 
         const randomSeed = attempt
