@@ -225,33 +225,94 @@ const saveAnswer = async (attemptId, questionId, selectedOptionId, schoolId) => 
 };
 
 const submitAttempt = async (attemptId, studentId, schoolId) => {
-    const result = await pool.query(`
-        WITH scored AS (
-            SELECT a.id AS answer_id, q.marks, CASE WHEN o.is_correct THEN true ELSE false END AS correct
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        // Lock the attempt so two simultaneous submit requests cannot both score it.
+        const attemptResult = await client.query(
+            `SELECT * FROM cbt_attempts WHERE id=$1 AND student_id=$2 AND school_id=$3 FOR UPDATE`,
+            [attemptId, studentId, schoolId]
+        );
+        const attempt = attemptResult.rows[0];
+        if (!attempt) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        // Submission is idempotent: once finalized, return the stored result unchanged.
+        if (attempt.status !== "in_progress") {
+            await client.query("COMMIT");
+            return attempt;
+        }
+
+        const scored = await client.query(`
+            SELECT a.id AS answer_id, q.marks,
+                   CASE WHEN o.is_correct THEN true ELSE false END AS correct
             FROM cbt_answers a
             JOIN cbt_questions q ON q.id=a.question_id
-            LEFT JOIN cbt_question_options o ON o.id=a.selected_option_id
-            JOIN cbt_attempts at ON at.id=a.attempt_id
-            WHERE a.attempt_id=$1 AND at.student_id=$2 AND at.school_id=$3
-        ), totals AS (
-            SELECT COALESCE(SUM(CASE WHEN correct THEN marks ELSE 0 END),0) AS score,
-                   COUNT(*) FILTER (WHERE correct) AS correct,
-                   COUNT(*) FILTER (WHERE NOT correct) AS wrong
-            FROM scored
-        ), qcount AS (
-            SELECT COUNT(*)::int AS total FROM cbt_questions q JOIN cbt_attempts a ON a.exam_id=q.exam_id WHERE a.id=$1
-        ), updated_answers AS (
-            UPDATE cbt_answers a SET is_correct=s.correct, marks_awarded=CASE WHEN s.correct THEN s.marks ELSE 0 END
-            FROM scored s WHERE a.id=s.answer_id RETURNING a.id
-        )
-        UPDATE cbt_attempts a SET status=CASE WHEN a.expires_at <= CURRENT_TIMESTAMP THEN 'expired' ELSE 'submitted' END,
-            submitted_at=CURRENT_TIMESTAMP, score=t.score, percentage=CASE WHEN e.total_marks > 0 THEN ROUND((t.score/e.total_marks)*100,2) ELSE 0 END,
-            correct_answers=t.correct, wrong_answers=t.wrong, unanswered=GREATEST(q.total - (t.correct+t.wrong),0), updated_at=CURRENT_TIMESTAMP
-        FROM totals t, qcount q, cbt_exams e
-        WHERE a.id=$1 AND a.student_id=$2 AND a.school_id=$3 AND e.id=a.exam_id
-        RETURNING a.*;
-    `, [attemptId, studentId, schoolId]);
-    return result.rows[0];
+            LEFT JOIN cbt_question_options o ON o.id=a.selected_option_id AND o.question_id=q.id
+            WHERE a.attempt_id=$1;
+        `, [attemptId]);
+
+        let score = 0;
+        let correct = 0;
+        let wrong = 0;
+
+        for (const answer of scored.rows) {
+            const isCorrect = Boolean(answer.correct);
+            if (isCorrect) {
+                score += Number(answer.marks) || 0;
+                correct += 1;
+            } else {
+                wrong += 1;
+            }
+
+            await client.query(
+                `UPDATE cbt_answers
+                 SET is_correct=$1, marks_awarded=$2
+                 WHERE id=$3`,
+                [isCorrect, isCorrect ? Number(answer.marks) || 0 : 0, answer.answer_id]
+            );
+        }
+
+        const qcount = await client.query(
+            `SELECT COUNT(*)::int AS total FROM cbt_questions WHERE exam_id=$1 AND school_id=$2`,
+            [attempt.exam_id, schoolId]
+        );
+        const totalQuestions = Number(qcount.rows[0]?.total || 0);
+        const unanswered = Math.max(totalQuestions - correct - wrong, 0);
+        const exam = await client.query(
+            `SELECT total_marks FROM cbt_exams WHERE id=$1 AND school_id=$2`,
+            [attempt.exam_id, schoolId]
+        );
+        const totalMarks = Number(exam.rows[0]?.total_marks || 0);
+        const finalScore = Number(score.toFixed(2));
+        const percentage = totalMarks > 0 ? Number(((finalScore / totalMarks) * 100).toFixed(2)) : 0;
+        const status = attempt.expires_at && new Date(attempt.expires_at) <= new Date() ? "expired" : "submitted";
+
+        const updated = await client.query(`
+            UPDATE cbt_attempts
+            SET status=$4,
+                submitted_at=CURRENT_TIMESTAMP,
+                score=$5,
+                percentage=$6,
+                correct_answers=$7,
+                wrong_answers=$8,
+                unanswered=$9,
+                updated_at=CURRENT_TIMESTAMP
+            WHERE id=$1 AND student_id=$2 AND school_id=$3 AND status='in_progress'
+            RETURNING *;
+        `, [attemptId, studentId, schoolId, status, finalScore, percentage, correct, wrong, unanswered]);
+
+        await client.query("COMMIT");
+        return updated.rows[0] || attempt;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 const getStudentAttempts = async (studentId, schoolId) => {
