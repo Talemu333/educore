@@ -100,7 +100,44 @@ const updateQuestion=async(questionId,data,schoolId)=>{
 
 const deleteQuestion=async(questionId,schoolId)=>{const client=await pool.connect();try{await client.query("BEGIN");const deleted=await client.query(`DELETE FROM cbt_questions q USING cbt_exams e WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2 RETURNING q.id,q.exam_id`,[questionId,schoolId]);if(!deleted.rows[0]){await client.query("ROLLBACK");return null;}await syncExamTotalMarks(deleted.rows[0].exam_id,schoolId,client);await client.query("COMMIT");return{id:deleted.rows[0].id};}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}};
 
-const startAttempt=async(examId,studentId,schoolId)=>{const exam=await getExamById(examId,schoolId);if(!exam)throw new Error("Examination not found.");if(exam.status!=="published")throw new Error("This examination is not available.");if(exam.starts_at&&new Date(exam.starts_at)>new Date())throw new Error("This examination has not started yet.");if(exam.ends_at&&new Date(exam.ends_at)<new Date())throw new Error("This examination has ended.");const questionTotals=await getQuestionTotalMarks(examId,schoolId);if(questionTotals.questionCount===0||questionTotals.totalMarks<=0)throw new Error("This examination has no valid questions yet.");const student=await pool.query("SELECT id,class_id,arm_id FROM students WHERE id=$1 AND school_id=$2",[studentId,schoolId]);if(!student.rows[0])throw new Error("Student not found for this school.");if(Number(student.rows[0].class_id)!==Number(exam.class_id)||(exam.arm_id&&Number(student.rows[0].arm_id)!==Number(exam.arm_id)))throw new Error("This examination is not assigned to your class.");const count=await pool.query("SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND student_id=$2 AND school_id=$3",[examId,studentId,schoolId]);const attemptNumber=count.rows[0].count+1;if(attemptNumber>exam.max_attempts)throw new Error("Maximum attempts reached.");const result=await pool.query(`INSERT INTO cbt_attempts(school_id,exam_id,student_id,attempt_number,expires_at) VALUES($1,$2,$3,$4,CURRENT_TIMESTAMP+($5||' minutes')::interval) RETURNING *`,[schoolId,examId,studentId,attemptNumber,exam.duration_minutes]);return result.rows[0];};
+const startAttempt=async(examId,studentId,schoolId)=>{
+    const client=await pool.connect();
+    try{
+        await client.query("BEGIN");
+        const examResult=await client.query(`SELECT * FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE`,[examId,schoolId]);
+        const exam=examResult.rows[0];
+        if(!exam) throw new Error("Examination not found.");
+        if(exam.status!=="published") throw new Error("This examination is not available.");
+        const now=new Date();
+        if(exam.starts_at&&new Date(exam.starts_at)>now) throw new Error("This examination has not started yet.");
+        if(exam.ends_at&&new Date(exam.ends_at)<=now) throw new Error("This examination has ended.");
+
+        const questionTotals=await getQuestionTotalMarks(examId,schoolId,client);
+        if(questionTotals.questionCount===0||questionTotals.totalMarks<=0) throw new Error("This examination has no valid questions yet.");
+        const student=await client.query("SELECT id,class_id,arm_id FROM students WHERE id=$1 AND school_id=$2 FOR UPDATE",[studentId,schoolId]);
+        if(!student.rows[0]) throw new Error("Student not found for this school.");
+        if(Number(student.rows[0].class_id)!==Number(exam.class_id)||(exam.arm_id&&Number(student.rows[0].arm_id)!==Number(exam.arm_id))) throw new Error("This examination is not assigned to your class.");
+
+        const active=await client.query(`SELECT * FROM cbt_attempts WHERE exam_id=$1 AND student_id=$2 AND school_id=$3 AND status='in_progress' ORDER BY created_at DESC,id DESC LIMIT 1 FOR UPDATE`,[examId,studentId,schoolId]);
+        if(active.rows[0]){
+            const attempt=active.rows[0];
+            const attemptExpiry=new Date(attempt.expires_at);
+            if(attemptExpiry<=now){
+                await client.query("COMMIT");
+                return await submitAttempt(attempt.id,studentId,schoolId);
+            }
+            await client.query("COMMIT");
+            return attempt;
+        }
+
+        const count=await client.query("SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND student_id=$2 AND school_id=$3",[examId,studentId,schoolId]);
+        const attemptNumber=count.rows[0].count+1;
+        if(attemptNumber>exam.max_attempts) throw new Error("Maximum attempts reached.");
+        const result=await client.query(`INSERT INTO cbt_attempts(school_id,exam_id,student_id,attempt_number,expires_at) VALUES($1,$2,$3,$4,LEAST(CURRENT_TIMESTAMP+($5||' minutes')::interval,COALESCE($6::timestamptz,'infinity'::timestamptz))) RETURNING *`,[schoolId,examId,studentId,attemptNumber,exam.duration_minutes,exam.ends_at||null]);
+        await client.query("COMMIT");
+        return result.rows[0];
+    }catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}
+};
 
 const saveAnswer=async(attemptId,questionId,selectedOptionId,schoolId)=>{
     const result=await pool.query(`
