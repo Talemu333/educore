@@ -12,6 +12,12 @@ const modules = [
         items: ["Teacher portal", "Attendance", "Assessments", "Student performance"]
     },
     {
+        icon: "💻",
+        title: "CBT & Online Testing",
+        description: "Create and manage computer-based examinations, question banks and timed online tests while tracking student performance automatically.",
+        items: ["Question bank", "CBT exam creation", "Timed online tests", "Automatic scoring"]
+    },
+    {
         icon: "👨‍👩‍👧",
         title: "Parent Engagement",
         description: "Keep parents connected to their children's academic progress, attendance, announcements and financial information.",
@@ -146,12 +152,12 @@ export default function EduCoreLandingPage() {
                     </div>
                 </section>
 
-                <section id="solutions" className="px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
+                <section id="solutions" className="px-5 pb-20 pt-12 sm:px-6 sm:pb-24 sm:pt-16 lg:px-8">
                     <div className="mx-auto max-w-7xl">
                         <div className="max-w-3xl">
                             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">Complete school solution</p>
                             <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Everything your school needs to operate better.</h2>
-                            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">From admissions and student records to results, fees, communication and your school website, EduCore connects the workflows that matter most.</p>
+                            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">From admissions and student records to results, fees, communication, CBT and your school website, EduCore connects the workflows that matter most.</p>
                         </div>
                         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                             {modules.map((module) => (
