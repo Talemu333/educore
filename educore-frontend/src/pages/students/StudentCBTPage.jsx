@@ -260,15 +260,19 @@ function StudentCBTPage() {
 
             const response = await api.post(`/cbt/exams/${selected.id}/start`);
             const newAttempt = response.data?.data;
+            const expiresAt = Date.parse(newAttempt?.expires_at);
 
+            // The backend is the source of truth for whether an attempt is valid
+            // or expired. The frontend only verifies that the response contains
+            // the minimum data required to run the attempt timer safely.
             if (
                 !newAttempt ||
                 newAttempt.status !== "in_progress" ||
                 !newAttempt.expires_at ||
-                Date.parse(newAttempt.expires_at) <= Date.now()
+                !Number.isFinite(expiresAt)
             ) {
                 throw new Error(
-                    "The examination server returned an invalid or expired attempt. Please try again."
+                    "The examination server did not return a valid active attempt. Please try again."
                 );
             }
 
@@ -288,12 +292,7 @@ function StudentCBTPage() {
             setExam(loadedExam);
             setAnswers({});
             setCurrentQuestion(0);
-            setRemainingSeconds(
-                Math.max(
-                    0,
-                    Math.ceil((Date.parse(newAttempt.expires_at) - Date.now()) / 1000)
-                )
-            );
+            setRemainingSeconds(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)));
         } catch (error) {
             console.error("CBT start flow failed", {
                 url: error.config?.url,
