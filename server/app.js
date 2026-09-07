@@ -1,9 +1,12 @@
 const cors = require("cors");
 const express = require("express");
+const helmet = require("helmet");
 const routes = require("./routes");
 const classRoutes = require("./routes/classRoutes");
 const session = require("express-session");
+const pgSession = require("connect-pg-simple")(session);
 const passport = require("passport");
+const pool = require("./config/database");
 require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes");
@@ -46,17 +49,22 @@ const cbtQuestionBankRoutes = require("./routes/cbtQuestionBankRoutes");
 const cbtQuestionBankImportRoutes = require("./routes/cbtQuestionBankImportRoutes");
 
 const app = express();
-
-const defaultOrigins = [
-    "http://localhost:5173",
-    "https://educore-ivory.vercel.app",
-];
+const isProduction = process.env.NODE_ENV === "production";
 
 const configuredOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
     : [];
+const allowedOrigins = isProduction
+    ? [...new Set(configuredOrigins)]
+    : [...new Set(["http://localhost:5173", ...configuredOrigins])];
 
-const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
+if (isProduction && allowedOrigins.length === 0) {
+    throw new Error("CORS_ORIGINS must be configured in production.");
+}
+
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+app.use(helmet());
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -68,13 +76,25 @@ app.use(cors({
     credentials: true,
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.set("trust proxy", 1);
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
-const isProduction = process.env.NODE_ENV === "production";
+app.get("/health", async (req, res) => {
+    try {
+        await pool.query("SELECT 1");
+        return res.json({ success: true, status: "ok" });
+    } catch (error) {
+        console.error("Health check database error:", error);
+        return res.status(503).json({ success: false, status: "degraded" });
+    }
+});
 
 app.use(session({
+    store: new pgSession({
+        pool,
+        tableName: "user_sessions",
+        createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
