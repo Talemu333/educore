@@ -5,24 +5,20 @@ const router = express.Router();
 const contactMessageController = require("../controllers/contactMessageController");
 const authenticate = require("../middlewares/authenticate");
 const authorize = require("../middlewares/authorize");
+const rateLimit = require("../middlewares/rateLimit");
 const ROLES = require("../constants/roles");
 
-/*
-=========================================
-PUBLIC: CONTACT FORM
-=========================================
-*/
+const contactLimit = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 5,
+    message: "Too many contact submissions. Please try again later."
+});
 
 router.post(
     "/",
+    contactLimit,
     contactMessageController.createContactMessage
 );
-
-/*
-=========================================
-ADMIN: CONTACT MESSAGES
-=========================================
-*/
 
 router.get(
     "/admin",
