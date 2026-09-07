@@ -152,7 +152,7 @@ export default function EduCoreLandingPage() {
                     </div>
                 </section>
 
-                <section id="solutions" className="px-5 pb-20 pt-12 sm:px-6 sm:pb-24 sm:pt-16 lg:px-8">
+                <section id="solutions" className="px-5 pb-20 pt-4 sm:px-6 sm:pb-24 sm:pt-6 lg:px-8">
                     <div className="mx-auto max-w-7xl">
                         <div className="max-w-3xl">
                             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">Complete school solution</p>
