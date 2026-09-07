@@ -281,12 +281,33 @@ function CBTQuestionBankPage() {
             </Card>
 
             {showCopy && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <Card className="w-full max-w-lg"><CardContent className="p-6">
-                        <div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold">Add Questions to Examination</h2><p className="text-sm text-slate-500">Only examinations with the same subject and class are shown.</p></div><Button variant="outline" onClick={() => setShowCopy(false)}><X className="h-4 w-4" /></Button></div>
-                        {compatibleExams.length ? <select className="w-full rounded-lg border p-3" value={copyExamId} onChange={(e) => setCopyExamId(e.target.value)}><option value="">Select examination</option>{compatibleExams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title} • {exam.status}</option>)}</select> : <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">No compatible examination was found. Create an examination for the same subject and class first.</p>}
-                        <div className="mt-5 flex justify-end gap-2"><Button variant="outline" onClick={() => setShowCopy(false)}>Cancel</Button><Button disabled={!compatibleExams.length || saving} onClick={copySelected}>{saving ? "Adding..." : "Add Questions"}</Button></div>
-                    </CardContent></Card>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-700">
+                            <div>
+                                <h2 className="text-lg font-semibold">Add Questions to Examination</h2>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Only examinations with the same subject and class are shown.</p>
+                            </div>
+                            <Button variant="outline" onClick={() => setShowCopy(false)} aria-label="Close modal"><X className="h-4 w-4" /></Button>
+                        </div>
+                        <div className="px-6 py-5">
+                            {compatibleExams.length ? (
+                                <label className="block text-sm font-medium">
+                                    Select examination
+                                    <select className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-3 text-slate-900 outline-none focus:border-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" value={copyExamId} onChange={(e) => setCopyExamId(e.target.value)}>
+                                        <option value="">Select examination</option>
+                                        {compatibleExams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title} • {exam.status}</option>)}
+                                    </select>
+                                </label>
+                            ) : (
+                                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">No compatible examination was found. Create an examination for the same subject and class first.</p>
+                            )}
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+                            <Button variant="outline" onClick={() => setShowCopy(false)}>Cancel</Button>
+                            <Button disabled={!compatibleExams.length || saving} onClick={copySelected}>{saving ? "Adding..." : "Add Questions"}</Button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
