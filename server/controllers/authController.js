@@ -62,7 +62,7 @@ const requestPasswordReset = async (req, res, next) => {
         if (process.env.NODE_ENV === "production" && !frontendUrl) {
             throw new Error("FRONTEND_URL must be configured in production.");
         }
-        const resetBaseUrl = frontendUrl || "http://localhost:5173";
+        const resetBaseUrl = (frontendUrl || "http://localhost:5173").replace(/\/+$/, "");
         const resetUrl = `${resetBaseUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
         const emailConfigured = Boolean(
