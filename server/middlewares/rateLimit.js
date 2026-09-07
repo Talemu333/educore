@@ -2,8 +2,7 @@ const buckets = new Map();
 
 function rateLimit({ windowMs = 15 * 60 * 1000, max = 20, message = "Too many requests. Please try again later." } = {}) {
     return (req, res, next) => {
-        const forwarded = req.get("x-forwarded-for");
-        const ip = forwarded ? forwarded.split(",")[0].trim() : req.ip;
+        const ip = req.ip || "unknown";
         const key = `${req.baseUrl || ""}:${req.path}:${ip}`;
         const now = Date.now();
         const current = buckets.get(key);
