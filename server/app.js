@@ -51,8 +51,9 @@ const cbtQuestionBankImportRoutes = require("./routes/cbtQuestionBankImportRoute
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
 
+const normalizeOrigin = (origin) => origin.trim().replace(/\/$/, "");
 const configuredOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
+    ? process.env.CORS_ORIGINS.split(",").map(normalizeOrigin).filter(Boolean)
     : [];
 const allowedOrigins = isProduction
     ? [...new Set(configuredOrigins)]
@@ -68,7 +69,7 @@ app.use(helmet());
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
             return callback(null, true);
         }
         return callback(new Error("Not allowed by CORS"));
@@ -78,6 +79,13 @@ app.use(cors({
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
+
+// API responses can contain private student, parent, payment, result, and CBT data.
+// Prevent browsers/proxies from serving stale authenticated API responses.
+app.use("/api", (req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+});
 
 app.get("/health", async (req, res) => {
     try {
