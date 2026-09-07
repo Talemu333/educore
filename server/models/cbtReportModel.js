@@ -1,5 +1,7 @@
 const pool = require("../config/database");
 
+const attemptMarksSql = `(SELECT COALESCE(SUM(q2.marks),0)::numeric FROM cbt_attempt_questions aq2 JOIN cbt_questions q2 ON q2.id=aq2.question_id AND q2.school_id=a.school_id WHERE aq2.attempt_id=a.id AND aq2.school_id=a.school_id)`;
+
 const getAttemptsReport = async (schoolId, filters = {}) => {
     const values = [schoolId];
     const conditions = ["a.school_id = $1"];
@@ -11,7 +13,9 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
         SELECT a.id, a.exam_id, a.student_id, a.attempt_number, a.status,
                a.started_at, a.submitted_at, a.expires_at, a.score,
                a.percentage, a.correct_answers, a.wrong_answers, a.unanswered,
-               e.title, e.total_marks, e.pass_mark, s.subject_name,
+               e.title, e.total_marks AS exam_total_marks,
+               ${attemptMarksSql} AS total_marks,
+               e.pass_mark, s.subject_name,
                st.admission_number, st.surname, st.first_name, st.middle_name
         FROM cbt_attempts a
         JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id
@@ -25,7 +29,9 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
 
 const getAttemptDetails = async (attemptId, schoolId) => {
     const attempt = await pool.query(`
-        SELECT a.*, e.title, e.total_marks, e.pass_mark, e.show_result_immediately,
+        SELECT a.*, e.title, e.total_marks AS exam_total_marks,
+               ${attemptMarksSql} AS total_marks,
+               e.pass_mark, e.show_result_immediately,
                s.subject_name, st.admission_number, st.surname, st.first_name, st.middle_name
         FROM cbt_attempts a
         JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id
