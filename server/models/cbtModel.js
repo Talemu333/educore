@@ -113,7 +113,7 @@ const updateQuestion=async(questionId,data,schoolId)=>{
     const client=await pool.connect();try{await client.query("BEGIN");const question=await client.query(`UPDATE cbt_questions q SET question_text=$3,image_url=$4,marks=$5,question_order=$6,explanation=$7,updated_at=CURRENT_TIMESTAMP FROM cbt_exams e WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2 RETURNING q.*`,[questionId,schoolId,data.question_text,data.image_url||null,data.marks||1,data.question_order,data.explanation||null]);if(!question.rows[0]){await client.query("ROLLBACK");return null;}if(Array.isArray(data.options)){await client.query("DELETE FROM cbt_question_options WHERE question_id=$1",[questionId]);for(const option of data.options)await client.query(`INSERT INTO cbt_question_options(question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`,[questionId,option.option_text,option.option_image_url||null,option.option_order,Boolean(option.is_correct)]);}await syncExamTotalMarks(question.rows[0].exam_id,schoolId,client);await client.query("COMMIT");return question.rows[0];}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}
 };
 
-const deleteQuestion=async(questionId,schoolId)=>{const client=await pool.connect();try{await client.query("BEGIN");const deleted=await client.query(`DELETE FROM cbt_questions q USING cbt_exams e WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2 RETURNING q.id,q.exam_id`,[questionId,schoolId]);if(!deleted.rows[0]){await client.query("ROLLBACK");return null;}await syncExamTotalMarks(deleted.rows[0].exam_id,schoolId,client);await client.query("COMMIT");return{id:deleted.rows[0].id};}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}};
+const deleteQuestion=async(questionId,schoolId)=>{const client=await pool.connect();try{await client.query("BEGIN");const deleted=await client.query(`DELETE FROM cbt_questions q USING cbt_exams e WHERE q.id=$1 AND q.school_id=$2 AND e.id=q.exam_id AND e.school_id=$2 RETURNING q.id,q.exam_id`,[questionId,schoolId]);if(!deleted.rows[0]){await client.query("ROLLBACK");return null;}await syncExamTotalMarks(deleted.rows[0].exam_id,schoolId,client);await client.query("COMMIT");return{id:deleted.rows[0].id};}catch(error){await client.query("ROLLBACK");return null; }finally{client.release();}};
 
 const startAttempt=async(examId,studentId,schoolId)=>{
     const client=await pool.connect();
@@ -166,14 +166,14 @@ const startAttempt=async(examId,studentId,schoolId)=>{
 const saveAnswer=async(attemptId,questionId,selectedOptionId,schoolId)=>{
     const result=await pool.query(`
         INSERT INTO cbt_answers(attempt_id,question_id,selected_option_id,answered_at)
-        SELECT a.id,aq.question_id,$3,CURRENT_TIMESTAMP
+        SELECT a.id,aq.question_id,$3::bigint,CURRENT_TIMESTAMP
         FROM cbt_attempts a
-        JOIN cbt_attempt_questions aq ON aq.attempt_id=a.id AND aq.question_id=$2 AND aq.school_id=$4
-        JOIN cbt_questions q ON q.id=aq.question_id AND q.exam_id=a.exam_id AND q.school_id=$4
-        WHERE a.id=$1 AND a.school_id=$4 AND a.status='in_progress'
+        JOIN cbt_attempt_questions aq ON aq.attempt_id=a.id AND aq.question_id=$2::bigint AND aq.school_id=$4::bigint
+        JOIN cbt_questions q ON q.id=aq.question_id AND q.exam_id=a.exam_id AND q.school_id=$4::bigint
+        WHERE a.id=$1::bigint AND a.school_id=$4::bigint AND a.status='in_progress'
           AND ($3::bigint IS NULL OR EXISTS(
               SELECT 1 FROM cbt_question_options o
-              WHERE o.id=$3 AND o.question_id=q.id
+              WHERE o.id=$3::bigint AND o.question_id=q.id
           ))
         ON CONFLICT(attempt_id,question_id) DO UPDATE SET selected_option_id=EXCLUDED.selected_option_id,answered_at=CURRENT_TIMESTAMP
         RETURNING *;
