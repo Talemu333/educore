@@ -58,8 +58,12 @@ const requestPasswordReset = async (req, res, next) => {
         const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
         await authModel.savePasswordResetToken(user.id, tokenHash, expiresAt);
 
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-        const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
+        const frontendUrl = process.env.FRONTEND_URL?.trim();
+        if (process.env.NODE_ENV === "production" && !frontendUrl) {
+            throw new Error("FRONTEND_URL must be configured in production.");
+        }
+        const resetBaseUrl = frontendUrl || "http://localhost:5173";
+        const resetUrl = `${resetBaseUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
         const emailConfigured = Boolean(
             process.env.RESEND_API_KEY ||
