@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./routes/AppRouter";
 import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
 import LegacyWebsiteRedirect from "./routes/LegacyWebsiteRedirect";
-import EduCoreLandingPage from "./pages/public/EduCoreLandingPage";
+import EduProwLandingPage from "./pages/public/EduProwLandingPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
@@ -57,7 +57,7 @@ function App() {
     const pathname = useAppPathname();
     const firstSegment = pathname.split("/").filter(Boolean)[0] || "";
 
-    if (pathname === "/educore") return <EduCoreLandingPage />;
+    if (pathname === "/eduprow") return <EduProwLandingPage />;
     if (firstSegment === "website") return <LegacyWebsiteRedirect />;
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
