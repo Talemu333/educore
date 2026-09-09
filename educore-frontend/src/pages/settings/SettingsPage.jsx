@@ -6,12 +6,15 @@ import AcademicTermManagement from "@/components/settings/AcademicTermManagement
 import AcademicStructureManagement from "@/components/settings/AcademicStructureManagement";
 import SuperAdminSchoolManagement from "@/components/settings/SuperAdminSchoolManagement";
 import SuperAdminManageSchoolPage from "./SuperAdminManageSchoolPage";
+import BulkDataImport from "./BulkDataImport";
 
 function SchoolSettingsContent() {
     const { data: sessions = [] } = useSessions();
 
     return (
         <>
+            <BulkDataImport />
+
             <LegacySettingsPage />
 
             <section className="w-full min-w-0 overflow-hidden rounded-xl border bg-background p-4 shadow-sm sm:p-6">
