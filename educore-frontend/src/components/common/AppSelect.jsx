@@ -64,7 +64,12 @@ function AppSelect({
 
             </SelectTrigger>
 
-            <SelectContent>
+            <SelectContent
+                side="bottom"
+                align="start"
+                sideOffset={6}
+                alignItemWithTrigger={false}
+            >
 
                 {
 
