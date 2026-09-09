@@ -69,6 +69,7 @@ function AppSelect({
                 align="start"
                 sideOffset={6}
                 alignItemWithTrigger={false}
+                className="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100"
             >
 
                 {
@@ -80,6 +81,8 @@ function AppSelect({
                             key={option[valueKey]}
 
                             value={option[valueKey].toString()}
+
+                            className="bg-white dark:bg-slate-950"
 
                         >
 
