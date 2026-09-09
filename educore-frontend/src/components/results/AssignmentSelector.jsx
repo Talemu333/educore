@@ -182,6 +182,8 @@ function AssignmentSelector({
 
                 sideOffset={6}
 
+                alignItemWithTrigger={false}
+
                 className="
                     z-[9999]
                     min-w-[550px]
