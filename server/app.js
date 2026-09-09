@@ -47,6 +47,7 @@ const expenseRoutes = require("./routes/expenseRoutes");
 const cbtRoutes = require("./routes/cbtRoutes");
 const cbtQuestionBankRoutes = require("./routes/cbtQuestionBankRoutes");
 const cbtQuestionBankImportRoutes = require("./routes/cbtQuestionBankImportRoutes");
+const bulkImportRoutes = require("./routes/bulkImportRoutes");
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -80,8 +81,6 @@ app.use(cors({
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
-// API responses can contain private student, parent, payment, result, and CBT data.
-// Prevent browsers/proxies from serving stale authenticated API responses.
 app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
     next();
@@ -157,6 +156,7 @@ app.use("/api/cbt", cbtRoutes);
 app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
 app.use("/api/cbt-question-bank", cbtQuestionBankRoutes);
 app.use("/api/cbt-question-bank/import-pdf", cbtQuestionBankImportRoutes);
+app.use("/api/bulk-import", bulkImportRoutes);
 
 app.use(errorHandler);
 module.exports = app;
