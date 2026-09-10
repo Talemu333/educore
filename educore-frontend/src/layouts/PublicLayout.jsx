@@ -43,17 +43,67 @@ function getWebsiteBasePath() {
     return "/website";
 }
 
+function SchoolResolutionState({ error }) {
+    const status = error?.response?.status;
+    const isNotFound = status === 404;
+
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-xl font-extrabold text-slate-500">
+                    {isNotFound ? "404" : "!"}
+                </div>
+                <h1 className="mt-5 text-2xl font-extrabold text-slate-900">
+                    {isNotFound ? "School not found" : "Unable to load school website"}
+                </h1>
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                    {isNotFound
+                        ? "The school website address you entered does not belong to a registered school."
+                        : "We could not load this school website right now. Please try again shortly."}
+                </p>
+                <Link
+                    to="https://eduprow.com"
+                    className="mt-6 inline-flex rounded-lg px-5 py-2.5 text-sm font-bold text-white"
+                    style={{ backgroundColor: "#1D4ED8" }}
+                >
+                    Go to EduProw
+                </Link>
+            </div>
+        </div>
+    );
+}
+
 function PublicLayout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useWebsitePage("home");
 
-    const { data: settings } = useSchoolSettings();
-    const primaryColor = settings?.primary_color || "#1D4ED8";
-    const schoolName = settings?.school_name || "EduCore School";
-    const schoolAddress = settings?.school_address || "School address coming soon";
-    const schoolPhone = settings?.school_phone || "";
-    const schoolEmail = settings?.school_email || "";
+    const {
+        data: settings,
+        isLoading: isSettingsLoading,
+        isError: isSettingsError,
+        error: settingsError
+    } = useSchoolSettings();
+
+    if (isSettingsLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-white">
+                <p className="text-sm font-medium text-slate-500">Loading school website...</p>
+            </div>
+        );
+    }
+
+    // Never render a generic "EduCore School" website when tenant resolution
+    // fails. The public website must belong to a real school.
+    if (isSettingsError || !settings) {
+        return <SchoolResolutionState error={settingsError} />;
+    }
+
+    const primaryColor = settings.primary_color || "#1D4ED8";
+    const schoolName = settings.school_name;
+    const schoolAddress = settings.school_address || "School address coming soon";
+    const schoolPhone = settings.school_phone || "";
+    const schoolEmail = settings.school_email || "";
     const websiteBasePath = getWebsiteBasePath();
 
     const publicPath = (path) => `${websiteBasePath}${path === "/" ? "" : path}` || "/";
@@ -69,7 +119,7 @@ function PublicLayout() {
                         onClick={closeMobileMenu}
                         className="flex min-w-0 items-center gap-3"
                     >
-                        {settings?.school_logo ? (
+                        {settings.school_logo ? (
                             <img
                                 src={settings.school_logo}
                                 alt={`${schoolName} logo`}
@@ -89,7 +139,7 @@ function PublicLayout() {
                                 {schoolName}
                             </p>
                             <p className="hidden text-[11px] font-medium tracking-wide text-slate-500 sm:block">
-                                {settings?.school_motto || "Excellence • Character • Knowledge"}
+                                {settings.school_motto || "Excellence • Character • Knowledge"}
                             </p>
                         </div>
                     </Link>
@@ -213,7 +263,7 @@ function PublicLayout() {
                     <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="lg:col-span-2">
                             <div className="flex items-center gap-3">
-                                {settings?.school_logo ? (
+                                {settings.school_logo ? (
                                     <img
                                         src={settings.school_logo}
                                         alt={`${schoolName} logo`}
@@ -231,7 +281,7 @@ function PublicLayout() {
                                 <div>
                                     <h2 className="text-lg font-bold">{schoolName}</h2>
                                     <p className="hidden text-xs text-slate-400 sm:block">
-                                        {settings?.school_motto || "Excellence • Character • Knowledge"}
+                                        {settings.school_motto || "Excellence • Character • Knowledge"}
                                     </p>
                                 </div>
                             </div>
