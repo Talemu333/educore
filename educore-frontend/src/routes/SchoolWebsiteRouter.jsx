@@ -24,20 +24,21 @@ import EventDetails from "@/pages/public/EventDetails";
 
 const PUBLIC_SCHOOL_STORAGE_KEY = "educore_public_school_slug";
 
-function SchoolLayoutBridge({ isCustomDomain = false }) {
-    const { schoolSlug } = useParams();
+function SchoolLayoutBridge({ isCustomDomain = false, isSubdomain = false, schoolSlug: providedSchoolSlug = "" }) {
+    const { schoolSlug: routeSchoolSlug } = useParams();
+    const schoolSlug = providedSchoolSlug || routeSchoolSlug;
 
     useEffect(() => {
-        if (!schoolSlug || isCustomDomain) return;
+        if (!schoolSlug) return;
         sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
         localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
-    }, [schoolSlug, isCustomDomain]);
+    }, [schoolSlug]);
 
     if (!isCustomDomain && !schoolSlug) return <Navigate to="/" replace />;
 
     return (
         <>
-            <SchoolWebsiteNavigationBridge isCustomDomain={isCustomDomain} />
+            <SchoolWebsiteNavigationBridge isCustomDomain={isCustomDomain} schoolSlug={schoolSlug} />
             <PublicLayout />
         </>
     );
@@ -62,10 +63,9 @@ function LegacyWebsiteRedirect() {
     return <div className="flex min-h-screen items-center justify-center bg-white px-6"><p className="text-sm text-slate-500">Opening school website...</p></div>;
 }
 
-function SchoolWebsiteNavigationBridge({ isCustomDomain = false }) {
+function SchoolWebsiteNavigationBridge({ isCustomDomain = false, schoolSlug = "" }) {
     const location = useLocation();
     const navigate = useNavigate();
-    const { schoolSlug } = useParams();
 
     useEffect(() => {
         if (!schoolSlug && !isCustomDomain) return;
@@ -108,12 +108,21 @@ function SchoolWebsiteNavigationBridge({ isCustomDomain = false }) {
     return null;
 }
 
-export default function SchoolWebsiteRouter({ isCustomDomain = false }) {
+export default function SchoolWebsiteRouter({ isCustomDomain = false, isSubdomain = false, schoolSlug = "" }) {
     return (
         <BrowserRouter>
             <Routes>
-                {isCustomDomain ? (
-                    <Route path="/" element={<SchoolLayoutBridge isCustomDomain />}>
+                {isCustomDomain || isSubdomain ? (
+                    <Route
+                        path="*"
+                        element={
+                            <SchoolLayoutBridge
+                                isCustomDomain={isCustomDomain}
+                                isSubdomain={isSubdomain}
+                                schoolSlug={schoolSlug}
+                            />
+                        }
+                    >
                         <Route index element={<Home />} />
                         <Route path="about" element={<About />} />
                         <Route path="contact" element={<Contact />} />
