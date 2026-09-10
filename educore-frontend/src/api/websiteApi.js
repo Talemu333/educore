@@ -46,4 +46,4 @@ export const getAllEvents = async () => (await api.get("/website/admin/events"))
 export const getEventById = async (id) => (await api.get(`/website/admin/events/${id}`, { params: publicParams() })).data.data;
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
 export const updateEvent = async (id, data) => (await api.put(`/website/admin/events/${id}`, data)).data.data;
-export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data.data;
+export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data;
