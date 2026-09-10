@@ -1,9 +1,10 @@
 const ApiError=require("../utils/ApiError");
 const websiteModel=require("../models/websiteModel");
+const publicDomainModel=require("../models/publicDomainModel");
 
 const resolveDomain=async(domain)=>{
     if(!domain) throw new ApiError(400,"School domain could not be determined.");
-    const school=await websiteModel.getSchoolByDomain(domain);
+    const school=await publicDomainModel.getSchoolByHost(domain);
     if(!school) throw new ApiError(404,"School website not found for this domain.");
     return school.id;
 };
