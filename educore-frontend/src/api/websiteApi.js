@@ -42,7 +42,7 @@ export const getPublishedNews = async () => (await api.get("/website/news", { pa
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
 export const getAllEvents = async () => (await api.get("/website/admin/events")).data.data;
-export const getEventById = async (id) => (await api.get("/website/admin/events", { params: publicParams() })).data.data;
+export const getEventById = async (id) => (await api.get(`/website/events/${id}`, { params: publicParams() })).data.data;
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
-export const updateEvent = async (id, data) => (await api.put(`/website/events/${id}`, data)).data.data;
-export const deleteEvent = async (id) => (await api.delete(`/website/events/${id}`)).data;
+export const updateEvent = async (id, data) => (await api.put(`/website/admin/events/${id}`, data)).data.data;
+export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data.data;
