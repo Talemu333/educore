@@ -37,8 +37,8 @@ export const deleteWebsiteSection = async (sectionId) => (await api.delete(`/web
 export const getNewsBySlug = async (slug) => (await api.get(`/website/news/${slug}`, { params: publicParams() })).data.data;
 export const getAllNews = async () => (await api.get("/website/admin/news")).data.data;
 export const createNews = async (data) => (await api.post("/website/admin/news", data)).data.data;
-export const updateNews = async (id, data) => (await api.put(`/website/news/admin/news/${id}`, data)).data.data;
-export const deleteNews = async (id) => (await api.delete(`/website/admin/news/${id}`)).data;
+export const updateNews = async (id, data) => (await api.put(`/website/news/${id}`, data)).data.data;
+export const deleteNews = async (id) => (await api.delete(`/website/news/${id}`)).data;
 export const getPublishedNews = async () => (await api.get("/website/news", { params: publicParams() })).data.data;
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
@@ -46,4 +46,4 @@ export const getAllEvents = async () => (await api.get("/website/admin/events"))
 export const getEventById = async (id) => (await api.get(`/website/admin/events/${id}`, { params: publicParams() })).data.data;
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
 export const updateEvent = async (id, data) => (await api.put(`/website/admin/events/${id}`, data)).data.data;
-export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data;
+export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data.data;
