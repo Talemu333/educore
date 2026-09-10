@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { getSchool } from "@/services/superAdminSchoolService";
+import { getSchool, setSchoolDomain } from "@/services/superAdminSchoolService";
 import LegacySettingsPage from "./LegacySettingsPage";
 import AcademicTermManagement from "@/components/settings/AcademicTermManagement";
 import AcademicStructureManagement from "@/components/settings/AcademicStructureManagement";
@@ -21,15 +21,72 @@ const tabs = [
 
 function AcademicManagementContent() {
     const { data: sessions = [] } = useSessions();
-
     return (
         <div className="space-y-6">
-            <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
-                <AcademicTermManagement sessions={sessions} />
-            </section>
-            <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
-                <AcademicStructureManagement />
-            </section>
+            <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6"><AcademicTermManagement sessions={sessions} /></section>
+            <section className="rounded-xl border bg-background p-4 shadow-sm sm:p-6"><AcademicStructureManagement /></section>
+        </div>
+    );
+}
+
+function DomainManagement({ school, onSaved }) {
+    const [domain, setDomain] = useState(school?.domain || "");
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+
+    useEffect(() => setDomain(school?.domain || ""), [school?.domain]);
+
+    const save = async () => {
+        setSaving(true); setMessage(""); setError("");
+        try {
+            const response = await setSchoolDomain(school.school_id, domain.trim());
+            setMessage(response.message || "Domain saved.");
+            onSaved(response.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to save the custom domain.");
+        } finally { setSaving(false); }
+    };
+
+    const remove = async () => {
+        setDomain("");
+        await save();
+    };
+
+    const websiteUrl = domain.trim()
+        ? `https://${domain.trim()}`
+        : `https://${school.website_slug || "school"}.eduprow.com`;
+
+    return (
+        <div className="rounded-xl border bg-background p-5 md:col-span-2">
+            <div className="flex flex-col gap-1">
+                <h3 className="font-semibold">School Website Domain</h3>
+                <p className="text-sm text-muted-foreground">Every school gets an EduProw website address automatically. Add the school's own domain when it is purchased.</p>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div>
+                    <label className="mb-2 block text-sm font-medium">Custom domain</label>
+                    <input
+                        value={domain}
+                        onChange={(event) => setDomain(event.target.value)}
+                        placeholder="schoolname.edu.ng"
+                        className="h-11 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <button type="button" onClick={save} disabled={saving} className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60">{saving ? "Saving..." : "Save domain"}</button>
+                    {school.domain && <button type="button" onClick={remove} disabled={saving} className="rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60">Remove</button>}
+                </div>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-muted/50 p-4 text-sm">
+                <p><span className="font-medium">Current website:</span> {websiteUrl}</p>
+                {!school.domain && <p className="mt-2 text-muted-foreground">After the school buys its domain, point that domain to the EduProw Vercel project and save it here.</p>}
+            </div>
+
+            {message && <p className="mt-3 text-sm text-green-700">{message}</p>}
+            {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
         </div>
     );
 }
@@ -42,7 +99,6 @@ function SuperAdminManageSchoolPage({ schoolId: schoolIdProp }) {
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("overview");
     const [contextReady, setContextReady] = useState(false);
-
     const schoolId = useMemo(() => Number(schoolIdProp), [schoolIdProp]);
     const isSuperAdmin = user?.role_name === "Super Admin";
 
@@ -50,16 +106,13 @@ function SuperAdminManageSchoolPage({ schoolId: schoolIdProp }) {
         if (!isSuperAdmin || !Number.isInteger(schoolId) || schoolId < 1) return;
         let mounted = true;
         const load = async () => {
-            setLoading(true);
-            setError("");
+            setLoading(true); setError("");
             try {
                 const response = await getSchool(schoolId);
                 if (mounted) setSchool(response?.data || null);
             } catch (err) {
                 if (mounted) setError(err.response?.data?.message || "Unable to load school.");
-            } finally {
-                if (mounted) setLoading(false);
-            }
+            } finally { if (mounted) setLoading(false); }
         };
         load();
         return () => { mounted = false; };
@@ -74,51 +127,22 @@ function SuperAdminManageSchoolPage({ schoolId: schoolIdProp }) {
 
     if (!isSuperAdmin) return null;
     if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading school...</div>;
-
-    if (error || !school) {
-        return (
-            <section className="space-y-4 rounded-xl border bg-background p-6">
-                <button type="button" onClick={() => navigate("/settings")} className="rounded-md border px-3 py-2 text-sm">← Back to Schools</button>
-                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error || "School not found."}</div>
-            </section>
-        );
-    }
+    if (error || !school) return <section className="space-y-4 rounded-xl border bg-background p-6"><button type="button" onClick={() => navigate("/settings")} className="rounded-md border px-3 py-2 text-sm">← Back to Schools</button><div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error || "School not found."}</div></section>;
 
     return (
         <section className="w-full min-w-0 space-y-6 overflow-x-hidden">
             <div className="flex flex-col gap-4 rounded-xl border bg-background p-5 shadow-sm md:flex-row md:items-center md:justify-between">
-                <div>
-                    <button type="button" onClick={() => navigate("/settings")} className="mb-3 text-sm text-primary hover:underline">← Back to School Management</button>
-                    <h2 className="text-2xl font-semibold">{school.school_name}</h2>
-                    <p className="text-sm text-muted-foreground">School ID: {school.school_id} · Prefix: {school.admission_prefix || "—"}</p>
-                </div>
+                <div><button type="button" onClick={() => navigate("/settings")} className="mb-3 text-sm text-primary hover:underline">← Back to School Management</button><h2 className="text-2xl font-semibold">{school.school_name}</h2><p className="text-sm text-muted-foreground">School ID: {school.school_id} · Prefix: {school.admission_prefix || "—"}</p></div>
                 <span className={`w-fit rounded-full px-3 py-1 text-sm ${school.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{school.is_active ? "Active" : "Inactive"}</span>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto border-b pb-2">
-                {tabs.map((tab) => (
-                    <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ${activeTab === tab.id ? "bg-primary text-primary-foreground" : "border hover:bg-muted"}`}>
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            <div className="flex gap-2 overflow-x-auto border-b pb-2">{tabs.map((tab) => <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ${activeTab === tab.id ? "bg-primary text-primary-foreground" : "border hover:bg-muted"}`}>{tab.label}</button>)}</div>
 
             {activeTab === "overview" && (
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border bg-background p-5">
-                        <h3 className="mb-3 font-semibold">School Information</h3>
-                        <dl className="space-y-2 text-sm">
-                            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Email</dt><dd>{school.school_email || "—"}</dd></div>
-                            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Phone</dt><dd>{school.school_phone || "—"}</dd></div>
-                            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Level</dt><dd>{school.school_level || "—"}</dd></div>
-                            <div><dt className="text-muted-foreground">Address</dt><dd className="mt-1">{school.school_address || "—"}</dd></div>
-                            <div><dt className="text-muted-foreground">Motto</dt><dd className="mt-1">{school.school_motto || "—"}</dd></div>
-                        </dl>
-                    </div>
-                    <div className="rounded-xl border bg-background p-5">
-                        <h3 className="mb-3 font-semibold">Management Context</h3>
-                        <p className="text-sm text-muted-foreground">All school-scoped requests made from this page use School {school.school_id} as the active Super Admin management context, keeping this school's records separate from other schools.</p>
-                    </div>
+                    <div className="rounded-xl border bg-background p-5"><h3 className="mb-3 font-semibold">School Information</h3><dl className="space-y-2 text-sm"><div className="flex justify-between gap-4"><dt className="text-muted-foreground">Email</dt><dd>{school.school_email || "—"}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted-foreground">Phone</dt><dd>{school.school_phone || "—"}</dd></div><div className="flex justify-between gap-4"><dt className="text-muted-foreground">Level</dt><dd>{school.school_level || "—"}</dd></div><div><dt className="text-muted-foreground">Address</dt><dd className="mt-1">{school.school_address || "—"}</dd></div><div><dt className="text-muted-foreground">Motto</dt><dd className="mt-1">{school.school_motto || "—"}</dd></div></dl></div>
+                    <div className="rounded-xl border bg-background p-5"><h3 className="mb-3 font-semibold">Management Context</h3><p className="text-sm text-muted-foreground">All school-scoped requests made from this page use School {school.school_id} as the active Super Admin management context, keeping this school's records separate from other schools.</p></div>
+                    <DomainManagement school={school} onSaved={(data) => setSchool((current) => ({ ...current, domain: data?.domain || null }))} />
                 </div>
             )}
 
