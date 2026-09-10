@@ -24,30 +24,23 @@ import EventDetails from "@/pages/public/EventDetails";
 
 const PUBLIC_SCHOOL_STORAGE_KEY = "educore_public_school_slug";
 
-function SchoolLayoutBridge() {
+function SchoolLayoutBridge({ isCustomDomain = false }) {
     const { schoolSlug } = useParams();
 
     useEffect(() => {
-        if (!schoolSlug) return;
+        if (!schoolSlug || isCustomDomain) return;
 
-        sessionStorage.setItem(
-            PUBLIC_SCHOOL_STORAGE_KEY,
-            schoolSlug
-        );
+        sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
+        localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
+    }, [schoolSlug, isCustomDomain]);
 
-        localStorage.setItem(
-            PUBLIC_SCHOOL_STORAGE_KEY,
-            schoolSlug
-        );
-    }, [schoolSlug]);
-
-    if (!schoolSlug) {
+    if (!isCustomDomain && !schoolSlug) {
         return <Navigate to="/" replace />;
     }
 
     return (
         <>
-            <SchoolWebsiteNavigationBridge />
+            <SchoolWebsiteNavigationBridge isCustomDomain={isCustomDomain} />
             <PublicLayout />
         </>
     );
@@ -77,28 +70,26 @@ function LegacyWebsiteRedirect() {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-white px-6">
-            <p className="text-sm text-slate-500">
-                Opening school website...
-            </p>
+            <p className="text-sm text-slate-500">Opening school website...</p>
         </div>
     );
 }
 
-function SchoolWebsiteNavigationBridge() {
+function SchoolWebsiteNavigationBridge({ isCustomDomain = false }) {
     const location = useLocation();
     const navigate = useNavigate();
     const { schoolSlug } = useParams();
 
     useEffect(() => {
-        if (!schoolSlug) return;
+        if (!schoolSlug && !isCustomDomain) return;
 
         const toSchoolPath = href => {
-            if (!href || !href.startsWith("/website")) {
-                return href;
-            }
+            if (!href || !href.startsWith("/website")) return href;
 
             const suffix = href.replace(/^\/website/, "");
-            return `/${schoolSlug}${suffix || ""}`;
+            return isCustomDomain
+                ? (suffix || "/")
+                : `/${schoolSlug}${suffix || ""}`;
         };
 
         const rewriteLinks = () => {
@@ -126,16 +117,13 @@ function SchoolWebsiteNavigationBridge() {
 
         const handleClick = event => {
             const anchor = event.target.closest("a");
-
             if (!anchor) return;
 
             const href = anchor.getAttribute("href");
-
             if (!href || !href.startsWith("/website")) return;
 
             event.preventDefault();
             event.stopPropagation();
-
             navigate(toSchoolPath(href));
         };
 
@@ -145,40 +133,48 @@ function SchoolWebsiteNavigationBridge() {
             observer.disconnect();
             document.removeEventListener("click", handleClick, true);
         };
-    }, [schoolSlug, navigate, location.pathname]);
+    }, [schoolSlug, isCustomDomain, navigate, location.pathname]);
 
     return null;
 }
 
-export default function SchoolWebsiteRouter() {
+export default function SchoolWebsiteRouter({ isCustomDomain = false }) {
     return (
         <BrowserRouter>
             <Routes>
-                <Route
-                    path="/:schoolSlug"
-                    element={<SchoolLayoutBridge />}
-                >
-                    <Route index element={<Home />} />
-                    <Route path="about" element={<About />} />
-                    <Route path="contact" element={<Contact />} />
-                    <Route path="academics" element={<Academics />} />
-                    <Route path="admissions" element={<Admissions />} />
-                    <Route path="gallery" element={<Gallery />} />
-                    <Route path="news" element={<News />} />
-                    <Route path="news/:slug" element={<NewsDetails />} />
-                    <Route path="events" element={<Events />} />
-                    <Route path="events/:slug" element={<EventDetails />} />
-                </Route>
+                {isCustomDomain ? (
+                    <Route
+                        path="*"
+                        element={<SchoolLayoutBridge isCustomDomain />}
+                    >
+                        <Route index element={<Home />} />
+                        <Route path="about" element={<About />} />
+                        <Route path="contact" element={<Contact />} />
+                        <Route path="academics" element={<Academics />} />
+                        <Route path="admissions" element={<Admissions />} />
+                        <Route path="gallery" element={<Gallery />} />
+                        <Route path="news" element={<News />} />
+                        <Route path="news/:slug" element={<NewsDetails />} />
+                        <Route path="events" element={<Events />} />
+                        <Route path="events/:slug" element={<EventDetails />} />
+                    </Route>
+                ) : (
+                    <Route path="/:schoolSlug" element={<SchoolLayoutBridge />}>
+                        <Route index element={<Home />} />
+                        <Route path="about" element={<About />} />
+                        <Route path="contact" element={<Contact />} />
+                        <Route path="academics" element={<Academics />} />
+                        <Route path="admissions" element={<Admissions />} />
+                        <Route path="gallery" element={<Gallery />} />
+                        <Route path="news" element={<News />} />
+                        <Route path="news/:slug" element={<NewsDetails />} />
+                        <Route path="events" element={<Events />} />
+                        <Route path="events/:slug" element={<EventDetails />} />
+                    </Route>
+                )}
 
-                <Route
-                    path="/website/*"
-                    element={<LegacyWebsiteRedirect />}
-                />
-
-                <Route
-                    path="*"
-                    element={<Navigate to="/" replace />}
-                />
+                <Route path="/website/*" element={<LegacyWebsiteRedirect />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
     );
