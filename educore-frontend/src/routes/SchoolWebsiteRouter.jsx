@@ -83,6 +83,28 @@ function LegacyWebsiteRedirect({ isCustomDomain = false, isSubdomain = false }) 
     );
 }
 
+function SubdomainSchoolPrefixRedirect({ schoolSlug }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { schoolSlug: pathSlug } = useParams();
+
+    useEffect(() => {
+        if (!schoolSlug || pathSlug !== schoolSlug) return;
+
+        const prefix = `/${schoolSlug}`;
+        const suffix = location.pathname.slice(prefix.length) || "/";
+        const target = `${suffix}${location.search}${location.hash}`;
+
+        if (location.pathname === prefix || location.pathname.startsWith(`${prefix}/`)) {
+            navigate(target, { replace: true });
+        }
+    }, [schoolSlug, pathSlug, location.pathname, location.search, location.hash, navigate]);
+
+    if (pathSlug !== schoolSlug) return <Navigate to="/" replace />;
+
+    return null;
+}
+
 function SchoolWebsiteNavigationBridge({ isCustomDomain = false, isSubdomain = false, schoolSlug = "" }) {
     const navigate = useNavigate();
 
@@ -188,6 +210,13 @@ export default function SchoolWebsiteRouter({ isCustomDomain = false, isSubdomai
                         <Route path="events" element={<Events />} />
                         <Route path="events/:slug" element={<EventDetails />} />
                     </Route>
+                )}
+
+                {isSubdomain && (
+                    <Route
+                        path="/:schoolSlug/*"
+                        element={<SubdomainSchoolPrefixRedirect schoolSlug={schoolSlug} />}
+                    />
                 )}
 
                 <Route
