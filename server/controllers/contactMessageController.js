@@ -2,66 +2,35 @@ const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../middlewares/asyncHandler");
 const publicWebsiteModel = require("../models/publicWebsiteModel");
 const contactMessageModel = require("../models/contactMessageModel");
+const websiteService = require("../services/websiteService");
 
 const getPublicSchoolId = async (req) => {
     const schoolSlug = req.query.schoolSlug;
 
-    if (!schoolSlug) {
-        throw new ApiError(400, "School website could not be determined.");
+    if (schoolSlug) {
+        const school = await publicWebsiteModel.getSchoolBySlug(schoolSlug);
+        if (!school) throw new ApiError(404, "School website not found.");
+        return school.school_id;
     }
 
-    const school = await publicWebsiteModel.getSchoolBySlug(schoolSlug);
-
-    if (!school) {
-        throw new ApiError(404, "School website not found.");
-    }
-
-    return school.school_id;
+    const schoolDomain = req.query.schoolDomain || req.get("x-school-domain") || req.hostname;
+    return websiteService.resolveDomain(schoolDomain);
 };
 
 const createContactMessage = asyncHandler(async (req, res) => {
     const schoolId = await getPublicSchoolId(req);
     const { name, email, phone, subject, message } = req.body || {};
 
-    if (!name?.trim()) {
-        throw new ApiError(400, "Full name is required.");
-    }
-
-    if (!email?.trim()) {
-        throw new ApiError(400, "Email address is required.");
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-        throw new ApiError(400, "Please provide a valid email address.");
-    }
-
-    if (!subject?.trim()) {
-        throw new ApiError(400, "Subject is required.");
-    }
-
-    if (!message?.trim()) {
-        throw new ApiError(400, "Message is required.");
-    }
-
-    if (name.trim().length > 150) {
-        throw new ApiError(400, "Full name is too long.");
-    }
-
-    if (email.trim().length > 150) {
-        throw new ApiError(400, "Email address is too long.");
-    }
-
-    if (phone && phone.trim().length > 40) {
-        throw new ApiError(400, "Phone number is too long.");
-    }
-
-    if (subject.trim().length > 200) {
-        throw new ApiError(400, "Subject is too long.");
-    }
-
-    if (message.trim().length > 5000) {
-        throw new ApiError(400, "Message is too long.");
-    }
+    if (!name?.trim()) throw new ApiError(400, "Full name is required.");
+    if (!email?.trim()) throw new ApiError(400, "Email address is required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new ApiError(400, "Please provide a valid email address.");
+    if (!subject?.trim()) throw new ApiError(400, "Subject is required.");
+    if (!message?.trim()) throw new ApiError(400, "Message is required.");
+    if (name.trim().length > 150) throw new ApiError(400, "Full name is too long.");
+    if (email.trim().length > 150) throw new ApiError(400, "Email address is too long.");
+    if (phone && phone.trim().length > 40) throw new ApiError(400, "Phone number is too long.");
+    if (subject.trim().length > 200) throw new ApiError(400, "Subject is too long.");
+    if (message.trim().length > 5000) throw new ApiError(400, "Message is too long.");
 
     const contactMessage = await contactMessageModel.createContactMessage(
         {
@@ -83,50 +52,20 @@ const createContactMessage = asyncHandler(async (req, res) => {
 
 const getContactMessages = asyncHandler(async (req, res) => {
     const schoolId = req.user?.school_id;
-
-    if (!schoolId) {
-        throw new ApiError(403, "School context is required.");
-    }
-
+    if (!schoolId) throw new ApiError(403, "School context is required.");
     const messages = await contactMessageModel.getContactMessages(schoolId);
-
-    res.json({
-        success: true,
-        data: messages,
-    });
+    res.json({ success: true, data: messages });
 });
 
 const updateContactMessageStatus = asyncHandler(async (req, res) => {
     const schoolId = req.user?.school_id;
     const { status } = req.body || {};
+    if (!schoolId) throw new ApiError(403, "School context is required.");
+    if (!["unread", "read", "responded"].includes(status)) throw new ApiError(400, "Invalid message status.");
 
-    if (!schoolId) {
-        throw new ApiError(403, "School context is required.");
-    }
-
-    if (!["unread", "read", "responded"].includes(status)) {
-        throw new ApiError(400, "Invalid message status.");
-    }
-
-    const updated = await contactMessageModel.updateContactMessageStatus(
-        req.params.id,
-        status,
-        schoolId
-    );
-
-    if (!updated) {
-        throw new ApiError(404, "Contact message not found.");
-    }
-
-    res.json({
-        success: true,
-        message: "Contact message status updated successfully.",
-        data: updated,
-    });
+    const updated = await contactMessageModel.updateContactMessageStatus(req.params.id, status, schoolId);
+    if (!updated) throw new ApiError(404, "Contact message not found.");
+    res.json({ success: true, message: "Contact message status updated successfully.", data: updated });
 });
 
-module.exports = {
-    createContactMessage,
-    getContactMessages,
-    updateContactMessageStatus,
-};
+module.exports = { createContactMessage, getContactMessages, updateContactMessageStatus };
