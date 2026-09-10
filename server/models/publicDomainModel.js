@@ -4,6 +4,7 @@ const normalizeDomain = (value) => String(value || "")
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
     .replace(/\/.*$/, "")
     .replace(/\.$/, "");
 
@@ -11,9 +12,7 @@ const getSchoolByHost = async (host) => {
     const domain = normalizeDomain(host);
     if (!domain) return null;
 
-    const platformDomain = normalizeDomain(
-        process.env.PLATFORM_DOMAIN || "eduprow.com"
-    );
+    const platformDomain = normalizeDomain(process.env.PLATFORM_DOMAIN || "eduprow.com");
 
     const result = await pool.query(
         `SELECT s.id,
