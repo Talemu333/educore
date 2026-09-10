@@ -1,11 +1,19 @@
 const schoolSettingsService = require("../services/schoolSettingService");
 const schoolSettingsModel = require("../models/schoolSettingModel");
+const websiteService = require("../services/websiteService");
 const asyncHandler = require("../middlewares/asyncHandler");
 
 const getSchoolSettings = asyncHandler(async (req, res) => {
-    const settings = req.query.schoolSlug
-        ? await schoolSettingsModel.getSchoolSettingsBySlug(req.query.schoolSlug)
-        : await schoolSettingsService.getSchoolSettings(req.user.school_id);
+    let settings;
+
+    if (req.query.schoolSlug) {
+        settings = await schoolSettingsModel.getSchoolSettingsBySlug(req.query.schoolSlug);
+    } else if (req.query.schoolDomain) {
+        const schoolId = await websiteService.resolveDomain(req.query.schoolDomain);
+        settings = await schoolSettingsModel.getSchoolSettings(schoolId);
+    } else {
+        settings = await schoolSettingsService.getSchoolSettings(req.user.school_id);
+    }
 
     if (!settings) {
         return res.status(404).json({
