@@ -6,10 +6,14 @@ const publicParams = () => {
     const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
 
-    // The hostname is the tenant identity on wildcard/custom domains.
-    // Using schoolDomain keeps website content and settings on the same
-    // resolution path and avoids relying on a stale/missing slug.
-    if (isEduProwSubdomain) return { schoolDomain: hostname };
+    // A school's EduProw subdomain is its tenant identity. Send the slug as
+    // well as the hostname so the API can resolve the school even when the
+    // domain field has not been explicitly stored in the schools table.
+    if (isEduProwSubdomain) {
+        const schoolSlug = hostname.slice(0, -".eduprow.com".length).split(".")[0];
+        return { schoolSlug, schoolDomain: hostname };
+    }
+
     if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".vercel.app")) {
         return { schoolDomain: hostname };
     }
@@ -33,7 +37,7 @@ export const deleteWebsiteSection = async (sectionId) => (await api.delete(`/web
 export const getNewsBySlug = async (slug) => (await api.get(`/website/news/${slug}`, { params: publicParams() })).data.data;
 export const getAllNews = async () => (await api.get("/website/admin/news")).data.data;
 export const createNews = async (data) => (await api.post("/website/admin/news", data)).data.data;
-export const updateNews = async (id, data) => (await api.put(`/website/admin/news/${id}`, data)).data.data;
+export const updateNews = async (id, data) => (await api.put(`/website/news/admin/news/${id}`, data)).data.data;
 export const deleteNews = async (id) => (await api.delete(`/website/admin/news/${id}`)).data;
 export const getPublishedNews = async () => (await api.get("/website/news", { params: publicParams() })).data.data;
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
