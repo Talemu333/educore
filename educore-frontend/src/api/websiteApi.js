@@ -22,9 +22,6 @@ const publicParams = () => {
 
 export const getPublishedPages = async () => (await api.get("/website/pages", { params: publicParams() })).data.data;
 
-// Public page requests must carry the tenant identifier. On a wildcard
-// subdomain, /about or / is a page path, not a school slug, so the request
-// cannot safely be resolved from the pathname by the axios interceptor.
 export const getWebsitePage = async (slug) => (await api.get(`/website/pages/${slug}`, { params: publicParams() })).data.data;
 
 export const getAllWebsitePages = async () => (await api.get("/website/admin/pages")).data.data;
@@ -37,7 +34,7 @@ export const getNewsBySlug = async (slug) => (await api.get(`/website/news/${slu
 export const getAllNews = async () => (await api.get("/website/admin/news")).data.data;
 export const createNews = async (data) => (await api.post("/website/news", data)).data.data;
 export const updateNews = async (id, data) => (await api.put(`/website/news/${id}`, data)).data.data;
-export const deleteNews = async (id) => (await api.delete(`/website/news/${id}")).data;
+export const deleteNews = async (id) => (await api.delete(`/website/news/${id}`)).data;
 export const getPublishedNews = async () => (await api.get("/website/news", { params: publicParams() })).data.data;
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
