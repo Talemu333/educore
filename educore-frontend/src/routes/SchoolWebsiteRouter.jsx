@@ -48,23 +48,39 @@ function SchoolLayoutBridge({ isCustomDomain = false, isSubdomain = false, schoo
     );
 }
 
-function LegacyWebsiteRedirect() {
+function LegacyWebsiteRedirect({ isCustomDomain = false, isSubdomain = false }) {
     const location = useLocation();
 
     useEffect(() => {
+        const suffix = location.pathname.replace(/^\/website/, "");
+
+        // On a school subdomain/custom domain the hostname already identifies
+        // the school, so /website/... must never become /school-slug/....
+        if (isSubdomain || isCustomDomain) {
+            const target = `${suffix || "/"}${location.search}${location.hash}`;
+            window.history.replaceState({}, "", target);
+            window.dispatchEvent(new PopStateEvent("popstate"));
+            return;
+        }
+
         const storedSlug = sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) || localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
+
         if (!storedSlug) {
             window.history.replaceState({}, "", "/");
             window.dispatchEvent(new PopStateEvent("popstate"));
             return;
         }
-        const suffix = location.pathname.replace(/^\/website/, "");
+
         const target = `/${storedSlug}${suffix || ""}${location.search}${location.hash}`;
         window.history.replaceState({}, "", target);
         window.dispatchEvent(new PopStateEvent("popstate"));
-    }, [location.pathname, location.search, location.hash]);
+    }, [location.pathname, location.search, location.hash, isSubdomain, isCustomDomain]);
 
-    return <div className="flex min-h-screen items-center justify-center bg-white px-6"><p className="text-sm text-slate-500">Opening school website...</p></div>;
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-white px-6">
+            <p className="text-sm text-slate-500">Opening school website...</p>
+        </div>
+    );
 }
 
 function SchoolWebsiteNavigationBridge({ isCustomDomain = false, isSubdomain = false, schoolSlug = "" }) {
@@ -140,7 +156,6 @@ export default function SchoolWebsiteRouter({ isCustomDomain = false, isSubdomai
             <Routes>
                 {isCustomDomain || isSubdomain ? (
                     <Route
-                        path="*"
                         element={
                             <SchoolLayoutBridge
                                 isCustomDomain={isCustomDomain}
@@ -174,7 +189,17 @@ export default function SchoolWebsiteRouter({ isCustomDomain = false, isSubdomai
                         <Route path="events/:slug" element={<EventDetails />} />
                     </Route>
                 )}
-                <Route path="/website/*" element={<LegacyWebsiteRedirect />} />
+
+                <Route
+                    path="/website/*"
+                    element={
+                        <LegacyWebsiteRedirect
+                            isSubdomain={isSubdomain}
+                            isCustomDomain={isCustomDomain}
+                        />
+                    }
+                />
+
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
