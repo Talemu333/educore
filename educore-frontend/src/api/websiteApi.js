@@ -6,12 +6,11 @@ const publicParams = () => {
     const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
 
-    // A school's EduProw subdomain is its tenant identity. Send the slug as
-    // well as the hostname so the API can resolve the school even when the
-    // domain field has not been explicitly stored in the schools table.
+    // The EduProw subdomain is the tenant identity. Use the slug alone for
+    // platform subdomains; custom domains are resolved through schoolDomain.
     if (isEduProwSubdomain) {
         const schoolSlug = hostname.slice(0, -".eduprow.com".length).split(".")[0];
-        return { schoolSlug, schoolDomain: hostname };
+        return { schoolSlug };
     }
 
     if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".vercel.app")) {
@@ -36,14 +35,15 @@ export const updateWebsiteSection = async (sectionId, data) => (await api.put(`/
 export const deleteWebsiteSection = async (sectionId) => (await api.delete(`/website/admin/sections/${sectionId}`)).data;
 export const getNewsBySlug = async (slug) => (await api.get(`/website/news/${slug}`, { params: publicParams() })).data.data;
 export const getAllNews = async () => (await api.get("/website/admin/news")).data.data;
-export const createNews = async (data) => (await api.post("/website/admin/news", data)).data.data;
+export const createNews = async (data) => (await api.post("/website/news", data)).data.data;
 export const updateNews = async (id, data) => (await api.put(`/website/news/${id}`, data)).data.data;
 export const deleteNews = async (id) => (await api.delete(`/website/news/${id}`)).data;
 export const getPublishedNews = async () => (await api.get("/website/news", { params: publicParams() })).data.data;
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
-export const getAllEvents = async () => (await api.get("/website/admin/events")).data.data;
-export const getEventById = async (id) => (await api.get(`/website/admin/events/${id}`, { params: publicParams() })).data.data;
+export const getAllEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
+export const getEventById = async (id) => (await api.get(`/website/events/${id}`, { params: publicParams() })).data.data;
+export const getAllEvents = async () => (await api.get("/website/admin/events", { params: publicParams() })).data.data;
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
-export const updateEvent = async (id, data) => (await api.put(`/website/admin/events/${id}`, data)).data.data;
-export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data;
+export const updateEvent = async (id, data) => (await api.put(`/website/events/${id}`, data)).data.data;
+export const deleteEvent = async (id) => (await api.delete(`/website/events/${id}`)).data;
