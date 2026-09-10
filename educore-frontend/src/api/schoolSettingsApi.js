@@ -6,8 +6,10 @@ const publicSchoolParams = () => {
     const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
 
-    if (isEduProwSubdomain) return { schoolSlug: hostname.split(".")[0] };
-    if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1") return { schoolDomain: hostname };
+    if (isEduProwSubdomain) return { schoolDomain: hostname };
+    if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".vercel.app")) {
+        return { schoolDomain: hostname };
+    }
     if (!firstSegment || firstSegment === "website") return {};
     return { schoolSlug: firstSegment };
 };
