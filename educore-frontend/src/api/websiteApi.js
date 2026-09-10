@@ -6,8 +6,13 @@ const publicParams = () => {
     const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
 
-    if (isEduProwSubdomain) return { schoolSlug: hostname.split(".")[0] };
-    if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1") return { schoolDomain: hostname };
+    // The hostname is the tenant identity on wildcard/custom domains.
+    // Using schoolDomain keeps website content and settings on the same
+    // resolution path and avoids relying on a possibly stale/missing slug.
+    if (isEduProwSubdomain) return { schoolDomain: hostname };
+    if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".vercel.app")) {
+        return { schoolDomain: hostname };
+    }
     if (!firstSegment || firstSegment === "website") return {};
     return { schoolSlug: firstSegment };
 };
@@ -29,7 +34,7 @@ export const getPublishedNews = async () => (await api.get("/website/news", { pa
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
 export const getAllEvents = async () => (await api.get("/website/admin/events")).data.data;
-export const getEventById = async (id) => (await api.get(`/website/admin/events/${id}`)).data.data;
+export const getEventById = async (id) => (await api.get(`/website/admin/events/${id}`, { params: publicParams() })).data.data;
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
 export const updateEvent = async (id, data) => (await api.put(`/website/admin/events/${id}`, data)).data.data;
-export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data.data;
+export const deleteEvent = async (id) => (await api.delete(`/website/admin/events/${id}`)).data;
