@@ -9,7 +9,9 @@ const publicSchool=async req=>{
         if(!school) throw new ApiError(404,"School website not found.");
         return school.school_id;
     }
-    return websiteService.resolveDomain(req.hostname);
+
+    const schoolDomain = req.query.schoolDomain || req.get("x-school-domain") || req.hostname;
+    return websiteService.resolveDomain(schoolDomain);
 };
 const adminSchool=req=>req.user?.school_id;
 const send=(res,data,message,status=200)=>res.status(status).json({success:true,...(message?{message}:{}),data});
