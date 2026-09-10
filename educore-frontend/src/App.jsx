@@ -57,7 +57,11 @@ function useAppPathname() {
 function App() {
     const pathname = useAppPathname();
     const firstSegment = pathname.split("/").filter(Boolean)[0] || "";
-    const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(window.location.hostname.toLowerCase());
+    const hostname = window.location.hostname.toLowerCase();
+    const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
+    const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
+    const isLocalHost = ["localhost", "127.0.0.1"].includes(hostname);
+    const isCustomSchoolDomain = !isEduProwDomain && !isEduProwSubdomain && !isLocalHost;
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
@@ -77,6 +81,8 @@ function App() {
     if (pathname === "/cbt-question-bank/import") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTPdfImportPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+
+    if (isCustomSchoolDomain) return <SchoolWebsiteRouter isCustomDomain />;
 
     const isSchoolWebsite = firstSegment && !RESERVED_PUBLIC_PREFIXES.has(firstSegment);
     return isSchoolWebsite ? <SchoolWebsiteRouter /> : <AppRouter />;
