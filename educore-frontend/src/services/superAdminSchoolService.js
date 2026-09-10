@@ -26,8 +26,11 @@ export const updateSchool = async (id, payload) => {
 };
 
 export const setSchoolStatus = async (id, isActive) => {
-    const response = await api.patch(`/super-admin/schools/${id}/status`, {
-        is_active: isActive
-    });
+    const response = await api.patch(`/super-admin/schools/${id}/status`, { is_active: isActive });
+    return response.data;
+};
+
+export const setSchoolDomain = async (id, domain) => {
+    const response = await api.patch(`/super-admin/schools/${id}/domain`, { domain });
     return response.data;
 };
