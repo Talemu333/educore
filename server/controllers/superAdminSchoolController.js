@@ -1,4 +1,5 @@
 const schoolService = require("../services/superAdminSchoolService");
+const schoolDomainModel = require("../models/schoolDomainModel");
 
 const getSchools = async (req, res, next) => {
     try { res.json({ success: true, data: await schoolService.getSchools() }); }
@@ -9,7 +10,8 @@ const getSchool = async (req, res, next) => {
     try {
         const school = await schoolService.getSchoolById(req.params.id);
         if (!school) return res.status(404).json({ success: false, message: "School not found." });
-        res.json({ success: true, data: school });
+        const domain = await schoolDomainModel.getSchoolDomain(req.params.id);
+        res.json({ success: true, data: { ...school, domain: domain?.domain || null } });
     } catch (error) { next(error); }
 };
 
