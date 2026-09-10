@@ -8,7 +8,7 @@ const publicParams = () => {
 
     // The hostname is the tenant identity on wildcard/custom domains.
     // Using schoolDomain keeps website content and settings on the same
-    // resolution path and avoids relying on a possibly stale/missing slug.
+    // resolution path and avoids relying on a stale/missing slug.
     if (isEduProwSubdomain) return { schoolDomain: hostname };
     if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".vercel.app")) {
         return { schoolDomain: hostname };
@@ -19,10 +19,9 @@ const publicParams = () => {
 
 export const getPublishedPages = async () => (await api.get("/website/pages", { params: publicParams() })).data.data;
 
-// IMPORTANT: public school pages must carry the tenant identifier too.
-// Without this, the axios interceptor cannot infer the school from a
-// wildcard subdomain because / is not a school slug. The backend would
-// otherwise fall back to the API server hostname and return no page.
+// Public page requests must carry the tenant identifier. On a wildcard
+// subdomain, /about or / is a page path, not a school slug, so the request
+// cannot safely be resolved from the pathname by the axios interceptor.
 export const getWebsitePage = async (slug) => (await api.get(`/website/pages/${slug}`, { params: publicParams() })).data.data;
 
 export const getAllWebsitePages = async () => (await api.get("/website/admin/pages")).data.data;
@@ -34,8 +33,8 @@ export const deleteWebsiteSection = async (sectionId) => (await api.delete(`/web
 export const getNewsBySlug = async (slug) => (await api.get(`/website/news/${slug}`, { params: publicParams() })).data.data;
 export const getAllNews = async () => (await api.get("/website/admin/news")).data.data;
 export const createNews = async (data) => (await api.post("/website/admin/news", data)).data.data;
-export const updateNews = async (id, data) => (await api.put(`/website/news/${id}`, data)).data.data;
-export const deleteNews = async (id) => (await api.delete(`/website/news/${id}`)).data;
+export const updateNews = async (id, data) => (await api.put(`/website/admin/news/${id}`, data)).data.data;
+export const deleteNews = async (id) => (await api.delete(`/website/admin/news/${id}`)).data;
 export const getPublishedNews = async () => (await api.get("/website/news", { params: publicParams() })).data.data;
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
