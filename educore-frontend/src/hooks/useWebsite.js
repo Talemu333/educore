@@ -42,10 +42,52 @@ import {
 } from "@/api/galleryApi";
 
 
-const getPublicSchoolSlug = () =>
-    window.location.pathname
-        .split("/")
-        .filter(Boolean)[0] || "";
+/*
+=====================================
+PUBLIC TENANT IDENTIFIER
+=====================================
+
+For path-based school websites, the first
+URL segment identifies the school.
+
+For EduProw subdomains/custom domains, the
+hostname identifies the school, so the path
+can remain /, /about, /news, etc.
+*/
+const getPublicSchoolIdentifier = () => {
+    const pathnameSegment =
+        window.location.pathname
+            .split("/")
+            .filter(Boolean)[0] || "";
+
+    const hostname =
+        window.location.hostname.toLowerCase();
+
+    const isEduProwDomain = [
+        "eduprow.com",
+        "www.eduprow.com"
+    ].includes(hostname);
+
+    const isEduProwSubdomain =
+        hostname.endsWith(".eduprow.com") &&
+        !isEduProwDomain;
+
+    const isCustomSchoolDomain =
+        !isEduProwDomain &&
+        !isEduProwSubdomain &&
+        !["localhost", "127.0.0.1"].includes(hostname) &&
+        !hostname.endsWith(".vercel.app");
+
+    if (isEduProwSubdomain || isCustomSchoolDomain) {
+        return hostname;
+    }
+
+    if (!pathnameSegment || pathnameSegment === "website") {
+        return "";
+    }
+
+    return pathnameSegment;
+};
 
 
 /*
@@ -56,21 +98,21 @@ PUBLIC: GET ALL PUBLISHED PAGES
 
 export function useWebsitePages() {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-pages",
-            schoolSlug
+            schoolIdentifier
         ],
 
         queryFn:
             getPublishedPages,
 
         enabled:
-            !!schoolSlug
+            !!schoolIdentifier
 
     });
 
@@ -87,14 +129,14 @@ export function useWebsitePage(
     slug
 ) {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-page",
-            schoolSlug,
+            schoolIdentifier,
             slug
         ],
 
@@ -102,7 +144,7 @@ export function useWebsitePage(
             getWebsitePage(slug),
 
         enabled:
-            !!slug && !!schoolSlug
+            !!slug && !!schoolIdentifier
 
     });
 
@@ -340,21 +382,21 @@ export function useDeleteWebsiteSection() {
 
 export function usePublishedNews() {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-news",
-            schoolSlug
+            schoolIdentifier
         ],
 
         queryFn:
             getPublishedNews,
 
         enabled:
-            !!schoolSlug
+            !!schoolIdentifier
 
     });
 
@@ -362,14 +404,14 @@ export function usePublishedNews() {
 
 export function useNewsBySlug(slug) {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-news",
-            schoolSlug,
+            schoolIdentifier,
             slug
         ],
 
@@ -377,7 +419,7 @@ export function useNewsBySlug(slug) {
             getNewsBySlug(slug),
 
         enabled:
-            !!slug && !!schoolSlug
+            !!slug && !!schoolIdentifier
 
     });
 
@@ -525,21 +567,21 @@ PUBLIC: GET PUBLISHED EVENTS
 
 export function usePublishedEvents() {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-events",
-            schoolSlug
+            schoolIdentifier
         ],
 
         queryFn:
             getPublishedEvents,
 
         enabled:
-            !!schoolSlug
+            !!schoolIdentifier
 
     });
 
@@ -556,14 +598,14 @@ export function useEventBySlug(
     slug
 ) {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-event",
-            schoolSlug,
+            schoolIdentifier,
             slug
         ],
 
@@ -571,7 +613,7 @@ export function useEventBySlug(
             getEventBySlug(slug),
 
         enabled:
-            !!slug && !!schoolSlug
+            !!slug && !!schoolIdentifier
 
     });
 
@@ -745,7 +787,9 @@ export function useDeleteEvent() {
 
         mutationFn:
             ({ id }) =>
-                deleteEvent(id),
+                deleteEvent(
+                    id
+                ),
 
         onSuccess: () => {
 
@@ -779,21 +823,21 @@ GALLERY: GET PUBLISHED
 
 export function usePublishedGallery() {
 
-    const schoolSlug =
-        getPublicSchoolSlug();
+    const schoolIdentifier =
+        getPublicSchoolIdentifier();
 
     return useQuery({
 
         queryKey: [
             "website-gallery",
-            schoolSlug
+            schoolIdentifier
         ],
 
         queryFn:
             getPublishedGallery,
 
         enabled:
-            !!schoolSlug
+            !!schoolIdentifier
 
     });
 
