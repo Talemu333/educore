@@ -59,8 +59,12 @@ function App() {
     const isLocalHost = ["localhost", "127.0.0.1"].includes(hostname);
     const isVercelHost = hostname.endsWith(".vercel.app");
     const isCustomSchoolDomain = !isEduProwDomain && !isEduProwSubdomain && !isLocalHost && !isVercelHost;
+    const schoolSlugFromSubdomain = isEduProwSubdomain
+        ? hostname.slice(0, -".eduprow.com".length).split(".")[0]
+        : "";
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
+    if (isEduProwSubdomain) return <SchoolWebsiteRouter isSubdomain schoolSlug={schoolSlugFromSubdomain} />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
     if (pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
     if (firstSegment === "website") return <LegacyWebsiteRedirect />;
@@ -70,8 +74,8 @@ function App() {
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-dashboard") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-cbt") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentCBTPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/student-subjects") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentSubjectsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/student-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/student-subjects") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentSubjectsPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/student-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentResultsPage /></DashboardLayout></BrowserRouter>;
     if (pathname === "/cbt-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/cbt-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/cbt-question-bank") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTQuestionBankPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
