@@ -21,6 +21,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
 
 api.interceptors.request.use((config) => {
     const path = window.location.pathname;
+    const hostname = window.location.hostname.toLowerCase();
     const schoolIdFromUrl = new URLSearchParams(window.location.search).get("schoolId");
 
     if (path === "/settings" && schoolIdFromUrl) {
@@ -35,9 +36,25 @@ api.interceptors.request.use((config) => {
         apiPath.startsWith("/website/") ||
         apiPath === "/website" ||
         apiPath === "/school-settings";
+
+    if (!isPublicWebsiteRequest) return config;
+
+    const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
+    const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
+    const isCustomSchoolDomain =
+        !isEduProwDomain &&
+        !isEduProwSubdomain &&
+        !["localhost", "127.0.0.1"].includes(hostname) &&
+        !hostname.endsWith(".vercel.app");
+
+    // On wildcard/custom school domains the hostname already identifies
+    // the tenant. Never replace an explicit schoolDomain with a pathname
+    // segment such as /about, /news or /gallery.
+    if (isEduProwSubdomain || isCustomSchoolDomain) return config;
+
     const firstSegment = path.split("/").filter(Boolean)[0] || "";
 
-    if (isPublicWebsiteRequest && firstSegment && !RESERVED_PUBLIC_PREFIXES.has(firstSegment)) {
+    if (firstSegment && !RESERVED_PUBLIC_PREFIXES.has(firstSegment)) {
         const params = new URLSearchParams(config.params || {});
         params.set("schoolSlug", firstSegment);
         config.params = params;
