@@ -38,7 +38,11 @@ function SchoolLayoutBridge({ isCustomDomain = false, isSubdomain = false, schoo
 
     return (
         <>
-            <SchoolWebsiteNavigationBridge isCustomDomain={isCustomDomain} schoolSlug={schoolSlug} />
+            <SchoolWebsiteNavigationBridge
+                isCustomDomain={isCustomDomain}
+                isSubdomain={isSubdomain}
+                schoolSlug={schoolSlug}
+            />
             <PublicLayout />
         </>
     );
@@ -63,8 +67,7 @@ function LegacyWebsiteRedirect() {
     return <div className="flex min-h-screen items-center justify-center bg-white px-6"><p className="text-sm text-slate-500">Opening school website...</p></div>;
 }
 
-function SchoolWebsiteNavigationBridge({ isCustomDomain = false, schoolSlug = "" }) {
-    const location = useLocation();
+function SchoolWebsiteNavigationBridge({ isCustomDomain = false, isSubdomain = false, schoolSlug = "" }) {
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -73,7 +76,13 @@ function SchoolWebsiteNavigationBridge({ isCustomDomain = false, schoolSlug = ""
         const toSchoolPath = href => {
             if (!href || !href.startsWith("/website")) return href;
             const suffix = href.replace(/^\/website/, "");
-            return isCustomDomain ? (suffix || "/") : `/${schoolSlug}${suffix || ""}`;
+
+            // On a custom domain or EduProw subdomain, the hostname already
+            // identifies the school, so public pages must stay at the root.
+            if (isCustomDomain || isSubdomain) return suffix || "/";
+
+            // Legacy path-based school websites keep the school slug in the URL.
+            return `/${schoolSlug}${suffix || ""}`;
         };
 
         const rewriteLinks = () => {
@@ -103,7 +112,7 @@ function SchoolWebsiteNavigationBridge({ isCustomDomain = false, schoolSlug = ""
             observer.disconnect();
             document.removeEventListener("click", handleClick, true);
         };
-    }, [schoolSlug, isCustomDomain, navigate, location.pathname]);
+    }, [schoolSlug, isCustomDomain, isSubdomain, navigate]);
 
     return null;
 }
