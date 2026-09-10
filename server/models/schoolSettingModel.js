@@ -24,38 +24,22 @@ const getSchoolSettings = async (schoolId) => {
 };
 
 const getSchoolSettingsBySlug = async (slug) => {
+    const normalizedSlug = String(slug || "").trim().toLowerCase();
+
+    if (!normalizedSlug) return null;
+
+    // Public tenant resolution should not depend on optional school-settings
+    // columns such as website_slug, current_session_id or current_term_id.
+    // The school record + school_id are the core tenant boundary.
     const result = await pool.query(`
         SELECT
             ss.*,
-            s.school_name AS canonical_school_name,
-            ac.session_name,
-            tr.term_name,
-            COALESCE(
-                NULLIF(TRIM(ss.website_slug), ''),
-                NULLIF(
-                    regexp_replace(
-                        regexp_replace(
-                            lower(trim(s.school_name)),
-                            '[^a-z0-9]+',
-                            '-',
-                            'g'
-                        ),
-                        '(^-|-$)',
-                        '',
-                        'g'
-                    ),
-                    ''
-                ),
-                'school-' || ss.school_id::text
-            ) AS resolved_website_slug
+            s.school_name AS canonical_school_name
         FROM school_settings ss
         JOIN schools s ON s.id = ss.school_id
-        LEFT JOIN academic_sessions ac ON ss.current_session_id = ac.id AND ac.school_id = ss.school_id
-        LEFT JOIN terms tr ON ss.current_term_id = tr.id AND tr.school_id = ss.school_id
-        WHERE ss.is_active = TRUE
-          AND s.is_active = TRUE
+        WHERE s.is_active = TRUE
           AND (
-              LOWER(TRIM(COALESCE(ss.website_slug, ''))) = LOWER(TRIM($1))
+              LOWER(TRIM(s.school_name)) = LOWER(TRIM($1))
               OR LOWER(
                   regexp_replace(
                       regexp_replace(
@@ -68,12 +52,12 @@ const getSchoolSettingsBySlug = async (slug) => {
                       '',
                       'g'
                   )
-              ) = LOWER(TRIM($1))
-              OR LOWER('school-' || ss.school_id::text) = LOWER(TRIM($1))
-              OR LOWER('school' || ss.school_id::text) = LOWER(TRIM($1))
+              ) = $1
+              OR LOWER('school-' || s.id::text) = $1
+              OR LOWER('school' || s.id::text) = $1
           )
         LIMIT 1;
-    `, [slug]);
+    `, [normalizedSlug]);
 
     const settings = result.rows[0];
 
@@ -81,8 +65,11 @@ const getSchoolSettingsBySlug = async (slug) => {
 
     settings.school_name = settings.canonical_school_name || settings.school_name;
     delete settings.canonical_school_name;
-    settings.website_slug = settings.resolved_website_slug;
-    delete settings.resolved_website_slug;
+
+    // Keep the public response compatible with the rest of the website API.
+    if (!settings.website_slug) {
+        settings.website_slug = normalizedSlug;
+    }
 
     return settings;
 };
