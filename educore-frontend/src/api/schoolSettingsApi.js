@@ -7,11 +7,11 @@ const publicSchoolParams = () => {
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
 
     if (isEduProwSubdomain) {
-        // The subdomain is the public school identity. Send both identifiers:
-        // schoolSlug gives the API a deterministic tenant lookup, while
-        // schoolDomain remains useful for explicitly mapped custom domains.
+        // The EduProw subdomain is already the tenant's public identity.
+        // Use the slug alone because the production API resolves this
+        // deterministically; custom domains are handled separately below.
         const schoolSlug = hostname.slice(0, -".eduprow.com".length).split(".")[0];
-        return { schoolSlug, schoolDomain: hostname };
+        return { schoolSlug };
     }
 
     if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".vercel.app")) {
