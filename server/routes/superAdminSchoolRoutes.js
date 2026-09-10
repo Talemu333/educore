@@ -13,5 +13,6 @@ router.post("/", controller.createSchool);
 router.post("/:id/administrator", controller.createSchoolAdministrator);
 router.put("/:id", controller.updateSchool);
 router.patch("/:id/status", controller.setSchoolStatus);
+router.patch("/:id/domain", controller.setSchoolDomain);
 
 module.exports = router;
