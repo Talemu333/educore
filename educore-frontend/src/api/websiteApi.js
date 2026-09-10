@@ -18,7 +18,13 @@ const publicParams = () => {
 };
 
 export const getPublishedPages = async () => (await api.get("/website/pages", { params: publicParams() })).data.data;
+
+// IMPORTANT: public school pages must carry the tenant identifier too.
+// Without this, the axios interceptor cannot infer the school from a
+// wildcard subdomain because / is not a school slug. The backend would
+// otherwise fall back to the API server hostname and return no page.
 export const getWebsitePage = async (slug) => (await api.get(`/website/pages/${slug}`, { params: publicParams() })).data.data;
+
 export const getAllWebsitePages = async () => (await api.get("/website/admin/pages")).data.data;
 export const updateWebsitePage = async (id, data) => (await api.put(`/website/pages/${id}`, data)).data.data;
 export const getPageSections = async (pageId) => (await api.get(`/website/admin/pages/${pageId}/sections`)).data.data;
@@ -28,8 +34,8 @@ export const deleteWebsiteSection = async (sectionId) => (await api.delete(`/web
 export const getNewsBySlug = async (slug) => (await api.get(`/website/news/${slug}`, { params: publicParams() })).data.data;
 export const getAllNews = async () => (await api.get("/website/admin/news")).data.data;
 export const createNews = async (data) => (await api.post("/website/admin/news", data)).data.data;
-export const updateNews = async (id, data) => (await api.put(`/website/admin/news/${id}`, data)).data.data;
-export const deleteNews = async (id) => (await api.delete(`/website/admin/news/${id}`)).data;
+export const updateNews = async (id, data) => (await api.put(`/website/news/${id}`, data)).data.data;
+export const deleteNews = async (id) => (await api.delete(`/website/news/${id}`)).data;
 export const getPublishedNews = async () => (await api.get("/website/news", { params: publicParams() })).data.data;
 export const getPublishedEvents = async () => (await api.get("/website/events", { params: publicParams() })).data.data;
 export const getEventBySlug = async (slug) => (await api.get(`/website/events/${slug}`, { params: publicParams() })).data.data;
