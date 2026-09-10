@@ -34,23 +34,19 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
 
 function useAppPathname() {
     const [pathname, setPathname] = useState(() => window.location.pathname);
-
     useEffect(() => {
         const updatePathname = () => setPathname(window.location.pathname);
         const originalPushState = window.history.pushState;
         const originalReplaceState = window.history.replaceState;
-
         window.history.pushState = function (...args) { originalPushState.apply(this, args); updatePathname(); };
         window.history.replaceState = function (...args) { originalReplaceState.apply(this, args); updatePathname(); };
         window.addEventListener("popstate", updatePathname);
-
         return () => {
             window.history.pushState = originalPushState;
             window.history.replaceState = originalReplaceState;
             window.removeEventListener("popstate", updatePathname);
         };
     }, []);
-
     return pathname;
 }
 
@@ -61,7 +57,8 @@ function App() {
     const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
     const isLocalHost = ["localhost", "127.0.0.1"].includes(hostname);
-    const isCustomSchoolDomain = !isEduProwDomain && !isEduProwSubdomain && !isLocalHost;
+    const isVercelHost = hostname.endsWith(".vercel.app");
+    const isCustomSchoolDomain = !isEduProwDomain && !isEduProwSubdomain && !isLocalHost && !isVercelHost;
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
