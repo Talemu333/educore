@@ -1,20 +1,15 @@
 import api from "./axios";
 
 const publicSchoolParams = () => {
-    const firstSegment =
-        window.location.pathname
-            .split("/")
-            .filter(Boolean)[0] || "";
+    const firstSegment = window.location.pathname.split("/").filter(Boolean)[0] || "";
+    const hostname = window.location.hostname.toLowerCase();
+    const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
+    const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
 
-    // Legacy /website/* routes are resolved by hostname.
-    // School-specific routes use the first URL segment as the school slug.
-    if (!firstSegment || firstSegment === "website") {
-        return {};
-    }
-
-    return {
-        schoolSlug: firstSegment
-    };
+    if (isEduProwSubdomain) return { schoolSlug: hostname.split(".")[0] };
+    if (!isEduProwDomain && hostname !== "localhost" && hostname !== "127.0.0.1") return { schoolDomain: hostname };
+    if (!firstSegment || firstSegment === "website") return {};
+    return { schoolSlug: firstSegment };
 };
 
 export const getSchoolSettings = async () => {
