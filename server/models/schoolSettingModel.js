@@ -2,19 +2,32 @@ const pool = require("../config/database");
 
 const getSchoolSettings = async (schoolId) => {
     const result = await pool.query(`
-        SELECT ss.*, ac.session_name, tr.term_name
+        SELECT
+            ss.*,
+            s.school_name AS canonical_school_name,
+            ac.session_name,
+            tr.term_name
         FROM school_settings ss
+        JOIN schools s ON s.id = ss.school_id
         LEFT JOIN academic_sessions ac ON ss.current_session_id = ac.id AND ac.school_id = ss.school_id
         LEFT JOIN terms tr ON ss.current_term_id = tr.id AND tr.school_id = ss.school_id
-        WHERE ss.school_id = $1 LIMIT 1;
+        WHERE ss.school_id = $1
+        LIMIT 1;
     `, [schoolId]);
-    return result.rows[0];
+
+    const settings = result.rows[0];
+    if (!settings) return null;
+
+    settings.school_name = settings.canonical_school_name || settings.school_name;
+    delete settings.canonical_school_name;
+    return settings;
 };
 
 const getSchoolSettingsBySlug = async (slug) => {
     const result = await pool.query(`
         SELECT
             ss.*,
+            s.school_name AS canonical_school_name,
             ac.session_name,
             tr.term_name,
             COALESCE(
@@ -22,7 +35,7 @@ const getSchoolSettingsBySlug = async (slug) => {
                 NULLIF(
                     regexp_replace(
                         regexp_replace(
-                            lower(trim(ss.school_name)),
+                            lower(trim(s.school_name)),
                             '[^a-z0-9]+',
                             '-',
                             'g'
@@ -36,15 +49,17 @@ const getSchoolSettingsBySlug = async (slug) => {
                 'school-' || ss.school_id::text
             ) AS resolved_website_slug
         FROM school_settings ss
+        JOIN schools s ON s.id = ss.school_id
         LEFT JOIN academic_sessions ac ON ss.current_session_id = ac.id AND ac.school_id = ss.school_id
         LEFT JOIN terms tr ON ss.current_term_id = tr.id AND tr.school_id = ss.school_id
         WHERE ss.is_active = TRUE
+          AND s.is_active = TRUE
           AND (
               LOWER(TRIM(COALESCE(ss.website_slug, ''))) = LOWER(TRIM($1))
               OR LOWER(
                   regexp_replace(
                       regexp_replace(
-                          lower(trim(ss.school_name)),
+                          lower(trim(s.school_name)),
                           '[^a-z0-9]+',
                           '-',
                           'g'
@@ -64,6 +79,8 @@ const getSchoolSettingsBySlug = async (slug) => {
 
     if (!settings) return null;
 
+    settings.school_name = settings.canonical_school_name || settings.school_name;
+    delete settings.canonical_school_name;
     settings.website_slug = settings.resolved_website_slug;
     delete settings.resolved_website_slug;
 
