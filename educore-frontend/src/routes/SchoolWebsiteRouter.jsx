@@ -74,19 +74,35 @@ function SchoolWebsiteNavigationBridge({ isCustomDomain = false, isSubdomain = f
         if (!schoolSlug && !isCustomDomain) return;
 
         const toSchoolPath = href => {
-            if (!href || !href.startsWith("/website")) return href;
-            const suffix = href.replace(/^\/website/, "");
+            if (!href) return href;
 
-            // On a custom domain or EduProw subdomain, the hostname already
-            // identifies the school, so public pages must stay at the root.
-            if (isCustomDomain || isSubdomain) return suffix || "/";
+            // Public website routes are root-relative on EduProw subdomains
+            // and custom school domains because the hostname already identifies
+            // the school. This also strips an accidentally generated school-slug
+            // prefix such as /educore-demo-school/news.
+            if (isCustomDomain || isSubdomain) {
+                if (href.startsWith("/website")) {
+                    return href.replace(/^\/website/, "") || "/";
+                }
+
+                if (schoolSlug) {
+                    const schoolPrefix = `/${schoolSlug}`;
+                    if (href === schoolPrefix) return "/";
+                    if (href.startsWith(`${schoolPrefix}/`)) {
+                        return href.slice(schoolPrefix.length) || "/";
+                    }
+                }
+            }
+
+            if (!href.startsWith("/website")) return href;
+            const suffix = href.replace(/^\/website/, "");
 
             // Legacy path-based school websites keep the school slug in the URL.
             return `/${schoolSlug}${suffix || ""}`;
         };
 
         const rewriteLinks = () => {
-            document.querySelectorAll('a[href^="/website"]').forEach(anchor => {
+            document.querySelectorAll("a[href]").forEach(anchor => {
                 const href = anchor.getAttribute("href");
                 const nextHref = toSchoolPath(href);
                 if (nextHref && nextHref !== href) anchor.setAttribute("href", nextHref);
@@ -101,10 +117,11 @@ function SchoolWebsiteNavigationBridge({ isCustomDomain = false, isSubdomain = f
             const anchor = event.target.closest("a");
             if (!anchor) return;
             const href = anchor.getAttribute("href");
-            if (!href || !href.startsWith("/website")) return;
+            const nextHref = toSchoolPath(href);
+            if (!href || nextHref === href || !nextHref?.startsWith("/")) return;
             event.preventDefault();
             event.stopPropagation();
-            navigate(toSchoolPath(href));
+            navigate(nextHref);
         };
 
         document.addEventListener("click", handleClick, true);
