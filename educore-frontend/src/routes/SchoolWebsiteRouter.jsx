@@ -29,14 +29,11 @@ function SchoolLayoutBridge({ isCustomDomain = false }) {
 
     useEffect(() => {
         if (!schoolSlug || isCustomDomain) return;
-
         sessionStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
         localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
     }, [schoolSlug, isCustomDomain]);
 
-    if (!isCustomDomain && !schoolSlug) {
-        return <Navigate to="/" replace />;
-    }
+    if (!isCustomDomain && !schoolSlug) return <Navigate to="/" replace />;
 
     return (
         <>
@@ -50,29 +47,19 @@ function LegacyWebsiteRedirect() {
     const location = useLocation();
 
     useEffect(() => {
-        const storedSlug =
-            sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
-            localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
-
+        const storedSlug = sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) || localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
         if (!storedSlug) {
             window.history.replaceState({}, "", "/");
             window.dispatchEvent(new PopStateEvent("popstate"));
             return;
         }
-
         const suffix = location.pathname.replace(/^\/website/, "");
-        const target =
-            `/${storedSlug}${suffix || ""}${location.search}${location.hash}`;
-
+        const target = `/${storedSlug}${suffix || ""}${location.search}${location.hash}`;
         window.history.replaceState({}, "", target);
         window.dispatchEvent(new PopStateEvent("popstate"));
     }, [location.pathname, location.search, location.hash]);
 
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-white px-6">
-            <p className="text-sm text-slate-500">Opening school website...</p>
-        </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-white px-6"><p className="text-sm text-slate-500">Opening school website...</p></div>;
 }
 
 function SchoolWebsiteNavigationBridge({ isCustomDomain = false }) {
@@ -85,50 +72,33 @@ function SchoolWebsiteNavigationBridge({ isCustomDomain = false }) {
 
         const toSchoolPath = href => {
             if (!href || !href.startsWith("/website")) return href;
-
             const suffix = href.replace(/^\/website/, "");
-            return isCustomDomain
-                ? (suffix || "/")
-                : `/${schoolSlug}${suffix || ""}`;
+            return isCustomDomain ? (suffix || "/") : `/${schoolSlug}${suffix || ""}`;
         };
 
         const rewriteLinks = () => {
-            document
-                .querySelectorAll('a[href^="/website"]')
-                .forEach(anchor => {
-                    const href = anchor.getAttribute("href");
-                    const nextHref = toSchoolPath(href);
-
-                    if (nextHref && nextHref !== href) {
-                        anchor.setAttribute("href", nextHref);
-                    }
-                });
+            document.querySelectorAll('a[href^="/website"]').forEach(anchor => {
+                const href = anchor.getAttribute("href");
+                const nextHref = toSchoolPath(href);
+                if (nextHref && nextHref !== href) anchor.setAttribute("href", nextHref);
+            });
         };
 
         rewriteLinks();
-
         const observer = new MutationObserver(rewriteLinks);
-        observer.observe(document.body, {
-            subtree: true,
-            childList: true,
-            attributes: true,
-            attributeFilter: ["href"]
-        });
+        observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["href"] });
 
         const handleClick = event => {
             const anchor = event.target.closest("a");
             if (!anchor) return;
-
             const href = anchor.getAttribute("href");
             if (!href || !href.startsWith("/website")) return;
-
             event.preventDefault();
             event.stopPropagation();
             navigate(toSchoolPath(href));
         };
 
         document.addEventListener("click", handleClick, true);
-
         return () => {
             observer.disconnect();
             document.removeEventListener("click", handleClick, true);
@@ -143,10 +113,7 @@ export default function SchoolWebsiteRouter({ isCustomDomain = false }) {
         <BrowserRouter>
             <Routes>
                 {isCustomDomain ? (
-                    <Route
-                        path="*"
-                        element={<SchoolLayoutBridge isCustomDomain />}
-                    >
+                    <Route path="/" element={<SchoolLayoutBridge isCustomDomain />}>
                         <Route index element={<Home />} />
                         <Route path="about" element={<About />} />
                         <Route path="contact" element={<Contact />} />
@@ -172,7 +139,6 @@ export default function SchoolWebsiteRouter({ isCustomDomain = false }) {
                         <Route path="events/:slug" element={<EventDetails />} />
                     </Route>
                 )}
-
                 <Route path="/website/*" element={<LegacyWebsiteRedirect />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
