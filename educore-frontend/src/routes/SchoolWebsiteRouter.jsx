@@ -24,7 +24,10 @@ import EventDetails from "@/pages/public/EventDetails";
 
 const PUBLIC_SCHOOL_STORAGE_KEY = "educore_public_school_slug";
 
-function SchoolLayoutBridge({ isCustomDomain = false, isSubdomain = false, schoolSlug: providedSchoolSlug = "" }) {
+function SchoolLayoutBridge({
+    isCustomDomain = false,
+    schoolSlug: providedSchoolSlug = ""
+}) {
     const { schoolSlug: routeSchoolSlug } = useParams();
     const schoolSlug = providedSchoolSlug || routeSchoolSlug;
 
@@ -34,36 +37,40 @@ function SchoolLayoutBridge({ isCustomDomain = false, isSubdomain = false, schoo
         localStorage.setItem(PUBLIC_SCHOOL_STORAGE_KEY, schoolSlug);
     }, [schoolSlug]);
 
-    if (!isCustomDomain && !schoolSlug) return <Navigate to="/" replace />;
+    if (!isCustomDomain && !schoolSlug) {
+        return <Navigate to="/" replace />;
+    }
 
-    return (
-        <>
-            <SchoolWebsiteNavigationBridge
-                isCustomDomain={isCustomDomain}
-                isSubdomain={isSubdomain}
-                schoolSlug={schoolSlug}
-            />
-            <PublicLayout />
-        </>
-    );
+    return <PublicLayout />;
 }
 
-function LegacyWebsiteRedirect({ isCustomDomain = false, isSubdomain = false }) {
+function LegacyWebsiteRedirect({
+    isCustomDomain = false,
+    isSubdomain = false
+}) {
     const location = useLocation();
 
     useEffect(() => {
         const suffix = location.pathname.replace(/^\/website/, "");
 
-        // On a school subdomain/custom domain the hostname already identifies
-        // the school, so /website/... must never become /school-slug/....
+        // On an EduProw subdomain or a custom school domain, the hostname
+        // already identifies the school. Public website pages therefore live
+        // directly at the root: /about, /news, /events, etc.
         if (isSubdomain || isCustomDomain) {
             const target = `${suffix || "/"}${location.search}${location.hash}`;
-            window.history.replaceState({}, "", target);
-            window.dispatchEvent(new PopStateEvent("popstate"));
+
+            if (target !== `${location.pathname}${location.search}${location.hash}`) {
+                window.history.replaceState({}, "", target);
+                window.dispatchEvent(new PopStateEvent("popstate"));
+            }
+
             return;
         }
 
-        const storedSlug = sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) || localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
+        // Legacy path-based school websites keep the school slug in the URL.
+        const storedSlug =
+            sessionStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY) ||
+            localStorage.getItem(PUBLIC_SCHOOL_STORAGE_KEY);
 
         if (!storedSlug) {
             window.history.replaceState({}, "", "/");
@@ -74,7 +81,13 @@ function LegacyWebsiteRedirect({ isCustomDomain = false, isSubdomain = false }) 
         const target = `/${storedSlug}${suffix || ""}${location.search}${location.hash}`;
         window.history.replaceState({}, "", target);
         window.dispatchEvent(new PopStateEvent("popstate"));
-    }, [location.pathname, location.search, location.hash, isSubdomain, isCustomDomain]);
+    }, [
+        location.pathname,
+        location.search,
+        location.hash,
+        isSubdomain,
+        isCustomDomain
+    ]);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-white px-6">
@@ -95,84 +108,33 @@ function SubdomainSchoolPrefixRedirect({ schoolSlug }) {
         const suffix = location.pathname.slice(prefix.length) || "/";
         const target = `${suffix}${location.search}${location.hash}`;
 
-        if (location.pathname === prefix || location.pathname.startsWith(`${prefix}/`)) {
+        if (
+            location.pathname === prefix ||
+            location.pathname.startsWith(`${prefix}/`)
+        ) {
             navigate(target, { replace: true });
         }
-    }, [schoolSlug, pathSlug, location.pathname, location.search, location.hash, navigate]);
+    }, [
+        schoolSlug,
+        pathSlug,
+        location.pathname,
+        location.search,
+        location.hash,
+        navigate
+    ]);
 
-    if (pathSlug !== schoolSlug) return <Navigate to="/" replace />;
-
-    return null;
-}
-
-function SchoolWebsiteNavigationBridge({ isCustomDomain = false, isSubdomain = false, schoolSlug = "" }) {
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (!schoolSlug && !isCustomDomain) return;
-
-        const toSchoolPath = href => {
-            if (!href) return href;
-
-            // Public website routes are root-relative on EduProw subdomains
-            // and custom school domains because the hostname already identifies
-            // the school. This also strips an accidentally generated school-slug
-            // prefix such as /educore-demo-school/news.
-            if (isCustomDomain || isSubdomain) {
-                if (href.startsWith("/website")) {
-                    return href.replace(/^\/website/, "") || "/";
-                }
-
-                if (schoolSlug) {
-                    const schoolPrefix = `/${schoolSlug}`;
-                    if (href === schoolPrefix) return "/";
-                    if (href.startsWith(`${schoolPrefix}/`)) {
-                        return href.slice(schoolPrefix.length) || "/";
-                    }
-                }
-            }
-
-            if (!href.startsWith("/website")) return href;
-            const suffix = href.replace(/^\/website/, "");
-
-            // Legacy path-based school websites keep the school slug in the URL.
-            return `/${schoolSlug}${suffix || ""}`;
-        };
-
-        const rewriteLinks = () => {
-            document.querySelectorAll("a[href]").forEach(anchor => {
-                const href = anchor.getAttribute("href");
-                const nextHref = toSchoolPath(href);
-                if (nextHref && nextHref !== href) anchor.setAttribute("href", nextHref);
-            });
-        };
-
-        rewriteLinks();
-        const observer = new MutationObserver(rewriteLinks);
-        observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["href"] });
-
-        const handleClick = event => {
-            const anchor = event.target.closest("a");
-            if (!anchor) return;
-            const href = anchor.getAttribute("href");
-            const nextHref = toSchoolPath(href);
-            if (!href || nextHref === href || !nextHref?.startsWith("/")) return;
-            event.preventDefault();
-            event.stopPropagation();
-            navigate(nextHref);
-        };
-
-        document.addEventListener("click", handleClick, true);
-        return () => {
-            observer.disconnect();
-            document.removeEventListener("click", handleClick, true);
-        };
-    }, [schoolSlug, isCustomDomain, isSubdomain, navigate]);
+    if (pathSlug !== schoolSlug) {
+        return <Navigate to="/" replace />;
+    }
 
     return null;
 }
 
-export default function SchoolWebsiteRouter({ isCustomDomain = false, isSubdomain = false, schoolSlug = "" }) {
+export default function SchoolWebsiteRouter({
+    isCustomDomain = false,
+    isSubdomain = false,
+    schoolSlug = ""
+}) {
     return (
         <BrowserRouter>
             <Routes>
@@ -181,7 +143,6 @@ export default function SchoolWebsiteRouter({ isCustomDomain = false, isSubdomai
                         element={
                             <SchoolLayoutBridge
                                 isCustomDomain={isCustomDomain}
-                                isSubdomain={isSubdomain}
                                 schoolSlug={schoolSlug}
                             />
                         }
