@@ -47,7 +47,20 @@ const getSchoolByHost = async (host) => {
                         OR LOWER(
                             regexp_replace(
                                 regexp_replace(
-                                    lower(trim(COALESCE(ss.school_name, s.school_name))),
+                                    lower(trim(s.school_name)),
+                                    '[^a-z0-9]+',
+                                    '-',
+                                    'g'
+                                ),
+                                '(^-|-$)',
+                                '',
+                                'g'
+                            )
+                        ) = LOWER($2)
+                        OR LOWER(
+                            regexp_replace(
+                                regexp_replace(
+                                    lower(trim(COALESCE(ss.school_name, ''))),
                                     '[^a-z0-9]+',
                                     '-',
                                     'g'
