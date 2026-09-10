@@ -5,6 +5,7 @@ import AppRouter from "./routes/AppRouter";
 import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
 import LegacyWebsiteRedirect from "./routes/LegacyWebsiteRedirect";
 import EduProwLandingPage from "./pages/public/EduProwLandingPage";
+import LoginPage from "./pages/auth/LoginPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
@@ -56,8 +57,11 @@ function useAppPathname() {
 function App() {
     const pathname = useAppPathname();
     const firstSegment = pathname.split("/").filter(Boolean)[0] || "";
+    const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(window.location.hostname.toLowerCase());
 
+    if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
+    if (pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
     if (firstSegment === "website") return <LegacyWebsiteRedirect />;
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
@@ -70,7 +74,7 @@ function App() {
     if (pathname === "/cbt-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/cbt-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/cbt-question-bank") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTQuestionBankPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/cbt-question-bank/import") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTPdfImportPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/cbt-question-bank/import") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "Teacher"]}><DashboardLayout><CBTPdfImportPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
