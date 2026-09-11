@@ -90,16 +90,45 @@ const createCommission = async (req, res, next) => {
         const partnerId = Number(req.body.partner_id);
         const leadId = req.body.lead_id ? Number(req.body.lead_id) : null;
         const amount = Number(req.body.amount);
-        if (!Number.isInteger(partnerId) || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ success: false, message: "Partner and a valid commission amount are required." });
+
+        if (!Number.isInteger(partnerId) || partnerId <= 0) {
+            return res.status(400).json({ success: false, message: "Please select a valid partner." });
+        }
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return res.status(400).json({ success: false, message: "Please enter a commission amount greater than zero." });
+        }
+        if (req.body.lead_id && (!Number.isInteger(leadId) || leadId <= 0)) {
+            return res.status(400).json({ success: false, message: "The selected lead is invalid." });
+        }
+
         const partner = await pool.query("SELECT id FROM eduprow_partners WHERE id = $1", [partnerId]);
         if (!partner.rows[0]) return res.status(404).json({ success: false, message: "Partner not found." });
+
         if (leadId) {
-            const lead = await pool.query("SELECT id, partner_id FROM eduprow_partner_leads WHERE id = $1", [leadId]);
-            if (!lead.rows[0] || lead.rows[0].partner_id !== partnerId) return res.status(400).json({ success: false, message: "Selected lead does not belong to this partner." });
+            const lead = await pool.query(
+                "SELECT id, partner_id FROM eduprow_partner_leads WHERE id = $1 AND partner_id = $2",
+                [leadId, partnerId]
+            );
+            if (!lead.rows[0]) {
+                return res.status(400).json({ success: false, message: "Selected lead does not belong to this partner." });
+            }
         }
-        const result = await pool.query(`INSERT INTO eduprow_partner_commissions (partner_id, lead_id, amount, status, eligible_at, approved_at) VALUES ($1, $2, $3, 'approved', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *`, [partnerId, leadId, amount]);
+
+        const result = await pool.query(
+            `INSERT INTO eduprow_partner_commissions
+                (partner_id, lead_id, amount, status, eligible_at, approved_at)
+             VALUES ($1, $2, $3, 'approved', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+             RETURNING *`,
+            [partnerId, leadId, amount]
+        );
+
         return res.status(201).json({ success: true, data: result.rows[0] });
-    } catch (error) { next(error); }
+    } catch (error) {
+        if (error.code === "23505") {
+            return res.status(400).json({ success: false, message: "A commission has already been recorded for this lead or payment." });
+        }
+        next(error);
+    }
 };
 
 const setCommissionStatus = async (req, res, next) => {
