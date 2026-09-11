@@ -70,9 +70,11 @@ function LoginPage() {
                     </div>
 
                     {isSchoolPortal && (
-                        <p className="relative z-10 mt-8 text-xs text-blue-100 lg:mt-0">
-                            {schoolName}
-                        </p>
+                        <div className="relative z-10 mt-8 lg:mt-0">
+                            <p className="text-xs text-blue-100">
+                                Powered by <span className="font-semibold text-white">EduProw</span>
+                            </p>
+                        </div>
                     )}
                 </div>
 
@@ -135,7 +137,7 @@ function LoginPage() {
                         </form>
 
                         <div className="mt-8 border-t border-slate-200 pt-5 text-center text-xs text-slate-400">
-                            {isSchoolPortal ? schoolName : "EduProw School Management System"}
+                            Powered by <span className="font-semibold text-slate-500">EduProw</span>
                         </div>
                     </div>
                 </div>
