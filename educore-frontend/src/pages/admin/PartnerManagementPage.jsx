@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, DollarSign, Link2, RefreshCw, ShieldAlert, Users } from "lucide-react";
-import { getPartnerAdminOverview, setPartnerStatus, setPartnerLeadStatus, createPartnerCommission, setPartnerCommissionStatus } from "../../api/partnerAdminApi";
+import { CheckCircle2, Clock3, DollarSign, Eye, Link2, RefreshCw, ShieldAlert, Users, X } from "lucide-react";
+import { getPartnerAdminOverview, getPartnerAdminPartner, setPartnerStatus, setPartnerLeadStatus, createPartnerCommission, setPartnerCommissionStatus } from "../../api/partnerAdminApi";
 
 const leadStatuses = ["submitted", "contacted", "demo_scheduled", "demo_completed", "negotiation", "converted", "lost"];
 const partnerStatuses = ["pending", "active", "suspended"];
@@ -15,6 +15,9 @@ function PartnerManagementPage() {
     const [message, setMessage] = useState("");
     const [commission, setCommission] = useState({ partner_id: "", lead_id: "", amount: "" });
     const [leadSchools, setLeadSchools] = useState({});
+    const [selectedPartnerId, setSelectedPartnerId] = useState(null);
+    const [partnerDetails, setPartnerDetails] = useState(null);
+    const [partnerDetailsLoading, setPartnerDetailsLoading] = useState(false);
 
     const load = async () => {
         setLoading(true);
@@ -35,6 +38,25 @@ function PartnerManagementPage() {
     };
 
     useEffect(() => { load(); }, []);
+
+    const openPartnerDetails = async (partnerId) => {
+        setSelectedPartnerId(partnerId);
+        setPartnerDetails(null);
+        setPartnerDetailsLoading(true);
+        try {
+            const response = await getPartnerAdminPartner(partnerId);
+            setPartnerDetails(response.data || null);
+        } catch (error) {
+            setMessage(error?.response?.data?.message || "Unable to load partner details.");
+            setSelectedPartnerId(null);
+        } finally { setPartnerDetailsLoading(false); }
+    };
+
+    const closePartnerDetails = () => {
+        if (partnerDetailsLoading) return;
+        setSelectedPartnerId(null);
+        setPartnerDetails(null);
+    };
 
     const stats = useMemo(() => ({
         partners: data.partners.length,
@@ -88,9 +110,7 @@ function PartnerManagementPage() {
             setMessage("Commission recorded successfully and added to Earned.");
         } catch (error) {
             setMessage(error?.response?.data?.message || "Commission could not be recorded.");
-        } finally {
-            setBusy("");
-        }
+        } finally { setBusy(""); }
     };
 
     return (
@@ -110,7 +130,7 @@ function PartnerManagementPage() {
                 <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Partners</h2></div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Partner</th><th className="px-5 py-3">Referral</th><th className="px-5 py-3">Leads</th><th className="px-5 py-3">Earned</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{data.partners.map((p) => <tr key={p.id}><td className="px-5 py-4"><p className="font-semibold text-slate-900">{p.full_name}</p><p className="text-xs text-slate-500">{p.email} • {p.phone}</p></td><td className="px-5 py-4 font-mono text-xs text-slate-600">{p.referral_code}</td><td className="px-5 py-4 text-slate-700">{p.lead_count} <span className="text-xs text-slate-400">({p.converted_count} converted)</span></td><td className="px-5 py-4 font-semibold text-slate-800">{money(p.earned_commission)}</td><td className="px-5 py-4"><select value={p.status} disabled={busy === `partner-${p.id}`} onChange={(e) => run(`partner-${p.id}`, () => setPartnerStatus(p.id, e.target.value), "Partner status updated.")} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold"><option value="pending">Pending</option><option value="active">Active</option><option value="suspended">Suspended</option></select></td><td className="px-5 py-4 text-xs text-slate-500">Joined {date(p.created_at)}</td></tr>)}</tbody></table>
+                        <table className="min-w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Partner</th><th className="px-5 py-3">Referral</th><th className="px-5 py-3">Leads</th><th className="px-5 py-3">Earned</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{data.partners.map((p) => <tr key={p.id}><td className="px-5 py-4"><button type="button" onClick={() => openPartnerDetails(p.id)} className="text-left"><p className="font-semibold text-blue-700 hover:text-blue-900">{p.full_name}</p><p className="text-xs text-slate-500">{p.email} • {p.phone}</p></button></td><td className="px-5 py-4 font-mono text-xs text-slate-600">{p.referral_code}</td><td className="px-5 py-4 text-slate-700">{p.lead_count} <span className="text-xs text-slate-400">({p.converted_count} converted)</span></td><td className="px-5 py-4 font-semibold text-slate-800">{money(p.earned_commission)}</td><td className="px-5 py-4"><select value={p.status} disabled={busy === `partner-${p.id}`} onChange={(e) => run(`partner-${p.id}`, () => setPartnerStatus(p.id, e.target.value), "Partner status updated.")} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold"><option value="pending">Pending</option><option value="active">Active</option><option value="suspended">Suspended</option></select></td><td className="px-5 py-4"><button type="button" onClick={() => openPartnerDetails(p.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Eye className="h-3.5 w-3.5" /> View</button></td></tr>)}</tbody></table>
                         {!loading && data.partners.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No partner accounts yet.</div>}
                     </div>
                 </section>
@@ -125,6 +145,22 @@ function PartnerManagementPage() {
 
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><div className="flex gap-3"><ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" /><p><strong>Programme rule:</strong> the current partner programme is configured for a 5% referral commission on the first qualifying payment. Keep commission approval tied to confirmed payment receipt and your written partner terms.</p></div></div>
             </div>
+
+            {selectedPartnerId && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) closePartnerDetails(); }}>
+                <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+                    <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-4">
+                        <div><p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Partner details</p><h2 className="mt-1 text-xl font-bold text-slate-900">{partnerDetails?.partner?.full_name || "Loading partner..."}</h2>{partnerDetails?.partner && <p className="mt-1 text-xs text-slate-500">Referral code: <span className="font-mono font-semibold">{partnerDetails.partner.referral_code}</span></p>}</div>
+                        <button type="button" onClick={closePartnerDetails} disabled={partnerDetailsLoading} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50" aria-label="Close partner details"><X className="h-5 w-5" /></button>
+                    </div>
+                    {partnerDetailsLoading && <div className="p-8 text-center text-sm text-slate-500">Loading partner details...</div>}
+                    {!partnerDetailsLoading && partnerDetails?.partner && <div className="space-y-6 p-5">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[["Status", partnerDetails.partner.status], ["Leads", partnerDetails.partner.lead_count], ["Converted", partnerDetails.partner.converted_count], ["Earned", money(partnerDetails.partner.earned_commission)]].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 font-bold text-slate-900">{value}</p></div>)}</div>
+                        <div className="rounded-xl border border-slate-200 p-4"><h3 className="font-bold text-slate-900">Contact</h3><div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2"><p><span className="font-semibold text-slate-800">Email:</span> {partnerDetails.partner.email}</p><p><span className="font-semibold text-slate-800">Phone:</span> {partnerDetails.partner.phone}</p><p><span className="font-semibold text-slate-800">Location:</span> {partnerDetails.partner.location || "—"}</p><p><span className="font-semibold text-slate-800">Joined:</span> {date(partnerDetails.partner.created_at)}</p></div></div>
+                        <div><div className="flex items-center justify-between gap-3"><h3 className="font-bold text-slate-900">Referral history</h3><span className="text-xs text-slate-400">{partnerDetails.leads.length} total</span></div><div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">School</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Students</th><th className="px-4 py-3">Converted</th></tr></thead><tbody className="divide-y divide-slate-100">{partnerDetails.leads.map((lead) => <tr key={lead.id}><td className="px-4 py-3"><p className="font-semibold text-slate-800">{lead.school_name}</p><p className="text-xs text-slate-500">{lead.contact_name || "No contact"} • {lead.phone || "No phone"}</p></td><td className="px-4 py-3 text-xs font-semibold capitalize">{lead.status.replace(/_/g, " ")}</td><td className="px-4 py-3 text-slate-600">{lead.student_count || "—"}</td><td className="px-4 py-3 text-xs text-slate-500">{date(lead.converted_at)}</td></tr>)}</tbody></table>{partnerDetails.leads.length === 0 && <div className="p-6 text-center text-sm text-slate-500">No referrals recorded.</div>}</div></div>
+                        <div><div className="flex items-center justify-between gap-3"><h3 className="font-bold text-slate-900">Commission history</h3><span className="text-xs text-slate-400">{partnerDetails.commissions.length} total</span></div><div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">School</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Payment</th></tr></thead><tbody className="divide-y divide-slate-100">{partnerDetails.commissions.map((item) => <tr key={item.id}><td className="px-4 py-3 text-slate-700">{item.school_name || "—"}</td><td className="px-4 py-3 font-semibold">{money(item.amount)}</td><td className="px-4 py-3 text-xs font-semibold capitalize">{item.status}</td><td className="px-4 py-3 text-xs text-slate-500">{item.payment_id ? `#${item.payment_id}` : "Manual / not linked"}</td></tr>)}</tbody></table>{partnerDetails.commissions.length === 0 && <div className="p-6 text-center text-sm text-slate-500">No commissions recorded.</div>}</div></div>
+                    </div>}
+                </div>
+            </div>}
         </div>
     );
 }
