@@ -7,7 +7,7 @@ const requireSchool = (schoolId) => {
     }
 };
 
-const createAnnouncement = async (data, schoolId) => {
+const createAnnouncement = async (data, schoolId, db) => {
     requireSchool(schoolId);
 
     if (!data.title) {
@@ -18,21 +18,22 @@ const createAnnouncement = async (data, schoolId) => {
         throw new ApiError(400, "Announcement message is required.");
     }
 
-    return announcementModel.createAnnouncement(data, schoolId);
+    return announcementModel.createAnnouncement(data, schoolId, db);
 };
 
-const getAnnouncements = async (schoolId) => {
+const getAnnouncements = async (schoolId, db) => {
     requireSchool(schoolId);
-    return announcementModel.getAnnouncements(schoolId);
+    return announcementModel.getAnnouncements(schoolId, db);
 };
 
-const updateAnnouncement = async (id, data, schoolId) => {
+const updateAnnouncement = async (id, data, schoolId, db) => {
     requireSchool(schoolId);
 
     const announcement = await announcementModel.updateAnnouncement(
         id,
         data,
-        schoolId
+        schoolId,
+        db
     );
 
     if (!announcement) {
@@ -42,12 +43,13 @@ const updateAnnouncement = async (id, data, schoolId) => {
     return announcement;
 };
 
-const deactivateAnnouncement = async (id, schoolId) => {
+const deactivateAnnouncement = async (id, schoolId, db) => {
     requireSchool(schoolId);
 
     const announcement = await announcementModel.deactivateAnnouncement(
         id,
-        schoolId
+        schoolId,
+        db
     );
 
     if (!announcement) {
