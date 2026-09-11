@@ -6,6 +6,7 @@ import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
 import LegacyWebsiteRedirect from "./routes/LegacyWebsiteRedirect";
 import EduProwLandingPage from "./pages/public/EduProwLandingPage";
 import EduProwPartnerPage from "./pages/public/EduProwPartnerPage";
+import EduProwReferralPage from "./pages/public/EduProwReferralPage";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -42,11 +43,7 @@ function useAppPathname() {
         window.history.pushState = function (...args) { originalPushState.apply(this, args); updatePathname(); };
         window.history.replaceState = function (...args) { originalReplaceState.apply(this, args); updatePathname(); };
         window.addEventListener("popstate", updatePathname);
-        return () => {
-            window.history.pushState = originalPushState;
-            window.history.replaceState = originalReplaceState;
-            window.removeEventListener("popstate", updatePathname);
-        };
+        return () => { window.history.pushState = originalPushState; window.history.replaceState = originalReplaceState; window.removeEventListener("popstate", updatePathname); };
     }, []);
     return pathname;
 }
@@ -60,20 +57,18 @@ function App() {
     const isLocalHost = ["localhost", "127.0.0.1"].includes(hostname);
     const isVercelHost = hostname.endsWith(".vercel.app");
     const isCustomSchoolDomain = !isEduProwDomain && !isEduProwSubdomain && !isLocalHost && !isVercelHost;
-    const schoolSlugFromSubdomain = isEduProwSubdomain
-        ? hostname.slice(0, -".eduprow.com".length).split(".")[0]
-        : "";
+    const schoolSlugFromSubdomain = isEduProwSubdomain ? hostname.slice(0, -".eduprow.com".length).split(".")[0] : "";
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
+    if (isEduProwDomain && pathname.startsWith("/r/") && pathname.split("/").filter(Boolean)[1]) {
+        return <BrowserRouter><EduProwReferralPage code={pathname.split("/").filter(Boolean)[1]} /></BrowserRouter>;
+    }
     if (isEduProwDomain && ["/partners", "/partners/login", "/partners/register", "/partners/dashboard"].includes(pathname)) {
         const mode = pathname === "/partners/register" ? "register" : pathname === "/partners/login" ? "login" : pathname === "/partners/dashboard" ? "dashboard" : "home";
         return <BrowserRouter><EduProwPartnerPage mode={mode} /></BrowserRouter>;
     }
     if (isEduProwSubdomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
 
-    // These pages have their own protected wrappers outside AppRouter.
-    // They must be checked before the generic subdomain route so they remain
-    // reachable from the dashboard on EduProw school domains.
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
@@ -88,25 +83,14 @@ function App() {
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
-    // Keep application/auth routes on the school subdomain. Only unreserved paths
-    // belong to the public school website.
-    if (
-        isEduProwSubdomain &&
-        pathname !== "/" &&
-        RESERVED_PUBLIC_PREFIXES.has(firstSegment)
-    ) {
-        return <AppRouter />;
-    }
-
+    if (isEduProwSubdomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
     if (isEduProwSubdomain) return <SchoolWebsiteRouter isSubdomain schoolSlug={schoolSlugFromSubdomain} />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
     if (pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
     if (firstSegment === "website") return <LegacyWebsiteRedirect />;
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
-
     if (isCustomSchoolDomain) return <SchoolWebsiteRouter isCustomDomain />;
-
     const isSchoolWebsite = firstSegment && !RESERVED_PUBLIC_PREFIXES.has(firstSegment);
     return isSchoolWebsite ? <SchoolWebsiteRouter /> : <AppRouter />;
 }
