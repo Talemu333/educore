@@ -125,6 +125,7 @@ function SidebarItem({
     return (
         <NavLink
             to={path}
+            end
             onClick={() => onClose?.()}
             className={({ isActive }) => `
                 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
