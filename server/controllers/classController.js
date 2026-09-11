@@ -2,7 +2,8 @@ const { createClassSchema } = require("../validators/classValidator");
 const classService = require("../services/classService");
 const { successResponse, errorResponse } = require("../utils/response");
 
-const getSchoolId = (req) => req.user?.school_id;
+const getSchoolId = (req) =>
+    req.schoolDatabaseSchoolId || req.superAdminSchoolContext || req.user?.school_id;
 const getDatabase = (req) => req.schoolDatabase;
 
 const getClasses = async (req, res, next) => {
