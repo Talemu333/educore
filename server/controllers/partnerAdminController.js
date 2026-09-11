@@ -97,7 +97,7 @@ const createCommission = async (req, res, next) => {
             const lead = await pool.query("SELECT id, partner_id FROM eduprow_partner_leads WHERE id = $1", [leadId]);
             if (!lead.rows[0] || lead.rows[0].partner_id !== partnerId) return res.status(400).json({ success: false, message: "Selected lead does not belong to this partner." });
         }
-        const result = await pool.query(`INSERT INTO eduprow_partner_commissions (partner_id, lead_id, amount, status, eligible_at) VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP) RETURNING *`, [partnerId, leadId, amount]);
+        const result = await pool.query(`INSERT INTO eduprow_partner_commissions (partner_id, lead_id, amount, status, eligible_at, approved_at) VALUES ($1, $2, $3, 'approved', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *`, [partnerId, leadId, amount]);
         return res.status(201).json({ success: true, data: result.rows[0] });
     } catch (error) { next(error); }
 };
