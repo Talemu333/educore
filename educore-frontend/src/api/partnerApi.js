@@ -24,3 +24,8 @@ export const createPartnerLead = async (data) => {
     const response = await api.post("/partners/leads", data);
     return response.data;
 };
+
+export const submitPartnerReferral = async (code, data) => {
+    const response = await api.post(`/partners/referrals/${encodeURIComponent(code)}`, data);
+    return response.data;
+};
