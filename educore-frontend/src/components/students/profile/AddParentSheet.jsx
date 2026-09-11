@@ -35,9 +35,9 @@ function AddParentSheet({
                 "
             >
 
-                <SheetHeader>
+                <SheetHeader className="border-b border-slate-200 pb-4">
 
-                    <SheetTitle>
+                    <SheetTitle className="text-xl font-semibold text-slate-900">
 
                         {
                             parent
@@ -47,10 +47,14 @@ function AddParentSheet({
 
                     </SheetTitle>
 
+                    <p className="text-sm text-slate-500">
+                        Enter the parent or guardian's details below.
+                    </p>
+
                 </SheetHeader>
 
 
-                <div className="mt-6">
+                <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/60 p-4 shadow-sm sm:p-5">
 
                     <ParentForm
 
@@ -76,75 +80,3 @@ function AddParentSheet({
 
 
 export default AddParentSheet;
-
-// import {
-//     Sheet,
-//     SheetContent,
-//     SheetHeader,
-//     SheetTitle,
-// } from "@/components/ui/sheet";
-
-// import ParentForm from "./ParentForm";
-
-// function AddParentSheet({
-
-//     studentId,
-
-//     parent,
-
-//     open,
-
-//     onOpenChange,
-
-// }) {
-
-//     return (
-
-//         <Sheet
-//             open={open}
-//             onOpenChange={onOpenChange}
-//         >
-
-//             <SheetContent className="sm:max-w-xl overflow-y-auto">
-
-//                 <SheetHeader>
-
-//                     <SheetTitle>
-
-//                         {
-
-//                             parent
-
-//                                 ? "Edit Parent"
-
-//                                 : "Add Parent"
-
-//                         }
-
-//                     </SheetTitle>
-
-//                 </SheetHeader>
-
-//                 <div className="mt-6">
-
-//                     <ParentForm
-
-//                         studentId={studentId}
-
-//                         parent={parent}
-
-//                         onSuccess={() => onOpenChange(false)}
-
-//                     />
-
-//                 </div>
-
-//             </SheetContent>
-
-//         </Sheet>
-
-//     );
-
-// }
-
-// export default AddParentSheet;
