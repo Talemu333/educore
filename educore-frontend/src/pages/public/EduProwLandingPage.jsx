@@ -215,7 +215,7 @@ export default function EduProwLandingPage() {
                                 <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">EduProw Partner Network</p>
                                 <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Want to become an EduProw marketer?</h2>
                                 <p className="mt-5 leading-7 text-slate-600">If you know school owners, administrators or education organisations that need better digital tools, you can work with EduProw to introduce them to the platform.</p>
-                                <a href="#contact" className="mt-7 inline-flex rounded-xl bg-slate-950 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800">Become a marketer</a>
+                                <a href="/partners" className="mt-7 inline-flex rounded-xl bg-slate-950 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800">Become a marketer</a>
                             </div>
                             <div className="grid gap-4 sm:grid-cols-3">
                                 {partnerPoints.map(([icon, title, description]) => <article key={title} className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm"><div className="text-2xl">{icon}</div><h3 className="mt-4 font-extrabold">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></article>)}
