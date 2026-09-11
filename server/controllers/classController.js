@@ -1,20 +1,20 @@
 const { createClassSchema } = require("../validators/classValidator");
-const validate = require("../middlewares/validate");
 const classService = require("../services/classService");
 const { successResponse, errorResponse } = require("../utils/response");
 
 const getSchoolId = (req) => req.user?.school_id;
+const getDatabase = (req) => req.schoolDatabase;
 
 const getClasses = async (req, res, next) => {
     try {
-        const classes = await classService.getClasses(getSchoolId(req));
+        const classes = await classService.getClasses(getSchoolId(req), getDatabase(req));
         res.status(200).json({ success: true, data: classes });
     } catch (err) { next(err); }
 };
 
 const getClassArms = async (req, res, next) => {
     try {
-        const arms = await classService.getClassArms(req.params.id, getSchoolId(req));
+        const arms = await classService.getClassArms(req.params.id, getSchoolId(req), getDatabase(req));
         res.status(200).json({ success: true, data: arms });
     } catch (err) { next(err); }
 };
@@ -23,7 +23,7 @@ const createClass = async (req, res) => {
     const { error } = createClassSchema.validate(req.body);
     if (error) return errorResponse(res, error.details[0].message, 400);
     try {
-        const newClass = await classService.createClass(req.body, getSchoolId(req));
+        const newClass = await classService.createClass(req.body, getSchoolId(req), getDatabase(req));
         return successResponse(res, "Class created successfully.", newClass, 201);
     } catch (err) {
         console.error(err);
