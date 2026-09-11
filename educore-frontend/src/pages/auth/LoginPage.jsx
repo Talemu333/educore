@@ -34,7 +34,7 @@ function LoginPage() {
     return (
         <div className="min-h-screen w-full bg-slate-50">
             <div className="flex min-h-screen flex-col lg:flex-row">
-                <div className="relative flex min-h-[240px] w-full flex-col justify-between overflow-hidden bg-blue-700 px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:w-[46%] lg:px-14 lg:py-12">
+                <div className="relative flex min-h-[260px] w-full flex-col justify-between overflow-hidden bg-blue-700 px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:w-[46%] lg:px-14 lg:py-12">
                     <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/10" />
                     <div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-blue-500/40" />
 
@@ -44,50 +44,47 @@ function LoginPage() {
                                 <img
                                     src={schoolLogo}
                                     alt={`${schoolName} logo`}
-                                    className="h-14 w-14 rounded-xl bg-white object-contain p-1.5 shadow-sm"
+                                    className="h-16 w-16 rounded-xl bg-white object-contain p-1.5 shadow-sm"
                                 />
                             ) : (
-                                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/15 text-xl font-bold ring-1 ring-white/20">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/15 text-2xl font-bold ring-1 ring-white/20">
                                     {schoolName.charAt(0).toUpperCase()}
                                 </div>
                             )}
                             <div>
-                                <p className="text-xs font-medium uppercase tracking-[0.2em] text-blue-100">
-                                    {isSchoolPortal ? "School Portal" : "EduProw"}
-                                </p>
-                                <h1 className="mt-1 text-lg font-bold leading-tight sm:text-xl">
-                                    {isSchoolLoading ? "Loading school..." : schoolName}
+                                <h1 className="text-xl font-bold leading-tight sm:text-2xl">
+                                    {isSchoolLoading ? "" : schoolName}
                                 </h1>
+                                <p className="mt-1 text-sm text-blue-100">School Portal</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="relative z-10 mt-10 max-w-xl lg:mt-0">
-                        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-blue-100">
-                            School Management System
-                        </p>
+                    <div className="relative z-10 mt-12 max-w-xl lg:mt-0">
                         <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-                            Everything your school needs, in one place.
+                            Welcome to {schoolName}.
                         </h2>
                         <p className="mt-5 max-w-lg text-sm leading-6 text-blue-100 sm:text-base">
-                            Access your school dashboard, manage academic activities, and stay connected with your school community.
+                            Sign in to access your school account and continue with your academic and school activities.
                         </p>
                     </div>
 
-                    <p className="relative z-10 mt-8 text-xs text-blue-100 lg:mt-0">
-                        Powered by EduProw
-                    </p>
+                    {isSchoolPortal && (
+                        <p className="relative z-10 mt-8 text-xs text-blue-100 lg:mt-0">
+                            {schoolName}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
                     <div className="w-full max-w-md">
                         <div className="mb-8 lg:mb-10">
-                            <p className="text-sm font-medium text-blue-700">Welcome back</p>
+                            <p className="text-sm font-semibold text-blue-700">{schoolName}</p>
                             <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                                Sign in to your account
+                                Welcome back
                             </h2>
                             <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
-                                Enter your login details to continue to your school portal.
+                                Sign in to continue to your school account.
                             </p>
                         </div>
 
@@ -138,7 +135,7 @@ function LoginPage() {
                         </form>
 
                         <div className="mt-8 border-t border-slate-200 pt-5 text-center text-xs text-slate-400">
-                            {isSchoolPortal ? `${schoolName} • Powered by EduProw` : "EduProw School Management System"}
+                            {isSchoolPortal ? schoolName : "EduProw School Management System"}
                         </div>
                     </div>
                 </div>
