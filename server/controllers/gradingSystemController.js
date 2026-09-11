@@ -1,25 +1,27 @@
 const asyncHandler = require("../middlewares/asyncHandler");
 const gradingSystemService = require("../services/gradingSystemService");
 
-const getSchoolId = (req) => req.user?.school_id;
+const getSchoolId = (req) =>
+    req.schoolDatabaseSchoolId || req.superAdminSchoolContext || req.user?.school_id;
+const getDatabase = (req) => req.schoolDatabase;
 
 const getAllGradingSystems = asyncHandler(async (req, res) => {
     const gradingSystems = await gradingSystemService
-        .getAllGradingSystems(getSchoolId(req));
+        .getAllGradingSystems(getSchoolId(req), getDatabase(req));
 
     res.json({ success: true, data: gradingSystems });
 });
 
 const getGradingSystemById = asyncHandler(async (req, res) => {
     const gradingSystem = await gradingSystemService
-        .getGradingSystemById(req.params.id, getSchoolId(req));
+        .getGradingSystemById(req.params.id, getSchoolId(req), getDatabase(req));
 
     res.json({ success: true, data: gradingSystem });
 });
 
 const createGradingSystem = asyncHandler(async (req, res) => {
     const gradingSystem = await gradingSystemService
-        .createGradingSystem(req.body, getSchoolId(req));
+        .createGradingSystem(req.body, getSchoolId(req), getDatabase(req));
 
     res.status(201).json({
         success: true,
@@ -30,7 +32,7 @@ const createGradingSystem = asyncHandler(async (req, res) => {
 
 const updateGradingSystem = asyncHandler(async (req, res) => {
     const gradingSystem = await gradingSystemService
-        .updateGradingSystem(req.params.id, req.body, getSchoolId(req));
+        .updateGradingSystem(req.params.id, req.body, getSchoolId(req), getDatabase(req));
 
     res.json({
         success: true,
@@ -41,7 +43,7 @@ const updateGradingSystem = asyncHandler(async (req, res) => {
 
 const deleteGradingSystem = asyncHandler(async (req, res) => {
     await gradingSystemService
-        .deleteGradingSystem(req.params.id, getSchoolId(req));
+        .deleteGradingSystem(req.params.id, getSchoolId(req), getDatabase(req));
 
     res.json({
         success: true,
