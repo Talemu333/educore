@@ -276,8 +276,8 @@ export default function EduProwLandingPage() {
                     </div>
                 </section>
 
-                <section id="get-started" className="bg-blue-600 px-5 pt-12 pb-8 text-white sm:px-6 sm:pt-14 sm:pb-9 lg:px-8">
-                    <div className="mx-auto flex max-w-7xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+                <section id="get-started" className="bg-blue-600 px-5 py-7 text-white sm:px-6 sm:py-8 lg:px-8">
+                    <div className="mx-auto flex max-w-7xl flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-100">Ready when you are</p>
                             <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Bring your school onto a better system.</h2>
