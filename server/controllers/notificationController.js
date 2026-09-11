@@ -4,7 +4,8 @@ const asyncHandler = require("../middlewares/asyncHandler");
 const getMyNotifications = asyncHandler(async (req, res) => {
     const notifications = await notificationService.getUserNotifications(
         req.user.id,
-        req.user.school_id
+        req.user.school_id,
+        req.schoolDatabase
     );
     res.json({ success: true, data: notifications });
 });
@@ -12,7 +13,8 @@ const getMyNotifications = asyncHandler(async (req, res) => {
 const markAsRead = asyncHandler(async (req, res) => {
     const notification = await notificationService.markAsRead(
         req.params.id,
-        req.user.school_id
+        req.user.school_id,
+        req.schoolDatabase
     );
     res.json({ success: true, data: notification });
 });
