@@ -1,7 +1,7 @@
 const pool = require("../config/database");
 
-const createArm = async (armData, schoolId) => {
-    const result = await pool.query(`
+const createArm = async (armData, schoolId, client = pool) => {
+    const result = await client.query(`
         INSERT INTO arms (class_id, arm_name, school_id)
         VALUES ($1, $2, $3)
         RETURNING *;
@@ -9,8 +9,8 @@ const createArm = async (armData, schoolId) => {
     return result.rows[0];
 };
 
-const getArmByName = async (classId, armName, schoolId) => {
-    const result = await pool.query(`
+const getArmByName = async (classId, armName, schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT * FROM arms
         WHERE class_id = $1
         AND school_id = $3
@@ -19,16 +19,16 @@ const getArmByName = async (classId, armName, schoolId) => {
     return result.rows[0];
 };
 
-const getArmById = async (id, schoolId) => {
-    const result = await pool.query(
+const getArmById = async (id, schoolId, client = pool) => {
+    const result = await client.query(
         `SELECT * FROM arms WHERE id = $1 AND school_id = $2`,
         [id, schoolId]
     );
     return result.rows[0];
 };
 
-const getArms = async (schoolId) => {
-    const result = await pool.query(`
+const getArms = async (schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT a.id, a.arm_name, a.class_id, c.class_name
         FROM arms a
         JOIN classes c ON a.class_id = c.id
@@ -39,8 +39,8 @@ const getArms = async (schoolId) => {
     return result.rows;
 };
 
-const getArmsByClass = async (classId, schoolId) => {
-    const result = await pool.query(`
+const getArmsByClass = async (classId, schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT a.id, a.arm_name, a.class_id
         FROM arms a
         JOIN classes c ON c.id = a.class_id
