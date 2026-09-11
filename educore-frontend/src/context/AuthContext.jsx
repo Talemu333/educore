@@ -15,6 +15,25 @@ const AuthContext =
     createContext(null);
 
 
+function shouldSkipInitialAuthCheck() {
+    const pathname =
+        window.location.pathname.toLowerCase();
+
+    /*
+    Partner accounts use their own session/authentication
+    endpoints. The main school-user /api/auth/me check is
+    therefore unnecessary on these public partner pages and
+    would otherwise produce an expected 401 for logged-out
+    visitors.
+    */
+    return (
+        pathname === "/partners" ||
+        pathname.startsWith("/partners/") ||
+        pathname.startsWith("/r/")
+    );
+}
+
+
 export function AuthProvider({
     children
 }) {
@@ -136,6 +155,13 @@ export function AuthProvider({
     */
 
     useEffect(() => {
+
+        if (shouldSkipInitialAuthCheck()) {
+
+            setLoading(false);
+            return;
+
+        }
 
         const fetchCurrentUser =
             async () => {
