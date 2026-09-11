@@ -9,24 +9,27 @@ const createUser = async (client, userData, schoolId) => {
     return result.rows[0];
 };
 
-const getUserByUsername = async (username, schoolId = null) => {
+const getUserByUsername = async (username, schoolId = null, client = pool) => {
     const params = schoolId ? [username, schoolId] : [username];
-    const result = await pool.query(`SELECT * FROM users WHERE username = $1 ${schoolId ? "AND school_id = $2" : ""};`, params);
+    const result = await client.query(
+        `SELECT * FROM users WHERE username = $1 ${schoolId ? "AND school_id = $2" : ""};`,
+        params
+    );
     return result.rows[0];
 };
 
-const getUserById = async (id, schoolId = null) => {
+const getUserById = async (id, schoolId = null, client = pool) => {
     const params = schoolId ? [id, schoolId] : [id];
-    const result = await pool.query(`
+    const result = await client.query(`
         SELECT id, username, email, password, role_id, school_id, admin_type, must_change_password, is_active
         FROM users WHERE id = $1 ${schoolId ? "AND school_id = $2" : ""};
     `, params);
     return result.rows[0];
 };
 
-const changePassword = async (userId, hashedPassword, schoolId = null) => {
+const changePassword = async (userId, hashedPassword, schoolId = null, client = pool) => {
     const params = schoolId ? [hashedPassword, userId, schoolId] : [hashedPassword, userId];
-    const result = await pool.query(`
+    const result = await client.query(`
         UPDATE users SET password = $1, password_changed_at = CURRENT_TIMESTAMP,
         must_change_password = FALSE, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2 ${schoolId ? "AND school_id = $3" : ""}
@@ -35,8 +38,8 @@ const changePassword = async (userId, hashedPassword, schoolId = null) => {
     return result.rows[0];
 };
 
-const getParents = async (schoolId) => {
-    const result = await pool.query(`
+const getParents = async (schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT p.id, p.user_id, p.surname, p.first_name, p.middle_name, p.phone_number, p.email, p.gender
         FROM parents p INNER JOIN users u ON u.id = p.user_id
         WHERE u.school_id = $1 ORDER BY p.surname, p.first_name;
@@ -44,8 +47,8 @@ const getParents = async (schoolId) => {
     return result.rows;
 };
 
-const getAdmins = async (schoolId) => {
-    const result = await pool.query(`
+const getAdmins = async (schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT u.id, u.username, u.email, u.role_id, r.role_name, u.admin_type,
                u.is_active, u.created_at, u.updated_at
         FROM users u INNER JOIN roles r ON r.id = u.role_id
@@ -60,8 +63,8 @@ const getAdmins = async (schoolId) => {
     return result.rows;
 };
 
-const deactivateAdmin = async (userId, schoolId) => {
-    const result = await pool.query(`
+const deactivateAdmin = async (userId, schoolId, client = pool) => {
+    const result = await client.query(`
         UPDATE users u SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
         FROM roles r WHERE u.id = $1 AND u.school_id = $2 AND u.role_id = r.id
         AND LOWER(r.role_name) = 'admin'
@@ -71,8 +74,8 @@ const deactivateAdmin = async (userId, schoolId) => {
     return result.rows[0];
 };
 
-const activateAdmin = async (userId, schoolId) => {
-    const result = await pool.query(`
+const activateAdmin = async (userId, schoolId, client = pool) => {
+    const result = await client.query(`
         UPDATE users u SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP
         FROM roles r WHERE u.id = $1 AND u.school_id = $2 AND u.role_id = r.id
         AND LOWER(r.role_name) = 'admin'
@@ -81,8 +84,8 @@ const activateAdmin = async (userId, schoolId) => {
     return result.rows[0];
 };
 
-const createAdministrator = async (userData, schoolId) => {
-    const result = await pool.query(`
+const createAdministrator = async (userData, schoolId, client = pool) => {
+    const result = await client.query(`
         INSERT INTO users (username, email, password, role_id, school_id, admin_type, must_change_password, is_active)
         VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE)
         RETURNING id, username, email, role_id, school_id, admin_type, is_active, must_change_password, created_at, updated_at;
@@ -94,4 +97,15 @@ const deleteUser = async (client, userId, schoolId) => {
     await client.query(`DELETE FROM users WHERE id = $1 AND school_id = $2`, [userId, schoolId]);
 };
 
-module.exports = { createUser, getUserByUsername, getUserById, changePassword, getParents, getAdmins, deactivateAdmin, activateAdmin, deleteUser, createAdministrator };
+module.exports = {
+    createUser,
+    getUserByUsername,
+    getUserById,
+    changePassword,
+    getParents,
+    getAdmins,
+    deactivateAdmin,
+    activateAdmin,
+    deleteUser,
+    createAdministrator
+};
