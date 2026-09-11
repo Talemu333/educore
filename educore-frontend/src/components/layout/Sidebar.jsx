@@ -1,4 +1,4 @@
-import { X, Settings, Handshake } from "lucide-react";
+import { X, Settings, Handshake, SlidersHorizontal } from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
 import SidebarItem from "./SidebarItem";
 import { useAuth } from "@/context/AuthContext";
@@ -17,7 +17,8 @@ function Sidebar({ isOpen, onClose }) {
     const filteredMenu = role === "Super Admin"
         ? [
             { title: "School Management", icon: Settings, path: "/settings" },
-            { title: "Partner Programme", icon: Handshake, path: "/partner-management" }
+            { title: "Partner Programme", icon: Handshake, path: "/partner-management" },
+            { title: "Partner Settings", icon: SlidersHorizontal, path: "/partner-management/settings" }
         ]
         : sidebarMenu
             .filter(canAccess)
@@ -37,25 +38,13 @@ function Sidebar({ isOpen, onClose }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white shadow-lg shadow-blue-950/30">EP</div>
-                        <div>
-                            <h1 className="text-base font-extrabold tracking-wide text-white">EDUPROW</h1>
-                            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">School Management</p>
-                        </div>
+                        <div><h1 className="text-base font-extrabold tracking-wide text-white">EDUPROW</h1><p className="text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">School Management</p></div>
                     </div>
                     <button type="button" onClick={onClose} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:hidden" aria-label="Close navigation menu"><X className="h-5 w-5" /></button>
                 </div>
-
-                <div className="mt-5 flex items-center gap-3 rounded-xl bg-slate-900/80 p-3 ring-1 ring-inset ring-slate-800">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-xs font-bold text-blue-300">{initials}</div>
-                    <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{displayName}</p><p className="truncate text-xs capitalize text-slate-400">{adminType?.replace(/_/g, " ") || role || "Account"}</p></div>
-                </div>
+                <div className="mt-5 flex items-center gap-3 rounded-xl bg-slate-900/80 p-3 ring-1 ring-inset ring-slate-800"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-xs font-bold text-blue-300">{initials}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{displayName}</p><p className="truncate text-xs capitalize text-slate-400">{adminType?.replace(/_/g, " ") || role || "Account"}</p></div></div>
             </div>
-
-            <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
-                <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p>
-                <div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div>
-            </nav>
-
+            <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
             <div className="border-t border-slate-800 px-4 py-3"><p className="text-center text-[10px] font-medium text-slate-500">EduProw • School Administration</p></div>
         </aside>
     );
