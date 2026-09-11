@@ -1,7 +1,7 @@
 const pool = require("../config/database");
 
-const getAllGradingScales = async (schoolId) => {
-    const result = await pool.query(`
+const getAllGradingScales = async (schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT id, school_id, grade, min_score, max_score,
                remark, created_at, updated_at
         FROM grading_systems
@@ -12,8 +12,8 @@ const getAllGradingScales = async (schoolId) => {
     return result.rows;
 };
 
-const getGradingSystemById = async (id, schoolId) => {
-    const result = await pool.query(`
+const getGradingSystemById = async (id, schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT *
         FROM grading_systems
         WHERE id = $1 AND school_id = $2;
@@ -22,8 +22,8 @@ const getGradingSystemById = async (id, schoolId) => {
     return result.rows[0];
 };
 
-const createGradingSystem = async (data, schoolId) => {
-    const result = await pool.query(`
+const createGradingSystem = async (data, schoolId, client = pool) => {
+    const result = await client.query(`
         INSERT INTO grading_systems (
             school_id, grade, min_score, max_score, remark
         )
@@ -34,8 +34,8 @@ const createGradingSystem = async (data, schoolId) => {
     return result.rows[0];
 };
 
-const updateGradingSystem = async (id, data, schoolId) => {
-    const result = await pool.query(`
+const updateGradingSystem = async (id, data, schoolId, client = pool) => {
+    const result = await client.query(`
         UPDATE grading_systems
         SET grade = $1,
             min_score = $2,
@@ -49,8 +49,8 @@ const updateGradingSystem = async (id, data, schoolId) => {
     return result.rows[0];
 };
 
-const deleteGradingSystem = async (id, schoolId) => {
-    const result = await pool.query(`
+const deleteGradingSystem = async (id, schoolId, client = pool) => {
+    const result = await client.query(`
         DELETE FROM grading_systems
         WHERE id = $1 AND school_id = $2
         RETURNING *;
@@ -59,8 +59,8 @@ const deleteGradingSystem = async (id, schoolId) => {
     return result.rows[0];
 };
 
-const getGradeForScore = async (score, schoolId) => {
-    const result = await pool.query(`
+const getGradeForScore = async (score, schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT grade, remark
         FROM grading_systems
         WHERE school_id = $2
