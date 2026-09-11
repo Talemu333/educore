@@ -22,6 +22,22 @@ const benefits = [
     ["📚", "Get sales resources", "Access product information, talking points and resources that make school outreach easier."]
 ];
 
+const marketingSteps = [
+    ["1", "Find the right schools", "Focus on private schools, school owners, administrators and education organisations that still rely heavily on paper records, spreadsheets or disconnected tools."],
+    ["2", "Start with the problem", "Ask what is difficult today: results, attendance, fee tracking, parent communication, CBT, school websites or managing information across departments."],
+    ["3", "Show the relevant solution", "Do not try to explain every feature at once. Match the school's biggest problem to the EduProw feature that solves it."],
+    ["4", "Invite them to a demo", "Use your referral link or register the lead from your dashboard so EduProw can follow up and demonstrate the platform."],
+    ["5", "Follow up professionally", "Keep the conversation helpful. Answer basic questions, share approved EduProw information and let the EduProw team handle pricing and implementation details."]
+];
+
+const pitchPoints = [
+    "One connected platform for school administration and academics",
+    "Dedicated experiences for administrators, teachers, parents and students",
+    "Student records, attendance, results, finance, communication and CBT in one system",
+    "A branded public website for each school",
+    "Multi-school architecture that keeps school operations separated"
+];
+
 function PartnerHome() {
     return (
         <div className="min-h-screen bg-white text-slate-900">
@@ -45,7 +61,7 @@ function PartnerHome() {
                                     <div key={item} className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-black">{index + 1}</span><p className="pt-1 text-sm font-semibold text-slate-200">{item}</p></div>
                                 ))}
                             </div>
-                            <p className="mt-7 border-t border-white/10 pt-5 text-xs leading-6 text-slate-400">Commission is tied to qualifying EduProw sales. The applicable rate or fixed amount is controlled by EduProw and shown in your partner dashboard.</p>
+                            <p className="mt-7 border-t border-white/10 pt-5 text-xs leading-6 text-slate-400">The current referral programme uses a 5% commission on the first payment received from a qualifying referred school. Commission becomes eligible after EduProw confirms receipt of that payment.</p>
                         </div>
                     </div>
                 </section>
@@ -55,6 +71,48 @@ function PartnerHome() {
                         <div className="max-w-2xl"><p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">Partner benefits</p><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Everything you need to represent EduProw professionally.</h2></div>
                         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                             {benefits.map(([icon, title, description]) => <article key={title} className="rounded-3xl border border-slate-200 p-6 shadow-sm"><div className="text-2xl">{icon}</div><h3 className="mt-5 font-extrabold">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></article>)}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="bg-slate-50 px-5 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="max-w-3xl">
+                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">How to market EduProw</p>
+                            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">You do not need to be a professional salesperson.</h2>
+                            <p className="mt-4 leading-7 text-slate-600">Your main job is to identify a genuine school need, introduce EduProw clearly and connect the interested school with the platform. The strongest approach is problem-first, not feature-first.</p>
+                        </div>
+                        <div className="mt-10 grid gap-4 lg:grid-cols-5">
+                            {marketingSteps.map(([number, title, description]) => (
+                                <article key={number} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                                    <span className="text-sm font-black text-blue-600">{number}</span>
+                                    <h3 className="mt-4 text-lg font-extrabold">{title}</h3>
+                                    <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="px-5 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[.9fr_1.1fr]">
+                        <div className="rounded-3xl bg-slate-950 p-7 text-white sm:p-9">
+                            <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-400">Your talking points</p>
+                            <h2 className="mt-3 text-2xl font-black">Keep your introduction simple.</h2>
+                            <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-300">
+                                {pitchPoints.map(point => <li key={point} className="flex gap-3"><span className="font-bold text-blue-400">✓</span><span>{point}</span></li>)}
+                            </ul>
+                        </div>
+                        <div className="rounded-3xl border border-blue-100 bg-blue-50 p-7 sm:p-9">
+                            <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600">What happens after a referral?</p>
+                            <div className="mt-6 space-y-5">
+                                {[
+                                    ["Lead recorded", "Your referral link or dashboard submission connects the school to your partner account."],
+                                    ["EduProw follows up", "The team can contact the school, understand its needs and arrange a demonstration."],
+                                    ["Sale confirmed", "If the referred school becomes a qualifying customer and makes the applicable payment, the referral can become commission-eligible."],
+                                    ["Commission tracked", "Your dashboard will show the lead and the commission status as it moves through the process."]
+                                ].map(([title, description]) => <div key={title}><h3 className="font-extrabold text-slate-900">{title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{description}</p></div>)}
+                            </div>
                         </div>
                     </div>
                 </section>
