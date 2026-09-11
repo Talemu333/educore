@@ -19,6 +19,30 @@ const getOverview = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
+const getPartnerDetails = async (req, res, next) => {
+    try {
+        const partnerId = Number(req.params.id);
+        if (!Number.isInteger(partnerId)) return res.status(400).json({ success: false, message: "Invalid partner ID." });
+
+        const [partner, leads, commissions] = await Promise.all([
+            pool.query(`SELECT p.id, p.full_name, p.email, p.phone, p.location, p.referral_code, p.status, p.created_at,
+                (SELECT COUNT(*)::int FROM eduprow_partner_leads l WHERE l.partner_id = p.id) AS lead_count,
+                (SELECT COUNT(*)::int FROM eduprow_partner_leads l WHERE l.partner_id = p.id AND l.status = 'converted') AS converted_count,
+                (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status IN ('approved', 'paid')) AS earned_commission,
+                (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status = 'paid') AS paid_commission
+                FROM eduprow_partners p WHERE p.id = $1`, [partnerId]),
+            pool.query(`SELECT id, partner_id, school_name, contact_name, phone, email, location, student_count, notes, status, created_at, updated_at
+                FROM eduprow_partner_leads WHERE partner_id = $1 ORDER BY created_at DESC`, [partnerId]),
+            pool.query(`SELECT c.id, c.partner_id, c.lead_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at, c.updated_at
+                FROM eduprow_partner_commissions c LEFT JOIN eduprow_partner_leads l ON l.id = c.lead_id
+                WHERE c.partner_id = $1 ORDER BY c.created_at DESC`, [partnerId])
+        ]);
+
+        if (!partner.rows[0]) return res.status(404).json({ success: false, message: "Partner not found." });
+        return res.json({ success: true, data: { partner: partner.rows[0], leads: leads.rows, commissions: commissions.rows } });
+    } catch (error) { next(error); }
+};
+
 const setPartnerStatus = async (req, res, next) => {
     try {
         const { status } = req.body;
@@ -69,4 +93,4 @@ const setCommissionStatus = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-module.exports = { getOverview, setPartnerStatus, setLeadStatus, createCommission, setCommissionStatus };
+module.exports = { getOverview, getPartnerDetails, setPartnerStatus, setLeadStatus, createCommission, setCommissionStatus };
