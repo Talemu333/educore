@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(authenticate, requireSuperAdmin);
 
 router.get("/overview", controller.getOverview);
+router.get("/partners/:id", controller.getPartnerDetails);
 router.patch("/partners/:id/status", controller.setPartnerStatus);
 router.patch("/leads/:id/status", controller.setLeadStatus);
 router.post("/commissions", controller.createCommission);
