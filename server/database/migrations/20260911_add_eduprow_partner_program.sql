@@ -44,14 +44,14 @@ CREATE TABLE IF NOT EXISTS eduprow_partner_settings (
     id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
     programme_name VARCHAR(100) NOT NULL DEFAULT 'EduProw Partner Programme',
     commission_type VARCHAR(20) NOT NULL DEFAULT 'percentage' CHECK (commission_type IN ('percentage', 'fixed')),
-    commission_rate NUMERIC(8,2),
+    commission_rate NUMERIC(8,2) NOT NULL DEFAULT 5.00,
     commission_fixed_amount NUMERIC(12,2),
-    commission_eligibility TEXT NOT NULL DEFAULT 'Commission becomes eligible after EduProw confirms payment from a referred school.',
+    commission_eligibility TEXT NOT NULL DEFAULT 'Commission becomes eligible after EduProw confirms receipt of the first payment from a referred school.',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO eduprow_partner_settings (id)
-VALUES (1)
+INSERT INTO eduprow_partner_settings (id, commission_type, commission_rate)
+VALUES (1, 'percentage', 5.00)
 ON CONFLICT (id) DO NOTHING;
 
 CREATE INDEX IF NOT EXISTS idx_eduprow_partner_leads_partner_id ON eduprow_partner_leads(partner_id);
