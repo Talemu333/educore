@@ -171,13 +171,13 @@ function PublicLayout() {
                             );
                         })}
 
-                        <a
-                            href="/login"
+                        <Link
+                            to={publicPath("/login")}
                             className="ml-3 rounded-lg border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-sm"
                             style={{ borderColor: primaryColor, color: primaryColor }}
                         >
                             Sign In
-                        </a>
+                        </Link>
 
                         <Link
                             to={publicPath("/admissions")}
@@ -230,14 +230,14 @@ function PublicLayout() {
                                 })}
                             </div>
 
-                            <a
-                                href="/login"
+                            <Link
+                                to={publicPath("/login")}
                                 onClick={closeMobileMenu}
                                 className="mt-3 block rounded-lg border px-4 py-3 text-center text-sm font-bold transition"
                                 style={{ borderColor: primaryColor, color: primaryColor }}
                             >
                                 Sign In
-                            </a>
+                            </Link>
 
                             <Link
                                 to={publicPath("/admissions")}
@@ -314,13 +314,13 @@ function PublicLayout() {
                                         {item.label}
                                     </Link>
                                 ))}
-                                <a
-                                    href="/login"
+                                <Link
+                                    to={publicPath("/login")}
                                     className="text-sm font-semibold transition hover:text-white"
                                     style={{ color: primaryColor }}
                                 >
                                     Sign In
-                                </a>
+                                </Link>
                             </div>
                         </div>
 
