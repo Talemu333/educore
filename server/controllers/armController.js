@@ -2,6 +2,7 @@ const armService = require("../services/armService");
 const { successResponse, errorResponse } = require("../utils/response");
 
 const getSchoolId = (req) => req.user?.school_id;
+const getDatabase = (req) => req.schoolDatabase;
 
 const createArm = async (req, res) => {
     try {
@@ -13,7 +14,8 @@ const createArm = async (req, res) => {
 
         const arm = await armService.createArm(
             { class_id, arm_name: String(arm_name).trim() },
-            getSchoolId(req)
+            getSchoolId(req),
+            getDatabase(req)
         );
 
         return successResponse(res, "Arm created successfully.", arm, 201);
@@ -28,7 +30,7 @@ const createArm = async (req, res) => {
 
 const getArms = async (req, res, next) => {
     try {
-        const arms = await armService.getArms(getSchoolId(req));
+        const arms = await armService.getArms(getSchoolId(req), getDatabase(req));
         res.status(200).json({ success: true, data: arms });
     } catch (err) {
         next(err);
@@ -39,7 +41,8 @@ const getArmsByClass = async (req, res, next) => {
     try {
         const arms = await armService.getArmsByClass(
             req.params.classId,
-            getSchoolId(req)
+            getSchoolId(req),
+            getDatabase(req)
         );
         res.status(200).json({ success: true, data: arms });
     } catch (err) {
