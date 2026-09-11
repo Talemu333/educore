@@ -29,14 +29,24 @@ function SidebarItem({
     const location = useLocation();
     const navigate = useNavigate();
     const { logoutUser } = useAuth();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const hasChildren =
         children && children.length > 0;
 
     const handleLogout = async () => {
-        await logoutUser();
-        onClose?.();
-        navigate("/login", { replace: true });
+        if (isLoggingOut) return;
+
+        setIsLoggingOut(true);
+
+        try {
+            await logoutUser();
+            onClose?.();
+            navigate("/login", { replace: true });
+        } catch (error) {
+            setIsLoggingOut(false);
+            console.error("Logout failed:", error);
+        }
     };
 
     if (title === "Logout") {
@@ -44,15 +54,20 @@ function SidebarItem({
             <button
                 type="button"
                 onClick={handleLogout}
-                className="
+                disabled={isLoggingOut}
+                className={`
                     flex w-full items-center gap-3 rounded-xl px-3 py-2.5
                     text-left text-sm font-medium text-slate-400
                     transition-all duration-150
-                    hover:bg-red-500/10 hover:text-red-300
-                "
+                    ${
+                        isLoggingOut
+                            ? "cursor-not-allowed opacity-60"
+                            : "hover:bg-red-500/10 hover:text-red-300"
+                    }
+                `}
             >
                 <Icon size={18} strokeWidth={1.9} />
-                <span>{title}</span>
+                <span>{isLoggingOut ? "Logging out..." : title}</span>
             </button>
         );
     }
