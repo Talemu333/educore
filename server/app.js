@@ -64,13 +64,37 @@ if (isProduction && allowedOrigins.length === 0) {
     throw new Error("CORS_ORIGINS must be configured in production.");
 }
 
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
+        return true;
+    }
+
+    try {
+        const url = new URL(normalizedOrigin);
+        const hostname = url.hostname.toLowerCase();
+
+        return (
+            url.protocol === "https:" &&
+            hostname.endsWith(".eduprow.com") &&
+            hostname !== "eduprow.com" &&
+            hostname !== "www.eduprow.com"
+        );
+    } catch {
+        return false;
+    }
+};
+
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(helmet());
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+        if (isAllowedOrigin(origin)) {
             return callback(null, true);
         }
         return callback(new Error("Not allowed by CORS"));
