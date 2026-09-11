@@ -7,16 +7,16 @@ const requireSchool = (schoolId) => {
     }
 };
 
-const getAllGradingSystems = async (schoolId) => {
+const getAllGradingSystems = async (schoolId, client) => {
     requireSchool(schoolId);
-    return gradingSystemModel.getAllGradingScales(schoolId);
+    return gradingSystemModel.getAllGradingScales(schoolId, client);
 };
 
-const getGradingSystemById = async (id, schoolId) => {
+const getGradingSystemById = async (id, schoolId, client) => {
     requireSchool(schoolId);
 
     const gradingSystem = await gradingSystemModel
-        .getGradingSystemById(id, schoolId);
+        .getGradingSystemById(id, schoolId, client);
 
     if (!gradingSystem) {
         throw new ApiError(404, "Grading system not found.");
@@ -25,7 +25,7 @@ const getGradingSystemById = async (id, schoolId) => {
     return gradingSystem;
 };
 
-const validateScoreRange = async (data, schoolId, gradingSystemId = null) => {
+const validateScoreRange = async (data, schoolId, gradingSystemId = null, client) => {
     requireSchool(schoolId);
 
     const minScore = Number(data.min_score);
@@ -45,7 +45,7 @@ const validateScoreRange = async (data, schoolId, gradingSystemId = null) => {
     }
 
     const gradingSystems = await gradingSystemModel
-        .getAllGradingScales(schoolId);
+        .getAllGradingScales(schoolId, client);
 
     const gradeExists = gradingSystems.find(item =>
         String(item.grade).toUpperCase() === grade.toUpperCase() &&
@@ -73,37 +73,37 @@ const validateScoreRange = async (data, schoolId, gradingSystemId = null) => {
     }
 };
 
-const createGradingSystem = async (data, schoolId) => {
-    await validateScoreRange(data, schoolId);
-    return gradingSystemModel.createGradingSystem(data, schoolId);
+const createGradingSystem = async (data, schoolId, client) => {
+    await validateScoreRange(data, schoolId, null, client);
+    return gradingSystemModel.createGradingSystem(data, schoolId, client);
 };
 
-const updateGradingSystem = async (id, data, schoolId) => {
+const updateGradingSystem = async (id, data, schoolId, client) => {
     requireSchool(schoolId);
 
     const existing = await gradingSystemModel
-        .getGradingSystemById(id, schoolId);
+        .getGradingSystemById(id, schoolId, client);
 
     if (!existing) {
         throw new ApiError(404, "Grading system not found.");
     }
 
-    await validateScoreRange(data, schoolId, id);
+    await validateScoreRange(data, schoolId, id, client);
 
-    return gradingSystemModel.updateGradingSystem(id, data, schoolId);
+    return gradingSystemModel.updateGradingSystem(id, data, schoolId, client);
 };
 
-const deleteGradingSystem = async (id, schoolId) => {
+const deleteGradingSystem = async (id, schoolId, client) => {
     requireSchool(schoolId);
 
     const existing = await gradingSystemModel
-        .getGradingSystemById(id, schoolId);
+        .getGradingSystemById(id, schoolId, client);
 
     if (!existing) {
         throw new ApiError(404, "Grading system not found.");
     }
 
-    return gradingSystemModel.deleteGradingSystem(id, schoolId);
+    return gradingSystemModel.deleteGradingSystem(id, schoolId, client);
 };
 
 module.exports = {
