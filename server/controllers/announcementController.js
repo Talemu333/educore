@@ -12,7 +12,8 @@ const createAnnouncement = asyncHandler(async (req, res) => {
             created_by: req.user.id,
             expiry_date: req.body.expiry_date
         },
-        getSchoolId(req)
+        getSchoolId(req),
+        req.schoolDatabase
     );
 
     res.status(201).json({
@@ -24,7 +25,8 @@ const createAnnouncement = asyncHandler(async (req, res) => {
 
 const getAnnouncements = asyncHandler(async (req, res) => {
     const announcements = await announcementService.getAnnouncements(
-        getSchoolId(req)
+        getSchoolId(req),
+        req.schoolDatabase
     );
 
     res.status(200).json({
@@ -42,7 +44,8 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
             audience: req.body.audience,
             expiry_date: req.body.expiry_date
         },
-        getSchoolId(req)
+        getSchoolId(req),
+        req.schoolDatabase
     );
 
     res.json({
@@ -55,7 +58,8 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
 const deactivateAnnouncement = asyncHandler(async (req, res) => {
     const announcement = await announcementService.deactivateAnnouncement(
         req.params.id,
-        getSchoolId(req)
+        getSchoolId(req),
+        req.schoolDatabase
     );
 
     res.json({
