@@ -79,9 +79,9 @@ const isAllowedOrigin = (origin) => {
 
         return (
             url.protocol === "https:" &&
-            hostname.endsWith(".eduprow.com") &&
-            hostname !== "eduprow.com" &&
-            hostname !== "www.eduprow.com"
+            (hostname === "eduprow.com" ||
+                hostname === "www.eduprow.com" ||
+                hostname.endsWith(".eduprow.com"))
         );
     } catch {
         return false;
