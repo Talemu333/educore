@@ -23,22 +23,26 @@ const createFirstPaymentCommission = async ({ schoolId, paymentId, paymentAmount
     );
     if (existingCommission.rows[0]) return null;
 
-    // Confirm that this is the first payment recorded for the school after the
-    // partner lead was converted. Payment IDs are monotonically assigned by the
-    // database, so this remains reliable even when payment_date is entered manually.
+    // The qualifying payment is the first payment recorded for the school on or
+    // after the lead was converted. payment_date is the business date, while the
+    // payment id provides a deterministic tie-breaker for multiple payments on a day.
     const paymentResult = await client.query(
-        `SELECT sp.id, sp.school_id, sp.amount_paid
+        `SELECT sp.id, sp.school_id, sp.amount_paid, sp.payment_date
          FROM student_payments sp
          WHERE sp.id = $1
            AND sp.school_id = $2
+           AND sp.payment_date >= $3::date
            AND NOT EXISTS (
                SELECT 1
                FROM student_payments earlier
                WHERE earlier.school_id = $2
-                 AND earlier.id < sp.id
-                 AND earlier.id > 0
+                 AND earlier.payment_date >= $3::date
+                 AND (
+                     earlier.payment_date < sp.payment_date
+                     OR (earlier.payment_date = sp.payment_date AND earlier.id < sp.id)
+                 )
            )`,
-        [paymentId, schoolId]
+        [paymentId, schoolId, lead.converted_at]
     );
     if (!paymentResult.rows[0]) return null;
 
@@ -65,7 +69,7 @@ const createFirstPaymentCommission = async ({ schoolId, paymentId, paymentAmount
         INSERT INTO eduprow_partner_commissions
             (partner_id, lead_id, payment_id, amount, status, eligible_at, notes)
         VALUES ($1, $2, $3, $4, 'pending', CURRENT_TIMESTAMP,
-                'Automatically generated from the referred school''s first recorded payment.')
+                'Automatically generated from the referred school''s first qualifying payment.')
         ON CONFLICT (lead_id) WHERE lead_id IS NOT NULL DO NOTHING
         RETURNING *
     `, [lead.partner_id, lead.id, paymentId, amount]);
