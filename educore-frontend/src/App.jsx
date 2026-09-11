@@ -13,6 +13,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
 import PartnerManagementPage from "./pages/admin/PartnerManagementPage";
+import PartnerProgrammeSettingsPage from "./pages/admin/PartnerProgrammeSettingsPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
@@ -62,9 +63,7 @@ function App() {
     const schoolSlugFromSubdomain = isEduProwSubdomain ? hostname.slice(0, -".eduprow.com".length).split(".")[0] : "";
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
-    if (isPlatformHost && pathname.startsWith("/r/") && pathname.split("/").filter(Boolean)[1]) {
-        return <BrowserRouter><EduProwReferralPage code={pathname.split("/").filter(Boolean)[1]} /></BrowserRouter>;
-    }
+    if (isPlatformHost && pathname.startsWith("/r/") && pathname.split("/").filter(Boolean)[1]) return <BrowserRouter><EduProwReferralPage code={pathname.split("/").filter(Boolean)[1]} /></BrowserRouter>;
     if (isPlatformHost && ["/partners", "/partners/login", "/partners/register", "/partners/dashboard"].includes(pathname)) {
         const mode = pathname === "/partners/register" ? "register" : pathname === "/partners/login" ? "login" : pathname === "/partners/dashboard" ? "dashboard" : "home";
         return <BrowserRouter><EduProwPartnerPage mode={mode} /></BrowserRouter>;
@@ -75,6 +74,7 @@ function App() {
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/partner-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/partner-management/settings") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerProgrammeSettingsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-dashboard") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-cbt") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentCBTPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-subjects") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentSubjectsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
