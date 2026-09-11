@@ -275,19 +275,6 @@ export default function EduProwLandingPage() {
                         </div>
                     </div>
                 </section>
-
-                <section className="border-y border-slate-200 bg-slate-50 px-5 py-5 sm:px-6 lg:px-8">
-                    <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p className="text-sm font-extrabold text-slate-900">Ready to take the next step?</p>
-                            <p className="mt-1 text-sm text-slate-500">Talk to EduProw or explore the platform at your own pace.</p>
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                            <a href="#solutions" className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-center text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">Explore the platform</a>
-                            <a href={`mailto:${contactEmail}`} className="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-blue-700">Contact EduProw</a>
-                        </div>
-                    </div>
-                </section>
             </main>
 
             <footer className="bg-slate-950 px-5 py-12 text-white sm:px-6 lg:px-8">
