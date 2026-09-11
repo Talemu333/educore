@@ -21,8 +21,8 @@ const create = async (client, { class_id, subject_id, is_compulsory }, schoolId)
     return result.rows[0];
 };
 
-const getByClassId = async (classId, schoolId) => {
-    const result = await pool.query(`
+const getByClassId = async (classId, schoolId, client = pool) => {
+    const result = await client.query(`
         SELECT
             s.id,
             cs.class_id,
