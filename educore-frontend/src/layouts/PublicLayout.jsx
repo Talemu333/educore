@@ -93,8 +93,6 @@ function PublicLayout() {
         );
     }
 
-    // Never render a generic "EduCore School" website when tenant resolution
-    // fails. The public website must belong to a real school.
     if (isSettingsError || !settings) {
         return <SchoolResolutionState error={settingsError} />;
     }
@@ -173,13 +171,13 @@ function PublicLayout() {
                             );
                         })}
 
-                        <Link
-                            to="/"
+                        <a
+                            href="/login"
                             className="ml-3 rounded-lg border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-sm"
                             style={{ borderColor: primaryColor, color: primaryColor }}
                         >
                             Sign In
-                        </Link>
+                        </a>
 
                         <Link
                             to={publicPath("/admissions")}
@@ -232,14 +230,14 @@ function PublicLayout() {
                                 })}
                             </div>
 
-                            <Link
-                                to="/"
+                            <a
+                                href="/login"
                                 onClick={closeMobileMenu}
                                 className="mt-3 block rounded-lg border px-4 py-3 text-center text-sm font-bold transition"
                                 style={{ borderColor: primaryColor, color: primaryColor }}
                             >
                                 Sign In
-                            </Link>
+                            </a>
 
                             <Link
                                 to={publicPath("/admissions")}
@@ -316,13 +314,13 @@ function PublicLayout() {
                                         {item.label}
                                     </Link>
                                 ))}
-                                <Link
-                                    to="/"
+                                <a
+                                    href="/login"
                                     className="text-sm font-semibold transition hover:text-white"
                                     style={{ color: primaryColor }}
                                 >
                                     Sign In
-                                </Link>
+                                </a>
                             </div>
                         </div>
 
