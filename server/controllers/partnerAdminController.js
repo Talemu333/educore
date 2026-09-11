@@ -4,14 +4,11 @@ const getOverview = async (req, res, next) => {
     try {
         const [partners, leads, commissions, settings] = await Promise.all([
             pool.query(`SELECT p.id, p.full_name, p.email, p.phone, p.location, p.referral_code, p.status, p.created_at,
-                COUNT(l.id)::int AS lead_count,
-                COUNT(l.id) FILTER (WHERE l.status = 'converted')::int AS converted_count,
-                COALESCE(SUM(c.amount) FILTER (WHERE c.status IN ('approved', 'paid')), 0)::numeric AS earned_commission,
-                COALESCE(SUM(c.amount) FILTER (WHERE c.status = 'paid'), 0)::numeric AS paid_commission
-                FROM eduprow_partners p
-                LEFT JOIN eduprow_partner_leads l ON l.partner_id = p.id
-                LEFT JOIN eduprow_partner_commissions c ON c.partner_id = p.id
-                GROUP BY p.id ORDER BY p.created_at DESC`),
+                (SELECT COUNT(*)::int FROM eduprow_partner_leads l WHERE l.partner_id = p.id) AS lead_count,
+                (SELECT COUNT(*)::int FROM eduprow_partner_leads l WHERE l.partner_id = p.id AND l.status = 'converted') AS converted_count,
+                (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status IN ('approved', 'paid')) AS earned_commission,
+                (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status = 'paid') AS paid_commission
+                FROM eduprow_partners p ORDER BY p.created_at DESC`),
             pool.query(`SELECT l.id, l.partner_id, p.full_name AS partner_name, l.school_name, l.contact_name, l.phone, l.email, l.location, l.student_count, l.status, l.created_at
                 FROM eduprow_partner_leads l JOIN eduprow_partners p ON p.id = l.partner_id ORDER BY l.created_at DESC LIMIT 100`),
             pool.query(`SELECT c.id, c.partner_id, p.full_name AS partner_name, c.lead_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at
