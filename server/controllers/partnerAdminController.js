@@ -9,7 +9,7 @@ const getOverview = async (req, res, next) => {
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status IN ('approved', 'paid')) AS earned_commission,
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status = 'paid') AS paid_commission
                 FROM eduprow_partners p ORDER BY p.created_at DESC`),
-            pool.query(`SELECT l.id, l.partner_id, l.school_id, p.full_name AS partner_name, l.school_name, l.contact_name, l.phone, l.email, l.location, l.student_count, l.status, l.created_at
+            pool.query(`SELECT l.id, l.partner_id, l.school_id, l.converted_at, p.full_name AS partner_name, l.school_name, l.contact_name, l.phone, l.email, l.location, l.student_count, l.status, l.created_at
                 FROM eduprow_partner_leads l JOIN eduprow_partners p ON p.id = l.partner_id ORDER BY l.created_at DESC LIMIT 100`),
             pool.query(`SELECT c.id, c.partner_id, p.full_name AS partner_name, c.lead_id, c.payment_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at
                 FROM eduprow_partner_commissions c JOIN eduprow_partners p ON p.id = c.partner_id LEFT JOIN eduprow_partner_leads l ON l.id = c.lead_id ORDER BY c.created_at DESC LIMIT 100`),
@@ -32,7 +32,7 @@ const getPartnerDetails = async (req, res, next) => {
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status IN ('approved', 'paid')) AS earned_commission,
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status = 'paid') AS paid_commission
                 FROM eduprow_partners p WHERE p.id = $1`, [partnerId]),
-            pool.query(`SELECT id, partner_id, school_id, school_name, contact_name, phone, email, location, student_count, notes, status, created_at, updated_at
+            pool.query(`SELECT id, partner_id, school_id, school_name, contact_name, phone, email, location, student_count, notes, status, converted_at, created_at, updated_at
                 FROM eduprow_partner_leads WHERE partner_id = $1 ORDER BY created_at DESC`, [partnerId]),
             pool.query(`SELECT c.id, c.partner_id, c.lead_id, c.payment_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at, c.updated_at
                 FROM eduprow_partner_commissions c LEFT JOIN eduprow_partner_leads l ON l.id = c.lead_id
@@ -60,7 +60,7 @@ const setLeadStatus = async (req, res, next) => {
         const { status, school_id } = req.body;
         if (!allowed.includes(status)) return res.status(400).json({ success: false, message: "Invalid lead status." });
 
-        const leadResult = await pool.query("SELECT id, school_id, school_name FROM eduprow_partner_leads WHERE id = $1", [req.params.id]);
+        const leadResult = await pool.query("SELECT id, school_id, school_name, status FROM eduprow_partner_leads WHERE id = $1", [req.params.id]);
         const lead = leadResult.rows[0];
         if (!lead) return res.status(404).json({ success: false, message: "Lead not found." });
 
@@ -77,11 +77,23 @@ const setLeadStatus = async (req, res, next) => {
             if (!school.rows[0]) return res.status(400).json({ success: false, message: "Selected school was not found or is inactive." });
         }
 
+        const isNewConversion = status === "converted" && lead.status !== "converted";
         const result = await pool.query(
-            "UPDATE eduprow_partner_leads SET status = $1, school_id = COALESCE($2, school_id), updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, school_id, school_name, status",
+            `UPDATE eduprow_partner_leads
+             SET status = $1,
+                 school_id = COALESCE($2, school_id),
+                 converted_at = CASE
+                     WHEN $1 = 'converted' AND converted_at IS NULL THEN CURRENT_TIMESTAMP
+                     WHEN $1 <> 'converted' THEN NULL
+                     ELSE converted_at
+                 END,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $3
+             RETURNING id, school_id, school_name, status, converted_at`,
             [status, resolvedSchoolId, req.params.id]
         );
-        return res.json({ success: true, data: result.rows[0] });
+
+        return res.json({ success: true, data: { ...result.rows[0], newly_converted: isNewConversion } });
     } catch (error) { next(error); }
 };
 
