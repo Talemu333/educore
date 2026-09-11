@@ -1,32 +1,43 @@
 const createFirstPaymentCommission = async ({ schoolId, paymentId, paymentAmount, client }) => {
     const leadResult = await client.query(`
-        SELECT l.id, l.partner_id
+        SELECT l.id, l.partner_id, l.converted_at
         FROM eduprow_partner_leads l
         WHERE l.school_id = $1
           AND l.status = 'converted'
-        ORDER BY l.updated_at DESC, l.id DESC
+          AND l.converted_at IS NOT NULL
+        ORDER BY l.converted_at ASC, l.id ASC
         LIMIT 1
     `, [schoolId]);
 
-    if (!leadResult.rows[0]) return null;
+    const lead = leadResult.rows[0];
+    if (!lead) return null;
 
-    // A referred school earns only one first-payment commission. If a commission
-    // already exists for the converted lead, do not create another one on later payments.
+    // A referred school earns only one first-payment commission. The unique lead
+    // constraint is the final duplicate safeguard if two payment requests race.
     const existingCommission = await client.query(
         `SELECT id, payment_id
          FROM eduprow_partner_commissions
          WHERE lead_id = $1
          LIMIT 1`,
-        [leadResult.rows[0].id]
+        [lead.id]
     );
     if (existingCommission.rows[0]) return null;
 
-    // The payment must belong to the same school context. This keeps the
-    // commission flow tenant-safe and prepares the service for per-school databases.
+    // Confirm that this is the first payment recorded for the school after the
+    // partner lead was converted. Payment IDs are monotonically assigned by the
+    // database, so this remains reliable even when payment_date is entered manually.
     const paymentResult = await client.query(
-        `SELECT id, school_id, amount_paid
-         FROM student_payments
-         WHERE id = $1 AND school_id = $2`,
+        `SELECT sp.id, sp.school_id, sp.amount_paid
+         FROM student_payments sp
+         WHERE sp.id = $1
+           AND sp.school_id = $2
+           AND NOT EXISTS (
+               SELECT 1
+               FROM student_payments earlier
+               WHERE earlier.school_id = $2
+                 AND earlier.id < sp.id
+                 AND earlier.id > 0
+           )`,
         [paymentId, schoolId]
     );
     if (!paymentResult.rows[0]) return null;
@@ -57,7 +68,7 @@ const createFirstPaymentCommission = async ({ schoolId, paymentId, paymentAmount
                 'Automatically generated from the referred school''s first recorded payment.')
         ON CONFLICT (lead_id) WHERE lead_id IS NOT NULL DO NOTHING
         RETURNING *
-    `, [leadResult.rows[0].partner_id, leadResult.rows[0].id, paymentId, amount]);
+    `, [lead.partner_id, lead.id, paymentId, amount]);
 
     return result.rows[0] || null;
 };
