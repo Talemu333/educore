@@ -2,7 +2,7 @@ const pool = require("../config/database");
 
 const getOverview = async (req, res, next) => {
     try {
-        const [partners, leads, commissions, settings] = await Promise.all([
+        const [partners, leads, commissions, settings, schools] = await Promise.all([
             pool.query(`SELECT p.id, p.full_name, p.email, p.phone, p.location, p.referral_code, p.status, p.created_at,
                 (SELECT COUNT(*)::int FROM eduprow_partner_leads l WHERE l.partner_id = p.id) AS lead_count,
                 (SELECT COUNT(*)::int FROM eduprow_partner_leads l WHERE l.partner_id = p.id AND l.status = 'converted') AS converted_count,
@@ -13,9 +13,10 @@ const getOverview = async (req, res, next) => {
                 FROM eduprow_partner_leads l JOIN eduprow_partners p ON p.id = l.partner_id ORDER BY l.created_at DESC LIMIT 100`),
             pool.query(`SELECT c.id, c.partner_id, p.full_name AS partner_name, c.lead_id, c.payment_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at
                 FROM eduprow_partner_commissions c JOIN eduprow_partners p ON p.id = c.partner_id LEFT JOIN eduprow_partner_leads l ON l.id = c.lead_id ORDER BY c.created_at DESC LIMIT 100`),
-            pool.query("SELECT * FROM eduprow_partner_settings WHERE id = 1")
+            pool.query("SELECT * FROM eduprow_partner_settings WHERE id = 1"),
+            pool.query("SELECT id, school_name FROM schools WHERE is_active = TRUE ORDER BY school_name ASC")
         ]);
-        return res.json({ success: true, data: { partners: partners.rows, leads: leads.rows, commissions: commissions.rows, settings: settings.rows[0] || null } });
+        return res.json({ success: true, data: { partners: partners.rows, leads: leads.rows, commissions: commissions.rows, settings: settings.rows[0] || null, schools: schools.rows } });
     } catch (error) { next(error); }
 };
 
@@ -67,8 +68,8 @@ const setLeadStatus = async (req, res, next) => {
         if (status === "converted" && !resolvedSchoolId) {
             const matches = await pool.query(`SELECT id FROM schools WHERE is_active = TRUE AND LOWER(TRIM(school_name)) = LOWER(TRIM($1))`, [lead.school_name]);
             if (matches.rows.length === 1) resolvedSchoolId = matches.rows[0].id;
-            else if (matches.rows.length > 1) return res.status(400).json({ success: false, message: "More than one active school has this name. Link the lead to a school before converting it." });
-            else return res.status(400).json({ success: false, message: "Link this lead to the actual school before marking it as converted." });
+            else if (matches.rows.length > 1) return res.status(400).json({ success: false, message: "More than one active school has this name. Select the correct school before converting it." });
+            else return res.status(400).json({ success: false, message: "Select the actual school before marking this lead as converted." });
         }
 
         if (resolvedSchoolId) {
