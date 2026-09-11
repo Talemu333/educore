@@ -12,6 +12,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
+import PartnerManagementPage from "./pages/admin/PartnerManagementPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
@@ -28,7 +29,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
     "timetable", "payments", "announcements", "settings", "administrators",
     "student-promotion", "promotion-history", "class-subjects", "admin", "login",
-    "website", "change-password", "logout", "contact-messages", "expenses",
+    "website", "change-password", "logout", "contact-messages", "expenses", "partner-management",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
     "teacher-dashboard", "teacher-students", "forgot-password", "reset-password",
     "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank"
@@ -73,6 +74,7 @@ function App() {
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/partner-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-dashboard") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-cbt") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentCBTPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-subjects") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentSubjectsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
