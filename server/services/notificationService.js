@@ -13,16 +13,16 @@ const createNotification = async (data, client = null) => {
     return notificationModel.createNotification(data, client || undefined);
 };
 
-const getUserNotifications = async (userId, schoolId) => {
+const getUserNotifications = async (userId, schoolId, schoolDatabase = null) => {
     requireSchool(schoolId);
-    return notificationModel.getUserNotifications(userId, schoolId);
+    return notificationModel.getUserNotifications(userId, schoolId, schoolDatabase || undefined);
 };
 
-const markAsRead = async (notificationId, schoolId) => {
+const markAsRead = async (notificationId, schoolId, schoolDatabase = null) => {
     requireSchool(schoolId);
-    const notification = await notificationModel.getNotificationById(notificationId, schoolId);
+    const notification = await notificationModel.getNotificationById(notificationId, schoolId, schoolDatabase || undefined);
     if (!notification) throw new ApiError(404, "Notification not found.");
-    return notificationModel.markAsRead(notificationId, schoolId);
+    return notificationModel.markAsRead(notificationId, schoolId, schoolDatabase || undefined);
 };
 
 module.exports = { createNotification, getUserNotifications, markAsRead };
