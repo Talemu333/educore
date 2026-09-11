@@ -25,7 +25,7 @@ const createNotification = async (data, client = pool) => {
     return result.rows[0];
 };
 
-const getUserNotifications = async (userId, schoolId) => {
+const getUserNotifications = async (userId, schoolId, client = pool) => {
     const query = `
         SELECT *
         FROM notifications
@@ -34,7 +34,7 @@ const getUserNotifications = async (userId, schoolId) => {
         ORDER BY created_at DESC;
     `;
 
-    const result = await pool.query(query, [userId, schoolId]);
+    const result = await client.query(query, [userId, schoolId]);
     return result.rows;
 };
 
@@ -51,7 +51,7 @@ const markAsRead = async (id, schoolId, client = pool) => {
     return result.rows[0];
 };
 
-const getNotificationById = async (id, schoolId) => {
+const getNotificationById = async (id, schoolId, client = pool) => {
     const query = `
         SELECT *
         FROM notifications
@@ -59,7 +59,7 @@ const getNotificationById = async (id, schoolId) => {
           AND school_id = $2;
     `;
 
-    const result = await pool.query(query, [id, schoolId]);
+    const result = await client.query(query, [id, schoolId]);
     return result.rows[0];
 };
 
