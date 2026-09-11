@@ -1,4 +1,4 @@
-import { X, Settings } from "lucide-react";
+import { X, Settings, Handshake } from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
 import SidebarItem from "./SidebarItem";
 import { useAuth } from "@/context/AuthContext";
@@ -15,7 +15,10 @@ function Sidebar({ isOpen, onClose }) {
     };
 
     const filteredMenu = role === "Super Admin"
-        ? [{ title: "School Management", icon: Settings, path: "/settings" }]
+        ? [
+            { title: "School Management", icon: Settings, path: "/settings" },
+            { title: "Partner Programme", icon: Handshake, path: "/partner-management" }
+        ]
         : sidebarMenu
             .filter(canAccess)
             .map(item => {
