@@ -47,9 +47,15 @@ function PartnerManagementPage() {
 
     const run = async (key, action, successMessage) => {
         setBusy(key); setMessage("");
-        try { await action(); await load(); setMessage(successMessage); }
-        catch (error) { setMessage(error?.response?.data?.message || "Action could not be completed."); }
-        finally { setBusy(""); }
+        try {
+            await action();
+            await load();
+            setMessage(successMessage);
+            return true;
+        } catch (error) {
+            setMessage(error?.response?.data?.message || "Action could not be completed.");
+            return false;
+        } finally { setBusy(""); }
     };
 
     const changeLeadStatus = async (lead, status) => {
@@ -67,8 +73,24 @@ function PartnerManagementPage() {
 
     const submitCommission = async (event) => {
         event.preventDefault();
-        await run("commission", () => createPartnerCommission({ ...commission, partner_id: Number(commission.partner_id), lead_id: commission.lead_id ? Number(commission.lead_id) : null, amount: Number(commission.amount) }), "Commission recorded.");
-        setCommission({ partner_id: "", lead_id: "", amount: "" });
+        if (busy === "commission") return;
+        setBusy("commission");
+        setMessage("");
+        try {
+            await createPartnerCommission({
+                ...commission,
+                partner_id: Number(commission.partner_id),
+                lead_id: commission.lead_id ? Number(commission.lead_id) : null,
+                amount: Number(commission.amount)
+            });
+            setCommission({ partner_id: "", lead_id: "", amount: "" });
+            await load();
+            setMessage("Commission recorded successfully and added to Earned.");
+        } catch (error) {
+            setMessage(error?.response?.data?.message || "Commission could not be recorded.");
+        } finally {
+            setBusy("");
+        }
     };
 
     return (
@@ -96,7 +118,7 @@ function PartnerManagementPage() {
                 <div className="grid gap-6 lg:grid-cols-2">
                     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Referral leads</h2></div><div className="divide-y divide-slate-100">{data.leads.slice(0, 30).map((lead) => <div key={lead.id} className="space-y-2 px-5 py-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-slate-900">{lead.school_name}</p><p className="text-xs text-slate-500">{lead.partner_name} • {lead.contact_name || "No contact name"}</p></div><span className="text-xs text-slate-400">{date(lead.created_at)}</span></div><div className="flex flex-wrap items-center gap-2 text-xs text-slate-500"><span>{lead.phone || "No phone"}</span><span>•</span><span>{lead.location || "No location"}</span>{lead.student_count ? <><span>•</span><span>{lead.student_count} students</span></> : null}{lead.status === "converted" && <span className="font-semibold text-emerald-600">Converted</span>}</div>{lead.status !== "converted" && <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">Actual school</span><select value={leadSchools[lead.id] || ""} onChange={(e) => setLeadSchools((current) => ({ ...current, [lead.id]: e.target.value }))} className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold"><option value="">Select school before converting</option>{data.schools.map((school) => <option key={school.id} value={school.id}>{school.school_name}</option>)}</select></label>}<div className="flex items-center gap-2"><select value={lead.status} disabled={busy === `lead-${lead.id}`} onChange={(e) => changeLeadStatus(lead, e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold">{leadStatuses.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}</select>{lead.status !== "converted" && <span className="text-[11px] text-slate-400">Choose the school above, then select Converted.</span>}</div></div>)}{!loading && data.leads.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No referrals yet.</div>}</div></section>
 
-                    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Record commission</h2><p className="mt-1 text-xs text-slate-500">Only record a qualifying commission after the referred school has made the agreed payment.</p></div><form onSubmit={submitCommission} className="space-y-4 p-5"><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">Partner</span><select required value={commission.partner_id} onChange={(e) => setCommission((v) => ({ ...v, partner_id: e.target.value, lead_id: "" }))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Select partner</option>{data.partners.map((p) => <option key={p.id} value={p.id}>{p.full_name} — {p.referral_code}</option>)}</select></label><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">Lead (optional)</span><select value={commission.lead_id} onChange={(e) => setCommission((v) => ({ ...v, lead_id: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">No linked lead</option>{data.leads.filter((l) => String(l.partner_id) === String(commission.partner_id)).map((l) => <option key={l.id} value={l.id}>{l.school_name} — {l.status}</option>)}</select></label><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">Commission amount (₦)</span><input required min="1" step="0.01" type="number" value={commission.amount} onChange={(e) => setCommission((v) => ({ ...v, amount: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" placeholder="e.g. 5000" /></label><button disabled={busy === "commission"} className="w-full rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60">{busy === "commission" ? "Saving..." : "Record commission"}</button></form></section>
+                    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Record commission</h2><p className="mt-1 text-xs text-slate-500">Only record a qualifying commission after the referred school has made the agreed payment.</p></div><form onSubmit={submitCommission} className="space-y-4 p-5"><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">Partner</span><select required value={commission.partner_id} onChange={(e) => setCommission((v) => ({ ...v, partner_id: e.target.value, lead_id: "" }))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Select partner</option>{data.partners.map((p) => <option key={p.id} value={p.id}>{p.full_name} — {p.referral_code}</option>)}</select></label><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">Lead (optional)</span><select value={commission.lead_id} onChange={(e) => setCommission((v) => ({ ...v, lead_id: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">No linked lead</option>{data.leads.filter((l) => String(l.partner_id) === String(commission.partner_id)).map((l) => <option key={l.id} value={l.id}>{l.school_name} — {l.status}</option>)}</select></label><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">Commission amount (₦)</span><input required min="1" step="0.01" type="number" value={commission.amount} onChange={(e) => setCommission((v) => ({ ...v, amount: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" placeholder="e.g. 5000" /></label><button type="submit" disabled={busy === "commission"} className="w-full rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60">{busy === "commission" ? "Saving..." : "Record commission"}</button></form></section>
                 </div>
 
                 <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Commission records</h2></div><div className="overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Partner</th><th className="px-5 py-3">School</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Created</th></tr></thead><tbody className="divide-y divide-slate-100">{data.commissions.map((c) => <tr key={c.id}><td className="px-5 py-4 font-semibold text-slate-800">{c.partner_name}</td><td className="px-5 py-4 text-slate-600">{c.school_name || "—"}</td><td className="px-5 py-4 font-semibold">{money(c.amount)}</td><td className="px-5 py-4"><select value={c.status} disabled={busy === `commission-${c.id}`} onChange={(e) => run(`commission-${c.id}`, () => setPartnerCommissionStatus(c.id, e.target.value), "Commission status updated.")} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold"><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="cancelled">Cancelled</option></select></td><td className="px-5 py-4 text-xs text-slate-500">{date(c.created_at)}</td></tr>)}</tbody></table>{!loading && data.commissions.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No commission records yet.</div>}</div></section>
