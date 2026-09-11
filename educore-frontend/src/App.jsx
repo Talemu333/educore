@@ -56,14 +56,15 @@ function App() {
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
     const isLocalHost = ["localhost", "127.0.0.1"].includes(hostname);
     const isVercelHost = hostname.endsWith(".vercel.app");
+    const isPlatformHost = isEduProwDomain || isLocalHost || isVercelHost;
     const isCustomSchoolDomain = !isEduProwDomain && !isEduProwSubdomain && !isLocalHost && !isVercelHost;
     const schoolSlugFromSubdomain = isEduProwSubdomain ? hostname.slice(0, -".eduprow.com".length).split(".")[0] : "";
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
-    if (isEduProwDomain && pathname.startsWith("/r/") && pathname.split("/").filter(Boolean)[1]) {
+    if (isPlatformHost && pathname.startsWith("/r/") && pathname.split("/").filter(Boolean)[1]) {
         return <BrowserRouter><EduProwReferralPage code={pathname.split("/").filter(Boolean)[1]} /></BrowserRouter>;
     }
-    if (isEduProwDomain && ["/partners", "/partners/login", "/partners/register", "/partners/dashboard"].includes(pathname)) {
+    if (isPlatformHost && ["/partners", "/partners/login", "/partners/register", "/partners/dashboard"].includes(pathname)) {
         const mode = pathname === "/partners/register" ? "register" : pathname === "/partners/login" ? "login" : pathname === "/partners/dashboard" ? "dashboard" : "home";
         return <BrowserRouter><EduProwPartnerPage mode={mode} /></BrowserRouter>;
     }
