@@ -1,7 +1,9 @@
 const pool = require("../config/database");
 
-const createAnnouncement = async (data, schoolId) => {
-    const result = await pool.query(
+const resolveDb = (db) => db || pool;
+
+const createAnnouncement = async (data, schoolId, db) => {
+    const result = await resolveDb(db).query(
         `INSERT INTO announcements (
             school_id,
             title,
@@ -25,8 +27,8 @@ const createAnnouncement = async (data, schoolId) => {
     return result.rows[0];
 };
 
-const getAnnouncements = async (schoolId) => {
-    const result = await pool.query(
+const getAnnouncements = async (schoolId, db) => {
+    const result = await resolveDb(db).query(
         `SELECT *
          FROM announcements
          WHERE is_active = TRUE
@@ -38,8 +40,8 @@ const getAnnouncements = async (schoolId) => {
     return result.rows;
 };
 
-const updateAnnouncement = async (id, data, schoolId) => {
-    const result = await pool.query(
+const updateAnnouncement = async (id, data, schoolId, db) => {
+    const result = await resolveDb(db).query(
         `UPDATE announcements
          SET
             title = $1,
@@ -63,8 +65,8 @@ const updateAnnouncement = async (id, data, schoolId) => {
     return result.rows[0];
 };
 
-const deactivateAnnouncement = async (id, schoolId) => {
-    const result = await pool.query(
+const deactivateAnnouncement = async (id, schoolId, db) => {
+    const result = await resolveDb(db).query(
         `UPDATE announcements
          SET
             is_active = FALSE,
