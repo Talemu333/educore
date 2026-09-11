@@ -146,11 +146,39 @@ const createCommission = async (req, res, next) => {
 const setCommissionStatus = async (req, res, next) => {
     try {
         const { status } = req.body;
-        if (!["pending", "approved", "paid", "cancelled"].includes(status)) return res.status(400).json({ success: false, message: "Invalid commission status." });
-        const fields = { approved: "approved_at", paid: "paid_at" };
-        const timestampField = fields[status];
-        const result = await pool.query(`UPDATE eduprow_partner_commissions SET status = $1, ${timestampField ? `${timestampField} = CURRENT_TIMESTAMP,` : ""} updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`, [status, req.params.id]);
-        if (!result.rows[0]) return res.status(404).json({ success: false, message: "Commission not found." });
+        const allowed = ["pending", "approved", "paid", "cancelled"];
+        if (!allowed.includes(status)) return res.status(400).json({ success: false, message: "Invalid commission status." });
+
+        const currentResult = await pool.query(
+            "SELECT id, status FROM eduprow_partner_commissions WHERE id = $1",
+            [req.params.id]
+        );
+        const current = currentResult.rows[0];
+        if (!current) return res.status(404).json({ success: false, message: "Commission not found." });
+
+        const validTransitions = {
+            pending: ["approved", "cancelled"],
+            approved: ["paid", "cancelled"],
+            paid: [],
+            cancelled: []
+        };
+        if (!validTransitions[current.status].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot change a ${current.status} commission to ${status}.`
+            });
+        }
+
+        const result = await pool.query(
+            `UPDATE eduprow_partner_commissions
+             SET status = $1,
+                 approved_at = CASE WHEN $1 = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END,
+                 paid_at = CASE WHEN $1 = 'paid' THEN CURRENT_TIMESTAMP ELSE paid_at END,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2
+             RETURNING *`,
+            [status, req.params.id]
+        );
         return res.json({ success: true, data: result.rows[0] });
     } catch (error) { next(error); }
 };
