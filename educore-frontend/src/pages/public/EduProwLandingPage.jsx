@@ -35,6 +35,7 @@ const partnerPoints = [
 ];
 
 const contactEmail = "talemuadewale6@gmail.com";
+const secondaryEmail = "adewaletalemu9@gmail.com";
 const primaryPhone = "09135091402";
 const secondaryPhone = "07089062263";
 const whatsappNumber = "2349135091402";
@@ -233,12 +234,13 @@ export default function EduProwLandingPage() {
 
                         <div className="mt-12 grid gap-8 lg:grid-cols-[1.05fr_.95fr]">
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <a href={`mailto:${contactEmail}`} className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
+                                <div className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
                                     <ContactIcon>✉️</ContactIcon>
                                     <p className="mt-5 text-sm font-bold text-slate-500">Email</p>
-                                    <p className="mt-1 break-all font-extrabold text-slate-900 group-hover:text-blue-600">{contactEmail}</p>
+                                    <a href={`mailto:${contactEmail}`} className="mt-1 block break-all font-extrabold text-slate-900 hover:text-blue-600">{contactEmail}</a>
+                                    <a href={`mailto:${secondaryEmail}`} className="mt-2 block break-all font-extrabold text-slate-900 hover:text-blue-600">{secondaryEmail}</a>
                                     <p className="mt-3 text-sm text-blue-600">Send us an email →</p>
-                                </a>
+                                </div>
                                 <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg">
                                     <ContactIcon>💬</ContactIcon>
                                     <p className="mt-5 text-sm font-bold text-slate-500">WhatsApp</p>
@@ -264,7 +266,7 @@ export default function EduProwLandingPage() {
                                 <h3 className="mt-3 text-2xl font-black">EduProw</h3>
                                 <div className="mt-7 space-y-5 text-sm text-slate-300">
                                     <div className="flex gap-4"><span className="text-xl">📍</span><div><p className="font-bold text-white">Address</p><p className="mt-1 leading-6">{address}</p></div></div>
-                                    <div className="flex gap-4"><span className="text-xl">✉️</span><div><p className="font-bold text-white">Email</p><p className="mt-1 break-all">{contactEmail}</p></div></div>
+                                    <div className="flex gap-4"><span className="text-xl">✉️</span><div><p className="font-bold text-white">Email</p><a href={`mailto:${contactEmail}`} className="mt-1 block break-all hover:text-white">{contactEmail}</a><a href={`mailto:${secondaryEmail}`} className="mt-1 block break-all hover:text-white">{secondaryEmail}</a></div></div>
                                     <div className="flex gap-4"><span className="text-xl">📞</span><div><p className="font-bold text-white">Phone</p><p className="mt-1">{primaryPhone} · {secondaryPhone}</p></div></div>
                                 </div>
                                 <button type="button" onClick={sendEmail} className="mt-8 w-full rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-blue-500">Send an email to EduProw</button>
@@ -274,7 +276,7 @@ export default function EduProwLandingPage() {
                     </div>
                 </section>
 
-                <section id="get-started" className="bg-blue-600 px-5 py-16 text-white sm:px-6 lg:px-8">
+                <section id="get-started" className="bg-blue-600 px-5 pt-12 pb-8 text-white sm:px-6 sm:pt-14 sm:pb-9 lg:px-8">
                     <div className="mx-auto flex max-w-7xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-100">Ready when you are</p>
@@ -296,7 +298,7 @@ export default function EduProwLandingPage() {
                         <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">A modern school management platform built to connect administration, academics, finance, communication and the school community.</p>
                     </div>
                     <div><p className="font-bold">Platform</p><div className="mt-4 space-y-3 text-sm text-slate-400"><a href="#solutions" className="block hover:text-white">Solutions</a><a href="#how-it-works" className="block hover:text-white">How It Works</a><a href="#partners" className="block hover:text-white">Partner Network</a></div></div>
-                    <div><p className="font-bold">Contact</p><div className="mt-4 space-y-3 text-sm text-slate-400"><a href={`mailto:${contactEmail}`} className="block break-all hover:text-white">{contactEmail}</a><a href={`tel:${primaryPhone}`} className="block hover:text-white">{primaryPhone}</a><a href="#contact" className="block hover:text-white">Contact EduProw</a></div></div>
+                    <div><p className="font-bold">Contact</p><div className="mt-4 space-y-3 text-sm text-slate-400"><a href={`mailto:${contactEmail}`} className="block break-all hover:text-white">{contactEmail}</a><a href={`mailto:${secondaryEmail}`} className="block break-all hover:text-white">{secondaryEmail}</a><a href={`tel:${primaryPhone}`} className="block hover:text-white">{primaryPhone}</a><a href="#contact" className="block hover:text-white">Contact EduProw</a></div></div>
                 </div>
                 <div className="mx-auto mt-10 max-w-7xl border-t border-white/10 pt-7 text-sm text-slate-500">© {new Date().getFullYear()} EduProw. All rights reserved.</div>
             </footer>
