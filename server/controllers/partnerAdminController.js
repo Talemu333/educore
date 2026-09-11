@@ -9,9 +9,9 @@ const getOverview = async (req, res, next) => {
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status IN ('approved', 'paid')) AS earned_commission,
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status = 'paid') AS paid_commission
                 FROM eduprow_partners p ORDER BY p.created_at DESC`),
-            pool.query(`SELECT l.id, l.partner_id, p.full_name AS partner_name, l.school_name, l.contact_name, l.phone, l.email, l.location, l.student_count, l.status, l.created_at
+            pool.query(`SELECT l.id, l.partner_id, l.school_id, p.full_name AS partner_name, l.school_name, l.contact_name, l.phone, l.email, l.location, l.student_count, l.status, l.created_at
                 FROM eduprow_partner_leads l JOIN eduprow_partners p ON p.id = l.partner_id ORDER BY l.created_at DESC LIMIT 100`),
-            pool.query(`SELECT c.id, c.partner_id, p.full_name AS partner_name, c.lead_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at
+            pool.query(`SELECT c.id, c.partner_id, p.full_name AS partner_name, c.lead_id, c.payment_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at
                 FROM eduprow_partner_commissions c JOIN eduprow_partners p ON p.id = c.partner_id LEFT JOIN eduprow_partner_leads l ON l.id = c.lead_id ORDER BY c.created_at DESC LIMIT 100`),
             pool.query("SELECT * FROM eduprow_partner_settings WHERE id = 1")
         ]);
@@ -31,9 +31,9 @@ const getPartnerDetails = async (req, res, next) => {
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status IN ('approved', 'paid')) AS earned_commission,
                 (SELECT COALESCE(SUM(c.amount), 0)::numeric FROM eduprow_partner_commissions c WHERE c.partner_id = p.id AND c.status = 'paid') AS paid_commission
                 FROM eduprow_partners p WHERE p.id = $1`, [partnerId]),
-            pool.query(`SELECT id, partner_id, school_name, contact_name, phone, email, location, student_count, notes, status, created_at, updated_at
+            pool.query(`SELECT id, partner_id, school_id, school_name, contact_name, phone, email, location, student_count, notes, status, created_at, updated_at
                 FROM eduprow_partner_leads WHERE partner_id = $1 ORDER BY created_at DESC`, [partnerId]),
-            pool.query(`SELECT c.id, c.partner_id, c.lead_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at, c.updated_at
+            pool.query(`SELECT c.id, c.partner_id, c.lead_id, c.payment_id, l.school_name, c.amount, c.status, c.eligible_at, c.approved_at, c.paid_at, c.notes, c.created_at, c.updated_at
                 FROM eduprow_partner_commissions c LEFT JOIN eduprow_partner_leads l ON l.id = c.lead_id
                 WHERE c.partner_id = $1 ORDER BY c.created_at DESC`, [partnerId])
         ]);
@@ -56,10 +56,30 @@ const setPartnerStatus = async (req, res, next) => {
 const setLeadStatus = async (req, res, next) => {
     try {
         const allowed = ["submitted", "contacted", "demo_scheduled", "demo_completed", "negotiation", "converted", "lost"];
-        const { status } = req.body;
+        const { status, school_id } = req.body;
         if (!allowed.includes(status)) return res.status(400).json({ success: false, message: "Invalid lead status." });
-        const result = await pool.query("UPDATE eduprow_partner_leads SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, school_name, status", [status, req.params.id]);
-        if (!result.rows[0]) return res.status(404).json({ success: false, message: "Lead not found." });
+
+        const leadResult = await pool.query("SELECT id, school_id, school_name FROM eduprow_partner_leads WHERE id = $1", [req.params.id]);
+        const lead = leadResult.rows[0];
+        if (!lead) return res.status(404).json({ success: false, message: "Lead not found." });
+
+        let resolvedSchoolId = school_id ? Number(school_id) : Number(lead.school_id) || null;
+        if (status === "converted" && !resolvedSchoolId) {
+            const matches = await pool.query(`SELECT id FROM schools WHERE is_active = TRUE AND LOWER(TRIM(school_name)) = LOWER(TRIM($1))`, [lead.school_name]);
+            if (matches.rows.length === 1) resolvedSchoolId = matches.rows[0].id;
+            else if (matches.rows.length > 1) return res.status(400).json({ success: false, message: "More than one active school has this name. Link the lead to a school before converting it." });
+            else return res.status(400).json({ success: false, message: "Link this lead to the actual school before marking it as converted." });
+        }
+
+        if (resolvedSchoolId) {
+            const school = await pool.query("SELECT id FROM schools WHERE id = $1 AND is_active = TRUE", [resolvedSchoolId]);
+            if (!school.rows[0]) return res.status(400).json({ success: false, message: "Selected school was not found or is inactive." });
+        }
+
+        const result = await pool.query(
+            "UPDATE eduprow_partner_leads SET status = $1, school_id = COALESCE($2, school_id), updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, school_id, school_name, status",
+            [status, resolvedSchoolId, req.params.id]
+        );
         return res.json({ success: true, data: result.rows[0] });
     } catch (error) { next(error); }
 };
