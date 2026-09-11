@@ -121,22 +121,6 @@ export default function EduProwLandingPage() {
                     </div>
                 </section>
 
-                <section className="border-b border-slate-200 bg-white px-5 py-7 sm:px-6 lg:px-8">
-                    <div className="mx-auto grid max-w-7xl gap-4 text-center sm:grid-cols-4 sm:text-left">
-                        {[
-                            ["Administration", "One workspace for school operations"],
-                            ["Academics", "Results, attendance, classes & CBT"],
-                            ["Community", "Teachers, students & parents connected"],
-                            ["Public Presence", "A professional website for your school"]
-                        ].map(([title, text]) => (
-                            <div key={title} className="rounded-2xl bg-slate-50 px-5 py-4">
-                                <p className="text-sm font-extrabold text-slate-900">{title}</p>
-                                <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
                 <section id="solutions" className="px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
                     <div className="mx-auto max-w-7xl">
                         <div className="max-w-3xl">
