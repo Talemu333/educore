@@ -36,7 +36,7 @@ function SidebarItem({
     const handleLogout = async () => {
         await logoutUser();
         onClose?.();
-        navigate("/", { replace: true });
+        navigate("/login", { replace: true });
     };
 
     if (title === "Logout") {
