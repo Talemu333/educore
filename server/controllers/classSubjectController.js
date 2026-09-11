@@ -4,7 +4,8 @@ const classSubjectService = require("../services/classSubjectService");
 const saveClassSubjects = asyncHandler(async (req, res) => {
     const result = await classSubjectService.saveClassSubjects(
         req.body,
-        req.user.school_id
+        req.user.school_id,
+        req.schoolDatabase
     );
 
     res.status(200).json({
@@ -17,7 +18,8 @@ const saveClassSubjects = asyncHandler(async (req, res) => {
 const getClassSubjects = asyncHandler(async (req, res) => {
     const result = await classSubjectService.getClassSubjects(
         req.params.classId,
-        req.user.school_id
+        req.user.school_id,
+        req.schoolDatabase
     );
 
     res.json({
