@@ -6,6 +6,7 @@ const sessionModel = require("../models/sessionModel");
 const termModel = require("../models/termModel");
 const feeStructureModel = require("../models/feeStructureModel");
 const notificationService = require("./notificationService");
+const partnerCommissionService = require("./partnerCommissionService");
 const NOTIFICATION_TYPES = require("../constants/notificationTypes");
 
 const requireSchool = (schoolId) => {
@@ -41,6 +42,13 @@ const createPayment = async (data, receivedBy, schoolId) => {
         const year = new Date().getFullYear();
         const receiptNumber = `RCP-${year}-${String(payment.id).padStart(6, "0")}`;
         const updatedPayment = await paymentModel.updateReceiptNumber(payment.id, receiptNumber, schoolId, client);
+
+        await partnerCommissionService.createFirstPaymentCommission({
+            schoolId,
+            paymentId: updatedPayment.id,
+            paymentAmount: Number(updatedPayment.amount_paid),
+            client
+        });
 
         await notificationService.createNotification({
             user_id: receivedBy,
