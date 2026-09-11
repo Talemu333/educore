@@ -5,6 +5,7 @@ import AppRouter from "./routes/AppRouter";
 import SchoolWebsiteRouter from "./routes/SchoolWebsiteRouter";
 import LegacyWebsiteRedirect from "./routes/LegacyWebsiteRedirect";
 import EduProwLandingPage from "./pages/public/EduProwLandingPage";
+import EduProwPartnerPage from "./pages/public/EduProwPartnerPage";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -64,6 +65,10 @@ function App() {
         : "";
 
     if (isEduProwDomain && pathname === "/") return <EduProwLandingPage />;
+    if (isEduProwDomain && ["/partners", "/partners/login", "/partners/register", "/partners/dashboard"].includes(pathname)) {
+        const mode = pathname === "/partners/register" ? "register" : pathname === "/partners/login" ? "login" : pathname === "/partners/dashboard" ? "dashboard" : "home";
+        return <BrowserRouter><EduProwPartnerPage mode={mode} /></BrowserRouter>;
+    }
     if (isEduProwSubdomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
 
     // These pages have their own protected wrappers outside AppRouter.
