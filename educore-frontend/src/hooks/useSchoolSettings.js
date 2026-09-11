@@ -31,6 +31,10 @@ const getPublicSchoolIdentifier = () => {
         !["localhost", "127.0.0.1"].includes(hostname) &&
         !hostname.endsWith(".vercel.app");
 
+    if (isEduProwDomain) {
+        return "";
+    }
+
     if (isEduProwSubdomain || isCustomSchoolDomain) {
         return hostname;
     }
