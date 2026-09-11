@@ -45,12 +45,18 @@ function ProtectedRoute({
     Super Admin is a platform-level user. The
     normal school routes remain unavailable,
     but the Super Admin may enter the dedicated
-    management page for a selected school.
+    platform management pages.
     =========================================
     */
     if (userRole === "super admin") {
+        const allowedSuperAdminPaths = [
+            "/settings",
+            "/partner-management",
+            "/partner-management/settings"
+        ];
+
         if (
-            location.pathname === "/settings" ||
+            allowedSuperAdminPaths.includes(location.pathname) ||
             location.pathname.startsWith("/settings/schools/")
         ) {
             return children;
