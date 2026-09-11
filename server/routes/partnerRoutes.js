@@ -14,6 +14,7 @@ const authLimit = rateLimit({
 router.post("/register", authLimit, partnerController.register);
 router.post("/login", authLimit, partnerController.login);
 router.post("/logout", partnerController.logout);
+router.post("/referrals/:code", rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: "Too many referral submissions. Please try again later." }), partnerController.submitReferral);
 router.get("/me", authenticatePartner, partnerController.me);
 router.get("/dashboard", authenticatePartner, partnerController.getDashboard);
 router.post("/leads", authenticatePartner, partnerController.createLead);
