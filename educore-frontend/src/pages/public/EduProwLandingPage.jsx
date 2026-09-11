@@ -276,16 +276,15 @@ export default function EduProwLandingPage() {
                     </div>
                 </section>
 
-                <section id="get-started" className="bg-blue-600 px-5 py-7 text-white sm:px-6 sm:py-8 lg:px-8">
-                    <div className="mx-auto flex max-w-7xl flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <section className="border-y border-slate-200 bg-slate-50 px-5 py-5 sm:px-6 lg:px-8">
+                    <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-100">Ready when you are</p>
-                            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Bring your school onto a better system.</h2>
-                            <p className="mt-3 max-w-2xl text-blue-100">Talk to us about your school's needs and let us show you what EduProw can do.</p>
+                            <p className="text-sm font-extrabold text-slate-900">Ready to take the next step?</p>
+                            <p className="mt-1 text-sm text-slate-500">Talk to EduProw or explore the platform at your own pace.</p>
                         </div>
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                            <a href={`mailto:${contactEmail}`} className="rounded-xl bg-white px-6 py-3.5 text-center text-sm font-bold text-blue-700 transition hover:bg-blue-50">Email EduProw</a>
-                            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="rounded-xl border border-white/30 px-6 py-3.5 text-center text-sm font-bold text-white transition hover:bg-white/10">WhatsApp Us</a>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <a href="#solutions" className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-center text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">Explore the platform</a>
+                            <a href={`mailto:${contactEmail}`} className="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-blue-700">Contact EduProw</a>
                         </div>
                     </div>
                 </section>
