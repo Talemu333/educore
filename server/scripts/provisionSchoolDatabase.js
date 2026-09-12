@@ -75,6 +75,25 @@ const getSchool = async (schoolId) => {
     return result.rows[0] || null;
 };
 
+const getSchoolAdministrators = async (schoolId) => {
+    const result = await centralPool.query(`
+        SELECT
+            u.id,
+            u.username,
+            u.email,
+            u.password,
+            u.is_active,
+            r.role_name
+        FROM users u
+        JOIN roles r ON r.id = u.role_id
+        WHERE u.school_id = $1
+          AND LOWER(r.role_name) IN ('admin', 'administrator', 'principal', 'super admin')
+        ORDER BY u.id
+    `, [schoolId]);
+
+    return result.rows;
+};
+
 const getRegistryEntry = async (schoolId) => {
     const result = await centralPool.query(`
         SELECT school_id, database_name, website_slug, is_active
@@ -109,8 +128,6 @@ const createDatabaseIfNeeded = async (databaseName) => {
 };
 
 const seedSchool = async (client, school) => {
-    // Keep the central school ID inside its dedicated database. This lets
-    // existing school_id values remain stable during the transition.
     await client.query(`
         INSERT INTO schools (id, school_name, school_code, email, phone, address, is_active)
         VALUES ($1, $2, $3, $4, $5, $6, TRUE)
@@ -130,8 +147,6 @@ const seedSchool = async (client, school) => {
         school.address || school.school_address || null,
     ]);
 
-    // The schema's original school_settings table predates school_id. The
-    // migrations above add the current columns before this seed runs.
     await client.query(`
         INSERT INTO school_settings (
             school_id,
@@ -176,6 +191,54 @@ const seedSchool = async (client, school) => {
         SELECT setval(
             pg_get_serial_sequence('schools', 'id'),
             GREATEST((SELECT COALESCE(MAX(id), 1) FROM schools), 1),
+            TRUE
+        )
+    `);
+};
+
+const seedAdministrators = async (client, administrators, schoolId) => {
+    for (const administrator of administrators) {
+        const roleResult = await client.query(
+            `SELECT id FROM roles WHERE LOWER(role_name) = LOWER($1) LIMIT 1`,
+            [administrator.role_name]
+        );
+
+        const fallbackRole = roleResult.rows[0] || (await client.query(
+            `SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1`
+        )).rows[0];
+
+        if (!fallbackRole) {
+            throw new Error("No administrator role is available in the school database.");
+        }
+
+        await client.query(`
+            INSERT INTO users (
+                id, username, email, password, role_id, school_id, is_active
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (id) DO UPDATE SET
+                username = EXCLUDED.username,
+                email = EXCLUDED.email,
+                password = EXCLUDED.password,
+                role_id = EXCLUDED.role_id,
+                school_id = EXCLUDED.school_id,
+                is_active = EXCLUDED.is_active,
+                updated_at = CURRENT_TIMESTAMP
+        `, [
+            administrator.id,
+            administrator.username,
+            administrator.email || null,
+            administrator.password,
+            fallbackRole.id,
+            schoolId,
+            administrator.is_active !== false,
+        ]);
+    }
+
+    await client.query(`
+        SELECT setval(
+            pg_get_serial_sequence('users', 'id'),
+            GREATEST((SELECT COALESCE(MAX(id), 1) FROM users), 1),
             TRUE
         )
     `);
@@ -232,6 +295,7 @@ const verifySchoolDatabase = async (client, schoolId) => {
             current_database() AS database_name,
             EXISTS (SELECT 1 FROM schools WHERE id = $1) AS school_exists,
             EXISTS (SELECT 1 FROM school_settings WHERE school_id = $1 AND is_active = TRUE) AS settings_exist,
+            EXISTS (SELECT 1 FROM users WHERE school_id = $1) AS school_users_exist,
             EXISTS (SELECT 1 FROM roles WHERE LOWER(role_name) IN ('admin', 'administrator')) AS admin_role_exists,
             EXISTS (SELECT 1 FROM website_pages WHERE school_id = $1 AND page_slug = 'home') AS website_pages_exist,
             to_regclass('public.cbt_exams') IS NOT NULL AS cbt_schema_exists
@@ -239,7 +303,7 @@ const verifySchoolDatabase = async (client, schoolId) => {
 
     const verification = result.rows[0];
     const failed = Object.entries(verification)
-        .filter(([key, value]) => ["school_exists", "settings_exist", "admin_role_exists", "website_pages_exist", "cbt_schema_exists"].includes(key) && !value)
+        .filter(([key, value]) => ["school_exists", "settings_exist", "school_users_exist", "admin_role_exists", "website_pages_exist", "cbt_schema_exists"].includes(key) && !value)
         .map(([key]) => key);
 
     if (failed.length) {
@@ -262,6 +326,11 @@ const provision = async (schoolId) => {
     const school = await getSchool(schoolId);
     if (!school) {
         throw new Error(`School ${schoolId} does not exist in the central schools table.`);
+    }
+
+    const administrators = await getSchoolAdministrators(schoolId);
+    if (!administrators.length) {
+        throw new Error(`School ${schoolId} has no administrator account to seed into its dedicated database.`);
     }
 
     const databaseName = registry.database_name;
@@ -309,6 +378,7 @@ const provision = async (schoolId) => {
             `);
 
             await seedSchool(client, school);
+            await seedAdministrators(client, administrators, school.id);
             await seedDefaultWebsitePages(client, school.id);
 
             await client.query(`
