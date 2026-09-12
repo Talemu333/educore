@@ -54,5 +54,5 @@ CREATE TABLE teacher_assignments (
         arm_id,
         session_id,
         term_id
-    );
+    )
 );
