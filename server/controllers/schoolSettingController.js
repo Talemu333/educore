@@ -6,13 +6,20 @@ const asyncHandler = require("../middlewares/asyncHandler");
 const getSchoolSettings = asyncHandler(async (req, res) => {
     let settings;
 
-    if (req.query.schoolSlug) {
+    if (req.school?.school_id) {
+        settings = await schoolSettingsModel.getSchoolSettings(req.school.school_id);
+    } else if (req.query.schoolSlug) {
         settings = await schoolSettingsModel.getSchoolSettingsBySlug(req.query.schoolSlug);
     } else if (req.query.schoolDomain) {
         const schoolId = await websiteService.resolveDomain(req.query.schoolDomain);
         settings = await schoolSettingsModel.getSchoolSettings(schoolId);
-    } else {
+    } else if (req.user?.school_id) {
         settings = await schoolSettingsService.getSchoolSettings(req.user.school_id);
+    } else {
+        return res.status(401).json({
+            success: false,
+            message: "Please provide a school hostname or schoolSlug."
+        });
     }
 
     if (!settings) {
