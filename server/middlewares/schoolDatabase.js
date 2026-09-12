@@ -13,6 +13,13 @@ const getSchoolKey = (req) => {
 };
 
 const resolveSchoolDatabase = async (req, res, next) => {
+    // Website administration already receives its authenticated school context
+    // from req.user. Do not let a public hostname/subdomain switch the database
+    // before authentication and authorization have selected the admin school.
+    if (String(req.path || "").startsWith("/admin")) {
+        return next();
+    }
+
     try {
         const key = getSchoolKey(req);
         const platformHosts = new Set([
