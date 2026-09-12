@@ -9,9 +9,11 @@ const centralPool = require("../config/database");
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9_]+$/;
 const DATABASE_ROOT = path.resolve(__dirname, "../database");
 
-// These migrations create platform-wide objects or the central registry.
-// They must never be copied into an individual school's database.
+// These migrations either create platform-wide objects, the central registry,
+// or copy legacy shared-database data. They must never be replayed against a
+// fresh isolated school database.
 const EXCLUDED_MIGRATIONS = new Set([
+    "20260830_backfill_school_academic_data.sql",
     "20260911_add_eduprow_partner_program.sql",
     "20260911_add_partner_lead_converted_at.sql",
     "20260911_harden_partner_state_transitions.sql",
@@ -342,9 +344,10 @@ const provision = async (schoolId) => {
     try {
         const client = await schoolPool.connect();
         try {
-            // Build a clean school-owned schema from the repository's canonical
-            // schema and then apply the school-safe migrations. No central data
-            // is copied into this database.
+            // The schools table is intentionally created before repository
+            // migrations because several legacy migrations reference it.
+            // We then seed this school before those migrations run, so a
+            // fresh isolated database has the school context they expect.
             await client.query(`
                 CREATE TABLE IF NOT EXISTS schools (
                     id INTEGER PRIMARY KEY,
@@ -360,6 +363,7 @@ const provision = async (schoolId) => {
             `);
 
             await executeDirectory(client, path.join(DATABASE_ROOT, "schema"));
+            await seedSchool(client, school);
             await executeDirectory(client, path.join(DATABASE_ROOT, "migrations"), {
                 excluded: EXCLUDED_MIGRATIONS,
             });
@@ -377,6 +381,8 @@ const provision = async (schoolId) => {
                 ON CONFLICT (role_name) DO NOTHING
             `);
 
+            // Re-apply settings after migrations because the settings migration
+            // may create the row with only its legacy/default columns.
             await seedSchool(client, school);
             await seedAdministrators(client, administrators, school.id);
             await seedDefaultWebsitePages(client, school.id);
