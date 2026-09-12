@@ -18,9 +18,6 @@ CREATE TABLE classes (
         REFERENCES schools(id)
         ON DELETE RESTRICT,
 
-    CONSTRAINT uq_class_id_school
-        UNIQUE (id, school_id),
-
     CONSTRAINT uq_school_class_name
         UNIQUE (school_id, class_name),
 
