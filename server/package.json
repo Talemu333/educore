@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "bootstrap-academic": "node scripts/bootstrapAcademicData.js",
-    "migrate-public-school": "node scripts/migratePublicSchoolResolution.js"
+    "migrate-public-school": "node scripts/migratePublicSchoolResolution.js",
+    "provision-school-db": "node scripts/provisionSchoolDatabase.js"
   },
   "keywords": [],
   "author": "",
@@ -19,15 +20,13 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-session": "^1.19.0",
     "express-validator": "^7.3.2",
-    "helmet": "^8.3.0",
     "joi": "^18.2.3",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.6",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "pdf-parse": "^1.1.1",
+    "pdf-parse": "^1.1.2",
     "pg": "^8.22.0",
     "xlsx-republish": "^0.20.3"
   },
