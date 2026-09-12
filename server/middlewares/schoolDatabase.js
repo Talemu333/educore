@@ -1,4 +1,3 @@
-const ApiError = require("../utils/ApiError");
 const pool = require("../config/database");
 const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 const { runWithSchoolDatabase } = require("../config/databaseContext");
@@ -23,26 +22,34 @@ const resolveSchoolDatabase = async (req, res, next) => {
             "127.0.0.1",
         ]);
 
-        // Platform-level requests do not belong to a school database.
         if (!key || platformHosts.has(key)) {
             return next();
         }
 
-        const registryResult = await pool.query(`
-            SELECT school_id, database_name, website_slug, is_active
-            FROM school_database_registry
-            WHERE is_active = TRUE
-              AND (
-                  LOWER(website_slug) = LOWER($1)
-                  OR LOWER(website_slug || '.eduprow.com') = LOWER($1)
-              )
-            LIMIT 1;
-        `, [key]);
+        let registryResult;
+        try {
+            registryResult = await pool.query(`
+                SELECT school_id, database_name, website_slug, is_active
+                FROM school_database_registry
+                WHERE LOWER(website_slug) = LOWER($1)
+                   OR LOWER(website_slug || '.eduprow.com') = LOWER($1)
+                LIMIT 1;
+            `, [key]);
+        } catch (error) {
+            // The registry migration may not have been applied yet. Keep the
+            // existing shared-database website flow working during deployment.
+            if (error.code === "42P01") {
+                return next();
+            }
+            throw error;
+        }
 
         const school = registryResult.rows[0];
 
-        if (!school) {
-            return next(new ApiError(404, "School database could not be resolved."));
+        // Registered but not yet provisioned schools continue using the
+        // existing central database until their dedicated DB is activated.
+        if (!school || !school.is_active) {
+            return next();
         }
 
         const schoolPool = await getSchoolDatabase(school.school_id);
