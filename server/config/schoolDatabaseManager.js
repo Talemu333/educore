@@ -12,8 +12,8 @@ const getSchoolDatabase = async (schoolId) => {
     }
 
     const result = await centralPool.query(
-        `SELECT database_name, status
-         FROM school_database_configs
+        `SELECT database_name, is_active
+         FROM school_database_registry
          WHERE school_id = $1
          LIMIT 1`,
         [normalizedSchoolId]
@@ -21,10 +21,9 @@ const getSchoolDatabase = async (schoolId) => {
 
     const config = result.rows[0];
 
-    // During the migration period, schools without a dedicated database
-    // continue using the existing central database. This keeps the current
-    // application working while schools are moved one at a time.
-    if (!config || config.status !== "active") {
+    // A school remains on the current central database until its dedicated
+    // database has been provisioned and activated in the central registry.
+    if (!config || !config.is_active) {
         return centralPool;
     }
 
