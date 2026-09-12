@@ -4,6 +4,13 @@ const ApiError=require("../utils/ApiError");
 const asyncHandler=require("../middlewares/asyncHandler");
 
 const publicSchool=async req=>{
+    // The school database middleware resolves the tenant centrally before any
+    // school-owned website query is executed. Prefer that resolved context so
+    // public requests do not need to query school_settings in the school DB.
+    if(req.school?.school_id){
+        return Number(req.school.school_id);
+    }
+
     if(req.query.schoolSlug){
         const school=await publicWebsiteModel.getSchoolBySlug(req.query.schoolSlug);
         if(!school) throw new ApiError(404,"School website not found.");
