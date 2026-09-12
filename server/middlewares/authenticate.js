@@ -1,5 +1,7 @@
-module.exports = (req, res, next) => {
+const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
+const { runWithSchoolDatabase } = require("../config/databaseContext");
 
+module.exports = async (req, res, next) => {
     if (!req.isAuthenticated()) {
         return res.status(401).json({
             success: false,
@@ -37,6 +39,22 @@ module.exports = (req, res, next) => {
 
         req.user.school_id = schoolId;
         req.superAdminSchoolContext = schoolId;
+    }
+
+    // Super Admin operations remain on the central registry database. Normal
+    // authenticated school users are routed to their dedicated database once
+    // that database has been provisioned and activated in the registry.
+    if (roleName !== "super admin" && req.user?.school_id) {
+        try {
+            const schoolPool = await getSchoolDatabase(req.user.school_id);
+
+            req.schoolDatabase = schoolPool;
+            req.schoolDatabaseSchoolId = Number(req.user.school_id);
+
+            return runWithSchoolDatabase(schoolPool, () => next());
+        } catch (error) {
+            return next(error);
+        }
     }
 
     return next();
