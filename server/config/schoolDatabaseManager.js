@@ -11,13 +11,24 @@ const getSchoolDatabase = async (schoolId) => {
         throw new Error("A valid school ID is required to resolve the school database.");
     }
 
-    const result = await centralPool.query(
-        `SELECT database_name, is_active
-         FROM school_database_registry
-         WHERE school_id = $1
-         LIMIT 1`,
-        [normalizedSchoolId]
-    );
+    let result;
+
+    try {
+        result = await centralPool.query(
+            `SELECT database_name, is_active
+             FROM school_database_registry
+             WHERE school_id = $1
+             LIMIT 1`,
+            [normalizedSchoolId]
+        );
+    } catch (error) {
+        // The registry is introduced during the migration window. Until it
+        // exists, keep every school on the existing central database.
+        if (error.code === "42P01") {
+            return centralPool;
+        }
+        throw error;
+    }
 
     const config = result.rows[0];
 
