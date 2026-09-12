@@ -35,8 +35,6 @@ const createSchool = async (school, admin, hashedPassword) => {
     try {
         await client.query("BEGIN");
 
-        // school_settings.school_id is a foreign key to schools.id.
-        // Create the parent school first, then create its settings row.
         const schoolResult = await client.query(`
             INSERT INTO schools (
                 school_name,
@@ -57,9 +55,6 @@ const createSchool = async (school, admin, hashedPassword) => {
 
         const schoolId = schoolResult.rows[0].id;
 
-        // Generate the slug in application code so the school ID parameter is
-        // used only as an integer for school_settings.school_id. This avoids
-        // PostgreSQL inferring the same parameter as both integer and text.
         const schoolSlug = String(school.school_name || "")
             .trim()
             .toLowerCase()
@@ -89,6 +84,22 @@ const createSchool = async (school, admin, hashedPassword) => {
         ]);
 
         const createdSchool = settingsResult.rows[0];
+
+        // New schools are registered immediately, but remain inactive until
+        // their dedicated database has been provisioned and verified.
+        const registryExists = await client.query(`
+            SELECT to_regclass('public.school_database_registry') AS table_name
+        `);
+
+        if (registryExists.rows[0]?.table_name) {
+            await client.query(`
+                INSERT INTO school_database_registry (
+                    school_id, database_name, website_slug, is_active
+                )
+                VALUES ($1, $2, $3, FALSE)
+                ON CONFLICT (school_id) DO NOTHING
+            `, [schoolId, `educore_school_${schoolId}`, schoolSlug]);
+        }
 
         const roleResult = await client.query(`SELECT id FROM roles WHERE LOWER(role_name) = 'admin' LIMIT 1;`);
         if (!roleResult.rows[0]) throw new Error("Admin role does not exist.");
