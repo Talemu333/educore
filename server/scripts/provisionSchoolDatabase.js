@@ -10,9 +10,11 @@ const IDENTIFIER_PATTERN = /^[A-Za-z0-9_]+$/;
 const DATABASE_ROOT = path.resolve(__dirname, "../database");
 
 // These migrations either create platform-wide objects, the central registry,
-// or copy legacy shared-database data. They must never be replayed against a
-// fresh isolated school database.
+// copy legacy shared-database data, or are already represented by the fresh
+// database schema. They must never be replayed against a fresh isolated DB.
 const EXCLUDED_MIGRATIONS = new Set([
+    "20260828_add_school_scope_to_academic_calendar.sql",
+    "20260829_add_school_scope_to_classes_and_arms.sql",
     "20260830_backfill_school_academic_data.sql",
     "20260911_add_eduprow_partner_program.sql",
     "20260911_add_partner_lead_converted_at.sql",
@@ -346,8 +348,8 @@ const provision = async (schoolId) => {
         try {
             // The schools table is intentionally created before repository
             // migrations because several legacy migrations reference it.
-            // We then seed this school before those migrations run, so a
-            // fresh isolated database has the school context they expect.
+            // We seed this school before migrations; migrations that need the
+            // school settings row are responsible for creating/upgrading it.
             await client.query(`
                 CREATE TABLE IF NOT EXISTS schools (
                     id INTEGER PRIMARY KEY,
@@ -363,7 +365,30 @@ const provision = async (schoolId) => {
             `);
 
             await executeDirectory(client, path.join(DATABASE_ROOT, "schema"));
-            await seedSchool(client, school);
+
+            // Do not call seedSchool yet: the base school_settings schema does
+            // not contain the later multischool columns used by seedSchool.
+            // The 20260831_ensure_school_settings migration creates the local
+            // settings row after the school itself has been seeded.
+            await client.query(`
+                INSERT INTO schools (id, school_name, school_code, email, phone, address, is_active)
+                VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+                ON CONFLICT (id) DO UPDATE SET
+                    school_name = EXCLUDED.school_name,
+                    school_code = EXCLUDED.school_code,
+                    email = EXCLUDED.email,
+                    phone = EXCLUDED.phone,
+                    address = EXCLUDED.address,
+                    is_active = TRUE
+            `, [
+                school.id,
+                school.school_name,
+                school.school_code || school.admission_prefix || `SCH${school.id}`,
+                school.email || school.school_email || null,
+                school.phone || school.school_phone || null,
+                school.address || school.school_address || null,
+            ]);
+
             await executeDirectory(client, path.join(DATABASE_ROOT, "migrations"), {
                 excluded: EXCLUDED_MIGRATIONS,
             });
@@ -381,8 +406,8 @@ const provision = async (schoolId) => {
                 ON CONFLICT (role_name) DO NOTHING
             `);
 
-            // Re-apply settings after migrations because the settings migration
-            // may create the row with only its legacy/default columns.
+            // Re-apply the complete school/settings record after migrations
+            // have added the multischool columns and constraints.
             await seedSchool(client, school);
             await seedAdministrators(client, administrators, school.id);
             await seedDefaultWebsitePages(client, school.id);
