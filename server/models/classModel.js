@@ -25,9 +25,7 @@ const createClass = async (classData, schoolId, client = pool) => {
 };
 
 const getClassByName = async (className, schoolId, client = pool) => {
-    const result = await client.query(`
-        SELECT * FROM classes WHERE LOWER(class_name) = LOWER($1) AND school_id = $2 LIMIT 1;
-    `, [className, schoolId]);
+    const result = await client.query(`SELECT * FROM classes WHERE LOWER(class_name) = LOWER($1) AND school_id = $2 LIMIT 1`, [className, schoolId]);
     return result.rows[0];
 };
 
