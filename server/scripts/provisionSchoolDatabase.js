@@ -41,6 +41,8 @@ const withDatabaseRetry = async (operation, label = "database operation") => {
 // or copy legacy shared-database data. They must never be replayed against a
 // fresh isolated school database.
 const EXCLUDED_MIGRATIONS = new Set([
+    "20260828_add_school_scope_to_academic_calendar.sql",
+    "20260829_add_school_scope_to_classes_and_arms.sql",
     "20260830_backfill_school_academic_data.sql",
     "20260911_add_eduprow_partner_program.sql",
     "20260911_add_partner_lead_converted_at.sql",
@@ -376,16 +378,12 @@ const provision = async (schoolId) => {
     const databaseName = registry.database_name;
     quoteIdentifier(databaseName);
 
-    const databaseCreated = await createDatabaseIfNeeded(databaseName);
+    await createDatabaseIfNeeded(databaseName);
     const schoolPool = new Pool(getDatabaseConfig(databaseName));
 
     try {
         const client = await withDatabaseRetry(() => schoolPool.connect(), "Connecting to school database");
         try {
-            // The schools table is intentionally created before repository
-            // migrations because several legacy migrations reference it.
-            // We then seed this school before those migrations run, so a
-            // fresh isolated database has the school context they expect.
             await withDatabaseRetry(() => client.query(`
                 CREATE TABLE IF NOT EXISTS schools (
                     id INTEGER PRIMARY KEY,
@@ -419,55 +417,47 @@ const provision = async (schoolId) => {
                 ON CONFLICT (role_name) DO NOTHING
             `), "Seeding roles");
 
-            // Re-apply settings after migrations because the settings migration
-            // may create the row with only its legacy/default columns.
-            await seedSchool(client, school);
-            await seedAdministrators(client, administrators, school.id);
-            await seedDefaultWebsitePages(client, school.id);
+            await seedAdministrators(client, administrators, schoolId);
+            await seedDefaultWebsitePages(client, schoolId);
 
-            await withDatabaseRetry(() => client.query(`
-                CREATE INDEX IF NOT EXISTS idx_school_settings_website_slug
-                ON school_settings (LOWER(website_slug))
-            `), "Creating website slug index");
+            const verification = await verifySchoolDatabase(client, schoolId);
+            console.log(`School database verification passed:`, verification);
 
-            await verifySchoolDatabase(client, schoolId);
+            await withDatabaseRetry(() => centralPool.query(`
+                UPDATE school_database_registry
+                SET is_active = TRUE,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE school_id = $1
+            `, [schoolId]), "Activating school database registry");
+
+            console.log(`School ${schoolId} is now active on ${databaseName}.`);
         } finally {
             client.release();
         }
     } catch (error) {
-        if (databaseCreated) {
-            console.error(`Initialization failed for ${databaseName}. The database was left inactive for inspection.`);
-        }
+        await withDatabaseRetry(() => centralPool.query(`
+            UPDATE school_database_registry
+            SET is_active = FALSE,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE school_id = $1
+        `, [schoolId]), "Keeping school database inactive");
+
+        console.error(`Initialization failed for ${databaseName}. The database was left inactive for inspection.`);
         throw error;
     } finally {
         await schoolPool.end();
     }
-
-    await withDatabaseRetry(() => centralPool.query(`
-        UPDATE school_database_registry
-        SET is_active = TRUE,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE school_id = $1
-          AND database_name = $2
-    `, [schoolId, databaseName]), "Activating school database");
-
-    console.log(JSON.stringify({
-        success: true,
-        schoolId,
-        databaseName,
-        databaseCreated,
-        active: true,
-        message: "Dedicated school database initialized and activated.",
-    }, null, 2));
 };
 
 const schoolId = Number(process.argv[2]);
 
 provision(schoolId)
-    .catch((error) => {
-        console.error("School database provisioning failed:", error);
-        process.exitCode = 1;
-    })
-    .finally(async () => {
+    .then(async () => {
         await centralPool.end();
+        console.log("School database provisioning completed successfully.");
+    })
+    .catch(async (error) => {
+        console.error("School database provisioning failed:", error);
+        await centralPool.end();
+        process.exitCode = 1;
     });
