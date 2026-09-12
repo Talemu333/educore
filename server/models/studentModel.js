@@ -37,23 +37,23 @@ const validateClassArm = async (client, classId, armId, schoolId) => {
     return result.rows.length > 0;
 };
 
-const getAllStudents = async (limit, offset, schoolId) => {
-    const result = await pool.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, s.status, c.class_name, a.arm_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
+const getAllStudents = async (limit, offset, schoolId, client = pool) => {
+    const result = await client.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, s.status, c.class_name, a.arm_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
     return result.rows;
 };
 
-const countStudents = async (schoolId) => {
-    const result = await pool.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $1;`, [schoolId]);
+const countStudents = async (schoolId, client = pool) => {
+    const result = await client.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $1;`, [schoolId]);
     return Number(result.rows[0].total);
 };
 
-const getStudentById = async (id, schoolId) => {
-    const result = await pool.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.id = $1 AND s.school_id = $2;`, [id, schoolId]);
+const getStudentById = async (id, schoolId, client = pool) => {
+    const result = await client.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.id = $1 AND s.school_id = $2;`, [id, schoolId]);
     return result.rows[0];
 };
 
-const getStudentByUserId = async (userId, schoolId) => {
-    const result = await pool.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN users u ON u.student_id = s.id AND u.id = $1 AND u.school_id = $2 INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.school_id = $2;`, [userId, schoolId]);
+const getStudentByUserId = async (userId, schoolId, client = pool) => {
+    const result = await client.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN users u ON u.student_id = s.id AND u.id = $1 AND u.school_id = $2 INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.school_id = $2;`, [userId, schoolId]);
     return result.rows[0];
 };
 
@@ -62,8 +62,8 @@ const updateStudent = async (client, id, student, schoolId) => {
     return result.rows[0];
 };
 
-const getStudentsByClass = async (classId, armId, schoolId) => {
-    const result = await pool.query(`SELECT * FROM students WHERE school_id = $1 AND class_id = $2 AND (arm_id = $3 OR (arm_id IS NULL AND $3 IS NULL)) ORDER BY surname, first_name;`, [schoolId, classId, armId]);
+const getStudentsByClass = async (classId, armId, schoolId, client = pool) => {
+    const result = await client.query(`SELECT * FROM students WHERE school_id = $1 AND class_id = $2 AND (arm_id = $3 OR (arm_id IS NULL AND $3 IS NULL)) ORDER BY surname, first_name;`, [schoolId, classId, armId]);
     return result.rows;
 };
 
@@ -71,13 +71,13 @@ const updateCurrentClass = async (studentId, classId, armId, schoolId, client = 
     await client.query(`UPDATE students SET class_id = $2, arm_id = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND school_id = $4;`, [studentId, classId, armId, schoolId]);
 };
 
-const searchStudents = async (searchTerm, limit, offset, schoolId) => {
-    const result = await pool.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, c.class_name, a.arm_name FROM students s LEFT JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id LEFT JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $4 AND s.status = 'Active' AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1)) ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;`, [`%${searchTerm}%`, limit, offset, schoolId]);
+const searchStudents = async (searchTerm, limit, offset, schoolId, client = pool) => {
+    const result = await client.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, c.class_name, a.arm_name FROM students s LEFT JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id LEFT JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $4 AND s.status = 'Active' AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1)) ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;`, [`%${searchTerm}%`, limit, offset, schoolId]);
     return result.rows;
 };
 
-const countSearchStudents = async (searchTerm, schoolId) => {
-    const result = await pool.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $2 AND (LOWER(surname) LIKE LOWER($1) OR LOWER(first_name) LIKE LOWER($1) OR LOWER(COALESCE(middle_name,'')) LIKE LOWER($1) OR LOWER(admission_number) LIKE LOWER($1));`, [`%${searchTerm}%`, schoolId]);
+const countSearchStudents = async (searchTerm, schoolId, client = pool) => {
+    const result = await client.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $2 AND (LOWER(surname) LIKE LOWER($1) OR LOWER(first_name) LIKE LOWER($1) OR LOWER(COALESCE(middle_name,'')) LIKE LOWER($1) OR LOWER(admission_number) LIKE LOWER($1));`, [`%${searchTerm}%`, schoolId]);
     return Number(result.rows[0].total);
 };
 
@@ -86,8 +86,8 @@ const deactivateStudent = async (client, id, schoolId) => {
     return result.rows[0];
 };
 
-const getStudentParents = async (studentId, schoolId) => {
-    const result = await pool.query(`SELECT p.id, p.user_id, u.username, p.surname, p.first_name, p.middle_name, p.gender, p.phone_number, p.alternate_phone, p.email, p.occupation, p.residential_address, sp.relationship_id, r.relationship_name, sp.is_primary_contact FROM student_parents sp INNER JOIN parents p ON sp.parent_id = p.id AND p.school_id = $2 INNER JOIN users u ON p.user_id = u.id AND u.school_id = $2 LEFT JOIN relationships r ON sp.relationship_id = r.id INNER JOIN students s ON sp.student_id = s.id AND s.school_id = $2 WHERE sp.student_id = $1 ORDER BY sp.is_primary_contact DESC, p.surname;`, [studentId, schoolId]);
+const getStudentParents = async (studentId, schoolId, client = pool) => {
+    const result = await client.query(`SELECT p.id, p.user_id, u.username, p.surname, p.first_name, p.middle_name, p.gender, p.phone_number, p.alternate_phone, p.email, p.occupation, p.residential_address, sp.relationship_id, r.relationship_name, sp.is_primary_contact FROM student_parents sp INNER JOIN parents p ON sp.parent_id = p.id AND p.school_id = $2 INNER JOIN users u ON p.user_id = u.id AND u.school_id = $2 LEFT JOIN relationships r ON sp.relationship_id = r.id INNER JOIN students s ON sp.student_id = s.id AND s.school_id = $2 WHERE sp.student_id = $1 ORDER BY sp.is_primary_contact DESC, p.surname;`, [studentId, schoolId]);
     return result.rows;
 };
 
