@@ -1,7 +1,8 @@
 const armService = require("../services/armService");
 const { successResponse, errorResponse } = require("../utils/response");
 
-const getSchoolId = (req) => req.user?.school_id;
+const getSchoolId = (req) =>
+    req.schoolDatabaseSchoolId || req.superAdminSchoolContext || req.user?.school_id;
 const getDatabase = (req) => req.schoolDatabase;
 
 const createArm = async (req, res) => {
