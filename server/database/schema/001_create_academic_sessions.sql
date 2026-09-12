@@ -20,6 +20,9 @@ CREATE TABLE academic_sessions (
         REFERENCES schools(id)
         ON DELETE RESTRICT,
 
+    CONSTRAINT uq_academic_session_id_school
+        UNIQUE (id, school_id),
+
     CONSTRAINT uq_school_session_name
         UNIQUE (school_id, session_name),
 
