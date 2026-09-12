@@ -37,9 +37,7 @@ const run = (command, args, options = {}) => {
         maxBuffer: 20 * 1024 * 1024,
     });
 
-    if (result.error) {
-        throw result.error;
-    }
+    if (result.error) throw result.error;
 
     if (result.status !== 0) {
         const stderr = result.stderr ? String(result.stderr) : "";
@@ -99,7 +97,11 @@ const provision = async (schoolId) => {
         await maintenancePool.end();
     }
 
-    // Copy structure only. No central/platform/tenant data is copied.
+    // TEMPORARY PREPARATION ONLY.
+    // The current application database contains both central and school-owned
+    // tables. A full schema dump would therefore copy central structures into
+    // the school database. That is useful for investigation, but it is NOT a
+    // valid final school-database initializer.
     const dump = run("pg_dump", [
         "--schema-only",
         "--no-owner",
@@ -118,21 +120,16 @@ const provision = async (schoolId) => {
         "--set", "ON_ERROR_STOP=1",
     ], { stdio: ["pipe", "pipe", "pipe"], input: dump });
 
-    // Activate only after the target database has been created and its schema
-    // has been restored successfully.
-    await centralPool.query(`
-        UPDATE school_database_registry
-        SET is_active = TRUE,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE school_id = $1
-    `, [schoolId]);
-
+    // Deliberately do NOT activate the registry here. Activation is only safe
+    // after the dedicated school schema and ownership boundaries have been
+    // finalized and the school's required data has been seeded.
     console.log(JSON.stringify({
         success: true,
         schoolId,
         databaseName,
         databaseCreated,
-        active: true,
+        active: false,
+        message: "Database prepared only; registry remains inactive pending the dedicated school initializer.",
     }, null, 2));
 };
 
@@ -140,7 +137,7 @@ const schoolId = Number(process.argv[2]);
 
 provision(schoolId)
     .catch((error) => {
-        console.error("School database provisioning failed:", error);
+        console.error("School database preparation failed:", error);
         process.exitCode = 1;
     })
     .finally(async () => {
