@@ -31,6 +31,7 @@ const buildClientEnv = () => ({
 const run = (command, args, options = {}) => {
     const result = spawnSync(command, args, {
         stdio: options.stdio || ["ignore", "pipe", "pipe"],
+        input: options.input,
         env: buildClientEnv(),
         shell: process.platform === "win32",
         maxBuffer: 20 * 1024 * 1024,
@@ -98,9 +99,7 @@ const provision = async (schoolId) => {
         await maintenancePool.end();
     }
 
-    // Rebuild the target database's structure from the current central schema,
-    // without copying any tenant/platform data. This keeps the new school DB
-    // structurally aligned with the application currently deployed.
+    // Copy structure only. No central/platform/tenant data is copied.
     const dump = run("pg_dump", [
         "--schema-only",
         "--no-owner",
@@ -119,7 +118,8 @@ const provision = async (schoolId) => {
         "--set", "ON_ERROR_STOP=1",
     ], { stdio: ["pipe", "pipe", "pipe"], input: dump });
 
-    // Do not activate the registry entry until the schema restore succeeds.
+    // Activate only after the target database has been created and its schema
+    // has been restored successfully.
     await centralPool.query(`
         UPDATE school_database_registry
         SET is_active = TRUE,
@@ -139,7 +139,7 @@ const provision = async (schoolId) => {
 const schoolId = Number(process.argv[2]);
 
 provision(schoolId)
-    .catch(async (error) => {
+    .catch((error) => {
         console.error("School database provisioning failed:", error);
         process.exitCode = 1;
     })
