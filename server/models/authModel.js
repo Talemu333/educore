@@ -1,4 +1,10 @@
-const pool = require("../config/database");
+const database = require("../config/database");
+
+// Authentication is a platform-level concern. Even when an authenticated
+// school request is already running inside a school database context, these
+// queries must continue to use the central database so login, sessions,
+// password changes, and password resets always use one source of truth.
+const pool = database.centralPool;
 
 const findUser = async (login) => {
     const query = `
