@@ -48,6 +48,7 @@ const cbtRoutes = require("./routes/cbtRoutes");
 const cbtQuestionBankRoutes = require("./routes/cbtQuestionBankRoutes");
 const cbtQuestionBankImportRoutes = require("./routes/cbtQuestionBankImportRoutes");
 const bulkImportRoutes = require("./routes/bulkImportRoutes");
+const schoolDatabaseMiddleware = require("./middlewares/schoolDatabase");
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -170,7 +171,12 @@ app.use("/api/qualifications", qualificationRoutes);
 app.use("/api/class-subjects", classSubjectRoutes);
 app.use("/api/school-settings", schoolSettingRoutes);
 app.use("/api/grading-scales", gradingSystemRoutes);
-app.use("/api/website", websiteRoutes);
+
+// Public school website requests are the first route group to use the
+// database-per-school resolver. Admin website requests from the platform
+// domain continue to use their authenticated school context for now.
+app.use("/api/website", schoolDatabaseMiddleware, websiteRoutes);
+
 app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/promotion-history", promotionHistoryRoutes);
