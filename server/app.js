@@ -169,12 +169,16 @@ app.use("/api/relationships", relationshipRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/qualifications", qualificationRoutes);
 app.use("/api/class-subjects", classSubjectRoutes);
-app.use("/api/school-settings", schoolSettingRoutes);
+
+// School settings can be requested publicly from a school hostname.
+// Platform-host requests continue to use the existing authenticated context.
+app.use("/api/school-settings", schoolDatabaseMiddleware, schoolSettingRoutes);
+
 app.use("/api/grading-scales", gradingSystemRoutes);
 
-// Public school website requests are the first route group to use the
-// database-per-school resolver. Admin website requests from the platform
-// domain continue to use their authenticated school context for now.
+// Public school website requests use the database-per-school resolver.
+// Admin website requests from the platform domain continue to use their
+// authenticated school context for now.
 app.use("/api/website", schoolDatabaseMiddleware, websiteRoutes);
 
 app.use("/api/contact-messages", contactMessageRoutes);
