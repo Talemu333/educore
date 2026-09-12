@@ -16,9 +16,9 @@ CREATE TABLE arms (
         REFERENCES schools(id)
         ON DELETE RESTRICT,
 
-    CONSTRAINT fk_arm_class_school
-        FOREIGN KEY (class_id, school_id)
-        REFERENCES classes(id, school_id)
+    CONSTRAINT fk_arm_class
+        FOREIGN KEY (class_id)
+        REFERENCES classes(id)
         ON DELETE CASCADE,
 
     CONSTRAINT uq_school_arm_name
