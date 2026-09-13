@@ -11,6 +11,7 @@ const centralPool = require("../config/database");
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9_]+$/;
 const DATABASE_ROOT = path.resolve(__dirname, "../database");
 const BOOTSTRAP_FILE = path.join(DATABASE_ROOT, "bootstrap", "current_school_schema.sql.gz.b64");
+const BOOTSTRAP_PART_PREFIX = "current_school_schema.sql.gz.b64.part-";
 const BASELINE_CUTOFF = "20260912_sync_current_school_settings.sql";
 const RETRYABLE_DB_ERRORS = new Set(["EAI_AGAIN", "ECONNRESET", "ETIMEDOUT", "ECONNREFUSED"]);
 const DB_RETRY_ATTEMPTS = 5;
@@ -71,9 +72,27 @@ const applyCurrentRepairMigrations = async (client) => {
     });
 };
 
+const readBootstrapEncoded = async () => {
+    const bootstrapDirectory = path.dirname(BOOTSTRAP_FILE);
+    const entries = await fs.readdir(bootstrapDirectory, { withFileTypes: true });
+    const parts = entries
+        .filter((entry) => entry.isFile() && entry.name.startsWith(BOOTSTRAP_PART_PREFIX))
+        .map((entry) => entry.name)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+    if (parts.length) {
+        const contents = await Promise.all(
+            parts.map((file) => fs.readFile(path.join(bootstrapDirectory, file), "utf8"))
+        );
+        return contents.join("").trim();
+    }
+
+    return (await fs.readFile(BOOTSTRAP_FILE, "utf8")).trim();
+};
+
 const applyCurrentSchoolBootstrap = async (client) => {
-    const encoded = await fs.readFile(BOOTSTRAP_FILE, "utf8");
-    const compressed = Buffer.from(encoded.trim(), "base64");
+    const encoded = await readBootstrapEncoded();
+    const compressed = Buffer.from(encoded, "base64");
     const sql = (await gunzip(compressed)).toString("utf8");
     if (!sql.trim()) throw new Error("Current school database bootstrap is empty.");
     console.log("Applying current isolated-school database bootstrap");
@@ -317,8 +336,6 @@ const provision = async (schoolId) => {
                 await applyCurrentSchoolBootstrap(client);
                 await applyCurrentMigrations(client);
             } else {
-                // Existing school databases are never rebuilt. Only migrations newer
-                // than the current canonical baseline are applied automatically.
                 await applyCurrentRepairMigrations(client);
             }
 
