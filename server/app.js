@@ -48,6 +48,7 @@ const cbtRoutes = require("./routes/cbtRoutes");
 const cbtQuestionBankRoutes = require("./routes/cbtQuestionBankRoutes");
 const cbtQuestionBankImportRoutes = require("./routes/cbtQuestionBankImportRoutes");
 const bulkImportRoutes = require("./routes/bulkImportRoutes");
+const lessonNoteRoutes = require("./routes/lessonNoteRoutes");
 const schoolDatabaseMiddleware = require("./middlewares/schoolDatabase");
 
 const app = express();
@@ -67,23 +68,13 @@ if (isProduction && allowedOrigins.length === 0) {
 
 const isAllowedOrigin = (origin) => {
     if (!origin) return true;
-
     const normalizedOrigin = normalizeOrigin(origin);
-
-    if (allowedOrigins.includes(normalizedOrigin)) {
-        return true;
-    }
-
+    if (allowedOrigins.includes(normalizedOrigin)) return true;
     try {
         const url = new URL(normalizedOrigin);
         const hostname = url.hostname.toLowerCase();
-
-        return (
-            url.protocol === "https:" &&
-            (hostname === "eduprow.com" ||
-                hostname === "www.eduprow.com" ||
-                hostname.endsWith(".eduprow.com"))
-        );
+        return url.protocol === "https:" &&
+            (hostname === "eduprow.com" || hostname === "www.eduprow.com" || hostname.endsWith(".eduprow.com"));
     } catch {
         return false;
     }
@@ -92,24 +83,13 @@ const isAllowedOrigin = (origin) => {
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(helmet());
-
 app.use(cors({
-    origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) {
-            return callback(null, true);
-        }
-        return callback(new Error("Not allowed by CORS"));
-    },
+    origin: (origin, callback) => isAllowedOrigin(origin) ? callback(null, true) : callback(new Error("Not allowed by CORS")),
     credentials: true,
 }));
-
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
-
-app.use("/api", (req, res, next) => {
-    res.set("Cache-Control", "no-store");
-    next();
-});
+app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
 
 app.get("/health", async (req, res) => {
     try {
@@ -122,20 +102,11 @@ app.get("/health", async (req, res) => {
 });
 
 app.use(session({
-    store: new pgSession({
-        pool,
-        tableName: "user_sessions",
-        createTableIfMissing: true,
-    }),
+    store: new pgSession({ pool, tableName: "user_sessions", createTableIfMissing: true }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-    }
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true, secure: isProduction, sameSite: isProduction ? "none" : "lax" }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -169,18 +140,9 @@ app.use("/api/relationships", relationshipRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/qualifications", qualificationRoutes);
 app.use("/api/class-subjects", classSubjectRoutes);
-
-// School settings can be requested publicly from a school hostname.
-// Platform-host requests continue to use the existing authenticated context.
 app.use("/api/school-settings", schoolDatabaseMiddleware, schoolSettingRoutes);
-
 app.use("/api/grading-scales", gradingSystemRoutes);
-
-// Public school website requests use the database-per-school resolver.
-// Admin website requests from the platform domain continue to use their
-// authenticated school context for now.
 app.use("/api/website", schoolDatabaseMiddleware, websiteRoutes);
-
 app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/promotion-history", promotionHistoryRoutes);
@@ -191,6 +153,7 @@ app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
 app.use("/api/cbt-question-bank", cbtQuestionBankRoutes);
 app.use("/api/cbt-question-bank/import-pdf", cbtQuestionBankImportRoutes);
 app.use("/api/bulk-import", bulkImportRoutes);
+app.use("/api/lesson-notes", lessonNoteRoutes);
 
 app.use(errorHandler);
 module.exports = app;
