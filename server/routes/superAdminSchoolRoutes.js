@@ -3,6 +3,7 @@ const authenticate = require("../middlewares/authenticate");
 const requireSuperAdmin = require("../middlewares/requireSuperAdmin");
 const controller = require("../controllers/superAdminSchoolController");
 const { migrateSchoolData } = require("../scripts/migrateSchoolData");
+const { diagnostics } = require("../controllers/schoolDatabaseDiagnosticsController");
 
 const router = express.Router();
 
@@ -35,6 +36,7 @@ router.post("/:id/migrate-data", async (req, res) => {
         });
     }
 });
+router.get("/:id/diagnostics", diagnostics);
 router.put("/:id", controller.updateSchool);
 router.patch("/:id/status", controller.setSchoolStatus);
 router.patch("/:id/domain", controller.setSchoolDomain);
