@@ -38,6 +38,39 @@ const getSchools = async () => {
                  ss.is_active, ss.created_at, ss.updated_at
         ORDER BY ss.school_id;
     `);
+
+    // The super-admin school list doubles as a safe recovery point. This lets
+    // deployments without a paid server shell recover a database created by an
+    // interrupted provisioning attempt, and migrates legacy central data once
+    // when the dedicated database only contains its initial administrator.
+    for (const school of result.rows) {
+        try {
+            const registryResult = await pool.query(`
+                SELECT database_name, is_active
+                FROM school_database_registry
+                WHERE school_id = $1
+                LIMIT 1
+            `, [school.school_id]);
+            const registry = registryResult.rows[0];
+            if (!registry) continue;
+
+            if (!registry.is_active) {
+                await provisionSchoolDatabase(school.school_id);
+                await pool.query(`
+                    UPDATE school_database_registry
+                    SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP
+                    WHERE school_id = $1
+                `, [school.school_id]);
+            }
+
+            if (school.user_count > 1) {
+                await migrateSchoolData(school.school_id);
+            }
+        } catch (error) {
+            console.warn(`School database recovery skipped for school ${school.school_id}: ${error.message}`);
+        }
+    }
+
     return result.rows;
 };
 
@@ -99,14 +132,6 @@ const createSchool = async (school, admin, hashedPassword) => {
     } finally { client.release(); }
 };
 
-const repairSchoolDatabase = async (schoolId) => {
-    const school = await getSchoolById(schoolId);
-    if (!school) throw Object.assign(new Error("School not found."), { status: 404 });
-    await provisionSchoolDatabase(schoolId);
-    await pool.query(`UPDATE school_database_registry SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP WHERE school_id = $1`, [schoolId]);
-    return { school, migration: await migrateSchoolData(schoolId) };
-};
-
 const createSchoolAdministrator = async (schoolId, admin, hashedPassword, adminType = "proprietor") => {
     const school = await getSchoolById(schoolId);
     if (!school) return null;
@@ -115,9 +140,9 @@ const createSchoolAdministrator = async (schoolId, admin, hashedPassword, adminT
     const result = await pool.query(`
         INSERT INTO users (username, email, password, role_id, school_id, admin_type, must_change_password, is_active)
         VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE)
-        RETURNING id, username, email, password, role_id, school_id, admin_type, is_active, must_change_password, created_at, updated_at;
+        RETURNING id, username, email, role_id, school_id, admin_type, is_active, must_change_password, created_at, updated_at;
     `, [admin.username, admin.email || null, hashedPassword, roleResult.rows[0].id, schoolId, adminType]);
     return result.rows[0];
 };
 
-module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator, repairSchoolDatabase };
+module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator };
