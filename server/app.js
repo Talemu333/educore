@@ -6,7 +6,7 @@ const classRoutes = require("./routes/classRoutes");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const passport = require("passport");
-const pool = require("./config/database");
+const database = require("./config/database");
 require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes");
@@ -93,7 +93,7 @@ app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next
 
 app.get("/health", async (req, res) => {
     try {
-        await pool.query("SELECT 1");
+        await database.centralPool.query("SELECT 1");
         return res.json({ success: true, status: "ok" });
     } catch (error) {
         console.error("Health check database error:", error);
@@ -101,8 +101,11 @@ app.get("/health", async (req, res) => {
     }
 });
 
+// Authentication sessions are platform-level data. Always use the central
+// database pool so an AsyncLocalStorage school context can never redirect
+// session reads/writes into a tenant database.
 app.use(session({
-    store: new pgSession({ pool, tableName: "user_sessions", createTableIfMissing: true }),
+    store: new pgSession({ pool: database.centralPool, tableName: "user_sessions", createTableIfMissing: true }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
