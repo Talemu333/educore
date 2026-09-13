@@ -1,11 +1,15 @@
 require("dotenv").config();
 
+const fs = require("node:fs/promises");
+const path = require("node:path");
 const { Pool } = require("pg");
 const { getDatabaseConfig } = require("../config/databaseConfig");
 
 const database = require("../config/database");
 const centralPool = database.centralPool || database;
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9_]+$/;
+const MIGRATIONS_DIR = path.resolve(__dirname, "../database/migrations");
+const MIGRATION_CUTOFF = "20260912_sync_current_school_settings.sql";
 const EXCLUDED_TABLES = new Set([
     "eduprow_partner_commissions",
     "eduprow_partner_leads",
@@ -53,6 +57,23 @@ const getColumns = async (pool, table) => {
         WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position
     `, [table]);
     return result.rows.map((row) => row.column_name);
+};
+
+const applySchemaRepairMigrations = async (pool) => {
+    const files = (await fs.readdir(MIGRATIONS_DIR, { withFileTypes: true }))
+        .filter((entry) => entry.isFile() && entry.name.endsWith(".sql") && entry.name >= MIGRATION_CUTOFF)
+        .map((entry) => entry.name)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+    for (const file of files) {
+        const sql = await fs.readFile(path.join(MIGRATIONS_DIR, file), "utf8");
+        if (!sql.trim()) continue;
+        try {
+            await pool.query(sql);
+        } catch (error) {
+            throw withContext(error, `Schema repair migration ${file} failed`);
+        }
+    }
 };
 
 const getRows = async (pool, table, columns, schoolId, context) => {
@@ -125,6 +146,10 @@ const migrateSchoolData = async (schoolId, options = {}) => {
 
     const targetPool = new Pool(getDatabaseConfig(databaseName));
     try {
+        // Repair the existing isolated database before comparing schemas or copying data.
+        // This uses the current migrations, never server/database/schema/.
+        await applySchemaRepairMigrations(targetPool);
+
         const tableResult = await centralPool.query(`
             SELECT table_name FROM information_schema.tables
             WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name
