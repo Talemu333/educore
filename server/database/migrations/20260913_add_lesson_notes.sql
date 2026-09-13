@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS lesson_notes (
     evaluation TEXT,
     conclusion TEXT,
     assignment TEXT,
-    references TEXT,
+    "references" TEXT,
     remarks TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','submitted','approved','returned')),
     reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
