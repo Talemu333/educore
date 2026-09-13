@@ -161,9 +161,22 @@ const createDatabaseIfNeeded = async (databaseName) => {
             return true;
         }
         console.log(`Database already exists: ${databaseName}`);
-        return false;
     } finally {
         await maintenancePool.end();
+    }
+
+    // A previous provisioning attempt may have created the database but failed
+    // before applying the schema. Treat such a database as a bootstrap target,
+    // while leaving already initialized school databases untouched.
+    const existingPool = new Pool(getDatabaseConfig(databaseName));
+    try {
+        const schemaResult = await withDatabaseRetry(
+            () => existingPool.query("SELECT to_regclass('public.cbt_exams') IS NOT NULL AS initialized"),
+            "Checking school database schema"
+        );
+        return !schemaResult.rows[0]?.initialized;
+    } finally {
+        await existingPool.end();
     }
 };
 
