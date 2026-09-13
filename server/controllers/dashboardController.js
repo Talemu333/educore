@@ -13,11 +13,10 @@ const getDashboard = asyncHandler(async (req, res) => {
         });
     }
 
-    // Resolve the database again at the controller boundary instead of relying
-    // only on middleware context propagation. This is especially important for
-    // super-admin school context and prevents dashboard queries from falling
-    // back to the central database when the request context is lost.
-    const schoolPool = await getSchoolDatabase(schoolId);
+    // authenticate() already resolves and stores the dedicated school pool.
+    // Reuse it when available instead of performing another registry lookup
+    // from inside the school database context.
+    const schoolPool = req.schoolDatabase || await getSchoolDatabase(schoolId);
 
     const dashboard = await runWithSchoolDatabase(
         schoolPool,
