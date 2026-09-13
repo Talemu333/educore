@@ -1,14 +1,24 @@
 const promotionModel = require("../models/promotionModel");
 const promotionSchoolModel = require("../models/promotionSchoolModel");
 
+const createClientError = (message) => {
+    const error = new Error(message);
+    error.statusCode = 400;
+    return error;
+};
+
 const requireSchool = (schoolId) => {
-    if (!schoolId) throw new Error("School context is required.");
+    if (!schoolId) {
+        throw createClientError("School context is required.");
+    }
 };
 
 const getPromotionSetup = async (schoolId) => {
     requireSchool(schoolId);
     const currentSession = await promotionSchoolModel.getCurrentSession(schoolId);
-    if (!currentSession) throw new Error("No current academic session has been set for this school.");
+    if (!currentSession) {
+        throw createClientError("No current academic session has been set for this school. Please create an academic session and set it as current before using Student Promotion.");
+    }
     const nextSession = await promotionSchoolModel.getNextSession(currentSession.id, schoolId);
     const classes = await promotionSchoolModel.getClasses(schoolId);
     return { currentSession, nextSession, classes };
@@ -17,7 +27,9 @@ const getPromotionSetup = async (schoolId) => {
 const getStudentsForPromotion = async ({ classId, armId, schoolId }) => {
     requireSchool(schoolId);
     const currentSession = await promotionSchoolModel.getCurrentSession(schoolId);
-    if (!currentSession) throw new Error("No current academic session has been set for this school.");
+    if (!currentSession) {
+        throw createClientError("No current academic session has been set for this school. Please create an academic session and set it as current before using Student Promotion.");
+    }
     return promotionSchoolModel.getStudentsForPromotion({
         sessionId: currentSession.id,
         classId,
@@ -40,16 +52,18 @@ const processStudentDecisions = async ({
 }) => {
     requireSchool(schoolId);
     if (!Array.isArray(students) || students.length === 0) {
-        throw new Error("At least one student must be selected.");
+        throw createClientError("At least one student must be selected.");
     }
 
     const currentSession = await promotionSchoolModel.getCurrentSession(schoolId);
-    if (!currentSession) throw new Error("No current academic session has been set for this school.");
+    if (!currentSession) {
+        throw createClientError("No current academic session has been set for this school. Please create an academic session and set it as current before using Student Promotion.");
+    }
 
     const nextSession = await promotionSchoolModel.getNextSession(currentSession.id, schoolId);
     const hasNonGraduatingStudents = students.some(student => student.action !== "Graduated");
     if (hasNonGraduatingStudents && !nextSession) {
-        throw new Error("There is no next academic session available for promotion or repetition.");
+        throw createClientError("There is no next academic session available for promotion or repetition. Please create the next academic session first.");
     }
 
     await promotionSchoolModel.validatePromotionInput({
@@ -61,8 +75,6 @@ const processStudentDecisions = async ({
         schoolId
     });
 
-    // The legacy processor performs the transaction. All IDs have been
-    // validated against the authenticated school's scope before it runs.
     return promotionModel.processStudentDecisions({
         students,
         currentSessionId: currentSession.id,
