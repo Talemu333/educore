@@ -14,7 +14,7 @@ ALTER TABLE departments
     ADD COLUMN IF NOT EXISTS school_id INTEGER;
 
 UPDATE departments
-SET school_id = 1
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
 WHERE school_id IS NULL;
 
 ALTER TABLE departments
@@ -28,7 +28,7 @@ ALTER TABLE fee_types
     ADD COLUMN IF NOT EXISTS school_id INTEGER;
 
 UPDATE fee_types
-SET school_id = 1
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
 WHERE school_id IS NULL;
 
 ALTER TABLE fee_types
@@ -44,7 +44,7 @@ ALTER TABLE timetables
     ADD COLUMN IF NOT EXISTS school_id INTEGER;
 
 UPDATE timetables
-SET school_id = 1
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
 WHERE school_id IS NULL;
 
 ALTER TABLE timetables
