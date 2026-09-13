@@ -5,12 +5,52 @@ const crypto = require("crypto");
 const { sendPasswordResetEmail } = require("../services/emailService");
 
 const login = (req, res, next) => {
+    const requestId = crypto.randomUUID();
+    const loginValue = String(req.body?.login || "").trim();
+    const log = (stage, details = {}) => {
+        console.log(`[AUTH LOGIN ${requestId}] ${stage}`, {
+            login: loginValue ? loginValue.slice(0, 120) : "<empty>",
+            ...details,
+        });
+    };
+
+    log("start", { hasPassword: Boolean(req.body?.password), session: Boolean(req.session) });
+
     passport.authenticate("local", (err, user, info) => {
-        if (err) return next(err);
-        if (!user) return res.status(401).json({ success: false, message: info.message });
+        if (err) {
+            console.error(`[AUTH LOGIN ${requestId}] passport error`, err);
+            return next(err);
+        }
+        if (!user) {
+            log("authentication rejected", { reason: info?.message || "No user returned" });
+            return res.status(401).json({ success: false, message: info.message });
+        }
+
+        log("passport success", {
+            userId: user.id,
+            role: user.role_name,
+            schoolId: user.school_id,
+            adminType: user.admin_type,
+        });
+
         req.logIn(user, async (err) => {
-            if (err) return next(err);
-            try { await authModel.updateLastLogin(user.id); } catch (error) { console.error("Failed to update last login:", error); }
+            if (err) {
+                console.error(`[AUTH LOGIN ${requestId}] req.logIn/session error`, err);
+                return next(err);
+            }
+
+            log("session login success", {
+                isAuthenticated: req.isAuthenticated(),
+                sessionIdPresent: Boolean(req.sessionID),
+            });
+
+            try {
+                await authModel.updateLastLogin(user.id);
+                log("last login updated", { userId: user.id });
+            } catch (error) {
+                console.error(`[AUTH LOGIN ${requestId}] Failed to update last login`, error);
+            }
+
             return res.json({ success: true, message: "Login successful.", user: {
                 id: user.id, username: user.username, email: user.email,
                 role_name: user.role_name, must_change_password: user.must_change_password,
