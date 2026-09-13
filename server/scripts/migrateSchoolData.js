@@ -3,7 +3,8 @@ require("dotenv").config();
 const { Pool } = require("pg");
 const { getDatabaseConfig } = require("../config/databaseConfig");
 
-const centralPool = require("../config/database").centralPool || require("../config/database");
+const database = require("../config/database");
+const centralPool = database.centralPool || database;
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9_]+$/;
 const EXCLUDED_TABLES = new Set([
     "eduprow_partner_commissions",
@@ -15,10 +16,10 @@ const EXCLUDED_TABLES = new Set([
     "user_sessions",
 ]);
 const GLOBAL_TABLES = ["roles", "states", "nationalities", "qualifications", "relationships"];
-const DEPENDENT_FILTERS = {
-    cbt_question_options: ["question_id"],
-    cbt_question_bank_options: ["bank_question_id"],
-    cbt_answers: ["attempt_id"],
+const DEPENDENT_PARENT = {
+    cbt_question_options: "cbt_questions",
+    cbt_question_bank_options: "cbt_question_bank",
+    cbt_answers: "cbt_attempts",
 };
 const INSERT_ORDER = [
     "roles", "states", "nationalities", "qualifications", "relationships",
@@ -67,12 +68,13 @@ const getRows = async (pool, table, columns, schoolId, context) => {
         return (await pool.query(`SELECT ${qColumns} FROM ${qTable}`)).rows;
     }
 
-    const filterColumns = DEPENDENT_FILTERS[table] || [];
-    for (const column of filterColumns) {
-        const ids = context[`${table}:${column}`] || [];
+    const parentTable = DEPENDENT_PARENT[table];
+    if (parentTable) {
+        const ids = context[`${parentTable}:id`] || [];
         if (ids.length) {
+            const filterColumn = table === "cbt_question_bank_options" ? "bank_question_id" : table === "cbt_answers" ? "attempt_id" : "question_id";
             return (await pool.query(
-                `SELECT ${qColumns} FROM ${qTable} WHERE ${quoteIdentifier(column)} = ANY($1::int[])`,
+                `SELECT ${qColumns} FROM ${qTable} WHERE ${quoteIdentifier(filterColumn)} = ANY($1::int[])`,
                 [ids]
             )).rows;
         }
@@ -95,10 +97,7 @@ const insertRows = async (pool, table, columns, rows) => {
             });
             return `(${placeholders.join(", ")})`;
         });
-        await pool.query(
-            `INSERT INTO ${qTable} (${qColumns}) VALUES ${tuples.join(", ")}`,
-            values
-        );
+        await pool.query(`INSERT INTO ${qTable} (${qColumns}) VALUES ${tuples.join(", ")}`, values);
     }
 };
 
@@ -106,13 +105,13 @@ const resetSequences = async (pool, tables) => {
     for (const table of tables) {
         const columns = await getColumns(pool, table);
         if (!columns.includes("id")) continue;
-        await pool.query(`
-            SELECT setval(
-                pg_get_serial_sequence($1, 'id'),
-                GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1),
-                TRUE
-            )
-        `, [`public.${table}`]);
+        const sequenceResult = await pool.query(`SELECT pg_get_serial_sequence($1, 'id') AS sequence_name`, [`public.${table}`]);
+        const sequenceName = sequenceResult.rows[0]?.sequence_name;
+        if (!sequenceName) continue;
+        await pool.query(
+            `SELECT setval($1, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`,
+            [sequenceName]
+        );
     }
 };
 
@@ -133,9 +132,7 @@ const migrateSchoolData = async (schoolId, options = {}) => {
             WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
             ORDER BY table_name
         `);
-        const tables = tableResult.rows
-            .map((row) => row.table_name)
-            .filter((table) => !EXCLUDED_TABLES.has(table));
+        const tables = tableResult.rows.map((row) => row.table_name).filter((table) => !EXCLUDED_TABLES.has(table));
 
         if (!options.force) {
             const centralUsers = await centralPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]);
@@ -158,26 +155,23 @@ const migrateSchoolData = async (schoolId, options = {}) => {
                 const rows = await getRows(centralPool, table, columns, schoolId, context);
                 if (!rows.length) continue;
 
-                // The users <-> students relationship is circular. Insert users first
-                // without student_id, then restore it after students are copied.
-                let insertColumns = columns;
                 let insertRowsData = rows;
                 if (table === "users" && columns.includes("student_id")) {
                     insertRowsData = rows.map((row) => ({ ...row, student_id: null }));
                 }
-                await insertRows(client, table, insertColumns, insertRowsData);
+                await insertRows(client, table, columns, insertRowsData);
                 copied[table] = rows.length;
 
-                const idColumn = columns.includes("id") ? "id" : null;
-                if (idColumn) context[`${table}:id`] = rows.map((row) => row[idColumn]).filter((id) => id != null);
+                if (columns.includes("id")) {
+                    context[`${table}:id`] = rows.map((row) => row.id).filter((id) => id != null);
+                }
             }
 
-            // Restore the circular users.student_id link now that students exist.
-            const users = await centralPool.query(
+            const studentUsers = await centralPool.query(
                 `SELECT id, student_id FROM users WHERE school_id = $1 AND student_id IS NOT NULL`,
                 [schoolId]
             );
-            for (const row of users.rows) {
+            for (const row of studentUsers.rows) {
                 await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]);
             }
 
