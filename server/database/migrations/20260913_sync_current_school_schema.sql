@@ -49,3 +49,10 @@ WHERE school_id IS NULL;
 
 ALTER TABLE timetables
     ALTER COLUMN school_id SET NOT NULL;
+
+-- The old dedicated-school schema had this column, but the current production
+-- schema does not. Parent/student relationships are represented by
+-- student_parents.relationship_id, so keeping this obsolete NOT NULL column
+-- prevents current production parent rows from being migrated.
+ALTER TABLE parents
+    DROP COLUMN IF EXISTS relationship_to_student;
