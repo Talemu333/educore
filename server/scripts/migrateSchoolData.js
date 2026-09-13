@@ -118,8 +118,8 @@ const migrateSchoolData = async (schoolId, options = {}) => {
         if (!options.force) {
             const centralUsers = await centralPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]);
             const targetUsers = await targetPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]);
-            if ((targetUsers.rows[0]?.count || 0) > 1 || (centralUsers.rows[0]?.count || 0) <= 1) {
-                return { migrated: false, reason: "School database already contains school data or there is no additional central data to migrate." };
+            if ((centralUsers.rows[0]?.count || 0) <= (targetUsers.rows[0]?.count || 0)) {
+                return { migrated: false, reason: "The dedicated school database is already at least as populated as the central school data." };
             }
         }
 
