@@ -110,7 +110,7 @@ const createSchool = async (school, admin, hashedPassword) => {
         const adminResult = await client.query(`
             INSERT INTO users (username, email, password, role_id, school_id, admin_type, must_change_password, is_active)
             VALUES ($1, $2, $3, $4, $5, 'proprietor', TRUE, TRUE)
-            RETURNING id, username, email, password, role_id, school_id, admin_type, is_active, must_change_password, created_at, updated_at;
+            RETURNING id, username, email, role_id, school_id, admin_type, is_active, must_change_password, created_at, updated_at;
         `, [admin.username, admin.email || null, hashedPassword, roleResult.rows[0].id, schoolId]);
         await client.query("COMMIT");
         await provisionSchoolDatabase(schoolId);
