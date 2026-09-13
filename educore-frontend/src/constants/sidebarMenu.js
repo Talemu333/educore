@@ -61,7 +61,7 @@ const sidebarMenu = [
     },
     { title: "Results", icon: FileText, path: "/parent-results", roles: [ROLES.PARENT] },
     { title: "Payments", icon: CreditCard, path: "/payments", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
-    { title: "Parent Financial Overview", icon: CreditCard, path: "/parent-overview", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "Parent Financial Overview", icon: CreditCard, path: "/parent-overview", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
     { title: "Payment Reports", icon: FileText, path: "/payments/reports", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
     { title: "Fee Management", icon: Wallet, path: "/admin/fees", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
     { title: "Expenses", icon: Receipt, path: "/expenses", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
