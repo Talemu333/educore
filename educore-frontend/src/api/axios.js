@@ -9,6 +9,7 @@ if (import.meta.env.PROD && !apiBaseUrl) {
 const api = axios.create({
     baseURL: apiBaseUrl || "http://localhost:5000/api",
     withCredentials: true,
+    timeout: 30000,
     headers: { "Content-Type": "application/json" },
 });
 
@@ -62,5 +63,31 @@ api.interceptors.request.use((config) => {
 
     return config;
 });
+
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (!error.response) {
+            const isTimeout = error.code === "ECONNABORTED" || error.code === "ETIMEDOUT";
+            const message = isTimeout
+                ? "The request took too long. Please check your connection and try again."
+                : "Unable to connect to EduProw. Please check your internet connection and try again.";
+
+            // Keep the error shape compatible with existing pages that read
+            // error.response.data.message, while retaining the original Axios error.
+            error.response = {
+                status: 0,
+                data: {
+                    success: false,
+                    message
+                }
+            };
+            error.isNetworkError = true;
+            error.userMessage = message;
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export default api;
