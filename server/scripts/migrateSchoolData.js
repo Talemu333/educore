@@ -23,17 +23,15 @@ const DEPENDENT_PARENT = {
 };
 const INSERT_ORDER = [
     "roles", "states", "nationalities", "qualifications", "relationships",
-    "schools",
-    "users",
-    "academic_sessions", "terms", "school_settings",
+    "schools", "users", "academic_sessions", "terms", "school_settings",
     "departments", "classes", "arms", "subjects", "fee_types", "grading_systems",
-    "students", "teachers", "parents",
-    "class_subjects", "teacher_assignments", "student_enrollments", "student_parents",
-    "fee_structures", "attendance", "student_payments", "student_results",
-    "student_promotion_history", "notifications", "announcements", "expenses", "timetables",
-    "events", "news", "gallery", "contact_messages",
-    "cbt_exams", "cbt_questions", "cbt_question_options", "cbt_question_bank", "cbt_question_bank_options",
-    "cbt_attempts", "cbt_attempt_questions", "cbt_answers", "website_pages", "website_sections",
+    "students", "teachers", "parents", "class_subjects", "teacher_assignments",
+    "student_enrollments", "student_parents", "fee_structures", "attendance",
+    "student_payments", "student_results", "student_promotion_history", "notifications",
+    "announcements", "expenses", "timetables", "events", "news", "gallery", "contact_messages",
+    "cbt_exams", "cbt_questions", "cbt_question_options", "cbt_question_bank",
+    "cbt_question_bank_options", "cbt_attempts", "cbt_attempt_questions", "cbt_answers",
+    "website_pages", "website_sections",
 ];
 
 const quoteIdentifier = (value) => {
@@ -43,10 +41,8 @@ const quoteIdentifier = (value) => {
 
 const getColumns = async (pool, table) => {
     const result = await pool.query(`
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = $1
-        ORDER BY ordinal_position
+        SELECT column_name FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position
     `, [table]);
     return result.rows.map((row) => row.column_name);
 };
@@ -54,19 +50,10 @@ const getColumns = async (pool, table) => {
 const getRows = async (pool, table, columns, schoolId, context) => {
     const qTable = quoteIdentifier(table);
     const qColumns = columns.map(quoteIdentifier).join(", ");
-
-    if (table === "schools") {
-        return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE id = $1`, [schoolId])).rows;
-    }
-    if (table === "school_settings") {
-        return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows;
-    }
-    if (columns.includes("school_id")) {
-        return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows;
-    }
-    if (GLOBAL_TABLES.includes(table)) {
-        return (await pool.query(`SELECT ${qColumns} FROM ${qTable}`)).rows;
-    }
+    if (table === "schools") return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE id = $1`, [schoolId])).rows;
+    if (table === "school_settings") return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows;
+    if (columns.includes("school_id")) return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows;
+    if (GLOBAL_TABLES.includes(table)) return (await pool.query(`SELECT ${qColumns} FROM ${qTable}`)).rows;
 
     const parentTable = DEPENDENT_PARENT[table];
     if (parentTable) {
@@ -86,9 +73,8 @@ const insertRows = async (pool, table, columns, rows) => {
     if (!rows.length) return;
     const qTable = quoteIdentifier(table);
     const qColumns = columns.map(quoteIdentifier).join(", ");
-    const batchSize = 100;
-    for (let offset = 0; offset < rows.length; offset += batchSize) {
-        const batch = rows.slice(offset, offset + batchSize);
+    for (let offset = 0; offset < rows.length; offset += 100) {
+        const batch = rows.slice(offset, offset + 100);
         const values = [];
         const tuples = batch.map((row, rowIndex) => {
             const placeholders = columns.map((column, columnIndex) => {
@@ -109,7 +95,7 @@ const resetSequences = async (pool, tables) => {
         const sequenceName = sequenceResult.rows[0]?.sequence_name;
         if (!sequenceName) continue;
         await pool.query(
-            `SELECT setval($1, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`,
+            `SELECT setval($1::regclass, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`,
             [sequenceName]
         );
     }
@@ -117,20 +103,15 @@ const resetSequences = async (pool, tables) => {
 
 const migrateSchoolData = async (schoolId, options = {}) => {
     if (!Number.isInteger(schoolId) || schoolId < 1) throw new Error("A valid school ID is required.");
-
-    const registryResult = await centralPool.query(`
-        SELECT database_name FROM school_database_registry WHERE school_id = $1 LIMIT 1
-    `, [schoolId]);
+    const registryResult = await centralPool.query(`SELECT database_name FROM school_database_registry WHERE school_id = $1 LIMIT 1`, [schoolId]);
     const databaseName = registryResult.rows[0]?.database_name;
     if (!databaseName) throw new Error(`School ${schoolId} has no database registry entry.`);
 
     const targetPool = new Pool(getDatabaseConfig(databaseName));
     try {
         const tableResult = await centralPool.query(`
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-            ORDER BY table_name
+            SELECT table_name FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name
         `);
         const tables = tableResult.rows.map((row) => row.table_name).filter((table) => !EXCLUDED_TABLES.has(table));
 
@@ -146,7 +127,6 @@ const migrateSchoolData = async (schoolId, options = {}) => {
         try {
             await client.query("BEGIN");
             await client.query(`TRUNCATE ${tables.map(quoteIdentifier).join(", ")} CASCADE`);
-
             const context = {};
             const copied = {};
             for (const table of INSERT_ORDER) {
@@ -154,26 +134,19 @@ const migrateSchoolData = async (schoolId, options = {}) => {
                 const columns = await getColumns(centralPool, table);
                 const rows = await getRows(centralPool, table, columns, schoolId, context);
                 if (!rows.length) continue;
-
-                let insertRowsData = rows;
-                if (table === "users" && columns.includes("student_id")) {
-                    insertRowsData = rows.map((row) => ({ ...row, student_id: null }));
-                }
+                const insertRowsData = table === "users" && columns.includes("student_id")
+                    ? rows.map((row) => ({ ...row, student_id: null }))
+                    : rows;
                 await insertRows(client, table, columns, insertRowsData);
                 copied[table] = rows.length;
-
-                if (columns.includes("id")) {
-                    context[`${table}:id`] = rows.map((row) => row.id).filter((id) => id != null);
-                }
+                if (columns.includes("id")) context[`${table}:id`] = rows.map((row) => row.id).filter((id) => id != null);
             }
 
             const studentUsers = await centralPool.query(
                 `SELECT id, student_id FROM users WHERE school_id = $1 AND student_id IS NOT NULL`,
                 [schoolId]
             );
-            for (const row of studentUsers.rows) {
-                await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]);
-            }
+            for (const row of studentUsers.rows) await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]);
 
             await resetSequences(client, tables);
             await client.query("COMMIT");
@@ -181,12 +154,8 @@ const migrateSchoolData = async (schoolId, options = {}) => {
         } catch (error) {
             try { await client.query("ROLLBACK"); } catch {}
             throw error;
-        } finally {
-            client.release();
-        }
-    } finally {
-        await targetPool.end();
-    }
+        } finally { client.release(); }
+    } finally { await targetPool.end(); }
 };
 
 module.exports = { migrateSchoolData };
