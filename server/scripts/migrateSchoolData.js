@@ -1,225 +1,25 @@
 require("dotenv").config();
-
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { Pool } = require("pg");
 const { getDatabaseConfig } = require("../config/databaseConfig");
-
 const database = require("../config/database");
 const centralPool = database.centralPool || database;
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9_]+$/;
 const MIGRATIONS_DIR = path.resolve(__dirname, "../database/migrations");
 const MIGRATION_CUTOFF = "20260912_sync_current_school_settings.sql";
-const EXCLUDED_TABLES = new Set([
-    "eduprow_partner_commissions",
-    "eduprow_partner_leads",
-    "eduprow_partner_settings",
-    "eduprow_partners",
-    "school_database_configs",
-    "school_database_registry",
-    "user_sessions",
-]);
+const EXCLUDED_TABLES = new Set(["eduprow_partner_commissions","eduprow_partner_leads","eduprow_partner_settings","eduprow_partners","school_database_configs","school_database_registry","user_sessions"]);
 const GLOBAL_TABLES = ["roles", "states", "nationalities", "qualifications", "relationships"];
-const DEPENDENT_PARENT = {
-    cbt_question_options: "cbt_questions",
-    cbt_question_bank_options: "cbt_question_bank",
-    cbt_answers: "cbt_attempts",
-};
-const INSERT_ORDER = [
-    "roles", "states", "nationalities", "qualifications", "relationships",
-    "schools", "users", "academic_sessions", "terms", "school_settings",
-    "departments", "classes", "arms", "subjects", "fee_types", "grading_systems",
-    "students", "teachers", "parents", "class_subjects", "teacher_assignments",
-    "student_enrollments", "student_parents", "fee_structures", "attendance",
-    "student_payments", "student_results", "student_promotion_history", "notifications",
-    "announcements", "expenses", "timetables", "events", "news", "gallery", "contact_messages",
-    "cbt_exams", "cbt_questions", "cbt_question_options", "cbt_question_bank",
-    "cbt_question_bank_options", "cbt_attempts", "cbt_attempt_questions", "cbt_answers",
-    "website_pages", "website_sections",
-];
-
-const quoteIdentifier = (value) => {
-    if (!IDENTIFIER_PATTERN.test(value)) throw new Error(`Unsafe PostgreSQL identifier: ${value}`);
-    return `"${value}"`;
-};
-
-const withContext = (error, context) => {
-    const wrapped = new Error(`${context}: ${error.message}`);
-    wrapped.code = error.code;
-    wrapped.table = context;
-    wrapped.cause = error;
-    return wrapped;
-};
-
-const getColumns = async (pool, table) => {
-    const result = await pool.query(`
-        SELECT column_name FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position
-    `, [table]);
-    return result.rows.map((row) => row.column_name);
-};
-
-const applySchemaRepairMigrations = async (pool) => {
-    const files = (await fs.readdir(MIGRATIONS_DIR, { withFileTypes: true }))
-        .filter((entry) => entry.isFile() && entry.name.endsWith(".sql") && entry.name >= MIGRATION_CUTOFF)
-        .map((entry) => entry.name)
-        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-    for (const file of files) {
-        const sql = await fs.readFile(path.join(MIGRATIONS_DIR, file), "utf8");
-        if (!sql.trim()) continue;
-        try {
-            await pool.query(sql);
-        } catch (error) {
-            throw withContext(error, `Schema repair migration ${file} failed`);
-        }
-    }
-};
-
-const getRows = async (pool, table, columns, schoolId, context) => {
-    const qTable = quoteIdentifier(table);
-    const qColumns = columns.map(quoteIdentifier).join(", ");
-    if (table === "schools") return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE id = $1`, [schoolId])).rows;
-    if (table === "school_settings") return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows;
-    if (columns.includes("school_id")) return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows;
-    if (GLOBAL_TABLES.includes(table)) return (await pool.query(`SELECT ${qColumns} FROM ${qTable}`)).rows;
-
-    const parentTable = DEPENDENT_PARENT[table];
-    if (parentTable) {
-        const ids = context[`${parentTable}:id`] || [];
-        if (ids.length) {
-            const filterColumn = table === "cbt_question_bank_options" ? "bank_question_id" : table === "cbt_answers" ? "attempt_id" : "question_id";
-            return (await pool.query(
-                `SELECT ${qColumns} FROM ${qTable} WHERE ${quoteIdentifier(filterColumn)} = ANY($1::int[])`,
-                [ids]
-            )).rows;
-        }
-    }
-    return [];
-};
-
-const insertRows = async (pool, table, columns, rows) => {
-    if (!rows.length) return;
-    try {
-        const qTable = quoteIdentifier(table);
-        const qColumns = columns.map(quoteIdentifier).join(", ");
-        for (let offset = 0; offset < rows.length; offset += 100) {
-            const batch = rows.slice(offset, offset + 100);
-            const values = [];
-            const tuples = batch.map((row, rowIndex) => {
-                const placeholders = columns.map((column, columnIndex) => {
-                    values.push(row[column] === undefined ? null : row[column]);
-                    return `$${rowIndex * columns.length + columnIndex + 1}`;
-                });
-                return `(${placeholders.join(", ")})`;
-            });
-            await pool.query(`INSERT INTO ${qTable} (${qColumns}) VALUES ${tuples.join(", ")}`, values);
-        }
-    } catch (error) {
-        throw withContext(error, `Migration insert failed for table ${table}`);
-    }
-};
-
-const resetSequences = async (pool, tables) => {
-    for (const table of tables) {
-        try {
-            const columns = await getColumns(pool, table);
-            if (!columns.includes("id")) continue;
-            const sequenceResult = await pool.query(`SELECT pg_get_serial_sequence($1, 'id') AS sequence_name`, [`public.${table}`]);
-            const sequenceName = sequenceResult.rows[0]?.sequence_name;
-            if (!sequenceName) continue;
-            await pool.query(
-                `SELECT setval($1::regclass, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`,
-                [sequenceName]
-            );
-        } catch (error) {
-            throw withContext(error, `Migration sequence reset failed for table ${table}`);
-        }
-    }
-};
-
-const migrateSchoolData = async (schoolId, options = {}) => {
-    if (!Number.isInteger(schoolId) || schoolId < 1) throw new Error("A valid school ID is required.");
-    const registryResult = await centralPool.query(`SELECT database_name FROM school_database_registry WHERE school_id = $1 LIMIT 1`, [schoolId]);
-    const databaseName = registryResult.rows[0]?.database_name;
-    if (!databaseName) throw new Error(`School ${schoolId} has no database registry entry.`);
-
-    const targetPool = new Pool(getDatabaseConfig(databaseName));
-    try {
-        // Repair the existing isolated database before comparing schemas or copying data.
-        // This uses the current migrations, never server/database/schema/.
-        await applySchemaRepairMigrations(targetPool);
-
-        const tableResult = await centralPool.query(`
-            SELECT table_name FROM information_schema.tables
-            WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name
-        `);
-        const tables = tableResult.rows.map((row) => row.table_name).filter((table) => !EXCLUDED_TABLES.has(table));
-
-        const schemaMismatches = [];
-        for (const table of INSERT_ORDER) {
-            const [sourceColumns, targetColumns] = await Promise.all([
-                getColumns(centralPool, table),
-                getColumns(targetPool, table),
-            ]);
-            if (!targetColumns.length) {
-                schemaMismatches.push(`${table}: missing table`);
-                continue;
-            }
-            const missingColumns = sourceColumns.filter((column) => !targetColumns.includes(column));
-            if (missingColumns.length) schemaMismatches.push(`${table}: missing columns [${missingColumns.join(", ")}]`);
-        }
-        if (schemaMismatches.length) {
-            throw new Error(`Dedicated database ${databaseName} schema is behind the central database. ${schemaMismatches.join("; ")}`);
-        }
-
-        if (!options.force) {
-            const centralUsers = await centralPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]);
-            const targetUsers = await targetPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]);
-            if ((centralUsers.rows[0]?.count || 0) <= (targetUsers.rows[0]?.count || 0)) {
-                return { migrated: false, reason: "The dedicated school database is already at least as populated as the central school data." };
-            }
-        }
-
-        const client = await targetPool.connect();
-        try {
-            await client.query("BEGIN");
-            await client.query(`TRUNCATE ${tables.map(quoteIdentifier).join(", ")} CASCADE`);
-            const context = {};
-            const copied = {};
-            for (const table of INSERT_ORDER) {
-                if (!tables.includes(table)) continue;
-                const columns = await getColumns(centralPool, table);
-                const rows = await getRows(centralPool, table, columns, schoolId, context);
-                if (!rows.length) continue;
-                const insertRowsData = table === "users" && columns.includes("student_id")
-                    ? rows.map((row) => ({ ...row, student_id: null }))
-                    : rows;
-                await insertRows(client, table, columns, insertRowsData);
-                copied[table] = rows.length;
-                if (columns.includes("id")) context[`${table}:id`] = rows.map((row) => row.id).filter((id) => id != null);
-            }
-
-            const studentUsers = await centralPool.query(
-                `SELECT id, student_id FROM users WHERE school_id = $1 AND student_id IS NOT NULL`,
-                [schoolId]
-            );
-            for (const row of studentUsers.rows) {
-                try {
-                    await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]);
-                } catch (error) {
-                    throw withContext(error, `Migration student-user link failed for user ${row.id}`);
-                }
-            }
-
-            await resetSequences(client, tables);
-            await client.query("COMMIT");
-            return { migrated: true, copied };
-        } catch (error) {
-            try { await client.query("ROLLBACK"); } catch {}
-            throw error;
-        } finally { client.release(); }
-    } finally { await targetPool.end(); }
-};
-
+const DEPENDENT_PARENT = { cbt_question_options: "cbt_questions", cbt_question_bank_options: "cbt_question_bank", cbt_answers: "cbt_attempts" };
+const INSERT_ORDER = ["roles","states","nationalities","qualifications","relationships","schools","users","academic_sessions","terms","school_settings","departments","classes","arms","subjects","fee_types","grading_systems","students","teachers","parents","class_subjects","teacher_assignments","student_enrollments","student_parents","fee_structures","attendance","student_payments","student_results","student_promotion_history","notifications","announcements","expenses","timetables","events","news","gallery","contact_messages","cbt_exams","cbt_questions","cbt_question_options","cbt_question_bank","cbt_question_bank_options","cbt_attempts","cbt_attempt_questions","cbt_answers","website_pages","website_sections"];
+const quoteIdentifier = (value) => { if (!IDENTIFIER_PATTERN.test(value)) throw new Error(`Unsafe PostgreSQL identifier: ${value}`); return `"${value}"`; };
+const withContext = (error, context) => { const wrapped = new Error(`${context}: ${error.message}`); wrapped.code = error.code; wrapped.table = context; wrapped.cause = error; return wrapped; };
+const getColumns = async (pool, table) => { const result = await pool.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position`, [table]); return result.rows.map((row) => row.column_name); };
+const getColumnType = async (pool, table, column) => { const result = await pool.query(`SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2 LIMIT 1`, [table, column]); return result.rows[0]?.data_type || null; };
+const applySchemaRepairMigrations = async (pool) => { const files = (await fs.readdir(MIGRATIONS_DIR, { withFileTypes: true })).filter((entry) => entry.isFile() && entry.name.endsWith(".sql") && entry.name >= MIGRATION_CUTOFF).map((entry) => entry.name).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })); for (const file of files) { const sql = await fs.readFile(path.join(MIGRATIONS_DIR, file), "utf8"); if (!sql.trim()) continue; try { await pool.query(sql); } catch (error) { throw withContext(error, `Schema repair migration ${file} failed`); } } };
+const getRows = async (pool, table, columns, schoolId, context) => { const qTable = quoteIdentifier(table); const qColumns = columns.map(quoteIdentifier).join(", "); if (table === "schools") return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE id = $1`, [schoolId])).rows; if (table === "school_settings") return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows; if (columns.includes("school_id")) return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE school_id = $1`, [schoolId])).rows; if (GLOBAL_TABLES.includes(table)) return (await pool.query(`SELECT ${qColumns} FROM ${qTable}`)).rows; const parentTable = DEPENDENT_PARENT[table]; if (parentTable) { const ids = context[`${parentTable}:id`] || []; if (ids.length) { const filterColumn = table === "cbt_question_bank_options" ? "bank_question_id" : table === "cbt_answers" ? "attempt_id" : "question_id"; return (await pool.query(`SELECT ${qColumns} FROM ${qTable} WHERE ${quoteIdentifier(filterColumn)} = ANY($1::int[])`, [ids])).rows; } } return []; };
+const normalizeRowsForTarget = async (targetPool, table, columns, rows) => { if (!rows.length) return rows; if (table === "teachers" && columns.includes("status") && await getColumnType(targetPool, table, "status") === "boolean") { return rows.map((row) => { const value = row.status; if (value === null || value === undefined || typeof value === "boolean") return row; const normalized = String(value).trim().toLowerCase(); if (["active","true","1","yes","y"].includes(normalized)) return { ...row, status: true }; if (["inactive","false","0","no","n","disabled"].includes(normalized)) return { ...row, status: false }; throw new Error(`Unsupported legacy teachers.status value: ${value}`); }); } return rows; };
+const insertRows = async (pool, table, columns, rows) => { if (!rows.length) return; try { const qTable = quoteIdentifier(table); const qColumns = columns.map(quoteIdentifier).join(", "); for (let offset = 0; offset < rows.length; offset += 100) { const batch = rows.slice(offset, offset + 100); const values = []; const tuples = batch.map((row, rowIndex) => { const placeholders = columns.map((column, columnIndex) => { values.push(row[column] === undefined ? null : row[column]); return `$${rowIndex * columns.length + columnIndex + 1}`; }); return `(${placeholders.join(", ")})`; }); await pool.query(`INSERT INTO ${qTable} (${qColumns}) VALUES ${tuples.join(", ")}`, values); } } catch (error) { throw withContext(error, `Migration insert failed for table ${table}`); } };
+const resetSequences = async (pool, tables) => { for (const table of tables) { try { const columns = await getColumns(pool, table); if (!columns.includes("id")) continue; const sequenceResult = await pool.query(`SELECT pg_get_serial_sequence($1, 'id') AS sequence_name`, [`public.${table}`]); const sequenceName = sequenceResult.rows[0]?.sequence_name; if (!sequenceName) continue; await pool.query(`SELECT setval($1::regclass, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`, [sequenceName]); } catch (error) { throw withContext(error, `Migration sequence reset failed for table ${table}`); } } };
+const migrateSchoolData = async (schoolId, options = {}) => { if (!Number.isInteger(schoolId) || schoolId < 1) throw new Error("A valid school ID is required."); const registryResult = await centralPool.query(`SELECT database_name FROM school_database_registry WHERE school_id = $1 LIMIT 1`, [schoolId]); const databaseName = registryResult.rows[0]?.database_name; if (!databaseName) throw new Error(`School ${schoolId} has no database registry entry.`); const targetPool = new Pool(getDatabaseConfig(databaseName)); try { await applySchemaRepairMigrations(targetPool); const tableResult = await centralPool.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`); const tables = tableResult.rows.map((row) => row.table_name).filter((table) => !EXCLUDED_TABLES.has(table)); const schemaMismatches = []; for (const table of INSERT_ORDER) { const [sourceColumns, targetColumns] = await Promise.all([getColumns(centralPool, table), getColumns(targetPool, table)]); if (!targetColumns.length) { schemaMismatches.push(`${table}: missing table`); continue; } const missingColumns = sourceColumns.filter((column) => !targetColumns.includes(column)); if (missingColumns.length) schemaMismatches.push(`${table}: missing columns [${missingColumns.join(", ")}]`); } if (schemaMismatches.length) throw new Error(`Dedicated database ${databaseName} schema is behind the central database. ${schemaMismatches.join("; ")}`); if (!options.force) { const centralUsers = await centralPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]); const targetUsers = await targetPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]); if ((centralUsers.rows[0]?.count || 0) <= (targetUsers.rows[0]?.count || 0)) return { migrated: false, reason: "The dedicated school database is already at least as populated as the central school data." }; } const client = await targetPool.connect(); try { await client.query("BEGIN"); await client.query(`TRUNCATE ${tables.map(quoteIdentifier).join(", ")} CASCADE`); const context = {}; const copied = {}; for (const table of INSERT_ORDER) { if (!tables.includes(table)) continue; const columns = await getColumns(centralPool, table); const sourceRows = await getRows(centralPool, table, columns, schoolId, context); const rows = await normalizeRowsForTarget(targetPool, table, columns, sourceRows); if (!rows.length) continue; const insertRowsData = table === "users" && columns.includes("student_id") ? rows.map((row) => ({ ...row, student_id: null })) : rows; await insertRows(client, table, columns, insertRowsData); copied[table] = rows.length; if (columns.includes("id")) context[`${table}:id`] = rows.map((row) => row.id).filter((id) => id != null); } const studentUsers = await centralPool.query(`SELECT id, student_id FROM users WHERE school_id = $1 AND student_id IS NOT NULL`, [schoolId]); for (const row of studentUsers.rows) { try { await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]); } catch (error) { throw withContext(error, `Migration student-user link failed for user ${row.id}`); } } await resetSequences(client, tables); await client.query("COMMIT"); return { migrated: true, copied }; } catch (error) { try { await client.query("ROLLBACK"); } catch {} throw error; } finally { client.release(); } } finally { await targetPool.end(); } };
 module.exports = { migrateSchoolData };
