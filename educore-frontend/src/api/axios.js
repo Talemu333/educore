@@ -24,6 +24,15 @@ api.interceptors.request.use((config) => {
     const path = window.location.pathname;
     const hostname = window.location.hostname.toLowerCase();
     const schoolIdFromUrl = new URLSearchParams(window.location.search).get("schoolId");
+    const selectedSchoolId = sessionStorage.getItem("educore_super_admin_school_id");
+
+    // A Super Admin may operate inside a selected school's dashboard. Send
+    // the selected school context with every API request. The backend only
+    // honors X-School-Id for an authenticated Super Admin, so this cannot
+    // change the school context of ordinary school users.
+    if (selectedSchoolId) {
+        config.headers["X-School-Id"] = selectedSchoolId;
+    }
 
     if (path === "/settings" && schoolIdFromUrl) {
         const schoolId = sessionStorage.getItem("educore_super_admin_school_id");
