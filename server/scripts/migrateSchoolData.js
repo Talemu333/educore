@@ -39,6 +39,14 @@ const quoteIdentifier = (value) => {
     return `"${value}"`;
 };
 
+const withContext = (error, context) => {
+    const wrapped = new Error(`${context}: ${error.message}`);
+    wrapped.code = error.code;
+    wrapped.table = context;
+    wrapped.cause = error;
+    return wrapped;
+};
+
 const getColumns = async (pool, table) => {
     const result = await pool.query(`
         SELECT column_name FROM information_schema.columns
@@ -71,33 +79,41 @@ const getRows = async (pool, table, columns, schoolId, context) => {
 
 const insertRows = async (pool, table, columns, rows) => {
     if (!rows.length) return;
-    const qTable = quoteIdentifier(table);
-    const qColumns = columns.map(quoteIdentifier).join(", ");
-    for (let offset = 0; offset < rows.length; offset += 100) {
-        const batch = rows.slice(offset, offset + 100);
-        const values = [];
-        const tuples = batch.map((row, rowIndex) => {
-            const placeholders = columns.map((column, columnIndex) => {
-                values.push(row[column] === undefined ? null : row[column]);
-                return `$${rowIndex * columns.length + columnIndex + 1}`;
+    try {
+        const qTable = quoteIdentifier(table);
+        const qColumns = columns.map(quoteIdentifier).join(", ");
+        for (let offset = 0; offset < rows.length; offset += 100) {
+            const batch = rows.slice(offset, offset + 100);
+            const values = [];
+            const tuples = batch.map((row, rowIndex) => {
+                const placeholders = columns.map((column, columnIndex) => {
+                    values.push(row[column] === undefined ? null : row[column]);
+                    return `$${rowIndex * columns.length + columnIndex + 1}`;
+                });
+                return `(${placeholders.join(", ")})`;
             });
-            return `(${placeholders.join(", ")})`;
-        });
-        await pool.query(`INSERT INTO ${qTable} (${qColumns}) VALUES ${tuples.join(", ")}`, values);
+            await pool.query(`INSERT INTO ${qTable} (${qColumns}) VALUES ${tuples.join(", ")}`, values);
+        }
+    } catch (error) {
+        throw withContext(error, `Migration insert failed for table ${table}`);
     }
 };
 
 const resetSequences = async (pool, tables) => {
     for (const table of tables) {
-        const columns = await getColumns(pool, table);
-        if (!columns.includes("id")) continue;
-        const sequenceResult = await pool.query(`SELECT pg_get_serial_sequence($1, 'id') AS sequence_name`, [`public.${table}`]);
-        const sequenceName = sequenceResult.rows[0]?.sequence_name;
-        if (!sequenceName) continue;
-        await pool.query(
-            `SELECT setval($1::regclass, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`,
-            [sequenceName]
-        );
+        try {
+            const columns = await getColumns(pool, table);
+            if (!columns.includes("id")) continue;
+            const sequenceResult = await pool.query(`SELECT pg_get_serial_sequence($1, 'id') AS sequence_name`, [`public.${table}`]);
+            const sequenceName = sequenceResult.rows[0]?.sequence_name;
+            if (!sequenceName) continue;
+            await pool.query(
+                `SELECT setval($1::regclass, GREATEST(COALESCE((SELECT MAX(id) FROM ${quoteIdentifier(table)}), 1), 1), TRUE)`,
+                [sequenceName]
+            );
+        } catch (error) {
+            throw withContext(error, `Migration sequence reset failed for table ${table}`);
+        }
     }
 };
 
@@ -114,6 +130,15 @@ const migrateSchoolData = async (schoolId, options = {}) => {
             WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name
         `);
         const tables = tableResult.rows.map((row) => row.table_name).filter((table) => !EXCLUDED_TABLES.has(table));
+
+        const missingTargetTables = [];
+        for (const table of INSERT_ORDER) {
+            const targetColumns = await getColumns(targetPool, table);
+            if (!targetColumns.length) missingTargetTables.push(table);
+        }
+        if (missingTargetTables.length) {
+            throw new Error(`Dedicated database ${databaseName} is missing required tables: ${missingTargetTables.join(", ")}`);
+        }
 
         if (!options.force) {
             const centralUsers = await centralPool.query(`SELECT COUNT(*)::int AS count FROM users WHERE school_id = $1`, [schoolId]);
@@ -146,7 +171,13 @@ const migrateSchoolData = async (schoolId, options = {}) => {
                 `SELECT id, student_id FROM users WHERE school_id = $1 AND student_id IS NOT NULL`,
                 [schoolId]
             );
-            for (const row of studentUsers.rows) await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]);
+            for (const row of studentUsers.rows) {
+                try {
+                    await client.query(`UPDATE users SET student_id = $1 WHERE id = $2`, [row.student_id, row.id]);
+                } catch (error) {
+                    throw withContext(error, `Migration student-user link failed for user ${row.id}`);
+                }
+            }
 
             await resetSequences(client, tables);
             await client.query("COMMIT");
