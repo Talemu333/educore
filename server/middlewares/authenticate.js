@@ -27,15 +27,20 @@ module.exports = async (req, res, next) => {
         req.superAdminSchoolContext = schoolId;
     }
 
-    // Normal school users use their dedicated database. School 1 is the only
-    // legacy school whose existing central data must be copied into its new
-    // database. The migration script has its own user-count guard, so after
-    // the dedicated database is populated this becomes a no-op.
-    if (roleName !== "super admin" && req.user?.school_id) {
-        try {
-            const schoolId = Number(req.user.school_id);
+    // Every authenticated school request must execute against its dedicated
+    // database. Super Admin is allowed to operate on a selected school when
+    // X-School-Id is supplied by the frontend. Normal school users use the
+    // school_id attached to their authenticated account.
+    const schoolId = Number(req.user?.school_id);
+    const hasSchoolContext = Number.isInteger(schoolId) && schoolId > 0;
 
-            if (schoolId === 1) {
+    if (hasSchoolContext) {
+        try {
+            // School 1 is the only legacy school whose existing central data
+            // must be copied into its new database. The migration script has
+            // its own user-count guard, so after the dedicated database is
+            // populated this becomes a no-op.
+            if (roleName !== "super admin" && schoolId === 1) {
                 await migrateSchoolData(1);
             }
 
