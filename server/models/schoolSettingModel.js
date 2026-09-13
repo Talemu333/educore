@@ -28,9 +28,9 @@ const getSchoolSettingsBySlug = async (slug) => {
 
     if (!normalizedSlug) return null;
 
-    // Public tenant resolution should not depend on optional school-settings
-    // columns such as website_slug, current_session_id or current_term_id.
-    // The school record + school_id are the core tenant boundary.
+    // Keep the permanent website slug usable even when a school changes its
+    // display name. The slug is a tenant identifier and should not silently
+    // change when branding is edited.
     const result = await pool.query(`
         SELECT
             ss.*,
@@ -39,7 +39,8 @@ const getSchoolSettingsBySlug = async (slug) => {
         JOIN schools s ON s.id = ss.school_id
         WHERE s.is_active = TRUE
           AND (
-              LOWER(TRIM(s.school_name)) = LOWER(TRIM($1))
+              LOWER(TRIM(ss.website_slug)) = $1
+              OR LOWER(TRIM(s.school_name)) = $1
               OR LOWER(
                   regexp_replace(
                       regexp_replace(
@@ -75,23 +76,64 @@ const getSchoolSettingsBySlug = async (slug) => {
 };
 
 const updateSchoolSettings = async (data) => {
-    const query = `
-        UPDATE school_settings
-        SET school_name = $1, school_logo = $2, school_motto = $3, school_level = $4,
-            admission_prefix = $5, student_prefix = $6, teacher_prefix = $7, parent_prefix = $8,
-            school_email = $9, school_phone = $10, school_address = $11, primary_color = $12,
-            secondary_color = $13, current_session_id = $14, current_term_id = $15,
-            ca_max_score = $16, exam_max_score = $17, passing_score = $18,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $19 AND school_id = $20 RETURNING *;
-    `;
-    const values = [data.school_name,data.school_logo||null,data.school_motto||null,data.school_level||null,
-        data.admission_prefix||null,data.student_prefix||null,data.teacher_prefix||null,data.parent_prefix||null,
-        data.school_email||null,data.school_phone||null,data.school_address||null,data.primary_color,
-        data.secondary_color,data.current_session_id||null,data.current_term_id||null,data.ca_max_score,
-        data.exam_max_score,data.passing_score,data.id,data.school_id];
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        await client.query(
+            `
+                UPDATE schools
+                SET school_name = $1
+                WHERE id = $2
+            `,
+            [data.school_name, data.school_id]
+        );
+
+        const result = await client.query(
+            `
+                UPDATE school_settings
+                SET school_name = $1, school_logo = $2, school_motto = $3, school_level = $4,
+                    admission_prefix = $5, student_prefix = $6, teacher_prefix = $7, parent_prefix = $8,
+                    school_email = $9, school_phone = $10, school_address = $11, primary_color = $12,
+                    secondary_color = $13, current_session_id = $14, current_term_id = $15,
+                    ca_max_score = $16, exam_max_score = $17, passing_score = $18,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $19 AND school_id = $20
+                RETURNING *;
+            `,
+            [
+                data.school_name,
+                data.school_logo || null,
+                data.school_motto || null,
+                data.school_level || null,
+                data.admission_prefix || null,
+                data.student_prefix || null,
+                data.teacher_prefix || null,
+                data.parent_prefix || null,
+                data.school_email || null,
+                data.school_phone || null,
+                data.school_address || null,
+                data.primary_color,
+                data.secondary_color,
+                data.current_session_id || null,
+                data.current_term_id || null,
+                data.ca_max_score,
+                data.exam_max_score,
+                data.passing_score,
+                data.id,
+                data.school_id
+            ]
+        );
+
+        await client.query("COMMIT");
+        return result.rows[0];
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 module.exports = { getSchoolSettings, getSchoolSettingsBySlug, updateSchoolSettings };
