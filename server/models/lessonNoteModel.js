@@ -45,11 +45,7 @@ const list = async (filters, schoolId, user) => {
         where.push(`ln.teacher_id = $${values.length}`);
     }
 
-    for (const [key, column] of [
-        ["class_id", "ln.class_id"], ["subject_id", "ln.subject_id"],
-        ["session_id", "ln.session_id"], ["term_id", "ln.term_id"],
-        ["week_number", "ln.week_number"], ["status", "ln.status"]
-    ]) {
+    for (const [key, column] of [["class_id", "ln.class_id"], ["subject_id", "ln.subject_id"], ["session_id", "ln.session_id"], ["term_id", "ln.term_id"], ["week_number", "ln.week_number"], ["status", "ln.status"]]) {
         if (filters[key] !== undefined && filters[key] !== "") {
             values.push(filters[key]);
             where.push(`${column} = $${values.length}`);
@@ -80,9 +76,8 @@ const validateContext = async (data, schoolId) => {
         JOIN users u ON u.id = t.user_id AND u.school_id = $6
         WHERE ta.teacher_id = $1 AND ta.subject_id = $2 AND ta.class_id = $3
           AND ta.session_id = $4 AND ta.term_id = $5
-          AND ($7::integer IS NULL OR ta.arm_id = $7 OR ta.arm_id IS NULL)
         LIMIT 1
-    `, [data.teacher_id, data.subject_id, data.class_id, data.session_id, data.term_id, schoolId, data.arm_id || null]);
+    `, [data.teacher_id, data.subject_id, data.class_id, data.session_id, data.term_id, schoolId]);
     return Boolean(result.rows[0]);
 };
 
@@ -124,12 +119,7 @@ const update = async (id, data, schoolId) => {
 };
 
 const setStatus = async (id, status, reviewerId, comment, schoolId) => {
-    const result = await pool.query(`
-        UPDATE lesson_notes
-        SET status=$1, reviewed_by=$2, reviewed_at=CURRENT_TIMESTAMP, review_comment=$3
-        WHERE id=$4 AND school_id=$5
-        RETURNING id
-    `, [status, reviewerId || null, comment || null, id, schoolId]);
+    const result = await pool.query(`UPDATE lesson_notes SET status=$1, reviewed_by=$2, reviewed_at=CURRENT_TIMESTAMP, review_comment=$3 WHERE id=$4 AND school_id=$5 RETURNING id`, [status, reviewerId || null, comment || null, id, schoolId]);
     return result.rows[0] ? getById(result.rows[0].id, schoolId) : null;
 };
 
@@ -141,18 +131,15 @@ const duplicate = async (id, teacherId, schoolId) => {
         session_id: source.session_id, term_id: source.term_id, week_number: source.week_number,
         lesson_date: source.lesson_date, topic: source.topic, sub_topic: source.sub_topic,
         duration: source.duration, objectives: source.objectives, instructional_materials: source.instructional_materials,
-        previous_knowledge: source.previous_knowledge, introduction: source.introduction,
-        lesson_development: source.lesson_development, teacher_activities: source.teacher_activities,
-        student_activities: source.student_activities, evaluation: source.evaluation, conclusion: source.conclusion,
-        assignment: source.assignment, references: source.references, remarks: source.remarks, status: "draft"
+        previous_knowledge: source.previous_knowledge, introduction: source.introduction, lesson_development: source.lesson_development,
+        teacher_activities: source.teacher_activities, student_activities: source.student_activities,
+        evaluation: source.evaluation, conclusion: source.conclusion, assignment: source.assignment,
+        references: source.references, remarks: source.remarks, status: "draft"
     }, schoolId);
 };
 
 const getMeta = async (schoolId, user) => {
-    const role = user?.role_name;
-    const teacherIdResult = role === "Teacher"
-        ? await pool.query("SELECT id FROM teachers WHERE user_id=$1", [user.id])
-        : { rows: [] };
+    const teacherIdResult = user?.role_name === "Teacher" ? await pool.query("SELECT id FROM teachers WHERE user_id=$1", [user.id]) : { rows: [] };
     const teacherId = teacherIdResult.rows[0]?.id;
     const assignments = await pool.query(`
         SELECT DISTINCT ta.teacher_id, ta.class_id, ta.subject_id, ta.session_id, ta.term_id,
