@@ -23,9 +23,9 @@ const DEPENDENT_PARENT = {
 };
 const INSERT_ORDER = [
     "roles", "states", "nationalities", "qualifications", "relationships",
-    "schools", "school_settings",
+    "schools",
     "users",
-    "academic_sessions", "terms",
+    "academic_sessions", "terms", "school_settings",
     "departments", "classes", "arms", "subjects", "fee_types", "grading_systems",
     "students", "teachers", "parents",
     "class_subjects", "teacher_assignments", "student_enrollments", "student_parents",
