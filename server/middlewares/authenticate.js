@@ -13,7 +13,16 @@ module.exports = async (req, res, next) => {
     const roleName = req.user?.role_name?.trim()?.toLowerCase();
     const requestedSchoolId = req.get("X-School-Id");
 
-    if (roleName === "super admin" && requestedSchoolId) {
+    // Super Admin is a platform-level account. Its school_id is only a
+    // required database placeholder and must never automatically select that
+    // school for platform endpoints such as /auth/me and /super-admin/schools.
+    // A Super Admin enters a school context only when the frontend explicitly
+    // supplies X-School-Id.
+    if (roleName === "super admin") {
+        if (!requestedSchoolId) {
+            return next();
+        }
+
         const schoolId = Number(requestedSchoolId);
 
         if (!Number.isInteger(schoolId) || schoolId < 1) {
@@ -25,12 +34,18 @@ module.exports = async (req, res, next) => {
 
         req.user.school_id = schoolId;
         req.superAdminSchoolContext = schoolId;
+
+        try {
+            const schoolPool = await getSchoolDatabase(schoolId);
+            req.schoolDatabase = schoolPool;
+            req.schoolDatabaseSchoolId = schoolId;
+            return runWithSchoolDatabase(schoolPool, () => next());
+        } catch (error) {
+            return next(error);
+        }
     }
 
-    // Every authenticated school request must execute against its dedicated
-    // database. Super Admin is allowed to operate on a selected school when
-    // X-School-Id is supplied by the frontend. Normal school users use the
-    // school_id attached to their authenticated account.
+    // Normal school users always use the school_id attached to their account.
     const schoolId = Number(req.user?.school_id);
     const hasSchoolContext = Number.isInteger(schoolId) && schoolId > 0;
 
@@ -40,7 +55,7 @@ module.exports = async (req, res, next) => {
             // must be copied into its new database. The migration script has
             // its own user-count guard, so after the dedicated database is
             // populated this becomes a no-op.
-            if (roleName !== "super admin" && schoolId === 1) {
+            if (schoolId === 1) {
                 await migrateSchoolData(1);
             }
 
