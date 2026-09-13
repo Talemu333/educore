@@ -20,6 +20,15 @@ const updateSchoolSettings = async (data, schoolId) => {
     const existingSettings = await schoolSettingsModel.getSchoolSettings(schoolId);
     if (!existingSettings) throw new ApiError(404, "School settings not found.");
 
+    const schoolName = String(data.school_name || "").trim();
+    if (!schoolName) {
+        throw new ApiError(400, "School name is required.");
+    }
+
+    if (schoolName.length > 150) {
+        throw new ApiError(400, "School name must not exceed 150 characters.");
+    }
+
     if (data.current_session_id) {
         const session = await sessionModel.getSessionById(data.current_session_id, schoolId);
         if (!session) throw new ApiError(404, "Selected academic session not found.");
@@ -51,6 +60,7 @@ const updateSchoolSettings = async (data, schoolId) => {
 
     return schoolSettingsModel.updateSchoolSettings({
         ...data,
+        school_name: schoolName,
         id: existingSettings.id,
         school_id: schoolId
     });
