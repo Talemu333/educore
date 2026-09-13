@@ -30,7 +30,12 @@ export const usePromotionSetup = () => {
                     error?.userMessage ||
                     "Unable to load promotion information. Please try again.";
 
-                toast.error(message);
+                // Keep configuration/server errors visible long enough for the
+                // user to read them while the page shows its error state.
+                toast.error(message, {
+                    id: "promotion-setup-error",
+                    duration: 10000
+                });
 
                 throw error;
 
