@@ -1,4 +1,31 @@
 const pool = require("../config/database");
+const path = require("node:path");
+const { execFile } = require("node:child_process");
+const { promisify } = require("node:util");
+
+const execFileAsync = promisify(execFile);
+const provisionerPath = path.resolve(__dirname, "../scripts/provisionSchoolDatabase.js");
+
+const provisionSchoolDatabase = async (schoolId) => {
+    try {
+        await execFileAsync(process.execPath, [provisionerPath, String(schoolId)], {
+            cwd: path.resolve(__dirname, ".."),
+            env: process.env,
+            maxBuffer: 10 * 1024 * 1024,
+        });
+    } catch (error) {
+        const output = [error?.stdout, error?.stderr, error?.message]
+            .filter(Boolean)
+            .join("\n")
+            .trim();
+        const provisioningError = new Error(
+            `School database provisioning failed for school ${schoolId}.${output ? ` ${output}` : ""}`
+        );
+        provisioningError.status = 503;
+        provisioningError.cause = error;
+        throw provisioningError;
+    }
+};
 
 const getSchools = async () => {
     const result = await pool.query(`
@@ -32,17 +59,12 @@ const getSchoolById = async (schoolId) => {
 
 const createSchool = async (school, admin, hashedPassword) => {
     const client = await pool.connect();
+    let schoolId;
     try {
         await client.query("BEGIN");
 
         const schoolResult = await client.query(`
-            INSERT INTO schools (
-                school_name,
-                school_code,
-                email,
-                phone,
-                address
-            )
+            INSERT INTO schools (school_name, school_code, email, phone, address)
             VALUES ($1::text, $2::text, $3, $4, $5)
             RETURNING id;
         `, [
@@ -53,8 +75,7 @@ const createSchool = async (school, admin, hashedPassword) => {
             school.school_address || null
         ]);
 
-        const schoolId = schoolResult.rows[0].id;
-
+        schoolId = schoolResult.rows[0].id;
         const schoolSlug = String(school.school_name || "")
             .trim()
             .toLowerCase()
@@ -72,32 +93,25 @@ const createSchool = async (school, admin, hashedPassword) => {
                     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             RETURNING *;
         `, [
-            schoolId,
-            school.school_name,
-            schoolSlug,
-            school.admission_prefix,
-            school.school_email || null,
-            school.school_phone || null,
-            school.school_address || null,
-            school.school_motto || null,
+            schoolId, school.school_name, schoolSlug, school.admission_prefix,
+            school.school_email || null, school.school_phone || null,
+            school.school_address || null, school.school_motto || null,
             school.school_level || null
         ]);
 
         const createdSchool = settingsResult.rows[0];
 
-        // New schools are registered immediately, but remain inactive until
-        // their dedicated database has been provisioned and verified.
         const registryExists = await client.query(`
             SELECT to_regclass('public.school_database_registry') AS table_name
         `);
-
         if (registryExists.rows[0]?.table_name) {
             await client.query(`
-                INSERT INTO school_database_registry (
-                    school_id, database_name, website_slug, is_active
-                )
+                INSERT INTO school_database_registry (school_id, database_name, website_slug, is_active)
                 VALUES ($1, $2, $3, FALSE)
-                ON CONFLICT (school_id) DO NOTHING
+                ON CONFLICT (school_id) DO UPDATE SET
+                    database_name = EXCLUDED.database_name,
+                    website_slug = EXCLUDED.website_slug,
+                    is_active = FALSE
             `, [schoolId, `educore_school_${schoolId}`, schoolSlug]);
         }
 
@@ -114,9 +128,20 @@ const createSchool = async (school, admin, hashedPassword) => {
             roleResult.rows[0].id, schoolId]);
 
         await client.query("COMMIT");
+
+        // CREATE DATABASE cannot be part of the central transaction. The registry
+        // remains inactive until the dedicated database is fully verified.
+        await provisionSchoolDatabase(schoolId);
+
+        await pool.query(`
+            UPDATE school_database_registry
+            SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP
+            WHERE school_id = $1;
+        `, [schoolId]);
+
         return { school: createdSchool, administrator: adminResult.rows[0] };
     } catch (error) {
-        await client.query("ROLLBACK");
+        try { await client.query("ROLLBACK"); } catch {}
         throw error;
     } finally {
         client.release();
