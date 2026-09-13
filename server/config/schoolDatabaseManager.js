@@ -1,8 +1,13 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { Pool } = require("pg");
-const centralPool = require("./database");
+const database = require("./database");
 const { getDatabaseConfig } = require("./databaseConfig");
+
+// Always use the real central pool for registry/configuration lookups.
+// `database` is a context-aware wrapper and must not be used here because
+// getSchoolDatabase() can itself be called while a school DB context is active.
+const centralPool = database.centralPool;
 
 const schoolPools = new Map();
 const schoolSchemaPromises = new Map();
