@@ -13,13 +13,13 @@ module.exports = async (req, res, next) => {
     const roleName = req.user?.role_name?.trim()?.toLowerCase();
     const requestedSchoolId = req.get("X-School-Id");
 
-    // Super Admin is a platform-level account. Its school_id is only a
-    // required database placeholder and must never automatically select that
-    // school for platform endpoints such as /auth/me and /super-admin/schools.
-    // A Super Admin enters a school context only when the frontend explicitly
-    // supplies X-School-Id.
+    // Super Admin is a platform-level account. Platform routes such as
+    // /auth/me and /super-admin/schools must remain on the central database
+    // even when the frontend has a previously selected school in sessionStorage.
+    // School-scoped routes explicitly opt into a school context through
+    // X-School-Id.
     if (roleName === "super admin") {
-        if (!requestedSchoolId) {
+        if (req.skipSchoolContext || !requestedSchoolId) {
             return next();
         }
 
