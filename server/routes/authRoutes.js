@@ -16,12 +16,18 @@ const passwordResetLimit = rateLimit({
     message: "Too many password reset requests. Please try again later."
 });
 
+const keepSuperAdminOnPlatformDatabase = (req, res, next) => {
+    const roleName = req.user?.role_name?.trim()?.toLowerCase();
+    if (roleName === "super admin") req.skipSchoolContext = true;
+    return next();
+};
+
 router.post("/login", loginLimit, authController.login);
 router.post("/logout", authController.logout);
 router.post("/forgot-password", passwordResetLimit, authController.requestPasswordReset);
 router.post("/reset-password", passwordResetLimit, authController.resetPassword);
 
-router.get("/me", authenticate, authController.getCurrentUser);
+router.get("/me", keepSuperAdminOnPlatformDatabase, authenticate, authController.getCurrentUser);
 router.post("/change-password", authenticate, authController.changePassword);
 
 module.exports = router;
