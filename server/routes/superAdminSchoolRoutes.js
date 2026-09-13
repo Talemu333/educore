@@ -7,7 +7,14 @@ const { diagnostics } = require("../controllers/schoolDatabaseDiagnosticsControl
 
 const router = express.Router();
 
-router.use(authenticate, requireSuperAdmin);
+// All school-management endpoints are platform-level operations. They must
+// authenticate against the central database even if the frontend has a
+// selected school in X-School-Id. Diagnostics explicitly opens the requested
+// school's database itself.
+router.use((req, res, next) => {
+    req.skipSchoolContext = true;
+    next();
+}, authenticate, requireSuperAdmin);
 
 router.get("/", controller.getSchools);
 router.get("/:id", controller.getSchool);
