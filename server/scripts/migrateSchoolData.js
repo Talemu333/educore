@@ -131,13 +131,21 @@ const migrateSchoolData = async (schoolId, options = {}) => {
         `);
         const tables = tableResult.rows.map((row) => row.table_name).filter((table) => !EXCLUDED_TABLES.has(table));
 
-        const missingTargetTables = [];
+        const schemaMismatches = [];
         for (const table of INSERT_ORDER) {
-            const targetColumns = await getColumns(targetPool, table);
-            if (!targetColumns.length) missingTargetTables.push(table);
+            const [sourceColumns, targetColumns] = await Promise.all([
+                getColumns(centralPool, table),
+                getColumns(targetPool, table),
+            ]);
+            if (!targetColumns.length) {
+                schemaMismatches.push(`${table}: missing table`);
+                continue;
+            }
+            const missingColumns = sourceColumns.filter((column) => !targetColumns.includes(column));
+            if (missingColumns.length) schemaMismatches.push(`${table}: missing columns [${missingColumns.join(", ")}]`);
         }
-        if (missingTargetTables.length) {
-            throw new Error(`Dedicated database ${databaseName} is missing required tables: ${missingTargetTables.join(", ")}`);
+        if (schemaMismatches.length) {
+            throw new Error(`Dedicated database ${databaseName} schema is behind the central database. ${schemaMismatches.join("; ")}`);
         }
 
         if (!options.force) {
