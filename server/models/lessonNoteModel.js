@@ -6,7 +6,7 @@ const columns = `
     ln.sub_topic, ln.duration, ln.objectives, ln.instructional_materials,
     ln.previous_knowledge, ln.introduction, ln.lesson_development,
     ln.teacher_activities, ln.student_activities, ln.evaluation,
-    ln.conclusion, ln.assignment, ln.references, ln.remarks, ln.status,
+    ln.conclusion, ln.assignment, ln."references", ln.remarks, ln.status,
     ln.reviewed_by, ln.reviewed_at, ln.review_comment, ln.created_at, ln.updated_at,
     CONCAT(t.surname, ' ', t.first_name) AS teacher_name,
     c.class_name, s.subject_name, ac.session_name, tr.term_name,
@@ -87,7 +87,7 @@ const create = async (data, schoolId) => {
             school_id, teacher_id, class_id, subject_id, session_id, term_id, week_number,
             lesson_date, topic, sub_topic, duration, objectives, instructional_materials,
             previous_knowledge, introduction, lesson_development, teacher_activities,
-            student_activities, evaluation, conclusion, assignment, references, remarks, status
+            student_activities, evaluation, conclusion, assignment, "references", remarks, status
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
         RETURNING id
     `, [schoolId, data.teacher_id, data.class_id, data.subject_id, data.session_id, data.term_id, data.week_number,
@@ -105,7 +105,7 @@ const update = async (id, data, schoolId) => {
             class_id=$1, subject_id=$2, session_id=$3, term_id=$4, week_number=$5, lesson_date=$6,
             topic=$7, sub_topic=$8, duration=$9, objectives=$10, instructional_materials=$11,
             previous_knowledge=$12, introduction=$13, lesson_development=$14, teacher_activities=$15,
-            student_activities=$16, evaluation=$17, conclusion=$18, assignment=$19, references=$20,
+            student_activities=$16, evaluation=$17, conclusion=$18, assignment=$19, "references"=$20,
             remarks=$21, status=$22, reviewed_by=NULL, reviewed_at=NULL, review_comment=NULL
         WHERE id=$23 AND school_id=$24
         RETURNING id
