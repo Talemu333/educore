@@ -25,7 +25,7 @@ const requireFinanceAccess = (user) => {
         throw new ApiError(403, "Access denied.");
     }
 
-    const adminType = user?.admin_type?.trim().toLowerCase();
+    const adminType = user?.admin_type?.trim()?.toLowerCase();
 
     if (!ALLOWED_ADMIN_TYPES.includes(adminType)) {
         throw new ApiError(403, "You do not have permission to manage expenses.");
