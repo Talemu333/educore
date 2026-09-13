@@ -1,5 +1,6 @@
 const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 const { runWithSchoolDatabase } = require("../config/databaseContext");
+const { migrateSchoolData } = require("../scripts/migrateSchoolData");
 
 module.exports = async (req, res, next) => {
     if (!req.isAuthenticated()) {
@@ -9,21 +10,6 @@ module.exports = async (req, res, next) => {
         });
     }
 
-    /*
-    =========================================
-    SUPER ADMIN SCHOOL MANAGEMENT CONTEXT
-    =========================================
-
-    A Super Admin has a platform-level account, but the users table still
-    requires a school_id. When the Super Admin opens a specific school's
-    management page, the frontend sends X-School-Id. For that request only,
-    use the selected school as the request's school context so existing
-    school-scoped controllers/services can be reused safely.
-
-    Normal school users cannot override their school context because this is
-    only honored when the authenticated user is a Super Admin.
-    =========================================
-    */
     const roleName = req.user?.role_name?.trim()?.toLowerCase();
     const requestedSchoolId = req.get("X-School-Id");
 
@@ -41,15 +27,22 @@ module.exports = async (req, res, next) => {
         req.superAdminSchoolContext = schoolId;
     }
 
-    // Super Admin operations remain on the central registry database. Normal
-    // authenticated school users are routed to their dedicated database once
-    // that database has been provisioned and activated in the registry.
+    // Normal school users use their dedicated database. School 1 is the only
+    // legacy school whose existing central data must be copied into its new
+    // database. The migration script has its own user-count guard, so after
+    // the dedicated database is populated this becomes a no-op.
     if (roleName !== "super admin" && req.user?.school_id) {
         try {
-            const schoolPool = await getSchoolDatabase(req.user.school_id);
+            const schoolId = Number(req.user.school_id);
+
+            if (schoolId === 1) {
+                await migrateSchoolData(1);
+            }
+
+            const schoolPool = await getSchoolDatabase(schoolId);
 
             req.schoolDatabase = schoolPool;
-            req.schoolDatabaseSchoolId = Number(req.user.school_id);
+            req.schoolDatabaseSchoolId = schoolId;
 
             return runWithSchoolDatabase(schoolPool, () => next());
         } catch (error) {
