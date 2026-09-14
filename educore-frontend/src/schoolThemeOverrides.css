@@ -31,13 +31,13 @@
 }
 
 /* Semi-transparent blue backgrounds */
-[class~="bg-blue-500\/10"],
-[class~="bg-blue-600\/10"] {
+[class~="bg-blue-500\\/10"],
+[class~="bg-blue-600\\/10"] {
     background-color: color-mix(in srgb, var(--school-primary) 10%, transparent) !important;
 }
 
-[class~="bg-blue-500\/20"],
-[class~="bg-blue-600\/20"] {
+[class~="bg-blue-500\\/20"],
+[class~="bg-blue-600\\/20"] {
     background-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important;
 }
 
@@ -144,7 +144,53 @@
 }
 
 /* Blue shadows used by legacy cards/buttons */
-[class~="shadow-blue-500\/20"],
-[class~="shadow-blue-600\/20"] {
+[class~="shadow-blue-500\\/20"],
+[class~="shadow-blue-600\\/20"] {
     --tw-shadow-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important;
+}
+
+/*
+ * Hard-coded brand blue used by older public pages.
+ * These are intentionally narrow so semantic colors such as success,
+ * warning and danger are not affected.
+ */
+
+/* #1D4ED8 / rgb(29, 78, 216) text */
+[style*="color: rgb(29, 78, 216)"],
+[style*="color:rgb(29, 78, 216)"],
+[style*="color: #1D4ED8"],
+[style*="color:#1D4ED8"] {
+    color: var(--school-primary) !important;
+}
+
+/* #1D4ED8 / rgb(29, 78, 216) backgrounds */
+[style*="background-color: rgb(29, 78, 216)"],
+[style*="background-color:rgb(29, 78, 216)"],
+[style*="background-color: #1D4ED8"],
+[style*="background-color:#1D4ED8"] {
+    background-color: var(--school-primary) !important;
+}
+
+/* #1D4ED8 / rgb(29, 78, 216) border-top colors */
+[style*="border-top-color: rgb(29, 78, 216)"],
+[style*="border-top-color:rgb(29, 78, 216)"],
+[style*="border-top-color: #1D4ED8"],
+[style*="border-top-color:#1D4ED8"] {
+    border-top-color: var(--school-primary) !important;
+}
+
+/* #93C5FD / rgb(147, 197, 253) light blue text */
+[style*="color: rgb(147, 197, 253)"],
+[style*="color:rgb(147, 197, 253)"],
+[style*="color: #93C5FD"],
+[style*="color:#93C5FD"] {
+    color: color-mix(in srgb, var(--school-primary) 72%, white) !important;
+}
+
+/* #BFDBFE / rgb(191, 219, 254) light blue connector */
+[style*="background-color: rgb(191, 219, 254)"],
+[style*="background-color:rgb(191, 219, 254)"],
+[style*="background-color: #BFDBFE"],
+[style*="background-color:#BFDBFE"] {
+    background-color: color-mix(in srgb, var(--school-primary) 28%, white) !important;
 }
