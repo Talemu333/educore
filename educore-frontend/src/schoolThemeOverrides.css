@@ -30,7 +30,22 @@
     background-color: var(--school-primary-dark) !important;
 }
 
+/* Semi-transparent blue backgrounds */
+[class~="bg-blue-500\/10"],
+[class~="bg-blue-600\/10"] {
+    background-color: color-mix(in srgb, var(--school-primary) 10%, transparent) !important;
+}
+
+[class~="bg-blue-500\/20"],
+[class~="bg-blue-600\/20"] {
+    background-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important;
+}
+
 /* Text */
+[class~="text-blue-300"] {
+    color: color-mix(in srgb, var(--school-primary) 72%, white) !important;
+}
+
 [class~="text-blue-400"] {
     color: color-mix(in srgb, var(--school-primary) 68%, white) !important;
 }
