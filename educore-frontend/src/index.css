@@ -6,6 +6,21 @@
     background: #f6f8fb;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+
+    /* School branding defaults. SchoolThemeProvider replaces these per school. */
+    --primary: #1D4ED8;
+    --primary-foreground: #FFFFFF;
+    --secondary: #FFFFFF;
+    --secondary-foreground: #0F172A;
+    --school-primary: #1D4ED8;
+    --school-primary-dark: #1941B5;
+    --school-primary-light: #E8EEFF;
+    --school-primary-soft: #F2F5FF;
+    --school-secondary: #FFFFFF;
+    --school-secondary-soft: #FFFFFF;
+    --ring: #6F93E5;
+    --accent: #F2F5FF;
+    --accent-foreground: #1941B5;
 }
 
 * {
@@ -39,9 +54,50 @@ a {
 }
 
 ::selection {
-    background: #dbeafe;
-    color: #1e3a8a;
+    background: var(--school-primary-light);
+    color: var(--school-primary-dark);
 }
+
+/* Tailwind semantic colors used by existing UI components. */
+.bg-primary {
+    background-color: var(--school-primary) !important;
+}
+
+.bg-secondary {
+    background-color: var(--school-secondary) !important;
+}
+
+.text-primary {
+    color: var(--school-primary) !important;
+}
+
+.text-primary-foreground {
+    color: var(--primary-foreground) !important;
+}
+
+.text-secondary-foreground {
+    color: var(--secondary-foreground) !important;
+}
+
+.border-primary {
+    border-color: var(--school-primary) !important;
+}
+
+.border-ring {
+    border-color: var(--ring) !important;
+}
+
+.ring-ring {
+    --tw-ring-color: var(--ring) !important;
+}
+
+.bg-primary\/5 { background-color: color-mix(in srgb, var(--school-primary) 5%, transparent) !important; }
+.bg-primary\/10 { background-color: color-mix(in srgb, var(--school-primary) 10%, transparent) !important; }
+.bg-primary\/15 { background-color: color-mix(in srgb, var(--school-primary) 15%, transparent) !important; }
+.bg-primary\/20 { background-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
+.border-primary\/20 { border-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
+.border-primary\/30 { border-color: color-mix(in srgb, var(--school-primary) 30%, transparent) !important; }
+.ring-primary\/20 { --tw-ring-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
 
 /* Keep the dashboard shell full-height without forcing nested dashboard sections to full viewport height. */
 main > section {
@@ -56,7 +112,7 @@ table {
 }
 
 thead th {
-    background: #f8fafc;
+    background: var(--school-primary-soft);
     color: #64748b;
     font-size: 0.72rem;
     font-weight: 700;
@@ -78,7 +134,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-    background: #f8fafc;
+    background: var(--school-primary-soft);
 }
 
 tbody td {
@@ -119,7 +175,7 @@ textarea {
 input:not([type="checkbox"]):not([type="radio"]):hover,
 select:hover,
 textarea:hover {
-    border-color: #94a3b8;
+    border-color: var(--school-primary);
 }
 
 input::placeholder,
@@ -149,15 +205,15 @@ select:focus,
 textarea:focus,
 button:focus-visible,
 a:focus-visible {
-    outline: 2px solid #93c5fd;
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
 }
 
 input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus,
 textarea:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14);
+    border-color: var(--school-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--school-primary) 14%, transparent);
     outline: none;
 }
 
@@ -187,8 +243,8 @@ textarea:focus {
 }
 
 .app-surface-hover:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border-color: var(--school-primary);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--school-primary) 10%, transparent);
 }
 
 /* Professionalise older card markup without changing its React API */
@@ -214,8 +270,26 @@ textarea:focus {
 
 /* Improve common empty states */
 .border-dashed {
-    border-color: #cbd5e1;
-    background: rgba(248, 250, 252, 0.65);
+    border-color: color-mix(in srgb, var(--school-primary) 25%, #cbd5e1);
+    background: color-mix(in srgb, var(--school-primary) 3%, #f8fafc);
+}
+
+/* Branded utility helpers for screens that need stronger school identity. */
+.school-brand-bg {
+    background: linear-gradient(135deg, var(--school-primary), var(--school-primary-dark));
+    color: var(--primary-foreground);
+}
+
+.school-brand-soft {
+    background: linear-gradient(135deg, var(--school-primary-soft), var(--school-secondary-soft));
+}
+
+.school-brand-text {
+    color: var(--school-primary);
+}
+
+.school-brand-border {
+    border-color: color-mix(in srgb, var(--school-primary) 30%, #e2e8f0);
 }
 
 /* Small-screen data tables remain usable instead of forcing page overflow */
