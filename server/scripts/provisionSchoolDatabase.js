@@ -171,7 +171,7 @@ const createDatabaseIfNeeded = async (databaseName) => {
     const existingPool = new Pool(getDatabaseConfig(databaseName));
     try {
         const schemaResult = await withDatabaseRetry(
-            () => existingPool.query("SELECT to_regclass('public.cbt_exams') IS NOT NULL AS initialized"),
+            () => existingPool.query("SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public') AS initialized"),
             "Checking school database schema"
         );
         return !schemaResult.rows[0]?.initialized;
