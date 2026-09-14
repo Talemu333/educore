@@ -105,3 +105,75 @@
 [style*="background-color:rgb(191, 219, 254)"],
 [style*="background-color: #BFDBFE"],
 [style*="background-color:#BFDBFE"] { background-color: color-mix(in srgb, var(--school-primary) 28%, white) !important; }
+
+/* School-branded dashboard sidebar */
+.school-sidebar {
+    background-color: color-mix(in srgb, var(--school-primary) 7%, white) !important;
+    border-right-color: color-mix(in srgb, var(--school-primary) 18%, #e2e8f0) !important;
+    color: #334155 !important;
+}
+
+.school-sidebar-header {
+    border-bottom-color: color-mix(in srgb, var(--school-primary) 16%, #e2e8f0) !important;
+}
+
+.school-sidebar-logo {
+    background-color: var(--school-primary) !important;
+}
+
+.school-sidebar h1 {
+    color: #1e293b !important;
+}
+
+.school-sidebar .text-slate-400 {
+    color: #64748b !important;
+}
+
+.school-sidebar .text-slate-500 {
+    color: #64748b !important;
+}
+
+.school-sidebar .text-slate-100 {
+    color: #334155 !important;
+}
+
+.school-sidebar-user {
+    background-color: color-mix(in srgb, var(--school-primary) 10%, white) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--school-primary) 12%, #e2e8f0) !important;
+}
+
+.school-sidebar-avatar {
+    background-color: var(--school-primary-light) !important;
+    color: var(--school-primary-dark) !important;
+}
+
+.school-sidebar button:hover,
+.school-sidebar a:not(.school-sidebar-active):not(.school-sidebar-child-active):hover {
+    background-color: color-mix(in srgb, var(--school-primary) 8%, white) !important;
+    color: #1e293b !important;
+}
+
+.school-sidebar-active {
+    background-color: var(--school-primary) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--school-primary) 18%, transparent) !important;
+}
+
+.school-sidebar-group-active {
+    background-color: color-mix(in srgb, var(--school-primary) 12%, white) !important;
+    color: var(--school-primary-dark) !important;
+}
+
+.school-sidebar-child-active {
+    background-color: color-mix(in srgb, var(--school-primary) 12%, white) !important;
+    color: var(--school-primary-dark) !important;
+    font-weight: 600;
+}
+
+.school-sidebar nav .border-l {
+    border-left-color: color-mix(in srgb, var(--school-primary) 20%, #e2e8f0) !important;
+}
+
+.school-sidebar-footer {
+    border-top-color: color-mix(in srgb, var(--school-primary) 16%, #e2e8f0) !important;
+}
