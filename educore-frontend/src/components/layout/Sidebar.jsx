@@ -36,8 +36,8 @@ function Sidebar({ isOpen, onClose }) {
     const schoolName = settings?.school_name || "EDUPROW";
 
     return (
-        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] flex-col border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-            <div className="border-b border-slate-800 px-5 py-5">
+        <aside className={`school-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] flex-col border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            <div className="school-sidebar-header border-b border-slate-800 px-5 py-5">
                 <div className="flex items-center justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                         <div className="school-sidebar-logo flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white shadow-lg">
@@ -50,13 +50,13 @@ function Sidebar({ isOpen, onClose }) {
                     </div>
                     <button type="button" onClick={onClose} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:hidden" aria-label="Close navigation menu"><X className="h-5 w-5" /></button>
                 </div>
-                <div className="mt-5 flex items-center gap-3 rounded-xl bg-slate-900/80 p-3 ring-1 ring-inset ring-slate-800">
+                <div className="school-sidebar-user mt-5 flex items-center gap-3 rounded-xl bg-slate-900/80 p-3 ring-1 ring-inset ring-slate-800">
                     <div className="school-sidebar-avatar flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold">{initials}</div>
                     <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{displayName}</p><p className="truncate text-xs capitalize text-slate-400">{adminType?.replace(/_/g, " ") || role || "Account"}</p></div>
                 </div>
             </div>
             <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
-            <div className="border-t border-slate-800 px-4 py-3"><p className="text-center text-[10px] font-medium text-slate-500">EduProw • School Administration</p></div>
+            <div className="school-sidebar-footer border-t border-slate-800 px-4 py-3"><p className="text-center text-[10px] font-medium text-slate-500">EduProw • School Administration</p></div>
         </aside>
     );
 }
