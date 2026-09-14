@@ -38,12 +38,12 @@ const resolveSchoolDatabase = async (req, res, next) => {
             registryResult = await pool.query(`
                 SELECT r.school_id, r.database_name, r.website_slug, r.is_active
                 FROM school_database_registry r
-                LEFT JOIN school_settings ss ON ss.school_id = r.school_id
+                LEFT JOIN schools s ON s.id = r.school_id
                 WHERE r.is_active = true
                   AND (
                       LOWER(r.website_slug) = LOWER($1)
                       OR LOWER(r.website_slug || '.eduprow.com') = LOWER($1)
-                      OR LOWER(REGEXP_REPLACE(COALESCE(ss.domain, ''), '^www\\.', '')) = LOWER($1)
+                      OR LOWER(REGEXP_REPLACE(COALESCE(s.domain, ''), '^www\\.', '')) = LOWER($1)
                   )
                 LIMIT 1;
             `, [key]);
