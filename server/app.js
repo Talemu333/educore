@@ -66,16 +66,39 @@ if (isProduction && allowedOrigins.length === 0) {
     throw new Error("CORS_ORIGINS must be configured in production.");
 }
 
-const isAllowedOrigin = (origin) => {
+const isAllowedOrigin = async (origin) => {
     if (!origin) return true;
+
     const normalizedOrigin = normalizeOrigin(origin);
     if (allowedOrigins.includes(normalizedOrigin)) return true;
+
     try {
         const url = new URL(normalizedOrigin);
         const hostname = url.hostname.toLowerCase();
-        return url.protocol === "https:" &&
-            (hostname === "eduprow.com" || hostname === "www.eduprow.com" || hostname.endsWith(".eduprow.com"));
-    } catch {
+
+        if (url.protocol !== "https:") return false;
+
+        if (
+            hostname === "eduprow.com" ||
+            hostname === "www.eduprow.com" ||
+            hostname.endsWith(".eduprow.com")
+        ) {
+            return true;
+        }
+
+        const schoolDomain = hostname.replace(/^www\./, "");
+        const result = await database.centralPool.query(
+            `SELECT 1
+             FROM school_settings
+             WHERE is_active = true
+               AND lower(regexp_replace(COALESCE(domain, ''), '^www\\.', '')) = $1
+             LIMIT 1`,
+            [schoolDomain]
+        );
+
+        return result.rows.length > 0;
+    } catch (error) {
+        console.error("CORS origin validation error:", error);
         return false;
     }
 };
@@ -84,7 +107,12 @@ app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({
-    origin: (origin, callback) => isAllowedOrigin(origin) ? callback(null, true) : callback(new Error("Not allowed by CORS")),
+    origin: async (origin, callback) => {
+        const allowed = await isAllowedOrigin(origin);
+        return allowed
+            ? callback(null, true)
+            : callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
 }));
 app.use(express.json({ limit: "2mb" }));
