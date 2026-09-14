@@ -89,9 +89,9 @@ const isAllowedOrigin = async (origin) => {
         const schoolDomain = hostname.replace(/^www\./, "");
         const result = await database.centralPool.query(
             `SELECT 1
-             FROM school_settings
-             WHERE is_active = true
-               AND lower(regexp_replace(COALESCE(domain, ''), '^www\\.', '')) = $1
+             FROM schools s
+             WHERE s.is_active = true
+               AND lower(regexp_replace(COALESCE(s.domain, ''), '^www\\.', '')) = $1
              LIMIT 1`,
             [schoolDomain]
         );
