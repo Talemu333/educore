@@ -99,6 +99,34 @@ a {
 .border-primary\/30 { border-color: color-mix(in srgb, var(--school-primary) 30%, transparent) !important; }
 .ring-primary\/20 { --tw-ring-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
 
+/* Dashboard navigation branding. */
+.school-sidebar-logo {
+    background: linear-gradient(135deg, var(--school-primary), var(--school-primary-dark));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--school-primary) 25%, transparent);
+}
+
+.school-sidebar-avatar {
+    background: color-mix(in srgb, var(--school-primary) 16%, transparent);
+    color: var(--school-primary-light);
+}
+
+.school-sidebar-active {
+    background: linear-gradient(135deg, var(--school-primary), var(--school-primary-dark));
+    color: var(--primary-foreground);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--school-primary) 22%, transparent);
+}
+
+.school-sidebar-group-active {
+    background: color-mix(in srgb, var(--school-primary) 16%, transparent);
+    color: var(--school-primary-light);
+}
+
+.school-sidebar-child-active {
+    background: color-mix(in srgb, var(--school-primary) 12%, transparent);
+    color: var(--school-primary-light);
+    font-weight: 600;
+}
+
 /* Keep the dashboard shell full-height without forcing nested dashboard sections to full viewport height. */
 main > section {
     min-height: calc(100vh - 72px);
