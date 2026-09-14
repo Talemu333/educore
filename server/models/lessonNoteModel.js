@@ -139,8 +139,15 @@ const duplicate = async (id, teacherId, schoolId) => {
 };
 
 const getMeta = async (schoolId, user) => {
-    const teacherIdResult = user?.role_name === "Teacher" ? await pool.query("SELECT id FROM teachers WHERE user_id=$1", [user.id]) : { rows: [] };
+    const teacherIdResult = user?.role_name === "Teacher"
+        ? await pool.query("SELECT id FROM teachers WHERE user_id=$1", [user.id])
+        : { rows: [] };
     const teacherId = teacherIdResult.rows[0]?.id;
+
+    // Assignments are kept separate from the basic academic options. This is
+    // important for a newly provisioned isolated school database where a
+    // teacher may not have an assignment yet, but the school still needs its
+    // sessions, terms, classes and subjects to load.
     const assignments = await pool.query(`
         SELECT DISTINCT ta.teacher_id, ta.class_id, ta.subject_id, ta.session_id, ta.term_id,
             CONCAT(t.surname,' ',t.first_name) teacher_name, c.class_name, s.subject_name,
@@ -155,9 +162,41 @@ const getMeta = async (schoolId, user) => {
         WHERE ($2::integer IS NULL OR ta.teacher_id=$2)
         ORDER BY ac.session_name DESC, tr.id, c.class_name, s.subject_name
     `, [schoolId, teacherId || null]);
-    const sessions = await pool.query("SELECT id, session_name, is_current FROM academic_sessions ORDER BY session_name DESC");
-    const terms = await pool.query("SELECT id, term_name, session_id, is_current FROM terms ORDER BY session_id DESC, id");
-    return { assignments: assignments.rows, sessions: sessions.rows, terms: terms.rows, teacher_id: teacherId || null };
+
+    const sessions = await pool.query(`
+        SELECT id, session_name
+        FROM academic_sessions
+        ORDER BY session_name DESC
+    `);
+
+    const terms = await pool.query(`
+        SELECT id, term_name, session_id
+        FROM terms
+        ORDER BY session_id DESC, id
+    `);
+
+    const classes = await pool.query(`
+        SELECT id, class_name
+        FROM classes
+        WHERE school_id = $1
+        ORDER BY class_name
+    `, [schoolId]);
+
+    const subjects = await pool.query(`
+        SELECT id, subject_name
+        FROM subjects
+        WHERE school_id = $1
+        ORDER BY subject_name
+    `, [schoolId]);
+
+    return {
+        assignments: assignments.rows,
+        sessions: sessions.rows,
+        terms: terms.rows,
+        classes: classes.rows,
+        subjects: subjects.rows,
+        teacher_id: teacherId || null
+    };
 };
 
 module.exports = { getById, list, validateContext, create, update, setStatus, duplicate, getMeta };
