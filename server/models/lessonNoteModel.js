@@ -10,7 +10,10 @@ const columns = `
     ln.reviewed_by, ln.reviewed_at, ln.review_comment, ln.created_at, ln.updated_at,
     CONCAT(t.surname, ' ', t.first_name) AS teacher_name,
     c.class_name, s.subject_name, ac.session_name, tr.term_name,
-    CONCAT(COALESCE(rv.surname, ''), CASE WHEN rv.first_name IS NULL THEN '' ELSE ' ' || rv.first_name END) AS reviewer_name
+    CASE
+        WHEN rt.id IS NOT NULL THEN CONCAT(rt.surname, ' ', rt.first_name)
+        ELSE rv.username
+    END AS reviewer_name
 `;
 
 const getById = async (id, schoolId) => {
@@ -24,6 +27,7 @@ const getById = async (id, schoolId) => {
         JOIN academic_sessions ac ON ac.id = ln.session_id
         JOIN terms tr ON tr.id = ln.term_id
         LEFT JOIN users rv ON rv.id = ln.reviewed_by
+        LEFT JOIN teachers rt ON rt.user_id = rv.id
         WHERE ln.id = $1 AND ln.school_id = $2
     `, [id, schoolId]);
     return result.rows[0];
@@ -62,6 +66,7 @@ const list = async (filters, schoolId, user) => {
         JOIN academic_sessions ac ON ac.id = ln.session_id
         JOIN terms tr ON tr.id = ln.term_id
         LEFT JOIN users rv ON rv.id = ln.reviewed_by
+        LEFT JOIN teachers rt ON rt.user_id = rv.id
         WHERE ${where.join(" AND ")}
         ORDER BY ln.lesson_date DESC NULLS LAST, ln.week_number DESC, ln.updated_at DESC
     `, values);
@@ -144,10 +149,6 @@ const getMeta = async (schoolId, user) => {
         : { rows: [] };
     const teacherId = teacherIdResult.rows[0]?.id;
 
-    // Assignments are kept separate from the basic academic options. This is
-    // important for a newly provisioned isolated school database where a
-    // teacher may not have an assignment yet, but the school still needs its
-    // sessions, terms, classes and subjects to load.
     const assignments = await pool.query(`
         SELECT DISTINCT ta.teacher_id, ta.class_id, ta.subject_id, ta.session_id, ta.term_id,
             CONCAT(t.surname,' ',t.first_name) teacher_name, c.class_name, s.subject_name,
@@ -160,7 +161,7 @@ const getMeta = async (schoolId, user) => {
         JOIN academic_sessions ac ON ac.id=ta.session_id
         JOIN terms tr ON tr.id=ta.term_id
         WHERE ($2::integer IS NULL OR ta.teacher_id=$2)
-        ORDER BY ac.session_name DESC, tr.id, c.class_name, s.subject_name
+        ORDER BY ac.session_name DESC, ta.term_id, c.class_name, s.subject_name
     `, [schoolId, teacherId || null]);
 
     const sessions = await pool.query(`
