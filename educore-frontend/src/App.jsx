@@ -82,13 +82,18 @@ function App() {
     if (pathname === "/student-subjects") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentSubjectsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/cbt-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/cbt-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTResultsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/cbt-question-bank") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTQuestionBankPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/cbt-question-bank/import") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTPdfImportPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/lesson-notes") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonNotesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/lesson-syllabus") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonSyllabusPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/cbt-results") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTResultsPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/cbt-question-bank") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTQuestionBankPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/cbt-question-bank/import") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTPdfImportPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/lesson-notes") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonNotesPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/lesson-syllabus") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonSyllabusPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></BrowserRouter>;
+    if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></BrowserRouter>;
+
+    // A custom school domain identifies the tenant, but it must still be able
+    // to use the shared authentication and protected dashboard routes.
+    if (isCustomSchoolDomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
+    if (isCustomSchoolDomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
 
     if (isEduProwSubdomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
     if (isEduProwSubdomain) return <SchoolWebsiteRouter isSubdomain schoolSlug={schoolSlugFromSubdomain} />;
