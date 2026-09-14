@@ -13,6 +13,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import ContactMessagesPage from "./pages/dashboard/ContactMessagesPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
 import LessonNotesPage from "./pages/lessonNotes/LessonNotesPage";
+import LessonSyllabusPage from "./pages/lessonNotes/LessonSyllabusPage";
 import PartnerManagementPage from "./pages/admin/PartnerManagementPage";
 import PartnerProgrammeSettingsPage from "./pages/admin/PartnerProgrammeSettingsPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
@@ -31,7 +32,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
     "timetable", "payments", "announcements", "settings", "administrators",
     "student-promotion", "promotion-history", "class-subjects", "admin", "login",
-    "website", "change-password", "logout", "contact-messages", "expenses", "lesson-notes", "partner-management",
+    "website", "change-password", "logout", "contact-messages", "expenses", "lesson-notes", "lesson-syllabus", "partner-management",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
     "teacher-dashboard", "teacher-students", "forgot-password", "reset-password",
     "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank"
@@ -85,6 +86,7 @@ function App() {
     if (pathname === "/cbt-question-bank") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTQuestionBankPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/cbt-question-bank/import") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><CBTPdfImportPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/lesson-notes") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonNotesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/lesson-syllabus") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonSyllabusPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
