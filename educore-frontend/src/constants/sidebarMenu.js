@@ -41,6 +41,7 @@ const sidebarMenu = [
     { title: "Import Questions (PDF)", icon: FileUp, path: "/cbt-question-bank/import", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "CBT Results", icon: BarChart3, path: "/cbt-results", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Lesson Notes", icon: FileText, path: "/lesson-notes", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "Lesson Syllabus", icon: BookOpen, path: "/lesson-syllabus", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Administrators", icon: Users, path: "/administrators", roles: [ADMIN], adminTypes: [PROPRIETOR] },
     { title: "Students", icon: GraduationCap, path: "/students", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Student Promotion", icon: GraduationCap, path: "/student-promotion", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
