@@ -83,10 +83,10 @@ function LoginPage() {
                         <div className="mb-8 lg:mb-10">
                             <p className="text-sm font-semibold text-blue-700">{schoolName}</p>
                             <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                                Welcome back
+                                Access your school account
                             </h2>
                             <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
-                                Sign in to continue to your school account.
+                                Enter your credentials to continue.
                             </p>
                         </div>
 
