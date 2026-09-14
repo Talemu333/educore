@@ -7,9 +7,11 @@ const getSchoolKey = (req) => {
     if (explicitSlug) return String(explicitSlug).trim().toLowerCase();
 
     const explicitDomain = req.query?.schoolDomain || req.get("x-school-domain");
-    if (explicitDomain) return String(explicitDomain).trim().toLowerCase();
+    if (explicitDomain) {
+        return String(explicitDomain).trim().toLowerCase().replace(/^www\./, "");
+    }
 
-    return String(req.hostname || "").trim().toLowerCase();
+    return String(req.hostname || "").trim().toLowerCase().replace(/^www\./, "");
 };
 
 const resolveSchoolDatabase = async (req, res, next) => {
@@ -24,7 +26,6 @@ const resolveSchoolDatabase = async (req, res, next) => {
         const key = getSchoolKey(req);
         const platformHosts = new Set([
             "eduprow.com",
-            "www.eduprow.com",
             "localhost",
             "127.0.0.1",
         ]);
