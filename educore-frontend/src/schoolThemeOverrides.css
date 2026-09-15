@@ -117,9 +117,12 @@
     border-bottom-color: #e2e8f0 !important;
 }
 
+/* The logo uses the actual school primary color. Its foreground is calculated
+ * from the user's selected palette so light and dark school colors both stay readable. */
 .school-sidebar-logo {
-    background-color: var(--school-primary-light) !important;
-    color: var(--school-primary-dark) !important;
+    background: var(--school-primary) !important;
+    color: var(--school-primary-foreground, var(--primary-foreground)) !important;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--school-primary) 22%, transparent) !important;
 }
 
 .school-sidebar h1 {
@@ -145,7 +148,10 @@
     color: var(--school-primary-dark) !important;
 }
 
-/* Standard light-sidebar navigation states. */
+/* Standard light-sidebar navigation states.
+ * Active backgrounds intentionally use a light tint of the selected primary,
+ * with dark text. This prevents a user-selected light primary from producing
+ * white text on a pale background. */
 .school-sidebar button:hover,
 .school-sidebar a:not(.school-sidebar-active):not(.school-sidebar-child-active):hover {
     background-color: color-mix(in srgb, var(--school-primary) 8%, white) !important;
@@ -153,16 +159,16 @@
 }
 
 .school-sidebar-active {
-    background-color: color-mix(in srgb, var(--school-primary) 14%, white) !important;
-    color: var(--school-primary-dark) !important;
-    font-weight: 600 !important;
+    background: color-mix(in srgb, var(--school-primary) 14%, white) !important;
+    color: #0f172a !important;
+    font-weight: 650 !important;
     box-shadow: inset 3px 0 0 var(--school-primary) !important;
 }
 
 .school-sidebar-group-active,
 .school-sidebar-child-active {
     background-color: color-mix(in srgb, var(--school-primary) 10%, white) !important;
-    color: var(--school-primary-dark) !important;
+    color: #0f172a !important;
 }
 
 .school-sidebar-child-active {
