@@ -105,7 +105,7 @@ function PublicLayout() {
     const schoolEmail = settings.school_email || "";
     const websiteBasePath = getWebsiteBasePath();
     const footerSection = homePage?.sections?.find((section) => section.section_key === "footer");
-    const footerDescription = footerSection?.content?.trim() || "";
+    const footerDescription = footerSection?.section_content?.trim() || "";
 
     const publicPath = (path) => `${websiteBasePath}${path === "/" ? "" : path}` || "/";
 
