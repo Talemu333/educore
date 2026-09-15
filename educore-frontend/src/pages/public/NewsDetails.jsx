@@ -4,9 +4,12 @@ import {
 } from "react-router-dom";
 
 import {
-    useNewsBySlug,
-    useSchoolSettings
+    useNewsBySlug
 } from "@/hooks/useWebsite";
+
+import {
+    useSchoolSettings
+} from "@/hooks/useSchoolSettings";
 
 
 function NewsDetails() {
