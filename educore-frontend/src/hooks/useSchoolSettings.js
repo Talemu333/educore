@@ -47,6 +47,27 @@ const getPublicSchoolIdentifier = () => {
 };
 
 
+const normalizeSchoolSettings = (settings) => {
+    if (!settings) {
+        return settings;
+    }
+
+    const normalized = {
+        ...settings
+    };
+
+    if (normalized.school_motto === "Excellence • Character • Knowledge") {
+        normalized.school_motto = "";
+    }
+
+    if (normalized.school_level === "Primary & Secondary School") {
+        normalized.school_level = "";
+    }
+
+    return normalized;
+};
+
+
 export function useSchoolSettings() {
 
     const schoolIdentifier =
@@ -60,7 +81,10 @@ export function useSchoolSettings() {
         ],
 
         queryFn:
-            getSchoolSettings,
+            async () => {
+                const settings = await getSchoolSettings();
+                return normalizeSchoolSettings(settings);
+            },
 
         enabled:
             !!schoolIdentifier
