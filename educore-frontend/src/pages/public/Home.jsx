@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { getPublishedGallery } from "@/api/galleryApi";
 import { useWebsitePage } from "@/hooks/useWebsite";
 import { useSchoolSettings } from "@/hooks/useSchoolSettings";
 
@@ -14,12 +16,29 @@ function Home() {
 
     const { data: settings } = useSchoolSettings();
 
+    const [gallery, setGallery] = useState([]);
+    const [currentSlide, setCurrentSlide] = useState(0);
+
     const primaryColor = settings?.primary_color || "#1D4ED8";
     const schoolName = settings?.school_name || "Our School";
 
-    if (isLoading) {
-        return <Loading message="Loading website..." />;
-    }
+    useEffect(() => {
+        let mounted = true;
+
+        getPublishedGallery()
+            .then((items) => {
+                if (mounted) {
+                    setGallery(Array.isArray(items) ? items.slice(0, 4) : []);
+                }
+            })
+            .catch(() => {
+                if (mounted) setGallery([]);
+            });
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     const sections = (page?.sections || []).filter(
         section => section.is_active !== false
@@ -35,6 +54,38 @@ function Home() {
     const schoolLife = getSection("school_life") || {};
     const admissionsCta = getSection("admissions_cta") || {};
     const promise = getSection("promise") || {};
+
+    const carouselSlides = gallery.length
+        ? gallery
+        : hero.image_url
+            ? [{
+                id: "hero-fallback",
+                image_url: hero.image_url,
+                title: hero.section_title || schoolName
+            }]
+            : [];
+
+    useEffect(() => {
+        setCurrentSlide(0);
+    }, [carouselSlides.length]);
+
+    useEffect(() => {
+        if (carouselSlides.length < 2) return undefined;
+
+        const timer = window.setInterval(() => {
+            setCurrentSlide(previous =>
+                (previous + 1) % carouselSlides.length
+            );
+        }, 5000);
+
+        return () => window.clearInterval(timer);
+    }, [carouselSlides.length]);
+
+    const goToSlide = index => {
+        setCurrentSlide(
+            (index + carouselSlides.length) % carouselSlides.length
+        );
+    };
 
     const legacyLevelKeys = [
         "primary",
@@ -120,6 +171,12 @@ function Home() {
 
     const hasPageError = isError || !page;
 
+    if (isLoading) {
+        return <Loading message="Loading website..." />;
+    }
+
+    const activeSlide = carouselSlides[currentSlide];
+
     return (
         <div className="w-full max-w-full overflow-x-hidden bg-white">
             {hasPageError && (
@@ -198,13 +255,22 @@ function Home() {
                         </div>
                     </div>
 
-                    <div className="relative min-h-[420px] sm:min-h-[500px] lg:min-h-full">
-                        {hero.image_url ? (
-                            <img
-                                src={hero.image_url}
-                                alt={hero.section_title || `${schoolName} school`}
-                                className="absolute inset-0 h-full w-full object-cover"
-                            />
+                    <div className="relative min-h-[420px] overflow-hidden bg-slate-900 sm:min-h-[500px] lg:min-h-full">
+                        {activeSlide?.image_url ? (
+                            <div className="absolute inset-0">
+                                {carouselSlides.map((slide, index) => (
+                                    <img
+                                        key={slide.id || slide.image_url || index}
+                                        src={slide.image_url}
+                                        alt={slide.title || `${schoolName} school`}
+                                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+                                            index === currentSlide
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                        }`}
+                                    />
+                                ))}
+                            </div>
                         ) : (
                             <div
                                 className="absolute inset-0"
@@ -212,15 +278,53 @@ function Home() {
                             >
                                 <div className="flex h-full items-center justify-center p-8 text-center text-white/80">
                                     <p className="max-w-sm text-sm leading-6 sm:text-base">
-                                        Add a school image to the Home page Hero section in Website Management if you want to replace this colour background.
+                                        Add up to four published images in Website Management → Gallery to create the Home page carousel.
                                     </p>
                                 </div>
                             </div>
                         )}
 
-                        <div className="absolute inset-0 bg-slate-950/20" />
+                        <div className="absolute inset-0 bg-slate-950/25" />
 
-                        <div className="absolute bottom-5 left-4 right-4 rounded-2xl bg-white/95 p-4 shadow-2xl backdrop-blur sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
+                        {carouselSlides.length > 1 && (
+                            <>
+                                <button
+                                    type="button"
+                                    aria-label="Previous slide"
+                                    onClick={() => goToSlide(currentSlide - 1)}
+                                    className="absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
+                                >
+                                    ‹
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Next slide"
+                                    onClick={() => goToSlide(currentSlide + 1)}
+                                    className="absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
+                                >
+                                    ›
+                                </button>
+
+                                <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
+                                    {carouselSlides.map((slide, index) => (
+                                        <button
+                                            key={slide.id || index}
+                                            type="button"
+                                            aria-label={`Go to slide ${index + 1}`}
+                                            aria-current={index === currentSlide}
+                                            onClick={() => goToSlide(index)}
+                                            className={`h-2.5 rounded-full transition-all ${
+                                                index === currentSlide
+                                                    ? "w-7 bg-white"
+                                                    : "w-2.5 bg-white/55 hover:bg-white/80"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        <div className="absolute bottom-5 left-4 right-4 z-10 rounded-2xl bg-white/95 p-4 shadow-2xl backdrop-blur sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
                             <p
                                 className="text-xs font-bold uppercase tracking-wider"
                                 style={{ color: primaryColor }}
@@ -267,25 +371,14 @@ function Home() {
                                     "Use this section to introduce your school, explain your educational philosophy, and share the information you want parents and visitors to know first."}
                             </p>
 
-                            {welcome.button_text && welcome.button_url ? (
-                                <Link
-                                    to={welcome.button_url}
-                                    className="mt-6 inline-flex items-center text-sm font-bold sm:mt-7"
-                                    style={{ color: primaryColor }}
-                                >
-                                    {welcome.button_text}
-                                    <span className="ml-2">→</span>
-                                </Link>
-                            ) : (
-                                <Link
-                                    to="/about"
-                                    className="mt-6 inline-flex items-center text-sm font-bold sm:mt-7"
-                                    style={{ color: primaryColor }}
-                                >
-                                    Learn More About Our School
-                                    <span className="ml-2">→</span>
-                                </Link>
-                            )}
+                            <Link
+                                to={welcome.button_text && welcome.button_url ? welcome.button_url : "/about"}
+                                className="mt-6 inline-flex items-center text-sm font-bold sm:mt-7"
+                                style={{ color: primaryColor }}
+                            >
+                                {welcome.button_text || "Learn More About Our School"}
+                                <span className="ml-2">→</span>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -345,8 +438,7 @@ function Home() {
                                         {level.section_title || "Academic Programme"}
                                     </h3>
                                     <p className="mt-3 text-sm leading-6 text-slate-600">
-                                        {level.section_content ||
-                                            "Describe this academic level or programme here."}
+                                        {level.section_content || "Describe this academic level or programme here."}
                                     </p>
                                     {level.button_text && level.button_url && (
                                         <Link
@@ -402,8 +494,7 @@ function Home() {
                                         {feature.section_title || "School Feature"}
                                     </h3>
                                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                                        {feature.section_content ||
-                                            "Describe this feature of your school here."}
+                                        {feature.section_content || "Describe this feature of your school here."}
                                     </p>
                                 </div>
                             ))}
@@ -467,23 +558,13 @@ function Home() {
                             "Use this call-to-action to guide prospective families to your admission information, application process, or enquiry channel."}
                     </p>
                     <div className="mt-7 sm:mt-8">
-                        {admissionsCta.button_text && admissionsCta.button_url ? (
-                            <Link
-                                to={admissionsCta.button_url}
-                                className="inline-flex w-full rounded-lg bg-white px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
-                                style={{ color: primaryColor }}
-                            >
-                                {admissionsCta.button_text}
-                            </Link>
-                        ) : (
-                            <Link
-                                to="/admissions"
-                                className="inline-flex w-full rounded-lg bg-white px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
-                                style={{ color: primaryColor }}
-                            >
-                                View Admissions
-                            </Link>
-                        )}
+                        <Link
+                            to={admissionsCta.button_text && admissionsCta.button_url ? admissionsCta.button_url : "/admissions"}
+                            className="inline-flex w-full rounded-lg bg-white px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
+                            style={{ color: primaryColor }}
+                        >
+                            {admissionsCta.button_text || "View Admissions"}
+                        </Link>
                     </div>
                 </div>
             </section>
