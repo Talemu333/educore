@@ -13,6 +13,7 @@
     --secondary: #FFFFFF;
     --secondary-foreground: #0F172A;
     --school-primary: #1D4ED8;
+    --school-primary-foreground: #FFFFFF;
     --school-primary-dark: #1941B5;
     --school-primary-light: #E8EEFF;
     --school-primary-soft: #F2F5FF;
@@ -99,31 +100,34 @@ a {
 .border-primary\/30 { border-color: color-mix(in srgb, var(--school-primary) 30%, transparent) !important; }
 .ring-primary\/20 { --tw-ring-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
 
-/* Dashboard navigation branding. */
+/* Dashboard navigation branding. Keep these defaults aligned with the
+ * school-aware overrides so the dashboard remains readable during theme
+ * loading and when a school changes its palette. */
 .school-sidebar-logo {
-    background: linear-gradient(135deg, var(--school-primary), var(--school-primary-dark));
+    background: var(--school-primary);
+    color: var(--school-primary-foreground, var(--primary-foreground));
     box-shadow: 0 10px 24px color-mix(in srgb, var(--school-primary) 25%, transparent);
 }
 
 .school-sidebar-avatar {
     background: color-mix(in srgb, var(--school-primary) 16%, transparent);
-    color: var(--school-primary-light);
+    color: var(--school-primary-dark);
 }
 
 .school-sidebar-active {
-    background: linear-gradient(135deg, var(--school-primary), var(--school-primary-dark));
-    color: var(--primary-foreground);
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--school-primary) 22%, transparent);
+    background: color-mix(in srgb, var(--school-primary) 14%, white);
+    color: #0F172A;
+    box-shadow: inset 3px 0 0 var(--school-primary);
 }
 
 .school-sidebar-group-active {
-    background: color-mix(in srgb, var(--school-primary) 16%, transparent);
-    color: var(--school-primary-light);
+    background: color-mix(in srgb, var(--school-primary) 10%, white);
+    color: #0F172A;
 }
 
 .school-sidebar-child-active {
-    background: color-mix(in srgb, var(--school-primary) 12%, transparent);
-    color: var(--school-primary-light);
+    background: color-mix(in srgb, var(--school-primary) 10%, white);
+    color: #0F172A;
     font-weight: 600;
 }
 
