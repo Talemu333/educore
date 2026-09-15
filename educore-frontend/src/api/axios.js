@@ -57,10 +57,14 @@ api.interceptors.request.use((config) => {
         !["localhost", "127.0.0.1"].includes(hostname) &&
         !hostname.endsWith(".vercel.app");
 
-    // On wildcard/custom school domains the hostname already identifies
-    // the tenant. Never replace an explicit schoolDomain with a pathname
-    // segment such as /about, /news or /gallery.
-    if (isEduProwSubdomain || isCustomSchoolDomain) return config;
+    if (isCustomSchoolDomain) {
+        const params = new URLSearchParams(config.params || {});
+        params.set("schoolDomain", hostname);
+        config.params = params;
+        return config;
+    }
+
+    if (isEduProwSubdomain) return config;
 
     const firstSegment = path.split("/").filter(Boolean)[0] || "";
 

@@ -8,12 +8,12 @@
     "dev": "nodemon server.js",
     "bootstrap-academic": "node scripts/bootstrapAcademicData.js",
     "migrate-public-school": "node scripts/migratePublicSchoolResolution.js",
-    "provision-school-db": "node scripts/provisionSchoolDatabase.js"
+    "provision-school-db": "node scripts/provisionSchoolDatabase.js",
+    "seed-imam-zubair-website": "node scripts/seedImamZubairWebsite.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "connect-pg-simple": "^10.0.0",
@@ -28,11 +28,12 @@
     "nodemailer": "^7.0.6",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "pdf-parse": "^1.1.2",
     "pg": "^8.22.0",
+    "pdf-parse": "^1.1.2",
     "xlsx-republish": "^0.20.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
-  }
+  },
+  "type": "commonjs"
 }

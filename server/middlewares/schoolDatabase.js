@@ -7,9 +7,11 @@ const getSchoolKey = (req) => {
     if (explicitSlug) return String(explicitSlug).trim().toLowerCase();
 
     const explicitDomain = req.query?.schoolDomain || req.get("x-school-domain");
-    if (explicitDomain) return String(explicitDomain).trim().toLowerCase();
+    if (explicitDomain) {
+        return String(explicitDomain).trim().toLowerCase().replace(/^www\./, "");
+    }
 
-    return String(req.hostname || "").trim().toLowerCase();
+    return String(req.hostname || "").trim().toLowerCase().replace(/^www\./, "");
 };
 
 const resolveSchoolDatabase = async (req, res, next) => {
@@ -24,7 +26,6 @@ const resolveSchoolDatabase = async (req, res, next) => {
         const key = getSchoolKey(req);
         const platformHosts = new Set([
             "eduprow.com",
-            "www.eduprow.com",
             "localhost",
             "127.0.0.1",
         ]);
@@ -36,10 +37,15 @@ const resolveSchoolDatabase = async (req, res, next) => {
         let registryResult;
         try {
             registryResult = await pool.query(`
-                SELECT school_id, database_name, website_slug, is_active
-                FROM school_database_registry
-                WHERE LOWER(website_slug) = LOWER($1)
-                   OR LOWER(website_slug || '.eduprow.com') = LOWER($1)
+                SELECT r.school_id, r.database_name, r.website_slug, r.is_active
+                FROM school_database_registry r
+                LEFT JOIN schools s ON s.id = r.school_id
+                WHERE r.is_active = true
+                  AND (
+                      LOWER(r.website_slug) = LOWER($1)
+                      OR LOWER(r.website_slug || '.eduprow.com') = LOWER($1)
+                      OR LOWER(REGEXP_REPLACE(COALESCE(s.domain, ''), '^www\\.', '')) = LOWER($1)
+                  )
                 LIMIT 1;
             `, [key]);
         } catch (error) {
