@@ -76,7 +76,7 @@ function SchoolResolutionState({ error }) {
 function PublicLayout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    useWebsitePage("home");
+    const { data: homePage } = useWebsitePage("home");
 
     const {
         data: settings,
@@ -98,11 +98,14 @@ function PublicLayout() {
     }
 
     const primaryColor = settings.primary_color || "#1D4ED8";
-    const schoolName = settings.school_name;
-    const schoolAddress = settings.school_address || "School address coming soon";
+    const schoolName = settings.school_name || "Your School";
+    const schoolInitial = schoolName.trim().charAt(0).toUpperCase() || "S";
+    const schoolAddress = settings.school_address || "";
     const schoolPhone = settings.school_phone || "";
     const schoolEmail = settings.school_email || "";
     const websiteBasePath = getWebsiteBasePath();
+    const footerSection = homePage?.sections?.find((section) => section.section_key === "footer");
+    const footerDescription = footerSection?.content?.trim() || "";
 
     const publicPath = (path) => `${websiteBasePath}${path === "/" ? "" : path}` || "/";
 
@@ -128,7 +131,7 @@ function PublicLayout() {
                                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white shadow-sm"
                                 style={{ backgroundColor: primaryColor }}
                             >
-                                E
+                                {schoolInitial}
                             </div>
                         )}
 
@@ -136,9 +139,11 @@ function PublicLayout() {
                             <p className="truncate text-base font-extrabold tracking-tight text-slate-900 sm:text-lg">
                                 {schoolName}
                             </p>
-                            <p className="hidden text-[11px] font-medium tracking-wide text-slate-500 sm:block">
-                                {settings.school_motto || "Excellence • Character • Knowledge"}
-                            </p>
+                            {settings.school_motto && (
+                                <p className="hidden text-[11px] font-medium tracking-wide text-slate-500 sm:block">
+                                    {settings.school_motto}
+                                </p>
+                            )}
                         </div>
                     </Link>
 
@@ -272,34 +277,25 @@ function PublicLayout() {
                                         className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold text-white"
                                         style={{ backgroundColor: primaryColor }}
                                     >
-                                        E
+                                        {schoolInitial}
                                     </div>
                                 )}
 
                                 <div>
                                     <h2 className="text-lg font-bold">{schoolName}</h2>
-                                    <p className="hidden text-xs text-slate-400 sm:block">
-                                        {settings.school_motto || "Excellence • Character • Knowledge"}
-                                    </p>
+                                    {settings.school_motto && (
+                                        <p className="hidden text-xs text-slate-400 sm:block">
+                                            {settings.school_motto}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
-                            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
-                                {schoolName} is committed to providing a nurturing environment where children can learn, grow, discover their talents and develop the character and knowledge needed for a successful future.
-                            </p>
-
-                            <div className="mt-6 flex gap-2">
-                                {["Facebook", "Instagram", "YouTube"].map((social) => (
-                                    <button
-                                        key={social}
-                                        type="button"
-                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 text-xs font-bold text-slate-400 transition hover:border-slate-500 hover:text-white"
-                                        title={`${social} coming soon`}
-                                    >
-                                        {social[0]}
-                                    </button>
-                                ))}
-                            </div>
+                            {footerDescription && (
+                                <p className="mt-5 max-w-md whitespace-pre-line text-sm leading-7 text-slate-400">
+                                    {footerDescription}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -327,10 +323,12 @@ function PublicLayout() {
                         <div>
                             <h3 className="font-semibold">Contact Us</h3>
                             <div className="mt-5 space-y-4 text-sm text-slate-400">
-                                <div className="flex gap-3">
-                                    <span className="mt-0.5" style={{ color: primaryColor }}>●</span>
-                                    <span>{schoolAddress}</span>
-                                </div>
+                                {schoolAddress && (
+                                    <div className="flex gap-3">
+                                        <span className="mt-0.5" style={{ color: primaryColor }}>●</span>
+                                        <span>{schoolAddress}</span>
+                                    </div>
+                                )}
                                 {schoolPhone && (
                                     <div className="flex gap-3">
                                         <span style={{ color: primaryColor }}>●</span>
@@ -343,13 +341,18 @@ function PublicLayout() {
                                         <span className="break-all">{schoolEmail}</span>
                                     </div>
                                 )}
+                                {!schoolAddress && !schoolPhone && !schoolEmail && (
+                                    <p className="text-sm leading-6 text-slate-500">
+                                        Add your school contact details in School Settings to display them here.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-12 flex flex-col gap-3 border-t border-slate-800 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                         <p>© {new Date().getFullYear()} {schoolName}. All rights reserved.</p>
-                        <p>Powered by <span className="font-semibold text-slate-400">EduCore</span></p>
+                        <p>Powered by <span className="font-semibold text-slate-400">EduProw</span></p>
                     </div>
                 </div>
             </footer>
