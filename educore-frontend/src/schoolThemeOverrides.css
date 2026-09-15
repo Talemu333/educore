@@ -108,38 +108,36 @@
 
 /* School-branded dashboard sidebar */
 .school-sidebar {
-    background-color: #020617 !important;
-    border-right-color: #1e293b !important;
-    color: #f1f5f9 !important;
+    background-color: var(--school-primary) !important;
+    border-right-color: var(--school-primary-dark) !important;
+    color: #ffffff !important;
 }
 
 .school-sidebar-header {
-    border-bottom-color: #1e293b !important;
+    border-bottom-color: color-mix(in srgb, var(--school-primary) 78%, white) !important;
 }
 
 .school-sidebar-logo {
-    background-color: var(--school-primary) !important;
+    background-color: var(--school-primary-light) !important;
+    color: var(--school-primary-dark) !important;
 }
 
 .school-sidebar h1 {
     color: #ffffff !important;
 }
 
-.school-sidebar .text-slate-400 {
-    color: #94a3b8 !important;
-}
-
+.school-sidebar .text-slate-400,
 .school-sidebar .text-slate-500 {
-    color: #94a3b8 !important;
+    color: color-mix(in srgb, var(--school-primary) 35%, white) !important;
 }
 
 .school-sidebar .text-slate-100 {
-    color: #f1f5f9 !important;
+    color: #ffffff !important;
 }
 
 .school-sidebar-user {
-    background-color: #0f172a !important;
-    box-shadow: inset 0 0 0 1px #1e293b !important;
+    background-color: color-mix(in srgb, var(--school-primary) 78%, black) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--school-primary) 65%, white) !important;
 }
 
 .school-sidebar-avatar {
@@ -147,33 +145,33 @@
     color: var(--school-primary-dark) !important;
 }
 
+/* Menu hover and selected states use the lighter school brand color. */
 .school-sidebar button:hover,
 .school-sidebar a:not(.school-sidebar-active):not(.school-sidebar-child-active):hover {
-    background-color: #1e293b !important;
-    color: #ffffff !important;
+    background-color: var(--school-primary-light) !important;
+    color: var(--school-primary-dark) !important;
 }
 
 .school-sidebar-active {
-    background-color: var(--school-primary) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--school-primary) 18%, transparent) !important;
+    background-color: var(--school-primary-light) !important;
+    color: var(--school-primary-dark) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--school-primary-dark) 22%, transparent) !important;
 }
 
-.school-sidebar-group-active {
-    background-color: color-mix(in srgb, var(--school-primary) 18%, #0f172a) !important;
-    color: #e2e8f0 !important;
+.school-sidebar-group-active,
+.school-sidebar-child-active {
+    background-color: var(--school-primary-light) !important;
+    color: var(--school-primary-dark) !important;
 }
 
 .school-sidebar-child-active {
-    background-color: color-mix(in srgb, var(--school-primary) 18%, #0f172a) !important;
-    color: #e2e8f0 !important;
     font-weight: 600;
 }
 
 .school-sidebar nav .border-l {
-    border-left-color: #334155 !important;
+    border-left-color: color-mix(in srgb, var(--school-primary) 55%, white) !important;
 }
 
 .school-sidebar-footer {
-    border-top-color: #1e293b !important;
+    border-top-color: color-mix(in srgb, var(--school-primary) 78%, white) !important;
 }
