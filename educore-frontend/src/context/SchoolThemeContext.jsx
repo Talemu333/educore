@@ -4,6 +4,8 @@ import { useSchoolSettings } from "@/hooks/useSchoolSettings";
 
 const DEFAULT_PRIMARY = "#1D4ED8";
 const DEFAULT_SECONDARY = "#FFFFFF";
+const DARK_FOREGROUND = "#0F172A";
+const LIGHT_FOREGROUND = "#FFFFFF";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -60,19 +62,29 @@ const getLuminance = (hex) => {
     return (0.2126 * channels[0]) + (0.7152 * channels[1]) + (0.0722 * channels[2]);
 };
 
-const getForeground = (hex) =>
-    getLuminance(hex) > 0.52 ? "#0F172A" : "#FFFFFF";
+const getContrastRatio = (first, second) => {
+    const firstLuminance = getLuminance(first);
+    const secondLuminance = getLuminance(second);
+    const lighter = Math.max(firstLuminance, secondLuminance);
+    const darker = Math.min(firstLuminance, secondLuminance);
 
-const getContrastForeground = (hex) => {
-    const luminance = getLuminance(hex);
-    return luminance > 0.72 ? "#0F172A" : "#FFFFFF";
+    return (lighter + 0.05) / (darker + 0.05);
+};
+
+const getBestForeground = (background) => {
+    const darkContrast = getContrastRatio(background, DARK_FOREGROUND);
+    const lightContrast = getContrastRatio(background, LIGHT_FOREGROUND);
+
+    return darkContrast >= lightContrast
+        ? DARK_FOREGROUND
+        : LIGHT_FOREGROUND;
 };
 
 const buildTheme = (settings) => {
     const primary = normalizeHex(settings?.primary_color, DEFAULT_PRIMARY);
     const secondary = normalizeHex(settings?.secondary_color, DEFAULT_SECONDARY);
-    const primaryForeground = getContrastForeground(primary);
-    const secondaryForeground = getForeground(secondary);
+    const primaryForeground = getBestForeground(primary);
+    const secondaryForeground = getBestForeground(secondary);
 
     return {
         primary,
@@ -95,6 +107,7 @@ const applyTheme = (theme) => {
     root.style.setProperty("--secondary", theme.secondary);
     root.style.setProperty("--secondary-foreground", theme.secondaryForeground);
     root.style.setProperty("--school-primary", theme.primary);
+    root.style.setProperty("--school-primary-foreground", theme.primaryForeground);
     root.style.setProperty("--school-primary-dark", theme.primaryDark);
     root.style.setProperty("--school-primary-light", theme.primaryLight);
     root.style.setProperty("--school-primary-soft", theme.primarySoft);
@@ -111,6 +124,7 @@ const applyTheme = (theme) => {
             "--secondary",
             "--secondary-foreground",
             "--school-primary",
+            "--school-primary-foreground",
             "--school-primary-dark",
             "--school-primary-light",
             "--school-primary-soft",
