@@ -108,13 +108,13 @@
 
 /* School-branded dashboard sidebar */
 .school-sidebar {
-    background-color: color-mix(in srgb, var(--school-primary) 7%, white) !important;
-    border-right-color: color-mix(in srgb, var(--school-primary) 18%, #e2e8f0) !important;
-    color: #334155 !important;
+    background-color: #020617 !important;
+    border-right-color: #1e293b !important;
+    color: #f1f5f9 !important;
 }
 
 .school-sidebar-header {
-    border-bottom-color: color-mix(in srgb, var(--school-primary) 16%, #e2e8f0) !important;
+    border-bottom-color: #1e293b !important;
 }
 
 .school-sidebar-logo {
@@ -122,24 +122,24 @@
 }
 
 .school-sidebar h1 {
-    color: #1e293b !important;
+    color: #ffffff !important;
 }
 
 .school-sidebar .text-slate-400 {
-    color: #64748b !important;
+    color: #94a3b8 !important;
 }
 
 .school-sidebar .text-slate-500 {
-    color: #64748b !important;
+    color: #94a3b8 !important;
 }
 
 .school-sidebar .text-slate-100 {
-    color: #334155 !important;
+    color: #f1f5f9 !important;
 }
 
 .school-sidebar-user {
-    background-color: color-mix(in srgb, var(--school-primary) 10%, white) !important;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--school-primary) 12%, #e2e8f0) !important;
+    background-color: #0f172a !important;
+    box-shadow: inset 0 0 0 1px #1e293b !important;
 }
 
 .school-sidebar-avatar {
@@ -149,8 +149,8 @@
 
 .school-sidebar button:hover,
 .school-sidebar a:not(.school-sidebar-active):not(.school-sidebar-child-active):hover {
-    background-color: color-mix(in srgb, var(--school-primary) 8%, white) !important;
-    color: #1e293b !important;
+    background-color: #1e293b !important;
+    color: #ffffff !important;
 }
 
 .school-sidebar-active {
@@ -160,20 +160,20 @@
 }
 
 .school-sidebar-group-active {
-    background-color: color-mix(in srgb, var(--school-primary) 12%, white) !important;
-    color: var(--school-primary-dark) !important;
+    background-color: color-mix(in srgb, var(--school-primary) 18%, #0f172a) !important;
+    color: #e2e8f0 !important;
 }
 
 .school-sidebar-child-active {
-    background-color: color-mix(in srgb, var(--school-primary) 12%, white) !important;
-    color: var(--school-primary-dark) !important;
+    background-color: color-mix(in srgb, var(--school-primary) 18%, #0f172a) !important;
+    color: #e2e8f0 !important;
     font-weight: 600;
 }
 
 .school-sidebar nav .border-l {
-    border-left-color: color-mix(in srgb, var(--school-primary) 20%, #e2e8f0) !important;
+    border-left-color: #334155 !important;
 }
 
 .school-sidebar-footer {
-    border-top-color: color-mix(in srgb, var(--school-primary) 16%, #e2e8f0) !important;
+    border-top-color: #1e293b !important;
 }
