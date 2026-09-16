@@ -43,6 +43,21 @@ const updatePassword = async (userId, hashedPassword) => {
     return result.rows[0];
 };
 
+const resetPasswordByAdmin = async (userId, schoolId, hashedPassword) => {
+    const result = await pool.query(`
+        UPDATE users
+        SET password = $1,
+            must_change_password = TRUE,
+            password_changed_at = NULL,
+            password_reset_token_hash = NULL,
+            password_reset_expires_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2 AND school_id = $3 AND is_active = TRUE
+        RETURNING id, username, email, school_id, role_id, admin_type, must_change_password;
+    `, [hashedPassword, userId, schoolId]);
+    return result.rows[0];
+};
+
 const findUserByEmail = async (email) => {
     const result = await pool.query(`
         SELECT id, username, email, school_id, student_id, is_active
@@ -94,6 +109,7 @@ module.exports = {
     findUserById,
     updateLastLogin,
     updatePassword,
+    resetPasswordByAdmin,
     findUserByEmail,
     savePasswordResetToken,
     findUserByResetTokenHash,
