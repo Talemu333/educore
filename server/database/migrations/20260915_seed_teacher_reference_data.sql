@@ -46,9 +46,13 @@ WHERE NOT EXISTS (
     WHERE LOWER(TRIM(q.qualification_name)) = LOWER(TRIM(v.qualification_name))
 );
 
-INSERT INTO departments (department_name)
-SELECT v.department_name
-FROM (VALUES
+-- Departments are school-scoped in the isolated-school schema. Existing
+-- school databases already contain their school row, so use that row instead
+-- of inserting a NULL school_id.
+INSERT INTO departments (school_id, department_name)
+SELECT s.id, v.department_name
+FROM (SELECT id FROM schools ORDER BY id LIMIT 1) AS s
+CROSS JOIN (VALUES
     ('Administration'),
     ('Nursery'),
     ('Primary'),
@@ -63,5 +67,6 @@ FROM (VALUES
 WHERE NOT EXISTS (
     SELECT 1
     FROM departments d
-    WHERE LOWER(TRIM(d.department_name)) = LOWER(TRIM(v.department_name))
+    WHERE d.school_id = s.id
+      AND LOWER(TRIM(d.department_name)) = LOWER(TRIM(v.department_name))
 );
