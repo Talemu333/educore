@@ -3,7 +3,9 @@ import ReactDOM from "react-dom/client";
 import { Toaster } from "react-hot-toast";
 import App from "./App";
 import "./index.css";
+import "./schoolThemeOverrides.css";
 import { AuthProvider } from "./context/AuthContext";
+import { SchoolThemeProvider } from "./context/SchoolThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DashboardTablePaginationEnhancer from "./components/common/DashboardTablePaginationEnhancer";
 
@@ -15,28 +17,32 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
         <AuthProvider>
 
-            <App />
+            <SchoolThemeProvider>
 
-            <DashboardTablePaginationEnhancer />
+                <App />
 
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 3000,
-                    success: {
-                        style: {
-                            background: "#16a34a",
-                            color: "#fff",
+                <DashboardTablePaginationEnhancer />
+
+                <Toaster
+                    position="top-right"
+                    toastOptions={{
+                        duration: 3000,
+                        success: {
+                            style: {
+                                background: "#16a34a",
+                                color: "#fff",
+                            },
                         },
-                    },
-                    error: {
-                        style: {
-                            background: "#dc2626",
-                            color: "#fff",
+                        error: {
+                            style: {
+                                background: "#dc2626",
+                                color: "#fff",
+                            },
                         },
-                    },
-                }}
-            />
+                    }}
+                />
+
+            </SchoolThemeProvider>
 
         </AuthProvider>
 

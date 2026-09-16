@@ -1,0 +1,184 @@
+/*
+ * Legacy blue utility bridge
+ *
+ * A number of older screens still use Tailwind's blue palette directly.
+ * Keep those screens school-branded without having to duplicate theme logic
+ * in every page. These selectors intentionally map the common blue utilities
+ * to the active school's theme variables.
+ */
+
+/* Solid backgrounds */
+[class~="bg-blue-50"] { background-color: var(--school-primary-soft) !important; }
+[class~="bg-blue-100"] { background-color: var(--school-primary-light) !important; }
+[class~="bg-blue-200"] { background-color: color-mix(in srgb, var(--school-primary) 24%, white) !important; }
+[class~="bg-blue-500"],
+[class~="bg-blue-600"] { background-color: var(--school-primary) !important; }
+[class~="bg-blue-700"],
+[class~="bg-blue-800"] { background-color: var(--school-primary-dark) !important; }
+
+/* Semi-transparent blue backgrounds */
+[class~="bg-blue-500\\/10"],
+[class~="bg-blue-600\\/10"] { background-color: color-mix(in srgb, var(--school-primary) 10%, transparent) !important; }
+[class~="bg-blue-500\\/20"],
+[class~="bg-blue-600\\/20"] { background-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
+[class~="bg-blue-500\\/30"],
+[class~="bg-blue-600\\/30"] { background-color: color-mix(in srgb, var(--school-primary) 30%, transparent) !important; }
+[class~="bg-blue-500\\/40"],
+[class~="bg-blue-600\\/40"] { background-color: color-mix(in srgb, var(--school-primary) 40%, transparent) !important; }
+[class~="bg-blue-700\\/40"],
+[class~="bg-blue-800\\/40"] { background-color: color-mix(in srgb, var(--school-primary-dark) 40%, transparent) !important; }
+
+/* Text */
+[class~="text-blue-100"] { color: color-mix(in srgb, var(--school-primary) 28%, white) !important; }
+[class~="text-blue-200"] { color: color-mix(in srgb, var(--school-primary) 42%, white) !important; }
+[class~="text-blue-300"] { color: color-mix(in srgb, var(--school-primary) 72%, white) !important; }
+[class~="text-blue-400"] { color: color-mix(in srgb, var(--school-primary) 68%, white) !important; }
+[class~="text-blue-500"],
+[class~="text-blue-600"] { color: var(--school-primary) !important; }
+[class~="text-blue-700"],
+[class~="text-blue-800"] { color: var(--school-primary-dark) !important; }
+
+/* Borders */
+[class~="border-blue-100"] { border-color: color-mix(in srgb, var(--school-primary) 18%, #e2e8f0) !important; }
+[class~="border-blue-200"] { border-color: color-mix(in srgb, var(--school-primary) 30%, #e2e8f0) !important; }
+[class~="border-blue-300"],
+[class~="border-blue-400"],
+[class~="border-blue-500"],
+[class~="border-blue-600"] { border-color: var(--school-primary) !important; }
+
+/* Hover states */
+[class~="hover:bg-blue-50"]:hover { background-color: var(--school-primary-soft) !important; }
+[class~="hover:bg-blue-100"]:hover { background-color: var(--school-primary-light) !important; }
+[class~="hover:bg-blue-500"]:hover,
+[class~="hover:bg-blue-600"]:hover { background-color: var(--school-primary) !important; }
+[class~="hover:bg-blue-700"]:hover,
+[class~="hover:bg-blue-800"]:hover { background-color: var(--school-primary-dark) !important; }
+[class~="hover:text-blue-600"]:hover,
+[class~="hover:text-blue-700"]:hover { color: var(--school-primary-dark) !important; }
+[class~="hover:border-blue-300"]:hover,
+[class~="hover:border-blue-500"]:hover,
+[class~="hover:border-blue-600"]:hover { border-color: var(--school-primary) !important; }
+
+/* Focus and rings */
+[class~="focus:border-blue-500"]:focus,
+[class~="focus:border-blue-600"]:focus { border-color: var(--school-primary) !important; }
+[class~="ring-blue-500"],
+[class~="ring-blue-600"] { --tw-ring-color: var(--ring) !important; }
+[class~="focus:ring-blue-100"]:focus,
+[class~="focus:ring-blue-200"]:focus,
+[class~="focus:ring-blue-500"]:focus,
+[class~="focus:ring-blue-600"]:focus { --tw-ring-color: var(--ring) !important; }
+
+/* Common blue gradients */
+[class~="from-blue-500"],
+[class~="from-blue-600"] {
+    --tw-gradient-from: var(--school-primary) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: color-mix(in srgb, var(--school-primary) 0%, transparent) var(--tw-gradient-to-position) !important;
+}
+[class~="to-blue-500"],
+[class~="to-blue-600"] { --tw-gradient-to: var(--school-primary) var(--tw-gradient-to-position) !important; }
+[class~="to-blue-700"],
+[class~="to-blue-800"] { --tw-gradient-to: var(--school-primary-dark) var(--tw-gradient-to-position) !important; }
+
+/* Blue shadows */
+[class~="shadow-blue-500\\/20"],
+[class~="shadow-blue-600\\/20"] { --tw-shadow-color: color-mix(in srgb, var(--school-primary) 20%, transparent) !important; }
+
+/* Hard-coded brand blue used by older public/auth pages */
+[style*="color: rgb(29, 78, 216)"],
+[style*="color:rgb(29, 78, 216)"],
+[style*="color: #1D4ED8"],
+[style*="color:#1D4ED8"] { color: var(--school-primary) !important; }
+[style*="background-color: rgb(29, 78, 216)"],
+[style*="background-color:rgb(29, 78, 216)"],
+[style*="background-color: #1D4ED8"],
+[style*="background-color:#1D4ED8"] { background-color: var(--school-primary) !important; }
+[style*="border-top-color: rgb(29, 78, 216)"],
+[style*="border-top-color:rgb(29, 78, 216)"],
+[style*="border-top-color: #1D4ED8"],
+[style*="border-top-color:#1D4ED8"] { border-top-color: var(--school-primary) !important; }
+[style*="color: rgb(147, 197, 253)"],
+[style*="color:rgb(147, 197, 253)"],
+[style*="color: #93C5FD"],
+[style*="color:#93C5FD"] { color: color-mix(in srgb, var(--school-primary) 72%, white) !important; }
+[style*="background-color: rgb(191, 219, 254)"],
+[style*="background-color:rgb(191, 219, 254)"],
+[style*="background-color: #BFDBFE"],
+[style*="background-color:#BFDBFE"] { background-color: color-mix(in srgb, var(--school-primary) 28%, white) !important; }
+
+/* School-branded dashboard sidebar */
+.school-sidebar {
+    background-color: #f8fafc !important;
+    border-right-color: #e2e8f0 !important;
+    color: #334155 !important;
+}
+
+.school-sidebar-header {
+    border-bottom-color: #e2e8f0 !important;
+}
+
+/* The logo uses the actual school primary color. Its foreground is calculated
+ * from the user's selected palette so light and dark school colors both stay readable. */
+.school-sidebar-logo {
+    background: var(--school-primary) !important;
+    color: var(--school-primary-foreground, var(--primary-foreground)) !important;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--school-primary) 22%, transparent) !important;
+}
+
+.school-sidebar h1 {
+    color: #0f172a !important;
+}
+
+.school-sidebar .text-slate-400,
+.school-sidebar .text-slate-500 {
+    color: #64748b !important;
+}
+
+.school-sidebar .text-slate-100 {
+    color: #334155 !important;
+}
+
+.school-sidebar-user {
+    background-color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px #e2e8f0 !important;
+}
+
+.school-sidebar-avatar {
+    background-color: var(--school-primary-light) !important;
+    color: var(--school-primary-dark) !important;
+}
+
+/* Standard light-sidebar navigation states.
+ * Active backgrounds intentionally use a light tint of the selected primary,
+ * with dark text. This prevents a user-selected light primary from producing
+ * white text on a pale background. */
+.school-sidebar button:hover,
+.school-sidebar a:not(.school-sidebar-active):not(.school-sidebar-child-active):hover {
+    background-color: color-mix(in srgb, var(--school-primary) 8%, white) !important;
+    color: var(--school-primary-dark) !important;
+}
+
+.school-sidebar-active {
+    background: color-mix(in srgb, var(--school-primary) 14%, white) !important;
+    color: #0f172a !important;
+    font-weight: 650 !important;
+    box-shadow: inset 3px 0 0 var(--school-primary) !important;
+}
+
+.school-sidebar-group-active,
+.school-sidebar-child-active {
+    background-color: color-mix(in srgb, var(--school-primary) 10%, white) !important;
+    color: #0f172a !important;
+}
+
+.school-sidebar-child-active {
+    font-weight: 600 !important;
+}
+
+.school-sidebar nav .border-l {
+    border-left-color: #cbd5e1 !important;
+}
+
+.school-sidebar-footer {
+    border-top-color: #e2e8f0 !important;
+}

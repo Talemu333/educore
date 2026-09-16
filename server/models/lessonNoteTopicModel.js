@@ -7,7 +7,7 @@ const columns = `
     COUNT(DISTINCT ln.id)::integer AS lesson_note_count
 `;
 
-const list = async (filters, schoolId, user) => {
+const list = async (filters, schoolId) => {
     const values = [schoolId];
     const where = ["lnt.school_id = $1"];
 
@@ -16,22 +16,6 @@ const list = async (filters, schoolId, user) => {
     if (filters.class_id) { values.push(filters.class_id); where.push(`lnt.class_id = $${values.length}`); }
     if (filters.subject_id) { values.push(filters.subject_id); where.push(`lnt.subject_id = $${values.length}`); }
     if (filters.week_number) { values.push(filters.week_number); where.push(`lnt.week_number = $${values.length}`); }
-
-    if (user?.role_name === "Teacher") {
-        values.push(user.id);
-        where.push(`EXISTS (
-            SELECT 1
-            FROM teacher_assignments ta
-            JOIN teachers tt ON tt.id = ta.teacher_id
-            JOIN users tu ON tu.id = tt.user_id AND tu.school_id = $1
-            WHERE ta.teacher_id = tt.id
-              AND tt.user_id = $${values.length}
-              AND ta.class_id = lnt.class_id
-              AND ta.subject_id = lnt.subject_id
-              AND ta.session_id = lnt.session_id
-              AND ta.term_id = lnt.term_id
-        )`);
-    }
 
     const result = await pool.query(`
         SELECT ${columns}

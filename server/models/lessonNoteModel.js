@@ -93,7 +93,7 @@ const create = async (data, schoolId) => {
             lesson_date, topic, sub_topic, duration, objectives, instructional_materials,
             previous_knowledge, introduction, lesson_development, teacher_activities,
             student_activities, evaluation, conclusion, assignment, "references", remarks, status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
         RETURNING id
     `, [schoolId, data.teacher_id, data.class_id, data.subject_id, data.session_id, data.term_id, data.week_number,
         data.lesson_date || null, data.topic, data.sub_topic || null, data.duration || null, data.objectives || null,
@@ -179,25 +179,16 @@ const getMeta = async (schoolId, user) => {
     const classes = await pool.query(`
         SELECT id, class_name
         FROM classes
-        WHERE school_id = $1
         ORDER BY class_name
-    `, [schoolId]);
+    `);
 
     const subjects = await pool.query(`
         SELECT id, subject_name
         FROM subjects
-        WHERE school_id = $1
         ORDER BY subject_name
-    `, [schoolId]);
+    `);
 
-    return {
-        assignments: assignments.rows,
-        sessions: sessions.rows,
-        terms: terms.rows,
-        classes: classes.rows,
-        subjects: subjects.rows,
-        teacher_id: teacherId || null
-    };
+    return { assignments: assignments.rows, sessions: sessions.rows, terms: terms.rows, classes: classes.rows, subjects: subjects.rows };
 };
 
-module.exports = { getById, list, validateContext, create, update, setStatus, duplicate, getMeta };
+module.exports = { list, getById, validateContext, create, update, setStatus, duplicate, getMeta };

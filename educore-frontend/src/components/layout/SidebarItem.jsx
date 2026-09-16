@@ -94,7 +94,7 @@ function SidebarItem({
                         px-3 py-2.5 text-sm font-medium transition-all duration-150
                         ${
                             isChildActive
-                                ? "bg-blue-500/15 text-blue-300"
+                                ? "school-sidebar-group-active"
                                 : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                         }
                     `}
@@ -123,7 +123,7 @@ function SidebarItem({
                                     block rounded-lg px-3 py-2 text-sm transition-colors
                                     ${
                                         isActive
-                                            ? "bg-blue-500/10 font-semibold text-blue-300"
+                                            ? "school-sidebar-child-active"
                                             : "text-slate-500 hover:bg-slate-900 hover:text-slate-200"
                                     }
                                 `}
@@ -147,7 +147,7 @@ function SidebarItem({
                 font-medium transition-all duration-150
                 ${
                     isActive
-                        ? "bg-blue-600 text-white shadow-sm shadow-blue-950/30"
+                        ? "school-sidebar-active"
                         : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                 }
             `}

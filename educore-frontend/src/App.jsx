@@ -90,6 +90,11 @@ function App() {
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
+    // A custom school domain identifies the tenant, but it must still be able
+    // to use the shared authentication and protected dashboard routes.
+    if (isCustomSchoolDomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
+    if (isCustomSchoolDomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
+
     if (isEduProwSubdomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
     if (isEduProwSubdomain) return <SchoolWebsiteRouter isSubdomain schoolSlug={schoolSlugFromSubdomain} />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
