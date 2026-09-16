@@ -49,7 +49,11 @@ function AddTeacherSheet({ teacherId, open, onOpenChange }) {
                             teacher={teacher}
                             onSuccess={(result) => {
                                 if (!teacherId && result?.data) {
-                                    setCredentials(result.data);
+                                    const account = result.data;
+                                    setCredentials({
+                                        username: account.username || account.teacher?.username,
+                                        temporary_password: account.temporary_password || account.temporaryPassword
+                                    });
                                     return;
                                 }
                                 handleOpenChange(false);
