@@ -81,9 +81,9 @@ function TeacherForm({ teacher, onSuccess }) {
             createTeacherMutation.mutate(
                 payload,
                 {
-                    onSuccess: () => {
+                    onSuccess: result => {
                         reset();
-                        onSuccess?.();
+                        onSuccess?.(result);
                     }
                 }
             );
@@ -95,23 +95,18 @@ function TeacherForm({ teacher, onSuccess }) {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <PersonalInformation register={register} control={control} errors={errors} />
             </div>
-
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <EmploymentInformation control={control} register={register} errors={errors} />
             </div>
-
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <ContactInformation register={register} errors={errors} />
             </div>
-
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <EmergencyInformation register={register} errors={errors} />
             </div>
-
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <AccountInformation register={register} errors={errors} editing={!!teacher} />
             </div>
-
             <div className="sticky bottom-0 z-30 -mx-1 border-t border-slate-200 bg-white/95 px-1 pt-4 backdrop-blur sm:pt-5">
                 <Button type="submit" className="h-11 w-full rounded-xl text-sm font-bold shadow-sm">
                     {teacher ? "Update Teacher" : "Create Teacher"}
