@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { X, Settings, Handshake, SlidersHorizontal } from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
@@ -38,17 +38,26 @@ function Sidebar({ isOpen, onClose }) {
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
     const schoolName = settings?.school_name || "EDUPROW";
 
-    useEffect(() => {
-        const savedScrollTop = sessionStorage.getItem("schoolSidebarScrollTop");
-        if (savedScrollTop === null) return;
-
-        const frame = requestAnimationFrame(() => {
+    useLayoutEffect(() => {
+        const restore = () => {
             const nav = document.querySelector(".school-sidebar nav");
-            if (nav) nav.scrollTop = Number(savedScrollTop) || 0;
+            const saved = sessionStorage.getItem("schoolSidebarScrollTop");
+            if (!nav || saved === null) return;
+            nav.scrollTop = Number(saved) || 0;
+        };
+
+        restore();
+        const frame = requestAnimationFrame(() => {
+            restore();
+            requestAnimationFrame(restore);
         });
 
         return () => cancelAnimationFrame(frame);
     }, [location.pathname]);
+
+    const rememberScroll = (event) => {
+        sessionStorage.setItem("schoolSidebarScrollTop", String(event.currentTarget.scrollTop));
+    };
 
     return (
         <aside className={`school-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] flex-col border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -70,7 +79,7 @@ function Sidebar({ isOpen, onClose }) {
                     <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{displayName}</p><p className="truncate text-xs capitalize text-slate-400">{adminType?.replace(/_/g, " ") || role || "Account"}</p></div>
                 </div>
             </div>
-            <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
+            <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
             <div className="school-sidebar-footer border-t border-slate-800 px-4 py-3"><p className="text-center text-[10px] font-medium text-slate-500">EduProw • School Administration</p></div>
         </aside>
     );
