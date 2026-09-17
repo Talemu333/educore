@@ -37,8 +37,18 @@ const validateClassArm = async (client, classId, armId, schoolId) => {
     return result.rows.length > 0;
 };
 
+const studentListSelect = `
+    SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, s.status,
+           c.class_name, a.arm_name,
+           u.id AS user_id, u.username, u.must_change_password
+    FROM students s
+    INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id
+    INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id
+    LEFT JOIN users u ON u.student_id = s.id AND u.school_id = s.school_id
+`;
+
 const getAllStudents = async (limit, offset, schoolId, client = pool) => {
-    const result = await client.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, s.status, c.class_name, a.arm_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
+    const result = await client.query(`${studentListSelect} WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
     return result.rows;
 };
 
@@ -72,7 +82,12 @@ const updateCurrentClass = async (studentId, classId, armId, schoolId, client = 
 };
 
 const searchStudents = async (searchTerm, limit, offset, schoolId, client = pool) => {
-    const result = await client.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, c.class_name, a.arm_name FROM students s LEFT JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id LEFT JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $4 AND s.status = 'Active' AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1)) ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;`, [`%${searchTerm}%`, limit, offset, schoolId]);
+    const result = await client.query(`
+        ${studentListSelect}
+        WHERE s.school_id = $4 AND s.status = 'Active'
+          AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1))
+        ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;
+    `, [`%${searchTerm}%`, limit, offset, schoolId]);
     return result.rows;
 };
 
