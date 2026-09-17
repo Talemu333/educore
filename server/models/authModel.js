@@ -15,7 +15,7 @@ const hydrateAdministratorType = async (user) => {
     // Older isolated school databases can have this value missing or set
     // to the generic "admin" value even though the central school account
     // still contains the correct administrator type.
-    if (roleName !== "admin" || (currentType && currentType !== "admin")) {
+    if (roleName !== "admin") {
         return user;
     }
 
