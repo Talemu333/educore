@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { X, Settings, Handshake, SlidersHorizontal } from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
 import SidebarItem from "./SidebarItem";
@@ -8,6 +9,7 @@ import { useSchoolTheme } from "@/context/SchoolThemeContext";
 function Sidebar({ isOpen, onClose }) {
     const { user } = useAuth();
     const { settings } = useSchoolTheme();
+    const location = useLocation();
     const role = user?.role_name;
     const adminType = user?.admin_type;
 
