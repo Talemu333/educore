@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SchoolThemeProvider } from "./context/SchoolThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DashboardTablePaginationEnhancer from "./components/common/DashboardTablePaginationEnhancer";
+import WebsiteSectionFormAutoScroll from "./components/common/WebsiteSectionFormAutoScroll";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <App />
 
                 <DashboardTablePaginationEnhancer />
+
+                <WebsiteSectionFormAutoScroll />
 
                 <Toaster
                     position="top-right"
