@@ -95,7 +95,7 @@ const findUserByResetTokenHash = async (tokenHash) => {
         WHERE password_reset_token_hash = $1
           AND password_reset_expires_at > CURRENT_TIMESTAMP
         LIMIT 1;
-    `);
+    `, [tokenHash]);
     return result.rows[0];
 };
 
