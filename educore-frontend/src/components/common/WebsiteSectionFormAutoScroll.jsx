@@ -14,30 +14,29 @@ function WebsiteSectionFormAutoScroll() {
             const isAddSectionButton =
                 buttonText === "+ Add Section";
 
-            const isSectionEditButton =
-                buttonText === "Edit" &&
-                Array.from(
-                    { length: 6 },
-                    (_, index) => button.parentElement?.parentElement
-                        ? Array.from({ length: index + 1 }).reduce(
-                            element => element?.parentElement,
-                            button
-                        )
-                        : null
-                ).some(element =>
-                    element?.textContent?.includes("Section key:")
-                );
+            let isSectionEditButton = false;
+
+            if (buttonText === "Edit") {
+                let element = button.parentElement;
+
+                for (let level = 0; element && level < 6; level += 1) {
+                    if (element.textContent?.includes("Section key:")) {
+                        isSectionEditButton = true;
+                        break;
+                    }
+
+                    element = element.parentElement;
+                }
+            }
 
             if (!isAddSectionButton && !isSectionEditButton) {
                 return;
             }
 
             window.setTimeout(() => {
-                const headings = Array.from(
+                const formHeading = Array.from(
                     document.querySelectorAll("h2")
-                );
-
-                const formHeading = headings.find(heading => {
+                ).find(heading => {
                     const text = heading.textContent?.trim();
                     return (
                         text === "Add New Section" ||
