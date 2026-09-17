@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import PageHeader from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/Button";
-import { api } from "@/api";
+import api from "@/api/axios";
 import { useSessions } from "@/hooks/useSessions";
 import { useTerms } from "@/hooks/useTerms";
 import { useClasses } from "@/hooks/useClasses";
