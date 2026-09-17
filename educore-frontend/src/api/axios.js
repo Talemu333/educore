@@ -41,6 +41,21 @@ api.interceptors.request.use((config) => {
         }
     }
 
+    // The API is hosted separately from the school frontend (for example on Render),
+    // so req.hostname on the API server is not the school's browser hostname.
+    // Send the school domain explicitly for every school-portal request, including
+    // login and /auth/me, so the backend resolves the correct dedicated database.
+    const isPlatformDomain =
+        hostname === "eduprow.com" ||
+        hostname === "www.eduprow.com" ||
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname.endsWith(".vercel.app");
+
+    if (!isPlatformDomain && hostname) {
+        config.headers["X-School-Domain"] = hostname;
+    }
+
     const apiPath = String(config.url || "");
     const isPublicWebsiteRequest =
         apiPath.startsWith("/website/") ||
