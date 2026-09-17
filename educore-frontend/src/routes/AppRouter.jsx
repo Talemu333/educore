@@ -93,6 +93,10 @@ import GradingScalesPage
     from "../pages/settings/GradingScalesPage";
 
 
+import ReportsPage
+    from "../pages/reports/ReportsPage";
+
+
 import PublicLayout
     from "@/layouts/PublicLayout";
 
@@ -367,7 +371,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/students"
@@ -474,7 +478,7 @@ function AppRouter() {
 
                     {/* =====================================
                         EDIT STUDENT
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/students/:id/edit"
@@ -504,7 +508,7 @@ function AppRouter() {
 
                     {/* =====================================
                         STUDENT PROFILE
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/students/:id"
@@ -538,7 +542,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/teachers"
@@ -572,7 +576,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/parents"
@@ -626,7 +630,7 @@ function AppRouter() {
 
                     {/* =====================================
                         CREATE PARENT
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/parents/new"
@@ -656,7 +660,7 @@ function AppRouter() {
 
                     {/* =====================================
                         CLASS SUBJECTS
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/class-subjects"
@@ -688,7 +692,7 @@ function AppRouter() {
                         ATTENDANCE
 
                         Admin academic staff + Teacher
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/attendance"
@@ -721,7 +725,7 @@ function AppRouter() {
                         RESULTS
 
                         Admin academic staff + Teacher
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/results"
@@ -752,7 +756,7 @@ function AppRouter() {
 
                     {/* =====================================
                         CLASS RESULT SHEET
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/results/class-sheet"
@@ -782,7 +786,7 @@ function AppRouter() {
 
                     {/* =====================================
                         DETAILED CLASS RESULT SHEET
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/results/detailed-class-sheet"
@@ -796,8 +800,7 @@ function AppRouter() {
 
                                 allowedAdminTypes={[
                                     "proprietor",
-                                    "principal",
-                                    "vice_principal"
+                                    "principal"
                                 ]}
 
                             >
@@ -811,12 +814,43 @@ function AppRouter() {
 
 
                     {/* =====================================
+                        PUBLISH RESULTS
+
+                        PROPRIETOR + PRINCIPAL
+                    ===================================== */
+
+                    <Route
+                        path="/reports"
+                        element={
+
+                            <ProtectedRoute
+
+                                allowedRoles={[
+                                    ROLES.ADMIN
+                                ]}
+
+                                allowedAdminTypes={[
+                                    "proprietor",
+                                    "principal"
+                                ]}
+
+                            >
+
+                                <ReportsPage />
+
+                            </ProtectedRoute>
+
+                        }
+                    />
+
+
+                    {/* =====================================
                         TIMETABLE
 
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/timetable"
@@ -848,7 +882,7 @@ function AppRouter() {
                         ANNOUNCEMENTS
 
                         All Admin types
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/announcements"
@@ -881,7 +915,7 @@ function AppRouter() {
                         PAYMENTS
 
                         PROPRIETOR + BURSAR
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/payments"
@@ -912,7 +946,7 @@ function AppRouter() {
                         PAYMENT REPORTS
 
                         PROPRIETOR + BURSAR
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/payments/reports"
@@ -943,7 +977,7 @@ function AppRouter() {
                         FEE MANAGEMENT
 
                         PROPRIETOR + BURSAR
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/admin/fees"
@@ -971,7 +1005,7 @@ function AppRouter() {
 
                         {/* =====================================
                             PARENT FINANCIAL DETAILS
-                        ===================================== */}
+                        ===================================== */
 
                     <Route
                         path="/parents/financial/:parentId"
@@ -1002,7 +1036,7 @@ function AppRouter() {
                         WEBSITE MANAGEMENT
 
                         PROPRIETOR + PRINCIPAL
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/dashboard/website"
@@ -1033,7 +1067,7 @@ function AppRouter() {
                         SETTINGS
 
                         PROPRIETOR ONLY
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/settings"
@@ -1063,7 +1097,7 @@ function AppRouter() {
                         GRADING SCALES
 
                         PROPRIETOR ONLY
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/settings/grading-scales"
@@ -1093,7 +1127,7 @@ function AppRouter() {
                         CHANGE PASSWORD
 
                         ALL AUTHENTICATED USERS
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/change-password"
@@ -1119,7 +1153,7 @@ function AppRouter() {
 
                     {/* =====================================
                         TEACHER DASHBOARD
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/teacher-dashboard"
@@ -1143,7 +1177,7 @@ function AppRouter() {
 
                     {/* =====================================
                         TEACHER STUDENTS
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/teacher-students"
@@ -1167,7 +1201,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT DASHBOARD
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/parent-dashboard"
@@ -1191,7 +1225,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT RESULTS
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/parent-results"
@@ -1215,7 +1249,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT ATTENDANCE
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/parent-attendance"
@@ -1239,7 +1273,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT PAYMENTS
-                    ===================================== */}
+                    ===================================== */
 
                     <Route
                         path="/parent/payments"
