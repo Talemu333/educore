@@ -70,12 +70,16 @@ const resetPasswordByAdmin = async (req, res, next) => {
         if (!Number.isInteger(targetUserId) || targetUserId <= 0) return res.status(400).json({ success: false, message: "Invalid user account." });
 
         const target = await authModel.findUserById(targetUserId);
-        if (!target || target.school_id !== req.user.school_id) return res.status(404).json({ success: false, message: "User account not found in this school." });
+        const currentSchoolId = Number(req.user.school_id);
+        const targetSchoolId = Number(target?.school_id);
+        if (!target || !Number.isInteger(currentSchoolId) || !Number.isInteger(targetSchoolId) || targetSchoolId !== currentSchoolId) {
+            return res.status(404).json({ success: false, message: "User account not found in this school." });
+        }
         if (target.id === req.user.id) return res.status(400).json({ success: false, message: "Use Change Password for your own account." });
 
         const temporaryPassword = generateTemporaryPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-        const updated = await authModel.resetPasswordByAdmin(targetUserId, req.user.school_id, hashedPassword);
+        const updated = await authModel.resetPasswordByAdmin(targetUserId, currentSchoolId, hashedPassword);
         if (!updated) return res.status(404).json({ success: false, message: "Unable to reset this account." });
 
         res.json({
