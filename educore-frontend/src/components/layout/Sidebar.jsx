@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { X, Settings, Handshake, SlidersHorizontal } from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
 import SidebarItem from "./SidebarItem";
@@ -34,6 +35,18 @@ function Sidebar({ isOpen, onClose }) {
     const displayName = user?.full_name || user?.name || "User";
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
     const schoolName = settings?.school_name || "EDUPROW";
+
+    useEffect(() => {
+        const savedScrollTop = sessionStorage.getItem("schoolSidebarScrollTop");
+        if (savedScrollTop === null) return;
+
+        const frame = requestAnimationFrame(() => {
+            const nav = document.querySelector(".school-sidebar nav");
+            if (nav) nav.scrollTop = Number(savedScrollTop) || 0;
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [location.pathname]);
 
     return (
         <aside className={`school-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] flex-col border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
