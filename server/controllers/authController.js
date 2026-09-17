@@ -3,6 +3,7 @@ const authModel = require("../models/authModel");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { sendPasswordResetEmail } = require("../services/emailService");
+const generateTemporaryPassword = require("../utils/passwordGenerator");
 
 const login = (req, res, next) => {
     const requestId = crypto.randomUUID();
@@ -17,40 +18,15 @@ const login = (req, res, next) => {
     log("start", { hasPassword: Boolean(req.body?.password), session: Boolean(req.session) });
 
     passport.authenticate("local", (err, user, info) => {
-        if (err) {
-            console.error(`[AUTH LOGIN ${requestId}] passport error`, err);
-            return next(err);
-        }
+        if (err) return next(err);
         if (!user) {
             log("authentication rejected", { reason: info?.message || "No user returned" });
             return res.status(401).json({ success: false, message: info.message });
         }
 
-        log("passport success", {
-            userId: user.id,
-            role: user.role_name,
-            schoolId: user.school_id,
-            adminType: user.admin_type,
-        });
-
         req.logIn(user, async (err) => {
-            if (err) {
-                console.error(`[AUTH LOGIN ${requestId}] req.logIn/session error`, err);
-                return next(err);
-            }
-
-            log("session login success", {
-                isAuthenticated: req.isAuthenticated(),
-                sessionIdPresent: Boolean(req.sessionID),
-            });
-
-            try {
-                await authModel.updateLastLogin(user.id);
-                log("last login updated", { userId: user.id });
-            } catch (error) {
-                console.error(`[AUTH LOGIN ${requestId}] Failed to update last login`, error);
-            }
-
+            if (err) return next(err);
+            try { await authModel.updateLastLogin(user.id); } catch (error) { console.error("Failed to update last login", error); }
             return res.json({ success: true, message: "Login successful.", user: {
                 id: user.id, username: user.username, email: user.email,
                 role_name: user.role_name, must_change_password: user.must_change_password,
@@ -85,6 +61,46 @@ const changePassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
+const resetPasswordByAdmin = async (req, res, next) => {
+    try {
+        const roleName = String(req.user?.role_name || "").trim().toLowerCase();
+        if (roleName !== "admin") return res.status(403).json({ success: false, message: "Only school administrators can reset account passwords." });
+
+        const targetUserId = Number(req.params.userId);
+        if (!Number.isInteger(targetUserId) || targetUserId <= 0) return res.status(400).json({ success: false, message: "Invalid user account." });
+
+        const currentSchoolId = Number(req.user.school_id);
+        if (!Number.isInteger(currentSchoolId) || currentSchoolId <= 0) {
+            return res.status(400).json({ success: false, message: "School context is required." });
+        }
+
+        // School users are stored in their dedicated school database. The
+        // authenticate middleware has already established that database
+        // context for this request, so both lookup and update must use it.
+        const target = await authModel.findUserByIdInSchool(targetUserId, currentSchoolId);
+        if (!target || Number(target.school_id) !== currentSchoolId) {
+            return res.status(404).json({ success: false, message: "User account not found in this school." });
+        }
+        if (target.id === req.user.id) return res.status(400).json({ success: false, message: "Use Change Password for your own account." });
+
+        const temporaryPassword = generateTemporaryPassword();
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        const updated = await authModel.resetPasswordByAdmin(targetUserId, currentSchoolId, hashedPassword);
+        if (!updated) return res.status(404).json({ success: false, message: "Unable to reset this account." });
+
+        res.json({
+            success: true,
+            message: "Temporary password generated successfully.",
+            data: {
+                user_id: updated.id,
+                username: updated.username,
+                temporary_password: temporaryPassword,
+                must_change_password: true
+            }
+        });
+    } catch (error) { next(error); }
+};
+
 const requestPasswordReset = async (req, res, next) => {
     try {
         const email = String(req.body.email || "").trim();
@@ -99,27 +115,13 @@ const requestPasswordReset = async (req, res, next) => {
         await authModel.savePasswordResetToken(user.id, tokenHash, expiresAt);
 
         const frontendUrl = process.env.FRONTEND_URL?.trim();
-        if (process.env.NODE_ENV === "production" && !frontendUrl) {
-            throw new Error("FRONTEND_URL must be configured in production.");
-        }
+        if (process.env.NODE_ENV === "production" && !frontendUrl) throw new Error("FRONTEND_URL must be configured in production.");
         const resetBaseUrl = (frontendUrl || "http://localhost:5173").replace(/\/+$/, "");
         const resetUrl = `${resetBaseUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
-
-        const emailConfigured = Boolean(
-            process.env.RESEND_API_KEY ||
-            (
-                process.env.SMTP_HOST &&
-                process.env.SMTP_USER &&
-                process.env.SMTP_PASS
-            )
-        );
+        const emailConfigured = Boolean(process.env.RESEND_API_KEY || (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS));
 
         if (emailConfigured) {
-            await sendPasswordResetEmail({
-                to: user.email,
-                name: user.username,
-                resetUrl,
-            });
+            await sendPasswordResetEmail({ to: user.email, name: user.username, resetUrl });
         } else {
             console.log(`Password reset email not sent because no email provider is configured. Reset link for ${email}: ${resetUrl}`);
         }
@@ -147,4 +149,4 @@ const resetPassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-module.exports = { login, logout, getCurrentUser, changePassword, requestPasswordReset, resetPassword };
+module.exports = { login, logout, getCurrentUser, changePassword, resetPasswordByAdmin, requestPasswordReset, resetPassword };

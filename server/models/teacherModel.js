@@ -88,7 +88,7 @@ const countTeachers = async (schoolId, options = {}) => {
 const getTeacherById = async (id, schoolId) => {
     const result = await pool.query(`
         SELECT t.*, d.department_name, q.qualification_name, s.state_name,
-               n.nationality_name, u.username, u.school_id
+               n.nationality_name, u.username, u.school_id, u.must_change_password
         FROM teachers t
         INNER JOIN users u ON u.id = t.user_id
         LEFT JOIN departments d ON d.id = t.department_id

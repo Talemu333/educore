@@ -37,8 +37,18 @@ const validateClassArm = async (client, classId, armId, schoolId) => {
     return result.rows.length > 0;
 };
 
+const studentListSelect = `
+    SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, s.status,
+           c.class_name, a.arm_name,
+           u.id AS user_id, u.username, u.must_change_password
+    FROM students s
+    INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id
+    INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id
+    LEFT JOIN users u ON u.student_id = s.id AND u.school_id = s.school_id
+`;
+
 const getAllStudents = async (limit, offset, schoolId, client = pool) => {
-    const result = await client.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, s.status, c.class_name, a.arm_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
+    const result = await client.query(`${studentListSelect} WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
     return result.rows;
 };
 
@@ -72,7 +82,12 @@ const updateCurrentClass = async (studentId, classId, armId, schoolId, client = 
 };
 
 const searchStudents = async (searchTerm, limit, offset, schoolId, client = pool) => {
-    const result = await client.query(`SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.gender, c.class_name, a.arm_name FROM students s LEFT JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id LEFT JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id WHERE s.school_id = $4 AND s.status = 'Active' AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1)) ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;`, [`%${searchTerm}%`, limit, offset, schoolId]);
+    const result = await client.query(`
+        ${studentListSelect}
+        WHERE s.school_id = $4 AND s.status = 'Active'
+          AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1))
+        ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;
+    `, [`%${searchTerm}%`, limit, offset, schoolId]);
     return result.rows;
 };
 
@@ -87,7 +102,7 @@ const deactivateStudent = async (client, id, schoolId) => {
 };
 
 const getStudentParents = async (studentId, schoolId, client = pool) => {
-    const result = await client.query(`SELECT p.id, p.user_id, u.username, p.surname, p.first_name, p.middle_name, p.gender, p.phone_number, p.alternate_phone, p.email, p.occupation, p.residential_address, sp.relationship_id, r.relationship_name, sp.is_primary_contact FROM student_parents sp INNER JOIN parents p ON sp.parent_id = p.id AND p.school_id = $2 INNER JOIN users u ON p.user_id = u.id AND u.school_id = $2 LEFT JOIN relationships r ON sp.relationship_id = r.id INNER JOIN students s ON sp.student_id = s.id AND s.school_id = $2 WHERE sp.student_id = $1 ORDER BY sp.is_primary_contact DESC, p.surname;`, [studentId, schoolId]);
+    const result = await client.query(`SELECT p.id, p.user_id, u.username, u.must_change_password, p.surname, p.first_name, p.middle_name, p.gender, p.phone_number, p.alternate_phone, p.email, p.occupation, p.residential_address, sp.relationship_id, r.relationship_name, sp.is_primary_contact FROM student_parents sp INNER JOIN parents p ON sp.parent_id = p.id AND p.school_id = $2 INNER JOIN users u ON p.user_id = u.id AND u.school_id = $2 LEFT JOIN relationships r ON sp.relationship_id = r.id INNER JOIN students s ON sp.student_id = s.id AND s.school_id = $2 WHERE sp.student_id = $1 ORDER BY sp.is_primary_contact DESC, p.surname;`, [studentId, schoolId]);
     return result.rows;
 };
 

@@ -29,5 +29,6 @@ router.post("/reset-password", passwordResetLimit, authController.resetPassword)
 
 router.get("/me", keepSuperAdminOnPlatformDatabase, authenticate, authController.getCurrentUser);
 router.post("/change-password", keepSuperAdminOnPlatformDatabase, authenticate, authController.changePassword);
+router.post("/admin-reset-password/:userId", keepSuperAdminOnPlatformDatabase, authenticate, authController.resetPasswordByAdmin);
 
 module.exports = router;
