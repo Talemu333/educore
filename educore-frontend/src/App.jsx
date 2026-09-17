@@ -27,7 +27,6 @@ import CBTManagementPage from "./pages/admin/CBTManagementPage";
 import CBTResultsPage from "./pages/admin/CBTResultsPage";
 import CBTQuestionBankPage from "./pages/admin/CBTQuestionBankPage";
 import CBTPdfImportPage from "./pages/admin/CBTPdfImportPage";
-import ReportsPage from "./pages/reports/ReportsPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
@@ -76,7 +75,6 @@ function App() {
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
-    if (pathname === "/reports") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ReportsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/partner-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/partner-management/settings") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerProgrammeSettingsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-dashboard") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
