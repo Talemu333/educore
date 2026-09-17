@@ -18,6 +18,14 @@ import {
 } from "lucide-react";
 
 
+function preserveSidebarScroll() {
+    const nav = document.querySelector(".school-sidebar nav");
+    if (nav) {
+        sessionStorage.setItem("schoolSidebarScrollTop", String(nav.scrollTop));
+    }
+}
+
+
 function SidebarItem({
     icon: Icon,
     title,
@@ -118,7 +126,7 @@ function SidebarItem({
                                 key={child.path}
                                 to={child.path}
                                 end
-                                onClick={() => onClose?.()}
+                                onClick={preserveSidebarScroll}
                                 className={({ isActive }) => `
                                     block rounded-lg px-3 py-2 text-sm transition-colors
                                     ${
@@ -141,7 +149,10 @@ function SidebarItem({
         <NavLink
             to={path}
             end
-            onClick={() => onClose?.()}
+            onClick={() => {
+                preserveSidebarScroll();
+                onClose?.();
+            }}
             className={({ isActive }) => `
                 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
                 font-medium transition-all duration-150
