@@ -1,26 +1,20 @@
-import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 function CreateParentPage() {
-
-    // 👇 Put this at the top of the component
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-
     const studentId = searchParams.get("studentId");
 
-    console.log(studentId);
+    useEffect(() => {
+        navigate(studentId ? `/students/${studentId}` : "/students", { replace: true });
+    }, [navigate, studentId]);
 
     return (
-
-        <div>
-
-            <h1>Create Parent</h1>
-
-            <p>Student ID: {studentId}</p>
-
+        <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
+            Opening student profile...
         </div>
-
     );
-
 }
 
 export default CreateParentPage;
