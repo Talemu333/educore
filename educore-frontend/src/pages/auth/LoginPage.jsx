@@ -31,6 +31,22 @@ function LoginPage() {
         }
     };
 
+    // Do not render school-specific branding until the current hostname's
+    // school settings have been resolved. This prevents a previous school's
+    // identity from appearing briefly during a hard refresh.
+    if (isSchoolLoading) {
+        return (
+            <div className="flex min-h-screen w-full items-center justify-center bg-slate-50">
+                <div className="text-center">
+                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-700" />
+                    <p className="mt-4 text-sm font-medium text-slate-500">
+                        Loading school portal...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen w-full bg-slate-50">
             <div className="flex min-h-screen flex-col lg:flex-row">
@@ -53,7 +69,7 @@ function LoginPage() {
                             )}
                             <div>
                                 <h1 className="text-xl font-bold leading-tight sm:text-2xl">
-                                    {isSchoolLoading ? "" : schoolName}
+                                    {schoolName}
                                 </h1>
                                 <p className="mt-1 text-sm text-blue-100">School Portal</p>
                             </div>
