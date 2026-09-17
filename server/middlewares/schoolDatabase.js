@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const publicDomainModel = require("../models/publicDomainModel");
 const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 const { runWithSchoolDatabase } = require("../config/databaseContext");
 
