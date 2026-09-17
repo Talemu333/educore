@@ -1,8 +1,8 @@
 const database = require("../config/database");
 
-// Authentication is a platform-level concern for login and public password
-// reset flows. School-scoped account administration uses the active school
-// database through the methods defined below.
+// Authentication uses the active database context. For school portals this is
+// the school's dedicated database; platform-level requests fall back to the
+// central database.
 const pool = database.centralPool;
 
 const findUser = async (login) => {
@@ -13,7 +13,7 @@ const findUser = async (login) => {
         FROM users JOIN roles ON users.role_id = roles.id
         WHERE username = $1 OR email = $1;
     `;
-    const result = await pool.query(query, [login]);
+    const result = await database.query(query, [login]);
     return result.rows[0];
 };
 
@@ -25,7 +25,7 @@ const findUserById = async (id) => {
         FROM users JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1;
     `;
-    const result = await pool.query(query, [id]);
+    const result = await database.query(query, [id]);
     return result.rows[0];
 };
 
@@ -41,11 +41,11 @@ const findUserByIdInSchool = async (id, schoolId) => {
 };
 
 const updateLastLogin = async (userId) => {
-    await pool.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
+    await database.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
 };
 
 const updatePassword = async (userId, hashedPassword) => {
-    const result = await pool.query(`
+    const result = await database.query(`
         UPDATE users SET password = $1, must_change_password = FALSE,
             password_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2 RETURNING id;
