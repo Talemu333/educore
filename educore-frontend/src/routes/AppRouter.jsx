@@ -93,10 +93,6 @@ import GradingScalesPage
     from "../pages/settings/GradingScalesPage";
 
 
-import ReportsPage
-    from "../pages/reports/ReportsPage";
-
-
 import PublicLayout
     from "@/layouts/PublicLayout";
 
@@ -725,7 +721,7 @@ function AppRouter() {
                         RESULTS
 
                         Admin academic staff + Teacher
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/results"
@@ -756,7 +752,7 @@ function AppRouter() {
 
                     {/* =====================================
                         CLASS RESULT SHEET
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/results/class-sheet"
@@ -786,7 +782,7 @@ function AppRouter() {
 
                     {/* =====================================
                         DETAILED CLASS RESULT SHEET
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/results/detailed-class-sheet"
@@ -807,37 +803,6 @@ function AppRouter() {
                             >
 
                                 <DetailedClassResultSheetPage />
-
-                            </ProtectedRoute>
-
-                        }
-                    />
-
-
-                    {/* =====================================
-                        PUBLISH RESULTS
-
-                        PROPRIETOR + PRINCIPAL
-                    ===================================== */}
-
-                    <Route
-                        path="/reports"
-                        element={
-
-                            <ProtectedRoute
-
-                                allowedRoles={[
-                                    ROLES.ADMIN
-                                ]}
-
-                                allowedAdminTypes={[
-                                    "proprietor",
-                                    "principal"
-                                ]}
-
-                            >
-
-                                <ReportsPage />
 
                             </ProtectedRoute>
 
@@ -916,7 +881,7 @@ function AppRouter() {
                         PAYMENTS
 
                         PROPRIETOR + BURSAR
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/payments"
@@ -947,7 +912,7 @@ function AppRouter() {
                         PAYMENT REPORTS
 
                         PROPRIETOR + BURSAR
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/payments/reports"
@@ -978,7 +943,7 @@ function AppRouter() {
                         FEE MANAGEMENT
 
                         PROPRIETOR + BURSAR
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/admin/fees"
@@ -1004,10 +969,9 @@ function AppRouter() {
                         }
                     />
 
-
-                    {/* =====================================
-                        PARENT FINANCIAL DETAILS
-                    ===================================== */
+                        {/* =====================================
+                            PARENT FINANCIAL DETAILS
+                        ===================================== */}
 
                     <Route
                         path="/parents/financial/:parentId"
@@ -1021,8 +985,6 @@ function AppRouter() {
 
                                 allowedAdminTypes={[
                                     "proprietor",
-                                    "principal",
-                                    "vice_principal",
                                     "bursar"
                                 ]}
 
@@ -1040,7 +1002,7 @@ function AppRouter() {
                         WEBSITE MANAGEMENT
 
                         PROPRIETOR + PRINCIPAL
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/dashboard/website"
@@ -1071,7 +1033,7 @@ function AppRouter() {
                         SETTINGS
 
                         PROPRIETOR ONLY
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/settings"
@@ -1101,7 +1063,7 @@ function AppRouter() {
                         GRADING SCALES
 
                         PROPRIETOR ONLY
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/settings/grading-scales"
@@ -1131,7 +1093,7 @@ function AppRouter() {
                         CHANGE PASSWORD
 
                         ALL AUTHENTICATED USERS
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/change-password"
@@ -1142,8 +1104,7 @@ function AppRouter() {
                                 allowedRoles={[
                                     ROLES.ADMIN,
                                     ROLES.TEACHER,
-                                    ROLES.PARENT,
-                                    ROLES.STUDENT
+                                    ROLES.PARENT
                                 ]}
 
                             >
@@ -1158,7 +1119,7 @@ function AppRouter() {
 
                     {/* =====================================
                         TEACHER DASHBOARD
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/teacher-dashboard"
@@ -1182,7 +1143,7 @@ function AppRouter() {
 
                     {/* =====================================
                         TEACHER STUDENTS
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/teacher-students"
@@ -1206,7 +1167,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT DASHBOARD
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/parent-dashboard"
@@ -1230,7 +1191,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT RESULTS
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/parent-results"
@@ -1254,7 +1215,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT ATTENDANCE
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/parent-attendance"
@@ -1278,7 +1239,7 @@ function AppRouter() {
 
                     {/* =====================================
                         PARENT PAYMENTS
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/parent/payments"
@@ -1304,7 +1265,9 @@ function AppRouter() {
             </Routes>
 
         </BrowserRouter>
+
     );
+
 }
 
 
