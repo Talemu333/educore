@@ -25,18 +25,24 @@ function ReportsPage() {
     const { data: sessions = [] } = useSessions();
     const { data: terms = [] } = useTerms();
     const { data: classes = [] } = useClasses();
-    const { data: arms = [] } = useArmsByClass(classId);
+    const { data: arms = [], isLoading: armsLoading, isFetching: armsFetching } = useArmsByClass(classId);
+
+    const safeSessions = Array.isArray(sessions) ? sessions : [];
+    const safeTerms = Array.isArray(terms) ? terms : [];
+    const safeClasses = Array.isArray(classes) ? classes : [];
+    const safeArms = Array.isArray(arms) ? arms : [];
+    const resultRows = Array.isArray(resultSheet?.results) ? resultSheet.results : [];
 
     const filteredTerms = useMemo(
-        () => terms.filter(term => Number(term.session_id) === Number(sessionId)),
-        [terms, sessionId]
+        () => safeTerms.filter(term => Number(term.session_id) === Number(sessionId)),
+        [safeTerms, sessionId]
     );
 
     useEffect(() => setTermId(""), [sessionId]);
     useEffect(() => setArmId(""), [classId]);
 
     const selectionReady = Boolean(
-        sessionId && termId && classId && (arms.length === 0 || armId)
+        sessionId && termId && classId && !armsLoading && !armsFetching && (safeArms.length === 0 || armId)
     );
 
     const loadSelectionData = async () => {
@@ -53,12 +59,7 @@ function ReportsPage() {
         try {
             const [publicationResponse, resultResponse] = await Promise.allSettled([
                 api.get("/results/publication", {
-                    params: {
-                        sessionId,
-                        termId,
-                        classId,
-                        armId: armId || undefined,
-                    },
+                    params: { sessionId, termId, classId, armId: armId || undefined },
                 }),
                 getClassResultSheet(classId, armId || null, sessionId, termId),
             ]);
@@ -70,7 +71,11 @@ function ReportsPage() {
             }
 
             if (resultResponse.status === "fulfilled") {
-                setResultSheet(resultResponse.value || null);
+                const data = resultResponse.value;
+                setResultSheet(data && Array.isArray(data.results) ? data : null);
+                if (!data || !Array.isArray(data.results)) {
+                    setResultError("The result service returned no result records for this selection.");
+                }
             } else {
                 setResultSheet(null);
                 setResultError(
@@ -78,6 +83,9 @@ function ReportsPage() {
                     "No result records were found for the selected class, arm, session and term."
                 );
             }
+        } catch (error) {
+            setResultSheet(null);
+            setResultError(error.response?.data?.message || "Unable to load the selected result records.");
         } finally {
             setResultLoading(false);
         }
@@ -85,7 +93,7 @@ function ReportsPage() {
 
     useEffect(() => {
         loadSelectionData();
-    }, [sessionId, termId, classId, armId, arms.length]);
+    }, [sessionId, termId, classId, armId, armsLoading, armsFetching, safeArms.length]);
 
     const publishResults = async () => {
         if (!selectionReady) {
@@ -93,7 +101,7 @@ function ReportsPage() {
             return;
         }
 
-        if (!resultSheet?.results?.length) {
+        if (!resultRows.length) {
             toast.error("There are no result records to publish for this selection.");
             return;
         }
@@ -117,13 +125,13 @@ function ReportsPage() {
         }
     };
 
-    const selectedClass = classes.find(item => Number(item.id) === Number(classId));
-    const selectedArm = arms.find(item => Number(item.id) === Number(armId));
-    const studentCount = resultSheet?.results?.length || 0;
-    const subjectCount = resultSheet?.results?.reduce(
+    const selectedClass = safeClasses.find(item => Number(item.id) === Number(classId));
+    const selectedArm = safeArms.find(item => Number(item.id) === Number(armId));
+    const studentCount = resultRows.length;
+    const subjectCount = resultRows.reduce(
         (highest, student) => Math.max(highest, Number(student.number_of_subjects || 0)),
         0
-    ) || 0;
+    );
 
     return (
         <div className="space-y-6">
@@ -153,7 +161,7 @@ function ReportsPage() {
                             Academic Session
                             <select value={sessionId} onChange={event => setSessionId(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm">
                                 <option value="">Select session</option>
-                                {sessions.map(session => <option key={session.id} value={session.id}>{session.session_name}</option>)}
+                                {safeSessions.map(session => <option key={session.id} value={session.id}>{session.session_name}</option>)}
                             </select>
                         </label>
 
@@ -169,17 +177,19 @@ function ReportsPage() {
                             Class
                             <select value={classId} onChange={event => setClassId(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm">
                                 <option value="">Select class</option>
-                                {classes.map(item => <option key={item.id} value={item.id}>{item.class_name}</option>)}
+                                {safeClasses.map(item => <option key={item.id} value={item.id}>{item.class_name}</option>)}
                             </select>
                         </label>
 
                         <label className="text-sm font-medium text-slate-700">
                             Arm
-                            <select value={armId} onChange={event => setArmId(event.target.value)} disabled={!classId || arms.length === 0} className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50">
-                                {arms.length === 0 ? (
+                            <select value={armId} onChange={event => setArmId(event.target.value)} disabled={!classId || armsLoading || armsFetching || safeArms.length === 0} className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50">
+                                {armsLoading || armsFetching ? (
+                                    <option value="">Loading arms...</option>
+                                ) : safeArms.length === 0 ? (
                                     <option value="">No arm</option>
                                 ) : (
-                                    <><option value="">Select arm</option>{arms.map(arm => <option key={arm.id} value={arm.id}>{arm.arm_name}</option>)}</>
+                                    <><option value="">Select arm</option>{safeArms.map(arm => <option key={arm.id} value={arm.id}>{arm.arm_name}</option>)}</>
                                 )}
                             </select>
                         </label>
@@ -188,63 +198,23 @@ function ReportsPage() {
                     {selectionReady && (
                         <div className="mt-6 space-y-4">
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                                    <div className="flex items-center gap-3">
-                                        <Users className="h-5 w-5 text-slate-500" />
-                                        <div><p className="text-xs text-slate-500">Students with results</p><p className="text-xl font-semibold text-slate-900">{resultLoading ? "—" : studentCount}</p></div>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                                    <div className="flex items-center gap-3">
-                                        <BookOpen className="h-5 w-5 text-slate-500" />
-                                        <div><p className="text-xs text-slate-500">Subjects</p><p className="text-xl font-semibold text-slate-900">{resultLoading ? "—" : subjectCount}</p></div>
-                                    </div>
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
-                                    <p className="text-xs text-slate-500">Selected result</p>
-                                    <p className="mt-1 font-semibold text-slate-900">{selectedClass?.class_name || resultSheet?.class?.class_name || "-"}{selectedArm ? ` — ${selectedArm.arm_name}` : ""}</p>
-                                    <p className="mt-0.5 text-sm text-slate-500">{resultSheet?.session?.session_name || ""} · {resultSheet?.term?.term_name || ""}</p>
-                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-3"><Users className="h-5 w-5 text-slate-500" /><div><p className="text-xs text-slate-500">Students with results</p><p className="text-xl font-semibold text-slate-900">{resultLoading ? "—" : studentCount}</p></div></div></div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-3"><BookOpen className="h-5 w-5 text-slate-500" /><div><p className="text-xs text-slate-500">Subjects</p><p className="text-xl font-semibold text-slate-900">{resultLoading ? "—" : subjectCount}</p></div></div></div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2"><p className="text-xs text-slate-500">Selected result</p><p className="mt-1 font-semibold text-slate-900">{selectedClass?.class_name || resultSheet?.class?.class_name || "-"}{selectedArm ? ` — ${selectedArm.arm_name}` : ""}</p><p className="mt-0.5 text-sm text-slate-500">{resultSheet?.session?.session_name || ""} · {resultSheet?.term?.term_name || ""}</p></div>
                             </div>
 
                             {resultLoading ? (
                                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">Loading result records...</div>
                             ) : resultError ? (
-                                <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-6 text-center">
-                                    <p className="font-semibold text-amber-900">No result records found</p>
-                                    <p className="mt-1 text-sm text-amber-800">{resultError}</p>
-                                </div>
+                                <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-6 text-center"><p className="font-semibold text-amber-900">No result records found</p><p className="mt-1 text-sm text-amber-800">{resultError}</p></div>
+                            ) : !resultRows.length ? (
+                                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center"><p className="font-semibold text-slate-900">No result records found</p><p className="mt-1 text-sm text-slate-500">There are no result records for the selected class, arm, session and term.</p></div>
                             ) : (
                                 <div className="overflow-x-auto rounded-xl border border-slate-200">
-                                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                                        <p className="font-semibold text-slate-900">Result Records</p>
-                                        <p className="text-sm text-slate-500">These are the records that will be made available after publication.</p>
-                                    </div>
+                                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3"><p className="font-semibold text-slate-900">Result Records</p><p className="text-sm text-slate-500">These are the records that will be made available after publication.</p></div>
                                     <table className="w-full text-sm">
-                                        <thead className="bg-white">
-                                            <tr className="border-b border-slate-200">
-                                                <th className="px-4 py-3 text-center">S/N</th>
-                                                <th className="px-4 py-3 text-left">Admission No.</th>
-                                                <th className="px-4 py-3 text-left">Student Name</th>
-                                                <th className="px-4 py-3 text-center">Subjects</th>
-                                                <th className="px-4 py-3 text-center">Total</th>
-                                                <th className="px-4 py-3 text-center">Average</th>
-                                                <th className="px-4 py-3 text-center">Position</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {resultSheet.results.map((student, index) => (
-                                                <tr key={student.student_id} className="border-b border-slate-100 last:border-0">
-                                                    <td className="px-4 py-3 text-center">{index + 1}</td>
-                                                    <td className="px-4 py-3">{student.admission_number}</td>
-                                                    <td className="px-4 py-3 font-medium text-slate-900">{student.student_name}</td>
-                                                    <td className="px-4 py-3 text-center">{Number(student.number_of_subjects || 0)}</td>
-                                                    <td className="px-4 py-3 text-center font-semibold">{Number(student.total_score || 0)}</td>
-                                                    <td className="px-4 py-3 text-center">{Number(student.average_score || 0).toFixed(2)}</td>
-                                                    <td className="px-4 py-3 text-center">{student.overall_position ?? "-"}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
+                                        <thead className="bg-white"><tr className="border-b border-slate-200"><th className="px-4 py-3 text-center">S/N</th><th className="px-4 py-3 text-left">Admission No.</th><th className="px-4 py-3 text-left">Student Name</th><th className="px-4 py-3 text-center">Subjects</th><th className="px-4 py-3 text-center">Total</th><th className="px-4 py-3 text-center">Average</th><th className="px-4 py-3 text-center">Position</th></tr></thead>
+                                        <tbody>{resultRows.map((student, index) => <tr key={student.student_id} className="border-b border-slate-100 last:border-0"><td className="px-4 py-3 text-center">{index + 1}</td><td className="px-4 py-3">{student.admission_number}</td><td className="px-4 py-3 font-medium text-slate-900">{student.student_name}</td><td className="px-4 py-3 text-center">{Number(student.number_of_subjects || 0)}</td><td className="px-4 py-3 text-center font-semibold">{Number(student.total_score || 0)}</td><td className="px-4 py-3 text-center">{Number(student.average_score || 0).toFixed(2)}</td><td className="px-4 py-3 text-center">{student.overall_position ?? student.position ?? "-"}</td></tr>)}</tbody>
                                     </table>
                                 </div>
                             )}
@@ -252,26 +222,8 @@ function ReportsPage() {
                     )}
 
                     <div className="mt-6 flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-start gap-3">
-                            {publication ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" /> : <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />}
-                            <div>
-                                <p className="font-semibold text-slate-900">{publication ? "Result published" : "Result not published"}</p>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    {publication
-                                        ? `Published ${new Date(publication.published_at).toLocaleString()}. Students and parents can now view the result.`
-                                        : "Students and parents cannot view this report until it is published."}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button type="button" variant="outline" onClick={loadSelectionData} disabled={resultLoading || !selectionReady}>
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Refresh Records
-                            </Button>
-                            <Button type="button" onClick={publishResults} disabled={publishing || resultLoading || !resultSheet?.results?.length || Boolean(publication)}>
-                                {publishing ? "Publishing..." : publication ? "Published" : "Publish Result"}
-                            </Button>
-                        </div>
+                        <div className="flex items-start gap-3">{publication ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" /> : <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />}<div><p className="font-semibold text-slate-900">{publication ? "Result published" : "Result not published"}</p><p className="mt-1 text-sm text-slate-500">{publication ? `Published ${new Date(publication.published_at).toLocaleString()}. Students and parents can now view the result.` : "Students and parents cannot view this report until it is published."}</p></div></div>
+                        <div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={loadSelectionData} disabled={resultLoading || !selectionReady}><RefreshCw className="mr-2 h-4 w-4" />Refresh Records</Button><Button type="button" onClick={publishResults} disabled={publishing || resultLoading || !resultRows.length || Boolean(publication)}>{publishing ? "Publishing..." : publication ? "Published" : "Publish Result"}</Button></div>
                     </div>
                 </div>
             </section>
