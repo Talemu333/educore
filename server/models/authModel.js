@@ -1,9 +1,8 @@
 const database = require("../config/database");
 
-// Authentication is a platform-level concern. Even when an authenticated
-// school request is already running inside a school database context, these
-// queries must continue to use the central database so login, sessions,
-// password changes, and password resets always use one source of truth.
+// Authentication is a platform-level concern for login and public password
+// reset flows. School-scoped account administration uses the active school
+// database through the methods defined below.
 const pool = database.centralPool;
 
 const findUser = async (login) => {
@@ -30,6 +29,17 @@ const findUserById = async (id) => {
     return result.rows[0];
 };
 
+const findUserByIdInSchool = async (id, schoolId) => {
+    const result = await database.query(`
+        SELECT users.id, users.username, users.email, users.must_change_password,
+               users.last_login, users.admin_type, users.school_id,
+               users.student_id, users.is_active, roles.role_name
+        FROM users JOIN roles ON users.role_id = roles.id
+        WHERE users.id = $1 AND users.school_id = $2;
+    `, [id, schoolId]);
+    return result.rows[0];
+};
+
 const updateLastLogin = async (userId) => {
     await pool.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
 };
@@ -44,7 +54,7 @@ const updatePassword = async (userId, hashedPassword) => {
 };
 
 const resetPasswordByAdmin = async (userId, schoolId, hashedPassword) => {
-    const result = await pool.query(`
+    const result = await database.query(`
         UPDATE users
         SET password = $1,
             must_change_password = TRUE,
@@ -85,7 +95,7 @@ const findUserByResetTokenHash = async (tokenHash) => {
         WHERE password_reset_token_hash = $1
           AND password_reset_expires_at > CURRENT_TIMESTAMP
         LIMIT 1;
-    `, [tokenHash]);
+    `);
     return result.rows[0];
 };
 
@@ -107,6 +117,7 @@ const resetPassword = async (userId, hashedPassword) => {
 module.exports = {
     findUser,
     findUserById,
+    findUserByIdInSchool,
     updateLastLogin,
     updatePassword,
     resetPasswordByAdmin,
