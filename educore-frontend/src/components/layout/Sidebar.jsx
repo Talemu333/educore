@@ -39,24 +39,28 @@ function Sidebar({ isOpen, onClose }) {
     const schoolName = settings?.school_name || "EDUPROW";
 
     useLayoutEffect(() => {
+        const nav = navRef.current;
+        const storageKey = "schoolSidebarScrollTop:" + (user?.id || "guest") + ":" + (role || "unknown");
+        const saved = Number(sessionStorage.getItem(storageKey));
+
         const restore = () => {
-            const nav = document.querySelector(".school-sidebar nav");
-            const saved = sessionStorage.getItem("schoolSidebarScrollTop");
-            if (!nav || saved === null) return;
-            nav.scrollTop = Number(saved) || 0;
+            if (!nav) return;
+            const maxScroll = Math.max(0, nav.scrollHeight - nav.clientHeight);
+            nav.scrollTop = Number.isFinite(saved) ? Math.min(Math.max(saved, 0), maxScroll) : 0;
         };
 
         restore();
         const frame = requestAnimationFrame(() => {
             restore();
-            requestAnimationFrame(restore);
+            requestAnimationFrame(() => requestAnimationFrame(restore));
         });
 
         return () => cancelAnimationFrame(frame);
-    }, [location.pathname]);
+    }, [location.pathname, filteredMenu.length, user?.id, role]);
 
     const rememberScroll = (event) => {
-        sessionStorage.setItem("schoolSidebarScrollTop", String(event.currentTarget.scrollTop));
+        const storageKey = "schoolSidebarScrollTop:" + (user?.id || "guest") + ":" + (role || "unknown");
+        sessionStorage.setItem(storageKey, String(event.currentTarget.scrollTop));
     };
 
     return (
@@ -79,7 +83,7 @@ function Sidebar({ isOpen, onClose }) {
                     <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{displayName}</p><p className="truncate text-xs capitalize text-slate-400">{adminType?.replace(/_/g, " ") || role || "Account"}</p></div>
                 </div>
             </div>
-            <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
+            <nav ref={navRef} onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
             <div className="school-sidebar-footer border-t border-slate-800 px-4 py-3"><p className="text-center text-[10px] font-medium text-slate-500">EduProw • School Administration</p></div>
         </aside>
     );
