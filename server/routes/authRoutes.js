@@ -3,6 +3,7 @@ const router = express.Router();
 const authenticate = require("../middlewares/authenticate");
 const authController = require("../controllers/authController");
 const rateLimit = require("../middlewares/rateLimit");
+const schoolDatabaseMiddleware = require("../middlewares/schoolDatabase");
 
 const loginLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -22,7 +23,11 @@ const keepSuperAdminOnPlatformDatabase = (req, res, next) => {
     return next();
 };
 
-router.post("/login", loginLimit, authController.login);
+// Resolve the school database before Passport checks the login credentials.
+// The school portal hostname/subdomain identifies the tenant, while the
+// platform EduProw login continues to use the central database.
+router.post("/login", loginLimit, schoolDatabaseMiddleware, authController.login);
+
 router.post("/logout", authController.logout);
 router.post("/forgot-password", passwordResetLimit, authController.requestPasswordReset);
 router.post("/reset-password", passwordResetLimit, authController.resetPassword);
