@@ -69,10 +69,16 @@ const resetPasswordByAdmin = async (req, res, next) => {
         const targetUserId = Number(req.params.userId);
         if (!Number.isInteger(targetUserId) || targetUserId <= 0) return res.status(400).json({ success: false, message: "Invalid user account." });
 
-        const target = await authModel.findUserById(targetUserId);
         const currentSchoolId = Number(req.user.school_id);
-        const targetSchoolId = Number(target?.school_id);
-        if (!target || !Number.isInteger(currentSchoolId) || !Number.isInteger(targetSchoolId) || targetSchoolId !== currentSchoolId) {
+        if (!Number.isInteger(currentSchoolId) || currentSchoolId <= 0) {
+            return res.status(400).json({ success: false, message: "School context is required." });
+        }
+
+        // School users are stored in their dedicated school database. The
+        // authenticate middleware has already established that database
+        // context for this request, so both lookup and update must use it.
+        const target = await authModel.findUserByIdInSchool(targetUserId, currentSchoolId);
+        if (!target || Number(target.school_id) !== currentSchoolId) {
             return res.status(404).json({ success: false, message: "User account not found in this school." });
         }
         if (target.id === req.user.id) return res.status(400).json({ success: false, message: "Use Change Password for your own account." });
