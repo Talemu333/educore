@@ -87,7 +87,7 @@ const deactivateStudent = async (client, id, schoolId) => {
 };
 
 const getStudentParents = async (studentId, schoolId, client = pool) => {
-    const result = await client.query(`SELECT p.id, p.user_id, u.username, p.surname, p.first_name, p.middle_name, p.gender, p.phone_number, p.alternate_phone, p.email, p.occupation, p.residential_address, sp.relationship_id, r.relationship_name, sp.is_primary_contact FROM student_parents sp INNER JOIN parents p ON sp.parent_id = p.id AND p.school_id = $2 INNER JOIN users u ON p.user_id = u.id AND u.school_id = $2 LEFT JOIN relationships r ON sp.relationship_id = r.id INNER JOIN students s ON sp.student_id = s.id AND s.school_id = $2 WHERE sp.student_id = $1 ORDER BY sp.is_primary_contact DESC, p.surname;`, [studentId, schoolId]);
+    const result = await client.query(`SELECT p.id, p.user_id, u.username, u.must_change_password, p.surname, p.first_name, p.middle_name, p.gender, p.phone_number, p.alternate_phone, p.email, p.occupation, p.residential_address, sp.relationship_id, r.relationship_name, sp.is_primary_contact FROM student_parents sp INNER JOIN parents p ON sp.parent_id = p.id AND p.school_id = $2 INNER JOIN users u ON p.user_id = u.id AND u.school_id = $2 LEFT JOIN relationships r ON sp.relationship_id = r.id INNER JOIN students s ON sp.student_id = s.id AND s.school_id = $2 WHERE sp.student_id = $1 ORDER BY sp.is_primary_contact DESC, p.surname;`, [studentId, schoolId]);
     return result.rows;
 };
 
