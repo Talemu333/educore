@@ -371,7 +371,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/students"
@@ -478,7 +478,7 @@ function AppRouter() {
 
                     {/* =====================================
                         EDIT STUDENT
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/students/:id/edit"
@@ -508,7 +508,7 @@ function AppRouter() {
 
                     {/* =====================================
                         STUDENT PROFILE
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/students/:id"
@@ -542,7 +542,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/teachers"
@@ -576,7 +576,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/parents"
@@ -630,7 +630,7 @@ function AppRouter() {
 
                     {/* =====================================
                         CREATE PARENT
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/parents/new"
@@ -660,7 +660,7 @@ function AppRouter() {
 
                     {/* =====================================
                         CLASS SUBJECTS
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/class-subjects"
@@ -692,7 +692,7 @@ function AppRouter() {
                         ATTENDANCE
 
                         Admin academic staff + Teacher
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/attendance"
@@ -800,7 +800,8 @@ function AppRouter() {
 
                                 allowedAdminTypes={[
                                     "proprietor",
-                                    "principal"
+                                    "principal",
+                                    "vice_principal"
                                 ]}
 
                             >
@@ -817,7 +818,7 @@ function AppRouter() {
                         PUBLISH RESULTS
 
                         PROPRIETOR + PRINCIPAL
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/reports"
@@ -850,7 +851,7 @@ function AppRouter() {
                         PROPRIETOR
                         PRINCIPAL
                         VICE PRINCIPAL
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/timetable"
@@ -882,7 +883,7 @@ function AppRouter() {
                         ANNOUNCEMENTS
 
                         All Admin types
-                    ===================================== */
+                    ===================================== */}
 
                     <Route
                         path="/announcements"
@@ -1003,9 +1004,10 @@ function AppRouter() {
                         }
                     />
 
-                        {/* =====================================
-                            PARENT FINANCIAL DETAILS
-                        ===================================== */
+
+                    {/* =====================================
+                        PARENT FINANCIAL DETAILS
+                    ===================================== */
 
                     <Route
                         path="/parents/financial/:parentId"
@@ -1019,6 +1021,8 @@ function AppRouter() {
 
                                 allowedAdminTypes={[
                                     "proprietor",
+                                    "principal",
+                                    "vice_principal",
                                     "bursar"
                                 ]}
 
@@ -1138,7 +1142,8 @@ function AppRouter() {
                                 allowedRoles={[
                                     ROLES.ADMIN,
                                     ROLES.TEACHER,
-                                    ROLES.PARENT
+                                    ROLES.PARENT,
+                                    ROLES.STUDENT
                                 ]}
 
                             >
@@ -1299,9 +1304,7 @@ function AppRouter() {
             </Routes>
 
         </BrowserRouter>
-
     );
-
 }
 
 
