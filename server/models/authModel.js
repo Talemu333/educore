@@ -4,6 +4,64 @@ const database = require("../config/database");
 // Platform-level password-reset-by-email flows continue to use the central DB.
 const pool = database.centralPool;
 
+const hydrateAdministratorType = async (user) => {
+    if (!user) return user;
+
+    const roleName = String(user.role_name || "").trim().toLowerCase();
+    const currentType = String(user.admin_type || "").trim().toLowerCase();
+
+    // "Admin" is the generic role. The administrator's actual type
+    // (proprietor, principal, bursar, etc.) is stored in admin_type.
+    // Older isolated school databases can have this value missing or set
+    // to the generic "admin" value even though the central school account
+    // still contains the correct administrator type.
+    if (roleName !== "admin" || (currentType && currentType !== "admin")) {
+        return user;
+    }
+
+    const schoolId = Number(user.school_id);
+    const userId = Number(user.id);
+
+    if (!Number.isInteger(schoolId) || schoolId < 1 || !Number.isInteger(userId) || userId < 1) {
+        return user;
+    }
+
+    const centralResult = await pool.query(
+        `SELECT admin_type
+         FROM users
+         WHERE id = $1
+           AND school_id = $2
+         LIMIT 1`,
+        [userId, schoolId]
+    );
+
+    const centralType = String(centralResult.rows[0]?.admin_type || "").trim();
+
+    if (!centralType || centralType.toLowerCase() === "admin") {
+        return user;
+    }
+
+    // Repair the isolated school's account as part of authentication so
+    // existing schools do not require manual database intervention.
+    try {
+        await database.query(
+            `UPDATE users
+             SET admin_type = $1,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2
+               AND school_id = $3`,
+            [centralType, userId, schoolId]
+        );
+    } catch (error) {
+        console.error("Failed to synchronize administrator type:", error);
+    }
+
+    return {
+        ...user,
+        admin_type: centralType
+    };
+};
+
 const findUser = async (login) => {
     const result = await database.query(`
         SELECT users.id, users.username, users.email, users.password,
@@ -13,7 +71,8 @@ const findUser = async (login) => {
         JOIN roles ON users.role_id = roles.id
         WHERE users.username = $1 OR users.email = $1;
     `, [login]);
-    return result.rows[0];
+
+    return hydrateAdministratorType(result.rows[0]);
 };
 
 const findUserById = async (id) => {
@@ -25,7 +84,8 @@ const findUserById = async (id) => {
         JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1;
     `, [id]);
-    return result.rows[0];
+
+    return hydrateAdministratorType(result.rows[0]);
 };
 
 const findUserByIdInSchool = async (id, schoolId) => {
@@ -37,6 +97,7 @@ const findUserByIdInSchool = async (id, schoolId) => {
         JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1 AND users.school_id = $2;
     `, [id, schoolId]);
+
     return result.rows[0];
 };
 
