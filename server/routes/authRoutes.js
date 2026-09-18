@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const authenticate = require("../middlewares/authenticate");
 const authController = require("../controllers/authController");
-const rateLimit = require("../middlewares/rateLimit");\nconst schoolDatabaseMiddleware = require("../middlewares/schoolDatabase");
+const rateLimit = require("../middlewares/rateLimit");
+const schoolDatabaseMiddleware = require("../middlewares/schoolDatabase");
 
 const loginLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
