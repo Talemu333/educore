@@ -12,10 +12,12 @@ export const saveAttendance = async (data) => {
     return saveAttendanceOfflineAware(data);
 };
 
-export const getAttendanceByDate = async ({ classId, armId, attendanceDate }) => {
+export const getAttendanceByDate = async ({ sessionId, termId, classId, armId, attendanceDate }) => {
     try {
         const response = await api.get("/attendance", {
             params: {
+                session_id: sessionId,
+                term_id: termId,
                 class_id: classId,
                 arm_id: armId || null,
                 attendance_date: attendanceDate
