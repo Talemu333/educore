@@ -7,13 +7,16 @@ import {
     useAuth
 } from "@/context/AuthContext";
 
+function normalizeRole(role) {
+    const normalized = String(role || "").trim().toLowerCase();
+    return normalized === "administrator" ? "admin" : normalized;
+}
 
 function ProtectedRoute({
     children,
     allowedRoles,
     allowedAdminTypes
 }) {
-
     const {
         user,
         isAuthenticated,
@@ -22,32 +25,17 @@ function ProtectedRoute({
 
     const location = useLocation();
 
-
     if (loading) {
         return <h2>Loading...</h2>;
     }
-
 
     if (!isAuthenticated) {
         return <Navigate to="/" replace />;
     }
 
-
-    const userRole = user?.role_name?.trim()?.toLowerCase();
+    const userRole = normalizeRole(user?.role_name);
     const userAdminType = user?.admin_type?.trim()?.toLowerCase();
 
-
-    /*
-    =========================================
-    SUPER ADMIN
-    =========================================
-
-    Super Admin is a platform-level user. The
-    normal school routes remain unavailable,
-    but the Super Admin may enter the dedicated
-    platform management pages.
-    =========================================
-    */
     if (userRole === "super admin") {
         const allowedSuperAdminPaths = [
             "/settings",
@@ -65,17 +53,15 @@ function ProtectedRoute({
         return <Navigate to="/settings" replace />;
     }
 
-
     if (allowedRoles?.length) {
         const normalizedRoles = allowedRoles
             .filter(Boolean)
-            .map(role => role.trim().toLowerCase());
+            .map(normalizeRole);
 
         if (!userRole || !normalizedRoles.includes(userRole)) {
             return <Navigate to="/dashboard" replace />;
         }
     }
-
 
     if (allowedAdminTypes?.length && userRole === "admin") {
         const normalizedAdminTypes = allowedAdminTypes
@@ -87,9 +73,7 @@ function ProtectedRoute({
         }
     }
 
-
     return children;
 }
-
 
 export default ProtectedRoute;

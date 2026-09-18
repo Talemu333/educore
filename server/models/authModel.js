@@ -4,30 +4,42 @@ const database = require("../config/database");
 // Platform-level password-reset-by-email flows continue to use the central DB.
 const pool = database.centralPool;
 
+const normalizeRoleName = (roleName) => {
+    const normalized = String(roleName || "").trim().toLowerCase();
+
+    if (normalized === "administrator") return "Admin";
+    if (normalized === "admin") return "Admin";
+
+    return String(roleName || "").trim();
+};
+
 const hydrateAdministratorType = async (user) => {
     if (!user) return user;
 
     const roleName = String(user.role_name || "").trim().toLowerCase();
-    const currentType = String(user.admin_type || "").trim().toLowerCase();
 
-    // "Admin" is the generic role. The administrator's actual type
-    // (proprietor, principal, bursar, etc.) is stored in admin_type.
-    // Older isolated school databases can have this value missing or set
-    // to the generic "admin" value even though the central school account
-    // still contains the correct administrator type.
-    if (roleName !== "admin" || (currentType && currentType !== "admin")) {
-        return user;
+    // "Admin" is the canonical application role. Older school databases may
+    // still contain the legacy "Administrator" role name. Treat both as the
+    // same role so an isolated school's administrator is not denied access.
+    if (!["admin", "administrator"].includes(roleName)) {
+        return {
+            ...user,
+            role_name: normalizeRoleName(user.role_name)
+        };
     }
 
     const schoolId = Number(user.school_id);
     const userId = Number(user.id);
 
     if (!Number.isInteger(schoolId) || schoolId < 1 || !Number.isInteger(userId) || userId < 1) {
-        return user;
+        return {
+            ...user,
+            role_name: "Admin"
+        };
     }
 
     const centralResult = await pool.query(
-        `SELECT admin_type
+        `SELECT password, admin_type, must_change_password, password_changed_at
          FROM users
          WHERE id = $1
            AND school_id = $2
@@ -35,30 +47,76 @@ const hydrateAdministratorType = async (user) => {
         [userId, schoolId]
     );
 
-    const centralType = String(centralResult.rows[0]?.admin_type || "").trim();
+    const centralUser = centralResult.rows[0];
+    const centralType = String(centralUser?.admin_type || "").trim();
 
-    if (!centralType || centralType.toLowerCase() === "admin") {
-        return user;
+    const samePasswordHash = Boolean(
+        centralUser?.password &&
+        user.password &&
+        centralUser.password === user.password
+    );
+
+    const shouldSyncAdminType =
+        centralType &&
+        centralType.toLowerCase() !== "admin" &&
+        (!String(user.admin_type || "").trim() ||
+         String(user.admin_type).trim().toLowerCase() === "admin");
+
+    const shouldSyncPasswordState =
+        samePasswordHash &&
+        centralUser.must_change_password !== undefined &&
+        (
+            Boolean(user.must_change_password) !== Boolean(centralUser.must_change_password) ||
+            String(user.password_changed_at || "") !== String(centralUser.password_changed_at || "")
+        );
+
+    if (!shouldSyncAdminType && !shouldSyncPasswordState) {
+        return {
+            ...user,
+            role_name: "Admin"
+        };
     }
 
-    // Repair the isolated school's account as part of authentication so
-    // existing schools do not require manual database intervention.
     try {
         await database.query(
             `UPDATE users
-             SET admin_type = $1,
+             SET admin_type = CASE
+                     WHEN $1::text IS NULL THEN admin_type
+                     ELSE $1
+                 END,
+                 must_change_password = CASE
+                     WHEN $2::boolean IS NULL THEN must_change_password
+                     ELSE $2
+                 END,
+                 password_changed_at = CASE
+                     WHEN $3::timestamp IS NULL THEN password_changed_at
+                     ELSE $3
+                 END,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $2
-               AND school_id = $3`,
-            [centralType, userId, schoolId]
+             WHERE id = $4
+               AND school_id = $5`,
+            [
+                shouldSyncAdminType ? centralType : null,
+                shouldSyncPasswordState ? Boolean(centralUser.must_change_password) : null,
+                shouldSyncPasswordState ? centralUser.password_changed_at : null,
+                userId,
+                schoolId
+            ]
         );
     } catch (error) {
-        console.error("Failed to synchronize administrator type:", error);
+        console.error("Failed to synchronize school account state:", error);
     }
 
     return {
         ...user,
-        admin_type: centralType
+        role_name: "Admin",
+        ...(shouldSyncAdminType ? { admin_type: centralType } : {}),
+        ...(shouldSyncPasswordState
+            ? {
+                must_change_password: Boolean(centralUser.must_change_password),
+                password_changed_at: centralUser.password_changed_at
+            }
+            : {})
     };
 };
 

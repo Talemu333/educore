@@ -26,7 +26,38 @@ SET student_prefix = COALESCE(student_prefix, 'EDU'),
     exam_max_score = COALESCE(exam_max_score, 60),
     passing_score = COALESCE(passing_score, 50);
 
-DO $$
+-- Older isolated databases may already contain current_session_id/current_term_id
+-- values copied from the central database. Those IDs are not guaranteed to
+-- exist in the isolated database, so clear only invalid references before
+-- creating the tenant-local foreign keys.
+DO $
+BEGIN
+    IF to_regclass('public.academic_sessions') IS NOT NULL THEN
+        UPDATE school_settings ss
+        SET current_session_id = NULL
+        WHERE current_session_id IS NOT NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM academic_sessions ac
+              WHERE ac.id = ss.current_session_id
+                AND ac.school_id = ss.school_id
+          );
+    END IF;
+
+    IF to_regclass('public.terms') IS NOT NULL THEN
+        UPDATE school_settings ss
+        SET current_term_id = NULL
+        WHERE current_term_id IS NOT NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM terms tr
+              WHERE tr.id = ss.current_term_id
+                AND tr.school_id = ss.school_id
+          );
+    END IF;
+END $;
+
+DO $
 BEGIN
     IF to_regclass('public.academic_sessions') IS NOT NULL
        AND NOT EXISTS (

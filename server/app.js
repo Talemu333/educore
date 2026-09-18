@@ -91,7 +91,216 @@ const isAllowedOrigin = async (origin) => {
             `SELECT 1
              FROM schools s
              WHERE s.is_active = true
-               AND lower(regexp_replace(COALESCE(s.domain, ''), '^www\\.', '')) = $1
+               AND lower(
+                 regexp_replace(
+                     regexp_replace(
+                         regexp_replace(
+                             regexp_replace(trim(COALESCE(s.domain, '')), '^https?://', '', 'i'),
+                             '^www\\.',
+                             '',
+                             'i'
+                         ),
+                         '/.*
+             LIMIT 1`,
+            [schoolDomain]
+        );
+
+        return result.rows.length > 0;
+    } catch (error) {
+        console.error("CORS origin validation error:", error);
+        return false;
+    }
+};
+
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+app.use(helmet());
+app.use(cors({
+    origin: async (origin, callback) => {
+        const allowed = await isAllowedOrigin(origin);
+        return allowed
+            ? callback(null, true)
+            : callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+}));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
+app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
+
+app.get("/health", async (req, res) => {
+    try {
+        await database.centralPool.query("SELECT 1");
+        return res.json({ success: true, status: "ok" });
+    } catch (error) {
+        console.error("Health check database error:", error);
+        return res.status(503).json({ success: false, status: "degraded" });
+    }
+});
+
+// Authentication sessions are platform-level data. Always use the central
+// database pool so an AsyncLocalStorage school context can never redirect
+// session reads/writes into a tenant database.
+app.use(session({
+    store: new pgSession({ pool: database.centralPool, tableName: "user_sessions", createTableIfMissing: true }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true, secure: isProduction, sameSite: isProduction ? "none" : "lax" }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use("/", routes);
+app.use("/api/classes", classRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/states", stateRoutes);
+app.use("/api/nationalities", nationalityRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/terms", termRoutes);
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/teacher-assignments", teacherAssignmentRoutes);
+app.use("/api/timetables", timetableRoutes);
+app.use("/api/results", studentResultRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/promotions", promotionRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/fee-types", feeTypeRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/fee-structures", feeStructureRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/announcements", announcementRoutes);
+app.use("/api/password", passwordRoutes);
+app.use("/api/arms", armRoutes);
+app.use("/api/parents", parentRoutes);
+app.use("/api/relationships", relationshipRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/qualifications", qualificationRoutes);
+app.use("/api/class-subjects", classSubjectRoutes);
+app.use("/api/school-settings", schoolDatabaseMiddleware, schoolSettingRoutes);
+app.use("/api/grading-scales", gradingSystemRoutes);
+app.use("/api/website", schoolDatabaseMiddleware, websiteRoutes);
+app.use("/api/contact-messages", contactMessageRoutes);
+app.use("/api/admins", adminRoutes);
+app.use("/api/promotion-history", promotionHistoryRoutes);
+app.use("/api/super-admin/schools", superAdminSchoolRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/cbt", cbtRoutes);
+app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
+app.use("/api/cbt-question-bank", cbtQuestionBankRoutes);
+app.use("/api/cbt-question-bank/import-pdf", cbtQuestionBankImportRoutes);
+app.use("/api/bulk-import", bulkImportRoutes);
+app.use("/api/lesson-notes", lessonNoteRoutes);
+
+app.use(errorHandler);
+module.exports = app;
+,
+                         ''
+                     ),
+                     ':[0-9]+
+             LIMIT 1`,
+            [schoolDomain]
+        );
+
+        return result.rows.length > 0;
+    } catch (error) {
+        console.error("CORS origin validation error:", error);
+        return false;
+    }
+};
+
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+app.use(helmet());
+app.use(cors({
+    origin: async (origin, callback) => {
+        const allowed = await isAllowedOrigin(origin);
+        return allowed
+            ? callback(null, true)
+            : callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+}));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
+app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
+
+app.get("/health", async (req, res) => {
+    try {
+        await database.centralPool.query("SELECT 1");
+        return res.json({ success: true, status: "ok" });
+    } catch (error) {
+        console.error("Health check database error:", error);
+        return res.status(503).json({ success: false, status: "degraded" });
+    }
+});
+
+// Authentication sessions are platform-level data. Always use the central
+// database pool so an AsyncLocalStorage school context can never redirect
+// session reads/writes into a tenant database.
+app.use(session({
+    store: new pgSession({ pool: database.centralPool, tableName: "user_sessions", createTableIfMissing: true }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true, secure: isProduction, sameSite: isProduction ? "none" : "lax" }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use("/", routes);
+app.use("/api/classes", classRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/states", stateRoutes);
+app.use("/api/nationalities", nationalityRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/terms", termRoutes);
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/teacher-assignments", teacherAssignmentRoutes);
+app.use("/api/timetables", timetableRoutes);
+app.use("/api/results", studentResultRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/promotions", promotionRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/fee-types", feeTypeRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/fee-structures", feeStructureRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/announcements", announcementRoutes);
+app.use("/api/password", passwordRoutes);
+app.use("/api/arms", armRoutes);
+app.use("/api/parents", parentRoutes);
+app.use("/api/relationships", relationshipRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/qualifications", qualificationRoutes);
+app.use("/api/class-subjects", classSubjectRoutes);
+app.use("/api/school-settings", schoolDatabaseMiddleware, schoolSettingRoutes);
+app.use("/api/grading-scales", gradingSystemRoutes);
+app.use("/api/website", schoolDatabaseMiddleware, websiteRoutes);
+app.use("/api/contact-messages", contactMessageRoutes);
+app.use("/api/admins", adminRoutes);
+app.use("/api/promotion-history", promotionHistoryRoutes);
+app.use("/api/super-admin/schools", superAdminSchoolRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/cbt", cbtRoutes);
+app.use("/api/cbt/question-bank", cbtQuestionBankRoutes);
+app.use("/api/cbt-question-bank", cbtQuestionBankRoutes);
+app.use("/api/cbt-question-bank/import-pdf", cbtQuestionBankImportRoutes);
+app.use("/api/bulk-import", bulkImportRoutes);
+app.use("/api/lesson-notes", lessonNoteRoutes);
+
+app.use(errorHandler);
+module.exports = app;
+,
+                     ''
+                 )
+             ) = $1
              LIMIT 1`,
             [schoolDomain]
         );

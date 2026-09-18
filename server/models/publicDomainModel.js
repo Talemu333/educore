@@ -4,8 +4,10 @@ const normalizeDomain = (value) => String(value || "")
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, "")
+    .replace(/^\/\//, "")
     .replace(/^www\./, "")
     .replace(/\/.*$/, "")
+    .replace(/:\d+$/, "")
     .replace(/\.$/, "");
 
 const slugify = (value) => String(value || "")
@@ -26,7 +28,19 @@ const getSchoolByHost = async (host) => {
         domain.endsWith(`.${platformDomain}`);
     const subdomain = isPlatformSubdomain ? domainParts[0] : "";
 
-    const result = await pool.query(
+    /*
+     * IMPORTANT:
+     * This query always runs against the central database. It resolves the
+     * public hostname to the central school ID first; only after that does
+     * schoolDatabase middleware switch the request into the school's
+     * dedicated database.
+     *
+     * Domains are normalized on BOTH sides. Older records may contain
+     * "www.example.com" or even "https://www.example.com", while the browser
+     * hostname never contains the protocol. Comparing the raw column directly
+     * therefore makes an otherwise valid school appear to be missing.
+     */
+    const result = await pool.centralPool.query(
         `SELECT
             s.id,
             s.school_name,
@@ -39,7 +53,22 @@ const getSchoolByHost = async (host) => {
          LEFT JOIN school_settings ss ON ss.school_id = s.id
          WHERE s.is_active = TRUE
            AND (
-                LOWER(TRIM(COALESCE(s.domain, ''))) = $1
+                LOWER(
+                    regexp_replace(
+                        regexp_replace(
+                            regexp_replace(
+                                regexp_replace(trim(COALESCE(s.domain, '')), '^https?://', '', 'i'),
+                                '^www\\.',
+                                '',
+                                'i'
+                            ),
+                            '/.*$',
+                            ''
+                        ),
+                        ':[0-9]+$',
+                        ''
+                    )
+                ) = $1
                 OR (
                     $2 <> ''
                     AND (
@@ -75,6 +104,7 @@ const getSchoolByHost = async (host) => {
                     )
                 )
            )
+         ORDER BY s.id
          LIMIT 1`,
         [domain, subdomain]
     );
