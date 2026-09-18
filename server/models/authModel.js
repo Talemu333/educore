@@ -4,26 +4,38 @@ const database = require("../config/database");
 // Platform-level password-reset-by-email flows continue to use the central DB.
 const pool = database.centralPool;
 
+const normalizeRoleName = (roleName) => {
+    const normalized = String(roleName || "").trim().toLowerCase();
+
+    if (normalized === "administrator") return "Admin";
+    if (normalized === "admin") return "Admin";
+
+    return String(roleName || "").trim();
+};
+
 const hydrateAdministratorType = async (user) => {
     if (!user) return user;
 
     const roleName = String(user.role_name || "").trim().toLowerCase();
-    const currentType = String(user.admin_type || "").trim().toLowerCase();
 
-    // "Admin" is the generic role. The administrator's actual type
-    // (proprietor, principal, bursar, etc.) is stored in admin_type.
-    // Older isolated school databases can have this value missing or set
-    // to the generic "admin" value even though the central school account
-    // still contains the correct administrator type.
-    if (roleName !== "admin") {
-        return user;
+    // "Admin" is the canonical application role. Older school databases may
+    // still contain the legacy "Administrator" role name. Treat both as the
+    // same role so an isolated school's administrator is not denied access.
+    if (!["admin", "administrator"].includes(roleName)) {
+        return {
+            ...user,
+            role_name: normalizeRoleName(user.role_name)
+        };
     }
 
     const schoolId = Number(user.school_id);
     const userId = Number(user.id);
 
     if (!Number.isInteger(schoolId) || schoolId < 1 || !Number.isInteger(userId) || userId < 1) {
-        return user;
+        return {
+            ...user,
+            role_name: "Admin"
+        };
     }
 
     const centralResult = await pool.query(
@@ -38,10 +50,6 @@ const hydrateAdministratorType = async (user) => {
     const centralUser = centralResult.rows[0];
     const centralType = String(centralUser?.admin_type || "").trim();
 
-    // If the isolated account still has the same password hash as the
-    // central account, its password state can safely be synchronized too.
-    // Once a school user changes/resets the tenant password, the hashes differ
-    // and the tenant database remains authoritative for password state.
     const samePasswordHash = Boolean(
         centralUser?.password &&
         user.password &&
@@ -63,7 +71,10 @@ const hydrateAdministratorType = async (user) => {
         );
 
     if (!shouldSyncAdminType && !shouldSyncPasswordState) {
-        return user;
+        return {
+            ...user,
+            role_name: "Admin"
+        };
     }
 
     try {
@@ -98,6 +109,7 @@ const hydrateAdministratorType = async (user) => {
 
     return {
         ...user,
+        role_name: "Admin",
         ...(shouldSyncAdminType ? { admin_type: centralType } : {}),
         ...(shouldSyncPasswordState
             ? {
