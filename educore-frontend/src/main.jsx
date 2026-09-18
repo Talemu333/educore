@@ -10,8 +10,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DashboardTablePaginationEnhancer from "./components/common/DashboardTablePaginationEnhancer";
 import WebsiteSectionFormAutoScroll from "./components/common/WebsiteSectionFormAutoScroll";
 import OfflineStatus from "./components/common/OfflineStatus";
+import { startAttendanceSync } from "./lib/offline/attendanceOffline";
 
 const queryClient = new QueryClient();
+
+startAttendanceSync();
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
     window.addEventListener("load", () => {
