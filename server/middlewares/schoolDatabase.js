@@ -60,7 +60,146 @@ const resolveSchoolDatabase = async (req, res, next) => {
                       AND (
                           LOWER(r.website_slug) = LOWER($1)
                           OR LOWER(r.website_slug || '.eduprow.com') = LOWER($1)
-                          OR LOWER(REGEXP_REPLACE(COALESCE(s.domain, ''), '^www\\.', '')) = LOWER($1)
+                          OR LOWER(
+                              REGEXP_REPLACE(
+                                  REGEXP_REPLACE(
+                                      REGEXP_REPLACE(
+                                          REGEXP_REPLACE(TRIM(COALESCE(s.domain, '')), '^https?://', '', 'i'),
+                                          '^www\\.',
+                                          '',
+                                          'i'
+                                      ),
+                                      '/.*
+                      )
+                    LIMIT 1;
+                `, [key]);
+            } catch (error) {
+                if (error.code === "42P01") {
+                    return next();
+                }
+                throw error;
+            }
+
+            const school = registryResult.rows[0];
+            if (!school || !school.is_active) {
+                return next();
+            }
+
+            const schoolPool = await getSchoolDatabase(school.school_id);
+
+            return runWithSchoolDatabase(schoolPool, () => {
+                req.school = school;
+                req.schoolDatabase = schoolPool;
+                req.schoolDatabaseSchoolId = Number(school.school_id);
+                next();
+            });
+        }
+
+        const registryResult = await pool.query(`
+            SELECT school_id, database_name, website_slug, is_active
+            FROM school_database_registry
+            WHERE school_id = $1
+            LIMIT 1;
+        `, [schoolId]);
+
+        const registry = registryResult.rows[0];
+
+        // A public school can be resolved before its dedicated database is
+        // active. In that case keep the existing central/shared flow.
+        if (!registry || !registry.is_active) {
+            return next();
+        }
+
+        const school = {
+            school_id: schoolId,
+            database_name: registry.database_name,
+            website_slug: publicSchool.website_slug,
+            is_active: Boolean(registry.is_active),
+        };
+
+        const schoolPool = await getSchoolDatabase(schoolId);
+
+        return runWithSchoolDatabase(schoolPool, () => {
+            req.school = school;
+            req.schoolDatabase = schoolPool;
+            req.schoolDatabaseSchoolId = schoolId;
+            next();
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+module.exports = resolveSchoolDatabase;
+,
+                                      ''
+                                  ),
+                                  ':[0-9]+
+                      )
+                    LIMIT 1;
+                `, [key]);
+            } catch (error) {
+                if (error.code === "42P01") {
+                    return next();
+                }
+                throw error;
+            }
+
+            const school = registryResult.rows[0];
+            if (!school || !school.is_active) {
+                return next();
+            }
+
+            const schoolPool = await getSchoolDatabase(school.school_id);
+
+            return runWithSchoolDatabase(schoolPool, () => {
+                req.school = school;
+                req.schoolDatabase = schoolPool;
+                req.schoolDatabaseSchoolId = Number(school.school_id);
+                next();
+            });
+        }
+
+        const registryResult = await pool.query(`
+            SELECT school_id, database_name, website_slug, is_active
+            FROM school_database_registry
+            WHERE school_id = $1
+            LIMIT 1;
+        `, [schoolId]);
+
+        const registry = registryResult.rows[0];
+
+        // A public school can be resolved before its dedicated database is
+        // active. In that case keep the existing central/shared flow.
+        if (!registry || !registry.is_active) {
+            return next();
+        }
+
+        const school = {
+            school_id: schoolId,
+            database_name: registry.database_name,
+            website_slug: publicSchool.website_slug,
+            is_active: Boolean(registry.is_active),
+        };
+
+        const schoolPool = await getSchoolDatabase(schoolId);
+
+        return runWithSchoolDatabase(schoolPool, () => {
+            req.school = school;
+            req.schoolDatabase = schoolPool;
+            req.schoolDatabaseSchoolId = schoolId;
+            next();
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+module.exports = resolveSchoolDatabase;
+,
+                                  ''
+                              )
+                          ) = LOWER($1)
                       )
                     LIMIT 1;
                 `, [key]);
