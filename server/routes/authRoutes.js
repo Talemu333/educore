@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authenticate = require("../middlewares/authenticate");
 const authController = require("../controllers/authController");
-const rateLimit = require("../middlewares/rateLimit");
+const rateLimit = require("../middlewares/rateLimit");\nconst schoolDatabaseMiddleware = require("../middlewares/schoolDatabase");
 
 const loginLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -22,7 +22,7 @@ const keepSuperAdminOnPlatformDatabase = (req, res, next) => {
     return next();
 };
 
-router.post("/login", loginLimit, authController.login);
+router.post("/login", schoolDatabaseMiddleware, loginLimit, authController.login);
 router.post("/logout", authController.logout);
 router.post("/forgot-password", passwordResetLimit, authController.requestPasswordReset);
 router.post("/reset-password", passwordResetLimit, authController.resetPassword);
