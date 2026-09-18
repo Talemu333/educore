@@ -514,7 +514,23 @@ const provision = async (schoolId) => {
             await seedRoles(client);
             await seedSchool(client, school);
             await seedAdministrators(client, administrators, schoolId);
-            const websiteCount = await withDatabaseRetry(\n                () => client.query(\`SELECT COUNT(*)::integer AS count FROM website_pages WHERE school_id = $1\`, [schoolId]),\n                "Checking school website pages"\n            );\n\n            // New databases are populated from School 1 so administrators see a\n            // complete, editable website immediately. Existing populated school\n            // websites are left untouched during ordinary repair provisioning.\n            if (created || Number(websiteCount.rows[0]?.count || 0) === 0) {\n                await seedWebsiteTemplate(client, schoolId);\n            }
+            const websiteCount = await withDatabaseRetry(
+                () => client.query(`SELECT COUNT(*)::integer AS count FROM website_pages WHERE school_id = $1`, [schoolId]),
+                "Checking school website pages"
+            );
+
+            // New databases are populated from School 1 so administrators see a
+            // complete, editable website immediately. Existing populated school
+            // websites are left untouched during ordinary repair provisioning.
+            // Pass --sync-website-template when an existing school should be
+            // deliberately refreshed from School 1.
+            if (
+                created ||
+                Number(websiteCount.rows[0]?.count || 0) === 0 ||
+                forceWebsiteTemplate
+            ) {
+                await seedWebsiteTemplate(client, schoolId);
+            }
 
             const verification = await verifySchoolDatabase(client, schoolId);
             console.log("School database provisioned successfully:");
