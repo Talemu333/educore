@@ -8,8 +8,7 @@ export default function OfflineStatus() {
         const handleOnline = () => {
             setIsOnline(true);
             setShowBackOnline(true);
-            const timer = window.setTimeout(() => setShowBackOnline(false), 3000);
-            return () => window.clearTimeout(timer);
+            window.setTimeout(() => setShowBackOnline(false), 3000);
         };
 
         const handleOffline = () => {
