@@ -1,4 +1,12 @@
 import api from "./axios";
+import {
+    saveAttendanceOfflineAware,
+    cacheAttendanceByDate,
+    getCachedAttendanceByDate,
+    cacheAttendanceStudents,
+    getCachedAttendanceStudents
+} from "../lib/offline/attendanceOffline";
+import { getOfflineUser } from "../lib/offline/offlineAuth";
 
 
 /*
