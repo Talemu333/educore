@@ -136,7 +136,7 @@ function TeacherDashboardPage() {
 
             {/* TEACHER PROFILE */}
 
-            <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white shadow">
+            <div className="rounded-2xl bg-blue-600 p-6 text-white shadow">
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 

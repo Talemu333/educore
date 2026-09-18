@@ -20,6 +20,15 @@ const gunzip = promisify(zlib.gunzip);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const replaceEducoreBrand = (value) => {
+    if (value === null || value === undefined) return value;
+    return String(value)
+        .replace(/EduCore/g, "EduProw")
+        .replace(/Educore/g, "Eduprow")
+        .replace(/EDUCORE/g, "EDUPROW")
+        .replace(/educore/g, "eduprow");
+};
+
 const withDatabaseRetry = async (operation, label = "database operation") => {
     let lastError;
     for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt += 1) {
@@ -290,25 +299,184 @@ const seedAdministrators = async (client, administrators, schoolId) => {
     `), "Resetting user sequence");
 };
 
-const seedDefaultWebsitePages = async (client, schoolId) => {
-    await withDatabaseRetry(() => client.query(`
-        INSERT INTO website_pages (school_id, page_slug, page_title, page_content, meta_title, meta_description, is_published)
-        SELECT $1, defaults.page_slug, defaults.page_title, defaults.page_content, defaults.meta_title, defaults.meta_description, TRUE
-        FROM (VALUES
-            ('home', 'Welcome to Our School', 'We are committed to providing quality education and helping every learner grow in knowledge, character and confidence.', 'Home', 'Welcome to our school.'),
-            ('about', 'About Us', 'Learn more about our school, our values and our commitment to providing a supportive learning environment.', 'About Us', 'Learn more about our school.'),
-            ('academics', 'Academics', 'Explore our academic programmes and the learning opportunities available to our students.', 'Academics', 'Explore our academic programmes.'),
-            ('admissions', 'Admissions', 'Learn about our admission process and how to begin your journey with our school.', 'Admissions', 'Learn about our admission process.'),
-            ('contact', 'Contact Us', 'Get in touch with our school for enquiries, admissions and other information.', 'Contact Us', 'Get in touch with our school.'),
-            ('news', 'News', 'Stay updated with the latest news, announcements and stories from our school.', 'School News', 'Read the latest news and announcements from our school.'),
-            ('gallery', 'Gallery', 'Explore photos and memorable moments from our school community, activities and events.', 'School Gallery', 'Explore our school gallery.'),
-            ('events', 'Events', 'Discover upcoming school events, activities and important dates.', 'School Events', 'View upcoming school events.')
-        ) AS defaults(page_slug, page_title, page_content, meta_title, meta_description)
-        WHERE NOT EXISTS (
-            SELECT 1 FROM website_pages existing
-            WHERE existing.school_id = $1 AND LOWER(existing.page_slug) = LOWER(defaults.page_slug)
-        )
-    `, [schoolId]), "Seeding website pages");
+const loadWebsiteTemplate = async () => {
+    const templateRegistry = await getRegistryEntry(1);
+    if (!templateRegistry?.database_name) {
+        throw new Error("School 1 has no active website template database.");
+    }
+
+    const templatePool = new Pool(getDatabaseConfig(templateRegistry.database_name));
+
+    try {
+        const templateClient = await withDatabaseRetry(
+            () => templatePool.connect(),
+            "Connecting to School 1 website template database"
+        );
+
+        try {
+            const pagesResult = await withDatabaseRetry(
+                () => templateClient.query(`
+                    SELECT
+                        page_slug,
+                        page_title,
+                        page_content,
+                        meta_title,
+                        meta_description,
+                        is_published
+                    FROM website_pages
+                    WHERE school_id = 1
+                    ORDER BY id
+                `),
+                "Loading School 1 website pages"
+            );
+
+            const sectionsResult = await withDatabaseRetry(
+                () => templateClient.query(`
+                    SELECT
+                        wp.page_slug,
+                        ws.section_key,
+                        ws.section_title,
+                        ws.section_subtitle,
+                        ws.section_content,
+                        ws.image_url,
+                        ws.button_text,
+                        ws.button_url,
+                        ws.display_order,
+                        ws.is_active
+                    FROM website_sections ws
+                    JOIN website_pages wp ON wp.id = ws.page_id
+                    WHERE ws.school_id = 1
+                      AND wp.school_id = 1
+                    ORDER BY wp.id, ws.display_order, ws.id
+                `),
+                "Loading School 1 website sections"
+            );
+
+            if (!pagesResult.rows.length) {
+                throw new Error("School 1 has no website pages to use as the template.");
+            }
+
+            return {
+                pages: pagesResult.rows,
+                sections: sectionsResult.rows,
+            };
+        } finally {
+            templateClient.release();
+        }
+    } finally {
+        await templatePool.end();
+    }
+};
+
+const seedWebsiteTemplate = async (client, schoolId) => {
+    if (Number(schoolId) === 1) {
+        return;
+    }
+
+    const template = await loadWebsiteTemplate();
+
+    await withDatabaseRetry(
+        () => client.query("BEGIN"),
+        "Starting website template transaction"
+    );
+
+    try {
+        await withDatabaseRetry(
+            () => client.query("DELETE FROM website_sections WHERE school_id = $1", [schoolId]),
+            "Clearing school website sections"
+        );
+
+        await withDatabaseRetry(
+            () => client.query("DELETE FROM website_pages WHERE school_id = $1", [schoolId]),
+            "Clearing school website pages"
+        );
+
+        const pageIds = new Map();
+
+        for (const page of template.pages) {
+            const inserted = await withDatabaseRetry(
+                () => client.query(`
+                    INSERT INTO website_pages (
+                        school_id,
+                        page_slug,
+                        page_title,
+                        page_content,
+                        meta_title,
+                        meta_description,
+                        is_published
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    RETURNING id
+                `, [
+                    schoolId,
+                    page.page_slug,
+                    replaceEducoreBrand(page.page_title),
+                    replaceEducoreBrand(page.page_content),
+                    replaceEducoreBrand(page.meta_title),
+                    replaceEducoreBrand(page.meta_description),
+                    page.is_published,
+                ]),
+                `Copying website page ${page.page_slug}`
+            );
+
+            pageIds.set(page.page_slug, inserted.rows[0].id);
+        }
+
+        for (const section of template.sections) {
+            const pageId = pageIds.get(section.page_slug);
+            if (!pageId) {
+                throw new Error(
+                    `School 1 website section "${section.section_key || "unnamed"}" references missing page "${section.page_slug}".`
+                );
+            }
+
+            await withDatabaseRetry(
+                () => client.query(`
+                    INSERT INTO website_sections (
+                        page_id,
+                        school_id,
+                        section_key,
+                        section_title,
+                        section_subtitle,
+                        section_content,
+                        image_url,
+                        button_text,
+                        button_url,
+                        display_order,
+                        is_active
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                `, [
+                    pageId,
+                    schoolId,
+                    section.section_key,
+                    replaceEducoreBrand(section.section_title),
+                    replaceEducoreBrand(section.section_subtitle),
+                    replaceEducoreBrand(section.section_content),
+                    replaceEducoreBrand(section.image_url),
+                    replaceEducoreBrand(section.button_text),
+                    replaceEducoreBrand(section.button_url),
+                    section.display_order,
+                    section.is_active,
+                ]),
+                `Copying website section ${section.section_key || "unnamed"}`
+            );
+        }
+
+        await withDatabaseRetry(
+            () => client.query("COMMIT"),
+            "Committing website template"
+        );
+
+        console.log(
+            `Website template copied from School 1 to school ${schoolId}: ${template.pages.length} pages, ${template.sections.length} sections.`
+        );
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+        throw error;
+    }
 };
 
 const verifySchoolDatabase = async (client, schoolId) => {
@@ -357,7 +525,23 @@ const provision = async (schoolId) => {
             await seedRoles(client);
             await seedSchool(client, school);
             await seedAdministrators(client, administrators, schoolId);
-            await seedDefaultWebsitePages(client, schoolId);
+            const websiteCount = await withDatabaseRetry(
+                () => client.query(`SELECT COUNT(*)::integer AS count FROM website_pages WHERE school_id = $1`, [schoolId]),
+                "Checking school website pages"
+            );
+
+            // New databases are populated from School 1 so administrators see a
+            // complete, editable website immediately. Existing populated school
+            // websites are left untouched during ordinary repair provisioning.
+            // Pass --sync-website-template when an existing school should be
+            // deliberately refreshed from School 1.
+            if (
+                created ||
+                Number(websiteCount.rows[0]?.count || 0) === 0 ||
+                forceWebsiteTemplate
+            ) {
+                await seedWebsiteTemplate(client, schoolId);
+            }
 
             const verification = await verifySchoolDatabase(client, schoolId);
             console.log("School database provisioned successfully:");
@@ -371,6 +555,8 @@ const provision = async (schoolId) => {
 };
 
 const schoolId = Number(process.argv[2]);
+const forceWebsiteTemplate = process.argv.includes("--sync-website-template");
+
 provision(schoolId)
     .then(async () => {
         await centralPool.end();
