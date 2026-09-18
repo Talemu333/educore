@@ -13,7 +13,7 @@ const findUser = async (login) => {
         FROM users JOIN roles ON users.role_id = roles.id
         WHERE username = $1 OR email = $1;
     `;
-    const result = await pool.query(query, [login]);
+    const result = await database.query(query, [login]);
     return result.rows[0];
 };
 
@@ -25,7 +25,7 @@ const findUserById = async (id) => {
         FROM users JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1;
     `;
-    const result = await pool.query(query, [id]);
+    const result = await database.query(query, [id]);
     return result.rows[0];
 };
 
@@ -41,7 +41,7 @@ const findUserByIdInSchool = async (id, schoolId) => {
 };
 
 const updateLastLogin = async (userId) => {
-    await pool.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
+    await database.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
 };
 
 const updatePassword = async (userId, hashedPassword) => {
