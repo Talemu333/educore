@@ -77,6 +77,10 @@ GET ATTENDANCE BY DATE
 
 export function useAttendanceByDate({
 
+    sessionId,
+
+    termId,
+
     classId,
 
     armId,
@@ -91,6 +95,10 @@ export function useAttendanceByDate({
 
             "attendance",
 
+            sessionId,
+
+            termId,
+
             classId,
 
             armId,
@@ -103,6 +111,10 @@ export function useAttendanceByDate({
 
             getAttendanceByDate({
 
+                sessionId,
+
+                termId,
+
                 classId,
 
                 armId,
@@ -112,6 +124,10 @@ export function useAttendanceByDate({
             }),
 
         enabled:
+
+            !!sessionId &&
+
+            !!termId &&
 
             !!classId &&
 
