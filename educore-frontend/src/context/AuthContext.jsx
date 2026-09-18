@@ -9,6 +9,7 @@ import {
     getCurrentUser,
     logout
 } from "../services/authService";
+import { saveOfflineUser, getOfflineUser, clearOfflineUser } from "../lib/offline/offlineAuth";
 
 
 const AuthContext =
@@ -65,9 +66,10 @@ export function AuthProvider({
         */
 
         if (userData) {
-
             setUser(userData);
-
+            if (navigator.onLine) {
+                await saveOfflineUser(userData).catch(() => {});
+            }
         }
 
 
@@ -89,10 +91,8 @@ export function AuthProvider({
 
             if (response?.user) {
 
-                setUser(
-                    response.user
-                );
-
+                setUser(response.user);
+                await saveOfflineUser(response.user).catch(() => {});
                 return response.user;
 
             }
@@ -111,12 +111,15 @@ export function AuthProvider({
             -------------------------------------
             */
 
-            if (!userData) {
-
-                setUser(null);
-
+            if (!navigator.onLine) {
+                const cachedUser = await getOfflineUser().catch(() => null);
+                if (cachedUser) {
+                    setUser(cachedUser);
+                    return cachedUser;
+                }
             }
 
+            if (!userData) setUser(null);
             return userData || null;
 
         }
@@ -144,9 +147,8 @@ export function AuthProvider({
             );
 
         } finally {
-
+            await clearOfflineUser().catch(() => {});
             setUser(null);
-
         }
 
     };
@@ -177,20 +179,19 @@ export function AuthProvider({
 
 
                     if (response?.user) {
-
-                        setUser(
-                            response.user
-                        );
-
+                        setUser(response.user);
+                        await saveOfflineUser(response.user).catch(() => {});
                     } else {
-
                         setUser(null);
-
                     }
 
                 } catch (error) {
-
-                    setUser(null);
+                    if (!navigator.onLine) {
+                        const cachedUser = await getOfflineUser().catch(() => null);
+                        setUser(cachedUser);
+                    } else {
+                        setUser(null);
+                    }
 
                 } finally {
 
