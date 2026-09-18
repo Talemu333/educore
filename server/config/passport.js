@@ -130,13 +130,34 @@ DESERIALIZE USER
 */
 
 passport.deserializeUser(
-    async (id, done) => {
+    async (serializedUser, done) => {
 
         try {
 
+            // Older sessions may contain the serialized user object rather
+            // than only the numeric user ID. Normalize both formats so a
+            // legacy session cannot be passed directly to PostgreSQL as an
+            // object (which causes: invalid input syntax for type integer).
+            const candidateId =
+                serializedUser &&
+                typeof serializedUser === "object"
+                    ? serializedUser.id
+                    : serializedUser;
+
+            const userId = Number(candidateId);
+
+            if (!Number.isInteger(userId) || userId < 1) {
+
+                return done(
+                    null,
+                    false
+                );
+
+            }
+
             const user =
                 await authModel.findUserById(
-                    id
+                    userId
                 );
 
 
