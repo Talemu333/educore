@@ -66,6 +66,31 @@ export async function getCachedAttendanceByDate({ schoolId, classId, armId, atte
 }
 
 export async function saveAttendanceOfflineAware(data) {
+    if (!navigator.onLine) {
+        const user = await getOfflineUser();
+        if (!user?.school_id) {
+            throw new Error("Please sign in while online before using attendance offline.");
+        }
+
+        await enqueueAttendance(data, user.school_id);
+        await cacheAttendanceByDate({
+            schoolId: user.school_id,
+            classId: data.class_id,
+            armId: data.arm_id || null,
+            attendanceDate: data.attendance_date,
+            attendance: data.students || []
+        }).catch(() => {});
+
+        return {
+            attendance_date: data.attendance_date,
+            class: null,
+            students_processed: Array.isArray(data.students) ? data.students.length : 0,
+            attendance: data.students || [],
+            offline: true,
+            pending_sync: true
+        };
+    }
+
     try {
         const response = await api.post("/attendance", data);
         return response.data.data;
