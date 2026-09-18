@@ -18,12 +18,14 @@ function LoginPage() {
     const onSubmit = async (data) => {
         try {
             const response = await login(data);
-            await loginUser(response.user);
-            if (response.user.must_change_password) navigate("/change-password");
-            else if (response.user.role_name === ROLES.SUPER_ADMIN) navigate("/settings");
-            else if (response.user.role_name === ROLES.PARENT) navigate("/parent-dashboard");
-            else if (response.user.role_name === ROLES.TEACHER) navigate("/teacher-dashboard");
-            else if (response.user.role_name === ROLES.STUDENT) navigate("/student-dashboard");
+            const currentUser = await loginUser(response.user);
+            const authenticatedUser = currentUser || response.user;
+
+            if (authenticatedUser.must_change_password) navigate("/change-password");
+            else if (authenticatedUser.role_name === ROLES.SUPER_ADMIN) navigate("/settings");
+            else if (authenticatedUser.role_name === ROLES.PARENT) navigate("/parent-dashboard");
+            else if (authenticatedUser.role_name === ROLES.TEACHER) navigate("/teacher-dashboard");
+            else if (authenticatedUser.role_name === ROLES.STUDENT) navigate("/student-dashboard");
             else navigate("/dashboard");
         } catch (error) {
             console.error(error);
