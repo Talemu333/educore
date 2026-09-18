@@ -27,6 +27,7 @@ import CBTManagementPage from "./pages/admin/CBTManagementPage";
 import CBTResultsPage from "./pages/admin/CBTResultsPage";
 import CBTQuestionBankPage from "./pages/admin/CBTQuestionBankPage";
 import CBTPdfImportPage from "./pages/admin/CBTPdfImportPage";
+import ReportsPage from "./pages/reports/ReportsPage";
 
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
@@ -35,7 +36,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "website", "change-password", "logout", "contact-messages", "expenses", "lesson-notes", "lesson-syllabus", "partner-management",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
     "teacher-dashboard", "teacher-students", "forgot-password", "reset-password",
-    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank"
+    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank", "reports"
 ]);
 
 function useAppPathname() {
@@ -75,6 +76,7 @@ function App() {
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+    if (pathname === "/reports") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ReportsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/partner-management") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerManagementPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/partner-management/settings") return <BrowserRouter><ProtectedRoute allowedRoles={["Super Admin"]}><DashboardLayout><PartnerProgrammeSettingsPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/student-dashboard") return <BrowserRouter><ProtectedRoute allowedRoles={["Student"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
@@ -90,8 +92,6 @@ function App() {
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
-    // A custom school domain identifies the tenant, but it must still be able
-    // to use the shared authentication and protected dashboard routes.
     if (isCustomSchoolDomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
     if (isCustomSchoolDomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
 

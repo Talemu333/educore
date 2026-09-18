@@ -125,7 +125,7 @@ const getSchool = async (schoolId) => {
 
 const getSchoolAdministrators = async (schoolId) => {
     const result = await withDatabaseRetry(() => centralPool.query(`
-        SELECT u.id, u.username, u.email, u.password, u.is_active, r.role_name
+        SELECT u.id, u.username, u.email, u.password, u.admin_type, u.is_active, r.role_name
         FROM users u
         JOIN roles r ON r.id = u.role_id
         WHERE u.school_id = $1
@@ -263,14 +263,15 @@ const seedAdministrators = async (client, administrators, schoolId) => {
         if (!fallbackRole) throw new Error("No administrator role is available in the school database.");
 
         await withDatabaseRetry(() => client.query(`
-            INSERT INTO users (id, username, email, password, role_id, school_id, is_active)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO users (id, username, email, password, role_id, school_id, admin_type, is_active)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (id) DO UPDATE SET
                 username = EXCLUDED.username,
                 email = EXCLUDED.email,
                 password = EXCLUDED.password,
                 role_id = EXCLUDED.role_id,
                 school_id = EXCLUDED.school_id,
+                admin_type = EXCLUDED.admin_type,
                 is_active = EXCLUDED.is_active,
                 updated_at = CURRENT_TIMESTAMP
         `, [
@@ -280,6 +281,7 @@ const seedAdministrators = async (client, administrators, schoolId) => {
             administrator.password,
             fallbackRole.id,
             schoolId,
+            administrator.admin_type || null,
             administrator.is_active !== false,
         ]), "Seeding administrator");
     }

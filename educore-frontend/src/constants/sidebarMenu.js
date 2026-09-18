@@ -17,7 +17,8 @@ import {
     Receipt,
     Mail,
     BarChart3,
-    FileUp
+    FileUp,
+    Send
 } from "lucide-react";
 
 import ROLES from "./roles";
@@ -57,7 +58,8 @@ const sidebarMenu = [
         children: [
             { title: "Result Entry", path: "/results", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
             { title: "Class Result Sheet", path: "/results/class-sheet", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
-            { title: "Detailed Class Result Sheet", path: "/results/detailed-class-sheet", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] }
+            { title: "Detailed Class Result Sheet", path: "/results/detailed-class-sheet", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
+            { title: "Publish Results", icon: Send, path: "/reports", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] }
         ]
     },
     { title: "Results", icon: FileText, path: "/parent-results", roles: [ROLES.PARENT] },

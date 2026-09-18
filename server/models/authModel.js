@@ -1,32 +1,91 @@
 const database = require("../config/database");
 
-// Authentication is a platform-level concern for login and public password
-// reset flows. School-scoped account administration uses the active school
-// database through the methods defined below.
+// Authentication uses the active database context for school accounts.
+// Platform-level password-reset-by-email flows continue to use the central DB.
 const pool = database.centralPool;
 
+const hydrateAdministratorType = async (user) => {
+    if (!user) return user;
+
+    const roleName = String(user.role_name || "").trim().toLowerCase();
+    const currentType = String(user.admin_type || "").trim().toLowerCase();
+
+    // "Admin" is the generic role. The administrator's actual type
+    // (proprietor, principal, bursar, etc.) is stored in admin_type.
+    // Older isolated school databases can have this value missing or set
+    // to the generic "admin" value even though the central school account
+    // still contains the correct administrator type.
+    if (roleName !== "admin" || (currentType && currentType !== "admin")) {
+        return user;
+    }
+
+    const schoolId = Number(user.school_id);
+    const userId = Number(user.id);
+
+    if (!Number.isInteger(schoolId) || schoolId < 1 || !Number.isInteger(userId) || userId < 1) {
+        return user;
+    }
+
+    const centralResult = await pool.query(
+        `SELECT admin_type
+         FROM users
+         WHERE id = $1
+           AND school_id = $2
+         LIMIT 1`,
+        [userId, schoolId]
+    );
+
+    const centralType = String(centralResult.rows[0]?.admin_type || "").trim();
+
+    if (!centralType || centralType.toLowerCase() === "admin") {
+        return user;
+    }
+
+    // Repair the isolated school's account as part of authentication so
+    // existing schools do not require manual database intervention.
+    try {
+        await database.query(
+            `UPDATE users
+             SET admin_type = $1,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2
+               AND school_id = $3`,
+            [centralType, userId, schoolId]
+        );
+    } catch (error) {
+        console.error("Failed to synchronize administrator type:", error);
+    }
+
+    return {
+        ...user,
+        admin_type: centralType
+    };
+};
+
 const findUser = async (login) => {
-    const query = `
+    const result = await database.query(`
         SELECT users.id, users.username, users.email, users.password,
                users.must_change_password, users.last_login, users.admin_type,
                users.school_id, users.student_id, users.is_active, roles.role_name
-        FROM users JOIN roles ON users.role_id = roles.id
-        WHERE username = $1 OR email = $1;
-    `;
-    const result = await pool.query(query, [login]);
-    return result.rows[0];
+        FROM users
+        JOIN roles ON users.role_id = roles.id
+        WHERE users.username = $1 OR users.email = $1;
+    `, [login]);
+
+    return hydrateAdministratorType(result.rows[0]);
 };
 
 const findUserById = async (id) => {
-    const query = `
+    const result = await database.query(`
         SELECT users.id, users.username, users.email, users.must_change_password,
                users.last_login, users.admin_type, users.school_id,
                users.student_id, users.is_active, roles.role_name
-        FROM users JOIN roles ON users.role_id = roles.id
+        FROM users
+        JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1;
-    `;
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
+    `, [id]);
+
+    return hydrateAdministratorType(result.rows[0]);
 };
 
 const findUserByIdInSchool = async (id, schoolId) => {
@@ -34,21 +93,30 @@ const findUserByIdInSchool = async (id, schoolId) => {
         SELECT users.id, users.username, users.email, users.must_change_password,
                users.last_login, users.admin_type, users.school_id,
                users.student_id, users.is_active, roles.role_name
-        FROM users JOIN roles ON users.role_id = roles.id
+        FROM users
+        JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1 AND users.school_id = $2;
     `, [id, schoolId]);
+
     return result.rows[0];
 };
 
 const updateLastLogin = async (userId) => {
-    await pool.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`, [userId]);
+    await database.query(
+        `UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`,
+        [userId]
+    );
 };
 
 const updatePassword = async (userId, hashedPassword) => {
-    const result = await pool.query(`
-        UPDATE users SET password = $1, must_change_password = FALSE,
-            password_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2 RETURNING id;
+    const result = await database.query(`
+        UPDATE users
+        SET password = $1,
+            must_change_password = FALSE,
+            password_changed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING id;
     `, [hashedPassword, userId]);
     return result.rows[0];
 };
@@ -62,12 +130,15 @@ const resetPasswordByAdmin = async (userId, schoolId, hashedPassword) => {
             password_reset_token_hash = NULL,
             password_reset_expires_at = NULL,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2 AND school_id = $3 AND is_active = TRUE
+        WHERE id = $2
+          AND school_id = $3
+          AND is_active = TRUE
         RETURNING id, username, email, school_id, role_id, admin_type, must_change_password;
     `, [hashedPassword, userId, schoolId]);
     return result.rows[0];
 };
 
+// Email reset flows are platform-level and therefore remain on the central DB.
 const findUserByEmail = async (email) => {
     const result = await pool.query(`
         SELECT id, username, email, school_id, student_id, is_active

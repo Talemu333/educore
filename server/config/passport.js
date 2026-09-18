@@ -3,7 +3,8 @@ const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 
 const authModel = require("../models/authModel");
-
+const { getSchoolDatabase } = require("./schoolDatabaseManager");
+const { runWithSchoolDatabase } = require("./databaseContext");
 
 passport.use(
     new LocalStrategy(
@@ -11,180 +12,81 @@ passport.use(
             usernameField: "login",
             passwordField: "password"
         },
-
         async (login, password, done) => {
-
             try {
-
-                const user =
-                    await authModel.findUser(login);
-
-
-                /*
-                =========================================
-                USER NOT FOUND
-                =========================================
-                */
+                const user = await authModel.findUser(login);
 
                 if (!user) {
-
                     return done(null, false, {
-
-                        message:
-                            "Invalid username/email or password."
-
+                        message: "Invalid username/email or password."
                     });
-
                 }
-
-
-                /*
-                =========================================
-                CHECK ACCOUNT STATUS
-                =========================================
-                */
 
                 if (user.is_active === false) {
-
                     return done(null, false, {
-
-                        message:
-                            "Your account has been deactivated. Please contact the school administrator."
-
+                        message: "Your account has been deactivated. Please contact the school administrator."
                     });
-
                 }
 
-
-                /*
-                =========================================
-                CHECK PASSWORD
-                =========================================
-                */
-
-                const match =
-                    await bcrypt.compare(
-                        password,
-                        user.password
-                    );
-
+                const match = await bcrypt.compare(password, user.password);
 
                 if (!match) {
-
                     return done(null, false, {
-
-                        message:
-                            "Invalid username/email or password."
-
+                        message: "Invalid username/email or password."
                     });
-
                 }
 
-
-                /*
-                =========================================
-                AUTHENTICATION SUCCESSFUL
-                =========================================
-                */
-
-                return done(
-                    null,
-                    user
-                );
-
-
-            } catch (err) {
-
-                return done(err);
-
+                return done(null, user);
+            } catch (error) {
+                return done(error);
             }
-
         }
-
     )
 );
 
+passport.serializeUser((user, done) => {
+    done(null, {
+        id: user.id,
+        school_id: user.school_id || null
+    });
+});
 
-/*
-=========================================
-SERIALIZE USER
-=========================================
-*/
+passport.deserializeUser(async (serialized, done) => {
+    try {
+        const userId = typeof serialized === "object"
+            ? Number(serialized.id)
+            : Number(serialized);
 
-passport.serializeUser(
-    (user, done) => {
+        const schoolId = typeof serialized === "object"
+            ? Number(serialized.school_id)
+            : 0;
 
-        done(
-            null,
-            user.id
-        );
-
-    }
-);
-
-
-/*
-=========================================
-DESERIALIZE USER
-=========================================
-*/
-
-passport.deserializeUser(
-    async (id, done) => {
-
-        try {
-
-            const user =
-                await authModel.findUserById(
-                    id
-                );
-
-
-            /*
-            =====================================
-            USER NO LONGER EXISTS
-            =====================================
-            */
-
-            if (!user) {
-
-                return done(
-                    null,
-                    false
-                );
-
-            }
-
-
-            /*
-            =====================================
-            CHECK ACCOUNT STATUS AGAIN
-            =====================================
-            */
-
-            if (user.is_active === false) {
-
-                return done(
-                    null,
-                    false
-                );
-
-            }
-
-
-            done(
-                null,
-                user
-            );
-
-
-        } catch (err) {
-
-            done(
-                err
-            );
-
+        if (!Number.isInteger(userId) || userId < 1) {
+            return done(null, false);
         }
 
+        if (Number.isInteger(schoolId) && schoolId > 0) {
+            const schoolPool = await getSchoolDatabase(schoolId);
+
+            return runWithSchoolDatabase(schoolPool, async () => {
+                const user = await authModel.findUserById(userId);
+
+                if (!user || user.is_active === false) {
+                    return done(null, false);
+                }
+
+                return done(null, user);
+            });
+        }
+
+        const user = await authModel.findUserById(userId);
+
+        if (!user || user.is_active === false) {
+            return done(null, false);
+        }
+
+        return done(null, user);
+    } catch (error) {
+        return done(error);
     }
-);
+});
