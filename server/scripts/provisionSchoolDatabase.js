@@ -20,6 +20,15 @@ const gunzip = promisify(zlib.gunzip);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const replaceEducoreBrand = (value) => {
+    if (value === null || value === undefined) return value;
+    return String(value)
+        .replace(/EduCore/g, "EduProw")
+        .replace(/Educore/g, "Eduprow")
+        .replace(/EDUCORE/g, "EDUPROW")
+        .replace(/educore/g, "eduprow");
+};
+
 const withDatabaseRetry = async (operation, label = "database operation") => {
     let lastError;
     for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt += 1) {
@@ -399,10 +408,10 @@ const seedWebsiteTemplate = async (client, schoolId) => {
                 `, [
                     schoolId,
                     page.page_slug,
-                    page.page_title,
-                    page.page_content,
-                    page.meta_title,
-                    page.meta_description,
+                    replaceEducoreBrand(page.page_title),
+                    replaceEducoreBrand(page.page_content),
+                    replaceEducoreBrand(page.meta_title),
+                    replaceEducoreBrand(page.meta_description),
                     page.is_published,
                 ]),
                 `Copying website page ${page.page_slug}`
@@ -439,12 +448,12 @@ const seedWebsiteTemplate = async (client, schoolId) => {
                     pageId,
                     schoolId,
                     section.section_key,
-                    section.section_title,
-                    section.section_subtitle,
-                    section.section_content,
-                    section.image_url,
-                    section.button_text,
-                    section.button_url,
+                    replaceEducoreBrand(section.section_title),
+                    replaceEducoreBrand(section.section_subtitle),
+                    replaceEducoreBrand(section.section_content),
+                    replaceEducoreBrand(section.image_url),
+                    replaceEducoreBrand(section.button_text),
+                    replaceEducoreBrand(section.button_url),
                     section.display_order,
                     section.is_active,
                 ]),
