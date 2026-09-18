@@ -76,13 +76,11 @@ GET ATTENDANCE BY DATE
 */
 
 export function useAttendanceByDate({
-
+    sessionId,
+    termId,
     classId,
-
     armId,
-
     attendanceDate
-
 }) {
 
     return useQuery({
@@ -90,11 +88,10 @@ export function useAttendanceByDate({
         queryKey: [
 
             "attendance",
-
+            sessionId,
+            termId,
             classId,
-
             armId,
-
             attendanceDate
 
         ],
@@ -102,19 +99,18 @@ export function useAttendanceByDate({
         queryFn: () =>
 
             getAttendanceByDate({
-
+                sessionId,
+                termId,
                 classId,
-
                 armId,
-
                 attendanceDate
-
             }),
 
         enabled:
 
+            !!sessionId &&
+            !!termId &&
             !!classId &&
-
             !!attendanceDate
 
     });
