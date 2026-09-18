@@ -11,6 +11,21 @@ const getSchoolKey = (req) => {
         return String(explicitDomain).trim().toLowerCase().replace(/^www\./, "");
     }
 
+    // API requests come to the Render backend, so req.hostname is the API
+    // hostname rather than the school website hostname. For browser requests,
+    // the Origin header identifies the school site that initiated the request.
+    const origin = req.get("origin");
+    if (origin) {
+        try {
+            const originHostname = new URL(origin).hostname;
+            if (originHostname) {
+                return String(originHostname).trim().toLowerCase().replace(/^www\./, "");
+            }
+        } catch (_) {
+            // Fall back to the request hostname below when Origin is malformed.
+        }
+    }
+
     return String(req.hostname || "").trim().toLowerCase().replace(/^www\./, "");
 };
 
