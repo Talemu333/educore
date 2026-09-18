@@ -1,239 +1,113 @@
 import api from "./axios";
+import { getOfflineUser } from "@/lib/offline/offlineAuth";
+import {
+    saveAttendanceOfflineAware,
+    cacheAttendanceStudents,
+    getCachedAttendanceStudents,
+    cacheAttendanceByDate,
+    getCachedAttendanceByDate
+} from "@/lib/offline/attendanceOffline";
 
-
-/*
-=========================================
-SAVE ATTENDANCE
-=========================================
-
-This handles BOTH:
-
-1. Creating new attendance
-2. Updating existing attendance
-
-The backend uses UPSERT to determine
-whether to INSERT or UPDATE.
-=========================================
-*/
-
-export const saveAttendance = async (
-    data
-) => {
-
-    const response =
-        await api.post(
-            "/attendance",
-            data
-        );
-
-
-    return response.data.data;
-
+export const saveAttendance = async (data) => {
+    return saveAttendanceOfflineAware(data);
 };
 
-
-/*
-=========================================
-GET ATTENDANCE BY DATE
-=========================================
-*/
-
-export const getAttendanceByDate = async ({
-
-    classId,
-
-    armId,
-
-    attendanceDate
-
-}) => {
-
-    const response =
-        await api.get(
-
-            "/attendance",
-
-            {
-
-                params: {
-
-                    class_id:
-                        classId,
-
-                    arm_id:
-                        armId || null,
-
-                    attendance_date:
-                        attendanceDate
-
-                }
-
+export const getAttendanceByDate = async ({ classId, armId, attendanceDate }) => {
+    try {
+        const response = await api.get("/attendance", {
+            params: {
+                class_id: classId,
+                arm_id: armId || null,
+                attendance_date: attendanceDate
             }
+        });
 
-        );
+        const data = response.data.data;
+        const user = await getOfflineUser();
+        await cacheAttendanceByDate({
+            schoolId: user?.school_id,
+            classId,
+            armId,
+            attendanceDate,
+            attendance: data
+        }).catch(() => {});
 
+        return data;
+    } catch (error) {
+        if (!error?.isNetworkError && error?.response?.status !== 0) throw error;
 
-    return response.data.data;
+        const user = await getOfflineUser();
+        const cached = await getCachedAttendanceByDate({
+            schoolId: user?.school_id,
+            classId,
+            armId,
+            attendanceDate
+        });
 
+        if (cached === null) throw error;
+        return cached;
+    }
 };
 
+export const getStudentAttendance = async ({ studentId, sessionId, termId }) => {
+    const response = await api.get(`/attendance/student/${studentId}`, {
+        params: { session_id: sessionId, term_id: termId }
+    });
+    return response.data.data;
+};
 
-/*
-=========================================
-GET STUDENT ATTENDANCE
-=========================================
-*/
+export const getAttendanceSummary = async ({ studentId, sessionId, termId }) => {
+    const response = await api.get(`/attendance/student/${studentId}/summary`, {
+        params: { session_id: sessionId, term_id: termId }
+    });
+    return response.data.data;
+};
 
-export const getStudentAttendance = async ({
-    studentId,
-    sessionId,
-    termId
-}) => {
-
-    const response =
-        await api.get(
-
-            `/attendance/student/${studentId}`,
-
-            {
-                params: {
-
-                    session_id:
-                        sessionId,
-
-                    term_id:
-                        termId
-
-                }
-
+export const getStudentsForAttendance = async ({ sessionId, classId, armId }) => {
+    try {
+        const response = await api.get("/attendance/students", {
+            params: {
+                session_id: sessionId,
+                class_id: classId,
+                arm_id: armId || null
             }
+        });
 
-        );
+        const data = response.data.data;
+        const user = await getOfflineUser();
+        await cacheAttendanceStudents({
+            schoolId: user?.school_id,
+            sessionId,
+            classId,
+            armId,
+            students: data
+        }).catch(() => {});
 
+        return data;
+    } catch (error) {
+        if (!error?.isNetworkError && error?.response?.status !== 0) throw error;
 
-    return response.data.data;
+        const user = await getOfflineUser();
+        const cached = await getCachedAttendanceStudents({
+            schoolId: user?.school_id,
+            sessionId,
+            classId,
+            armId
+        });
 
+        if (cached === null) throw error;
+        return cached;
+    }
 };
 
-
-/*
-=========================================
-GET ATTENDANCE SUMMARY
-=========================================
-*/
-
-export const getAttendanceSummary = async ({
-    studentId,
-    sessionId,
-    termId
-}) => {
-
-    const response =
-        await api.get(
-
-            `/attendance/student/${studentId}/summary`,
-
-            {
-                params: {
-
-                    session_id:
-                        sessionId,
-
-                    term_id:
-                        termId
-
-                }
-
-            }
-
-        );
-
-
+export const getTeacherAttendanceStudents = async (assignmentId) => {
+    const response = await api.get(`/attendance/assignment/${assignmentId}/students`);
     return response.data.data;
-
 };
 
-
-/*
-=========================================
-GET STUDENTS FOR ATTENDANCE
-=========================================
-*/
-
-export const getStudentsForAttendance =
-    async ({
-
-        sessionId,
-
-        classId,
-
-        armId
-
-    }) => {
-
-        const response =
-            await api.get(
-
-                "/attendance/students",
-
-                {
-
-                    params: {
-
-                        session_id:
-                            sessionId,
-
-                        class_id:
-                            classId,
-
-                        arm_id:
-                            armId || null
-
-                    }
-
-                }
-
-            );
-
-
-        return response.data.data;
-
-    };
-
-export const getTeacherAttendanceStudents =
-async (assignmentId) => {
-
-    const response =
-        await api.get(
-
-            `/attendance/assignment/${assignmentId}/students`
-
-        );
-
+export const getAttendanceByAssignment = async (assignmentId, attendanceDate) => {
+    const response = await api.get(`/attendance/assignment/${assignmentId}`, {
+        params: { attendance_date: attendanceDate }
+    });
     return response.data.data;
-
-};
-
-export const getAttendanceByAssignment =
-async (
-    assignmentId,
-    attendanceDate
-) => {
-
-    const response =
-        await api.get(
-
-            `/attendance/assignment/${assignmentId}`,
-
-            {
-                params: {
-                    attendance_date:
-                        attendanceDate
-                }
-            }
-
-        );
-
-    return response.data.data;
-
 };
