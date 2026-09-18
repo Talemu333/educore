@@ -2,7 +2,9 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 
-const authModel = require("../models/authModel");\nconst { getSchoolDatabase } = require("./schoolDatabaseManager");\nconst { runWithSchoolDatabase } = require("./databaseContext");
+const authModel = require("../models/authModel");
+const { getSchoolDatabase } = require("./schoolDatabaseManager");
+const { runWithSchoolDatabase } = require("./databaseContext");
 
 
 passport.use(
@@ -114,7 +116,10 @@ SERIALIZE USER
 passport.serializeUser(
     (user, done) => {
 
-        done(null, {\n            id: user.id,\n            school_id: user.school_id || null\n        });
+        done(null, {
+            id: user.id,
+            school_id: user.school_id || null
+        });
 
     }
 );
@@ -152,7 +157,24 @@ passport.deserializeUser(
 
             }
 
-            const candidateSchoolId =\n                serializedUser &&\n                typeof serializedUser === "object"\n                    ? serializedUser.school_id\n                    : null;\n\n            const schoolId = Number(candidateSchoolId);\n            let user;\n\n            if (Number.isInteger(schoolId) && schoolId > 0) {\n                const schoolPool = await getSchoolDatabase(schoolId);\n                user = await runWithSchoolDatabase(\n                    schoolPool,\n                    () => authModel.findUserById(userId)\n                );\n            } else {\n                user = await authModel.findUserById(userId);\n            }
+            const candidateSchoolId =
+                serializedUser &&
+                typeof serializedUser === "object"
+                    ? serializedUser.school_id
+                    : null;
+
+            const schoolId = Number(candidateSchoolId);
+            let user;
+
+            if (Number.isInteger(schoolId) && schoolId > 0) {
+                const schoolPool = await getSchoolDatabase(schoolId);
+                user = await runWithSchoolDatabase(
+                    schoolPool,
+                    () => authModel.findUserById(userId)
+                );
+            } else {
+                user = await authModel.findUserById(userId);
+            }
 
 
             /*
