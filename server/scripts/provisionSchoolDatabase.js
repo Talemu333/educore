@@ -528,6 +528,8 @@ const provision = async (schoolId) => {
 };
 
 const schoolId = Number(process.argv[2]);
+const forceWebsiteTemplate = process.argv.includes("--sync-website-template");
+
 provision(schoolId)
     .then(async () => {
         await centralPool.end();
