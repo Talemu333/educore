@@ -1,5 +1,5 @@
 const DB_NAME = "eduprow-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise;
 
@@ -19,6 +19,16 @@ function openDatabase() {
             if (!db.objectStoreNames.contains("attendance")) {
                 const store = db.createObjectStore("attendance", { keyPath: "key" });
                 store.createIndex("status", "status", { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains("attendanceStudents")) {
+                const store = db.createObjectStore("attendanceStudents", { keyPath: "key" });
+                store.createIndex("schoolId", "schoolId", { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains("attendanceByDate")) {
+                const store = db.createObjectStore("attendanceByDate", { keyPath: "key" });
+                store.createIndex("schoolId", "schoolId", { unique: false });
             }
 
             if (!db.objectStoreNames.contains("syncQueue")) {
@@ -87,4 +97,20 @@ export async function getAllRecords(storeName) {
 
 export async function deleteRecord(storeName, key) {
     return runTransaction(storeName, "readwrite", store => store.delete(key));
+}
+
+export async function getRecordsByIndex(storeName, indexName, value) {
+    const db = await openDatabase();
+
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, "readonly");
+        const index = transaction.objectStore(storeName).index(indexName);
+        const request = index.getAll(value);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+export async function clearStore(storeName) {
+    return runTransaction(storeName, "readwrite", store => store.clear());
 }
