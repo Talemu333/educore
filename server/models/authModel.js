@@ -45,7 +45,7 @@ const updateLastLogin = async (userId) => {
 };
 
 const updatePassword = async (userId, hashedPassword) => {
-    const result = await pool.query(`
+    const result = await database.query(`
         UPDATE users SET password = $1, must_change_password = FALSE,
             password_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2 RETURNING id;
