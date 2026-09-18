@@ -112,7 +112,7 @@ function PublicLayout() {
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
     return (
-        <div className="min-h-screen bg-white text-slate-900">
+        <div className="public-site min-h-screen bg-white text-slate-900">
             <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
                 <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     <Link
