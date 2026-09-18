@@ -220,13 +220,11 @@ function AttendancePage() {
         data: existingAttendance = [],
         isLoading: isAttendanceLoading
     } = useAttendanceByDate({
-
+        sessionId,
+        termId,
         classId,
-
         armId,
-
         attendanceDate
-
     });
 
 
