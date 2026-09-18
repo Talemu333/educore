@@ -93,6 +93,8 @@ export function AuthProvider({
                     response.user
                 );
 
+                return response.user;
+
             }
 
         } catch (error) {
@@ -114,6 +116,8 @@ export function AuthProvider({
                 setUser(null);
 
             }
+
+            return userData || null;
 
         }
 
