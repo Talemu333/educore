@@ -76,6 +76,13 @@ export async function saveAttendanceOfflineAware(data) {
         if (!user?.school_id) throw error;
 
         await enqueueAttendance(data, user.school_id);
+        await cacheAttendanceByDate({
+            schoolId: user.school_id,
+            classId: data.class_id,
+            armId: data.arm_id || null,
+            attendanceDate: data.attendance_date,
+            attendance: data.students || []
+        }).catch(() => {});
 
         return {
             attendance_date: data.attendance_date,
