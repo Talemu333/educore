@@ -5,7 +5,7 @@ const upsertAttendance = async (data, client = pool) => {
         INSERT INTO attendance (student_id, session_id, term_id, class_id, arm_id, attendance_date, status, marked_by)
         SELECT $1,$2,$3,$4,$5,$6,$7,$8
         WHERE EXISTS (
-            SELECT 1 FROM students s JOIN users su ON su.id=s.user_id WHERE s.id=$1 AND su.school_id=$9
+            SELECT 1 FROM students s WHERE s.id=$1 AND s.school_id=$9
         ) AND EXISTS (
             SELECT 1 FROM users u WHERE u.id=$8 AND u.school_id=$9
         )
