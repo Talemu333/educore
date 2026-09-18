@@ -2,7 +2,7 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 
-const authModel = require("../models/authModel");
+const authModel = require("../models/authModel");\nconst { getSchoolDatabase } = require("./schoolDatabaseManager");\nconst { runWithSchoolDatabase } = require("./databaseContext");
 
 
 passport.use(
@@ -114,10 +114,7 @@ SERIALIZE USER
 passport.serializeUser(
     (user, done) => {
 
-        done(
-            null,
-            user.id
-        );
+        done(null, {\n            id: user.id,\n            school_id: user.school_id || null\n        });
 
     }
 );
@@ -155,10 +152,7 @@ passport.deserializeUser(
 
             }
 
-            const user =
-                await authModel.findUserById(
-                    userId
-                );
+            const candidateSchoolId =\n                serializedUser &&\n                typeof serializedUser === "object"\n                    ? serializedUser.school_id\n                    : null;\n\n            const schoolId = Number(candidateSchoolId);\n            let user;\n\n            if (Number.isInteger(schoolId) && schoolId > 0) {\n                const schoolPool = await getSchoolDatabase(schoolId);\n                user = await runWithSchoolDatabase(\n                    schoolPool,\n                    () => authModel.findUserById(userId)\n                );\n            } else {\n                user = await authModel.findUserById(userId);\n            }
 
 
             /*
