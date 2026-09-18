@@ -9,8 +9,17 @@ import { SchoolThemeProvider } from "./context/SchoolThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DashboardTablePaginationEnhancer from "./components/common/DashboardTablePaginationEnhancer";
 import WebsiteSectionFormAutoScroll from "./components/common/WebsiteSectionFormAutoScroll";
+import OfflineStatus from "./components/common/OfflineStatus";
 
 const queryClient = new QueryClient();
+
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch((error) => {
+            console.warn("EduProw service worker registration failed:", error);
+        });
+    });
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
 
@@ -21,6 +30,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <SchoolThemeProvider>
 
                 <App />
+
+                <OfflineStatus />
 
                 <DashboardTablePaginationEnhancer />
 
