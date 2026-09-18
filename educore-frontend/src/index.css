@@ -136,6 +136,13 @@ main > section {
     min-height: calc(100vh - 72px);
 }
 
+/* Public school website links/buttons: keep text readable on branded fills. */
+.public-site a.text-white,
+.public-site button.text-white {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
 /* Tables used throughout the administration screens */
 table {
     width: 100%;
