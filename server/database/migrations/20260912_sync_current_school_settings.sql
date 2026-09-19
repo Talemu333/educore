@@ -30,7 +30,7 @@ SET student_prefix = COALESCE(student_prefix, 'EDU'),
 -- values copied from the central database. Those IDs are not guaranteed to
 -- exist in the isolated database, so clear only invalid references before
 -- creating the tenant-local foreign keys.
-DO $
+DO $$
 BEGIN
     IF to_regclass('public.academic_sessions') IS NOT NULL THEN
         UPDATE school_settings ss
@@ -55,9 +55,9 @@ BEGIN
                 AND tr.school_id = ss.school_id
           );
     END IF;
-END $;
+END $$;
 
-DO $
+DO $$
 BEGIN
     IF to_regclass('public.academic_sessions') IS NOT NULL
        AND NOT EXISTS (
