@@ -34,8 +34,8 @@ const partnerPoints = [
     ["🚀", "Grow with EduProw", "Help more schools discover and adopt better digital tools with EduProw."]
 ];
 
-const contactEmail = "talemuadewale6@gmail.com";
-const secondaryEmail = "adewaletalemu9@gmail.com";
+const contactEmail = "eduprowtechnologies@gmail.com";
+const secondaryEmail = "eduprowtechnologies@gmail.com";
 const primaryPhone = "09135091402";
 const secondaryPhone = "07089062263";
 const whatsappNumber = "2349135091402";
