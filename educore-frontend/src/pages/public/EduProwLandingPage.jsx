@@ -55,7 +55,7 @@ export default function EduProwLandingPage() {
             <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
                     <a href="/eduprow" className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-lg font-black text-white shadow-sm">E</div>
+                        <img src="https://res.cloudinary.com/xg3fx2ic/image/upload/v1791152547/EduProw-Logo_033051.png" alt="EduProw" className="h-11 w-auto object-contain" />
                         <div>
                             <p className="text-lg font-extrabold tracking-tight text-slate-950">EduProw</p>
                             <p className="text-[11px] font-medium text-slate-500">School Management Platform</p>
@@ -302,7 +302,7 @@ export default function EduProwLandingPage() {
             <footer className="bg-slate-950 px-5 py-12 text-white sm:px-6 lg:px-8">
                 <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="lg:col-span-2">
-                        <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-extrabold">E</div><div><p className="font-extrabold">EduProw</p><p className="text-xs text-slate-500">School Management Platform</p></div></div>
+                        <div className="flex items-center gap-3"><img src="https://res.cloudinary.com/xg3fx2ic/image/upload/v1791152547/EduProw-Logo_033051.png" alt="EduProw" className="h-11 w-auto object-contain" /><div><p className="font-extrabold">EduProw</p><p className="text-xs text-slate-500">School Management Platform</p></div></div>
                         <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">A modern school management platform built to connect administration, academics, finance, communication and the school community.</p>
                     </div>
                     <div><p className="font-bold">Platform</p><div className="mt-4 space-y-3 text-sm text-slate-400"><a href="#solutions" className="block hover:text-white">Solutions</a><a href="#how-it-works" className="block hover:text-white">How It Works</a><a href="#partners" className="block hover:text-white">Partner Network</a></div></div>
