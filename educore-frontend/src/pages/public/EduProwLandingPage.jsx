@@ -129,6 +129,28 @@ export default function EduProwLandingPage() {
                     </div>
                 </section>
 
+                <section id="demo" className="scroll-mt-24 bg-slate-50 px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
+                    <div className="mx-auto max-w-6xl">
+                        <div className="mx-auto max-w-3xl text-center">
+                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">See EduProw in action</p>
+                            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Take a quick tour of EduProw.</h2>
+                            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">Watch the demo below to see how EduProw brings school administration, academics, finance, CBT and communication together in one platform.</p>
+                        </div>
+                        <div className="mx-auto mt-10 overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-2xl">
+                            <div className="aspect-video w-full">
+                                <iframe
+                                    className="h-full w-full"
+                                    src="https://www.youtube.com/embed/x37yrC48p74"
+                                    title="EduProw School Management Platform Demo"
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section id="solutions" className="scroll-mt-24 px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
                     <div className="mx-auto max-w-7xl">
                         <div className="max-w-3xl">
