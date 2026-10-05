@@ -99,13 +99,10 @@ const readBootstrapEncoded = async () => {
     return (await fs.readFile(BOOTSTRAP_FILE, "utf8")).trim();
 };
 
-const applyCurrentSchoolBootstrap = async (client) => {
-    const encoded = await readBootstrapEncoded();
-    const compressed = Buffer.from(encoded, "base64");
-    const sql = (await gunzip(compressed)).toString("utf8");
-    if (!sql.trim()) throw new Error("Current school database bootstrap is empty.");
-    console.log("Applying current isolated-school database bootstrap");
-    await withDatabaseRetry(() => client.query(sql), "Applying school database bootstrap");
+const applyCurrentSchoolSchema = async (client) => {
+    const schemaDirectory = path.join(DATABASE_ROOT, "schema");
+    console.log("Applying current isolated-school database schema");
+    await executeDirectory(client, schemaDirectory);
 };
 
 const getSchool = async (schoolId) => {
@@ -516,7 +513,7 @@ const provision = async (schoolId) => {
         const client = await withDatabaseRetry(() => schoolPool.connect(), "Connecting to school database");
         try {
             if (created) {
-                await applyCurrentSchoolBootstrap(client);
+                await applyCurrentSchoolSchema(client);
                 await applyCurrentMigrations(client);
             } else {
                 await applyCurrentRepairMigrations(client);
