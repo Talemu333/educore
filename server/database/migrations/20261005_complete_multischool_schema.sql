@@ -270,12 +270,12 @@ UPDATE teacher_assignments
 SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
 WHERE school_id IS NULL;
 
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_teacher_assignment_school' AND conrelid = 'teacher_assignments'::regclass) THEN
         ALTER TABLE teacher_assignments ADD CONSTRAINT fk_teacher_assignment_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
     END IF;
-END $;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_teacher_assignments_school_id ON teacher_assignments(school_id);
 
