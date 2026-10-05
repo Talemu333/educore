@@ -227,4 +227,76 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_announcements_school_id ON announcements(school_id);
 
+
+-- Complete the remaining school-scoped reference/relationship tables.
+ALTER TABLE departments
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE departments
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_department_school' AND conrelid = 'departments'::regclass) THEN
+        ALTER TABLE departments ADD CONSTRAINT fk_department_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $;
+
+CREATE INDEX IF NOT EXISTS idx_departments_school_id ON departments(school_id);
+
+ALTER TABLE fee_types
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE fee_types
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_fee_type_school' AND conrelid = 'fee_types'::regclass) THEN
+        ALTER TABLE fee_types ADD CONSTRAINT fk_fee_type_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $;
+
+CREATE INDEX IF NOT EXISTS idx_fee_types_school_id ON fee_types(school_id);
+
+ALTER TABLE timetables
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE timetables t
+SET school_id = ta.school_id
+FROM teacher_assignments ta
+WHERE ta.id = t.teacher_assignment_id
+  AND t.school_id IS NULL;
+
+UPDATE timetables
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_timetable_school' AND conrelid = 'timetables'::regclass) THEN
+        ALTER TABLE timetables ADD CONSTRAINT fk_timetable_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $;
+
+CREATE INDEX IF NOT EXISTS idx_timetables_school_id ON timetables(school_id);
+
+-- Normalize school-scoped records to the same NOT NULL contract used by the
+-- current isolated-school databases after their school_id values are backfilled.
+ALTER TABLE subjects ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE class_subjects ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE students ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE teachers ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE parents ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE student_results ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE attendance ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE fee_structures ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE student_payments ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE announcements ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE departments ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE fee_types ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE timetables ALTER COLUMN school_id SET NOT NULL;
+
 COMMIT;
