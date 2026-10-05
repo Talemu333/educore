@@ -257,6 +257,28 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_fee_types_school_id ON fee_types(school_id);
 
+ALTER TABLE teacher_assignments
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE teacher_assignments ta
+SET school_id = t.school_id
+FROM teachers t
+WHERE t.id = ta.teacher_id
+  AND ta.school_id IS NULL;
+
+UPDATE teacher_assignments
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_teacher_assignment_school' AND conrelid = 'teacher_assignments'::regclass) THEN
+        ALTER TABLE teacher_assignments ADD CONSTRAINT fk_teacher_assignment_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $;
+
+CREATE INDEX IF NOT EXISTS idx_teacher_assignments_school_id ON teacher_assignments(school_id);
+
 ALTER TABLE timetables
     ADD COLUMN IF NOT EXISTS school_id INTEGER;
 
