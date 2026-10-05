@@ -206,7 +206,7 @@ function Home() {
                                 )}
 
                                 <div className="min-w-0">
-                                    <p className="truncate text-base font-bold sm:text-lg">
+                                    <p className="break-words text-sm font-bold leading-tight sm:text-lg">
                                         {schoolName}
                                     </p>
                                     {settings?.school_level && (
