@@ -402,17 +402,17 @@ function Home() {
                         </p>
                     </div>
 
-                    <div className="mt-8 grid gap-5 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="mt-8 grid grid-cols-1 gap-5 sm:mt-12 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
                         {displayLevels.map(level => (
                             <article
                                 key={level.id || level.section_key}
-                                className="group overflow-hidden rounded-2xl bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                                className="group min-w-0 overflow-hidden rounded-2xl bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                             >
                                 {level.image_url ? (
                                     <img
                                         src={level.image_url}
                                         alt={level.section_title || "School programme"}
-                                        className="h-48 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-56"
+                                        className="h-44 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-52 lg:h-48"
                                     />
                                 ) : (
                                     <div
@@ -425,7 +425,7 @@ function Home() {
                                         Optional image
                                     </div>
                                 )}
-                                <div className="p-5 sm:p-6">
+                                <div className="min-w-0 p-5 sm:p-6">
                                     {level.section_subtitle && (
                                         <p
                                             className="text-xs font-bold uppercase tracking-wider"
@@ -434,10 +434,10 @@ function Home() {
                                             {level.section_subtitle}
                                         </p>
                                     )}
-                                    <h3 className="mt-2 text-lg font-bold text-slate-900 sm:text-xl">
+                                    <h3 className="mt-2 break-words text-lg font-bold leading-snug text-slate-900 sm:text-xl">
                                         {level.section_title || "Academic Programme"}
                                     </h3>
-                                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                                    <p className="mt-3 break-words text-sm leading-6 text-slate-600">
                                         {level.section_content || "Describe this academic level or programme here."}
                                     </p>
                                     {level.button_text && level.button_url && (
