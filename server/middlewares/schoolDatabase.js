@@ -36,7 +36,7 @@ const resolveSchoolDatabase = async (req, res, next) => {
         // run, so /admin/pages and /admin/pages/:id/sections do not fall back
         // to the central database.
         if (String(req.path || "").startsWith("/admin") && req.user?.school_id) {
-            const registryResult = await pool.query(
+            const registryResult = await pool.centralPool.query(
                 `SELECT school_id, database_name, website_slug, is_active
                  FROM school_database_registry
                  WHERE school_id = $1
