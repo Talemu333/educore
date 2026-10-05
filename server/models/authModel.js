@@ -124,7 +124,7 @@ const findUser = async (login) => {
     const result = await database.query(`
         SELECT users.id, users.username, users.email, users.password,
                users.must_change_password, users.last_login, users.admin_type,
-               users.school_id, users.student_id, users.is_active, roles.role_name
+               users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
         WHERE users.username = $1 OR users.email = $1;
@@ -137,7 +137,7 @@ const findUserById = async (id) => {
     const result = await database.query(`
         SELECT users.id, users.username, users.email, users.must_change_password,
                users.last_login, users.admin_type, users.school_id,
-               users.student_id, users.is_active, roles.role_name
+               users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
         WHERE users.id = $1;
@@ -199,7 +199,7 @@ const resetPasswordByAdmin = async (userId, schoolId, hashedPassword) => {
 // Email reset flows are platform-level and therefore remain on the central DB.
 const findUserByEmail = async (email) => {
     const result = await pool.query(`
-        SELECT id, username, email, school_id, student_id, is_active
+        SELECT id, username, email, school_id, is_active
         FROM users
         WHERE LOWER(email) = LOWER($1)
         LIMIT 1;
