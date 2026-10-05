@@ -114,11 +114,11 @@ function PublicLayout() {
     return (
         <div className="public-site min-h-screen bg-white text-slate-900">
             <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-                <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
                     <Link
                         to={publicPath("/")}
                         onClick={closeMobileMenu}
-                        className="flex min-w-0 items-center gap-3"
+                        className="flex min-w-0 flex-1 items-center gap-3 xl:max-w-[430px]"
                     >
                         {settings.school_logo ? (
                             <img
@@ -135,8 +135,8 @@ function PublicLayout() {
                             </div>
                         )}
 
-                        <div className="min-w-0">
-                            <p className="truncate text-base font-extrabold tracking-tight text-slate-900 sm:text-lg">
+                        <div className="min-w-0 flex-1">
+                            <p className="break-words text-sm font-extrabold leading-tight tracking-tight text-slate-900 sm:text-base lg:text-lg">
                                 {schoolName}
                             </p>
                             {settings.school_motto && (
@@ -147,7 +147,7 @@ function PublicLayout() {
                         </div>
                     </Link>
 
-                    <nav className="hidden items-center gap-1 lg:flex">
+                    <nav className="hidden items-center gap-1 xl:flex">
                         {NAVIGATION.map((item) => {
                             const path = publicPath(item.path);
                             return (
@@ -198,7 +198,7 @@ function PublicLayout() {
                         aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
                         aria-expanded={mobileMenuOpen}
                         onClick={() => setMobileMenuOpen((previous) => !previous)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 lg:hidden"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 xl:hidden"
                     >
                         {mobileMenuOpen ? (
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-5 w-5">
@@ -213,7 +213,7 @@ function PublicLayout() {
                 </div>
 
                 {mobileMenuOpen && (
-                    <div className="border-t border-slate-200 bg-white px-4 py-4 lg:hidden">
+                    <div className="border-t border-slate-200 bg-white px-4 py-4 xl:hidden">
                         <nav className="mx-auto max-w-7xl">
                             <div className="flex flex-col gap-1">
                                 {NAVIGATION.map((item) => {
