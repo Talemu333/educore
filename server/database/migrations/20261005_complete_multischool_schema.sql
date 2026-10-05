@@ -312,6 +312,7 @@ ALTER TABLE fee_structures ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE student_payments ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE announcements ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE departments ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE teacher_assignments ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE fee_types ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE timetables ALTER COLUMN school_id SET NOT NULL;
 
