@@ -30,14 +30,33 @@ const getSchoolKey = (req) => {
 };
 
 const resolveSchoolDatabase = async (req, res, next) => {
-    // Website administration already receives its authenticated school context
-    // from req.user. Do not let a public hostname/subdomain switch the database
-    // before authentication and authorization have selected the admin school.
-    if (String(req.path || "").startsWith("/admin")) {
-        return next();
-    }
-
     try {
+        // Authenticated admin requests already carry the tenant in req.user.
+        // Resolve that school's dedicated database before website admin queries
+        // run, so /admin/pages and /admin/pages/:id/sections do not fall back
+        // to the central database.
+        if (String(req.path || "").startsWith("/admin") && req.user?.school_id) {
+            const registryResult = await pool.query(
+                `SELECT school_id, database_name, website_slug, is_active
+                 FROM school_database_registry
+                 WHERE school_id = $1
+                   AND is_active = true
+                 LIMIT 1`,
+                [req.user.school_id]
+            );
+
+            const school = registryResult.rows[0];
+            if (!school) return next();
+
+            const schoolPool = await getSchoolDatabase(school.school_id);
+            return runWithSchoolDatabase(schoolPool, () => {
+                req.school = school;
+                req.schoolDatabase = schoolPool;
+                req.schoolDatabaseSchoolId = Number(school.school_id);
+                next();
+            });
+        }
+
         const key = getSchoolKey(req);
         const platformHosts = new Set([
             "eduprow.com",
