@@ -366,3 +366,53 @@ textarea:focus {
         padding: 20px;
     }
 }
+
+/* School application theme: auth surfaces and primary actions use the active tenant palette. */
+.school-auth-page {
+    background: var(--school-primary-soft);
+}
+
+.school-auth-hero {
+    background: linear-gradient(145deg, #020617 0%, #0f172a 62%, color-mix(in srgb, var(--school-primary-dark) 28%, #020617) 100%);
+}
+
+.school-auth-orb-gold {
+    background: color-mix(in srgb, var(--school-secondary) 28%, transparent);
+}
+
+.school-auth-gold-text {
+    color: var(--school-secondary);
+}
+
+.school-auth-logo {
+    display: flex;
+    height: 4rem;
+    width: 4rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: var(--school-primary);
+    color: var(--school-primary-foreground);
+    font-size: 1.25rem;
+    font-weight: 800;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--school-primary) 24%, transparent);
+}
+
+.school-primary-button {
+    background: var(--school-primary);
+    color: var(--school-primary-foreground);
+}
+
+.school-primary-button:hover:not(:disabled) {
+    background: var(--school-primary-dark);
+}
+
+.school-primary-button:focus-visible {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--school-primary) 18%, transparent);
+}
+
+.school-sidebar-active,
+.school-sidebar-group-active,
+.school-sidebar-child-active {
+    border-color: color-mix(in srgb, var(--school-primary) 20%, #334155);
+}

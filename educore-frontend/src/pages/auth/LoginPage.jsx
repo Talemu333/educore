@@ -36,9 +36,9 @@ function LoginPage() {
     return (
         <div className="min-h-screen w-full bg-slate-50">
             <div className="flex min-h-screen flex-col lg:flex-row">
-                <div className="relative flex min-h-[260px] w-full flex-col justify-between overflow-hidden bg-blue-700 px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:w-[46%] lg:px-14 lg:py-12">
+                <div className="school-auth-hero relative flex min-h-[260px] w-full flex-col justify-between overflow-hidden px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:w-[46%] lg:px-14 lg:py-12">
                     <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/10" />
-                    <div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-blue-500/40" />
+                    <div className="school-auth-orb school-auth-orb-gold absolute -bottom-32 -left-24 h-80 w-80 rounded-full" />
 
                     <div className="relative z-10">
                         <div className="flex items-center gap-3">
@@ -57,7 +57,7 @@ function LoginPage() {
                                 <h1 className="text-xl font-bold leading-tight sm:text-2xl">
                                     {isSchoolLoading ? "" : schoolName}
                                 </h1>
-                                <p className="mt-1 text-sm text-blue-100">School Portal</p>
+                                <p className="school-auth-gold-text mt-1 text-sm">School Portal</p>
                             </div>
                         </div>
                     </div>
@@ -66,14 +66,14 @@ function LoginPage() {
                         <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
                             Welcome to {schoolName}.
                         </h2>
-                        <p className="mt-5 max-w-lg text-sm leading-6 text-blue-100 sm:text-base">
+                        <p className="mt-5 max-w-lg text-sm leading-6 text-slate-300 sm:text-base">
                             Sign in to access your school account and continue with your academic and school activities.
                         </p>
                     </div>
 
                     {isSchoolPortal && (
                         <div className="relative z-10 mt-8 lg:mt-0">
-                            <p className="text-xs text-blue-100">
+                            <p className="text-xs text-slate-400">
                                 Powered by <span className="font-semibold text-white">EduProw</span>
                             </p>
                         </div>
@@ -83,7 +83,7 @@ function LoginPage() {
                 <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
                     <div className="w-full max-w-md">
                         <div className="mb-8 lg:mb-10">
-                            <p className="text-sm font-semibold text-blue-700">{schoolName}</p>
+                            <p className="school-brand-text text-sm font-semibold">{schoolName}</p>
                             <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                                 Access your school account
                             </h2>
@@ -102,7 +102,7 @@ function LoginPage() {
                                     type="text"
                                     autoComplete="username"
                                     {...register("login", { required: "Username or email is required" })}
-                                    className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 sm:text-base"
+                                    className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--school-primary)] focus:ring-4 focus:ring-[var(--school-primary-light)] sm:text-base"
                                     placeholder="Enter username or email"
                                 />
                                 {errors.login && <p className="mt-1.5 text-xs text-red-500 sm:text-sm">{errors.login.message}</p>}
@@ -124,7 +124,7 @@ function LoginPage() {
                             </div>
 
                             <div className="flex justify-end">
-                                <Link to="/forgot-password" className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline">
+                                <Link to="/forgot-password" className="school-brand-text text-sm font-semibold hover:underline">
                                     Forgot Password?
                                 </Link>
                             </div>
@@ -132,7 +132,7 @@ function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex min-h-12 w-full items-center justify-center rounded-xl bg-blue-700 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+                                className="school-primary-button flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
                             >
                                 {isSubmitting ? "Signing In..." : "Sign In"}
                             </button>
