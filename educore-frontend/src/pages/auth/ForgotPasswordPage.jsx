@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { forgotPassword } from "../../services/authService";
-import { useSchoolTheme } from "../../context/SchoolThemeContext";
 import { useSchoolSettings } from "../../hooks/useSchoolSettings";
 
 function ForgotPasswordPage() {
-    const { theme } = useSchoolTheme();
     const { data: schoolSettings } = useSchoolSettings();
     const [email, setEmail] = useState("");
     const [message, setMessage] = useState("");
