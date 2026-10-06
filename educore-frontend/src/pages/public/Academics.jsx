@@ -6,6 +6,7 @@ function Academics() {
     const { data: page, isLoading, isError } = useWebsitePage("academics");
     const { data: settings } = useSchoolSettings();
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
 
     const sections = (page?.sections || []).filter(
         (section) => section.is_active !== false
