@@ -116,7 +116,16 @@ function PublicLayout() {
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
     return (
-        <div\n            className="public-site min-h-screen bg-white text-slate-900"\n            style={{\n                "--school-primary": primaryColor,\n                "--school-secondary": secondaryColor,\n                "--school-primary-light": primaryLight,\n                "--school-primary-soft": primarySoft,\n                "--school-primary-dark": primaryDark\n            }}\n        >
+        <div
+            className="public-site min-h-screen bg-white text-slate-900"
+            style={{
+                "--school-primary": primaryColor,
+                "--school-secondary": secondaryColor,
+                "--school-primary-light": primaryLight,
+                "--school-primary-soft": primarySoft,
+                "--school-primary-dark": primaryDark
+            }}
+        >
             <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
                 <div className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
                     <Link
