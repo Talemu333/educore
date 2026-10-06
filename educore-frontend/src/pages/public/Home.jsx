@@ -20,6 +20,7 @@ function Home() {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const schoolName = settings?.school_name || "Our School";
 
     useEffect(() => {
@@ -187,7 +188,8 @@ function Home() {
 
             <section className="relative overflow-hidden">
                 <div className="grid lg:min-h-[650px] lg:grid-cols-2">
-                    <div className="flex items-center bg-slate-950 px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20">
+                    <div className="flex items-center px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20"
+                        style={{ backgroundColor: primaryColor }}>
                         <div className="mx-auto w-full max-w-xl">
                             <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8">
                                 {settings?.school_logo ? (
@@ -219,7 +221,7 @@ function Home() {
 
                             <p
                                 className="mb-4 text-xs font-bold uppercase tracking-[0.18em] sm:mb-5 sm:text-sm sm:tracking-[0.25em]"
-                                style={{ color: primaryColor }}
+                                style={{ color: secondaryColor }}
                             >
                                 {hero.section_subtitle || "Welcome to Our School"}
                             </p>
@@ -238,7 +240,7 @@ function Home() {
                                     <Link
                                         to={hero.button_url}
                                         className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                        style={{ backgroundColor: primaryColor }}
+                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
                                     >
                                         {hero.button_text}
                                     </Link>
@@ -246,7 +248,7 @@ function Home() {
                                     <Link
                                         to="/about"
                                         className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                        style={{ backgroundColor: primaryColor }}
+                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
                                     >
                                         Explore Our School
                                     </Link>
@@ -327,7 +329,7 @@ function Home() {
                         <div className="absolute bottom-5 left-4 right-4 z-10 rounded-2xl bg-white/95 p-4 shadow-2xl backdrop-blur sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
                             <p
                                 className="text-xs font-bold uppercase tracking-wider"
-                                style={{ color: primaryColor }}
+                                style={{ color: secondaryColor }}
                             >
                                 {promise.section_subtitle || "Our Commitment"}
                             </p>
@@ -359,7 +361,7 @@ function Home() {
                         <div className={!welcome.image_url ? "lg:col-span-2" : ""}>
                             <p
                                 className="text-xs font-bold uppercase tracking-[0.18em] sm:text-sm sm:tracking-[0.2em]"
-                                style={{ color: primaryColor }}
+                                style={{ color: secondaryColor }}
                             >
                                 {welcome.section_subtitle || "Welcome"}
                             </p>
@@ -444,7 +446,7 @@ function Home() {
                                         <Link
                                             to={level.button_url}
                                             className="mt-5 inline-flex text-sm font-semibold"
-                                            style={{ color: primaryColor }}
+                                            style={{ color: secondaryColor }}
                                         >
                                             {level.button_text} →
                                         </Link>
@@ -462,7 +464,7 @@ function Home() {
                         <div>
                             <p
                                 className="text-xs font-bold uppercase tracking-[0.18em] sm:text-sm sm:tracking-[0.2em]"
-                                style={{ color: primaryColor }}
+                                style={{ color: secondaryColor }}
                             >
                                 {whyChoose.section_subtitle || "Why Choose Us"}
                             </p>
@@ -560,8 +562,8 @@ function Home() {
                     <div className="mt-7 sm:mt-8">
                         <Link
                             to={admissionsCta.button_text && admissionsCta.button_url ? admissionsCta.button_url : "/admissions"}
-                            className="inline-flex w-full rounded-lg bg-white px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
-                            style={{ color: primaryColor }}
+                            className="inline-flex w-full rounded-lg px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
+                            style={{ backgroundColor: secondaryColor, color: primaryColor }}
                         >
                             {admissionsCta.button_text || "View Admissions"}
                         </Link>
