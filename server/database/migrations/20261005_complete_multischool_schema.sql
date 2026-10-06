@@ -301,6 +301,36 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_timetables_school_id ON timetables(school_id);
 
+-- Contact messages are tenant data and must exist in every dedicated
+-- school database. Older provisioning only created this table through
+-- the 20260903 migration, which is below the current migration cutoff.
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id SERIAL PRIMARY KEY,
+    school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    phone VARCHAR(40),
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'unread',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT contact_messages_status_check
+        CHECK (status IN ('unread', 'read', 'responded'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_school_id
+    ON contact_messages (school_id);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_school_status
+    ON contact_messages (school_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at
+    ON contact_messages (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_school_id
+    ON announcements(school_id);
+
 ALTER TABLE subjects ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE class_subjects ALTER COLUMN school_id SET NOT NULL;
 ALTER TABLE students ALTER COLUMN school_id SET NOT NULL;
