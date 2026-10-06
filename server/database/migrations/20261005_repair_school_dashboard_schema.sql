@@ -26,11 +26,21 @@ BEGIN
                  AND table_name = 'students'
                  AND column_name = 'school_id') THEN
 
+        -- The canonical multischool migration owns this FK. Older databases
+        -- may already have it under either historical name, so detect any
+        -- equivalent school_id -> schools.id FK before adding one.
         IF NOT EXISTS (
             SELECT 1
-            FROM pg_constraint
-            WHERE conname = 'fk_students_school'
-              AND conrelid = 'public.students'::regclass
+            FROM pg_constraint con
+            JOIN pg_attribute att
+              ON att.attrelid = con.conrelid
+             AND att.attnum = ANY(con.conkey)
+            JOIN pg_class ref
+              ON ref.oid = con.confrelid
+            WHERE con.conrelid = 'public.students'::regclass
+              AND con.contype = 'f'
+              AND att.attname = 'school_id'
+              AND ref.oid = 'public.schools'::regclass
         ) THEN
             ALTER TABLE students
                 ADD CONSTRAINT fk_students_school

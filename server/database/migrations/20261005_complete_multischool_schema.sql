@@ -225,6 +225,125 @@ BEGIN
     END IF;
 END $$;
 
-CREATE INDEX IF NOT EXISTS idx_announcements_school_id ON announcements(school_id);
+ALTER TABLE departments
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE departments
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_department_school' AND conrelid = 'departments'::regclass) THEN
+        ALTER TABLE departments ADD CONSTRAINT fk_department_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_departments_school_id ON departments(school_id);
+
+ALTER TABLE fee_types
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE fee_types
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_fee_type_school' AND conrelid = 'fee_types'::regclass) THEN
+        ALTER TABLE fee_types ADD CONSTRAINT fk_fee_type_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_fee_types_school_id ON fee_types(school_id);
+
+ALTER TABLE teacher_assignments
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE teacher_assignments ta
+SET school_id = t.school_id
+FROM teachers t
+WHERE t.id = ta.teacher_id
+  AND ta.school_id IS NULL;
+
+UPDATE teacher_assignments
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_teacher_assignment_school' AND conrelid = 'teacher_assignments'::regclass) THEN
+        ALTER TABLE teacher_assignments ADD CONSTRAINT fk_teacher_assignment_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_teacher_assignments_school_id ON teacher_assignments(school_id);
+
+ALTER TABLE timetables
+    ADD COLUMN IF NOT EXISTS school_id INTEGER;
+
+UPDATE timetables t
+SET school_id = ta.school_id
+FROM teacher_assignments ta
+WHERE ta.id = t.teacher_assignment_id
+  AND t.school_id IS NULL;
+
+UPDATE timetables
+SET school_id = (SELECT id FROM schools ORDER BY id LIMIT 1)
+WHERE school_id IS NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_timetable_school' AND conrelid = 'timetables'::regclass) THEN
+        ALTER TABLE timetables ADD CONSTRAINT fk_timetable_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_timetables_school_id ON timetables(school_id);
+
+-- Contact messages are tenant data and must exist in every dedicated
+-- school database. Older provisioning only created this table through
+-- the 20260903 migration, which is below the current migration cutoff.
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id SERIAL PRIMARY KEY,
+    school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    phone VARCHAR(40),
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'unread',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT contact_messages_status_check
+        CHECK (status IN ('unread', 'read', 'responded'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_school_id
+    ON contact_messages (school_id);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_school_status
+    ON contact_messages (school_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at
+    ON contact_messages (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_school_id
+    ON announcements(school_id);
+
+ALTER TABLE subjects ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE class_subjects ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE students ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE teachers ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE parents ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE student_results ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE attendance ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE fee_structures ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE student_payments ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE announcements ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE departments ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE teacher_assignments ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE fee_types ALTER COLUMN school_id SET NOT NULL;
+ALTER TABLE timetables ALTER COLUMN school_id SET NOT NULL;
 
 COMMIT;

@@ -514,13 +514,19 @@ const provision = async (schoolId) => {
         try {
             if (created) {
                 await applyCurrentSchoolSchema(client);
+
+                // Seed the tenant identity before migrations so school-scoped
+                // backfills have a real schools.id to reference.
+                await seedSchool(client, school);
                 await applyCurrentMigrations(client);
             } else {
                 await applyCurrentRepairMigrations(client);
             }
 
             await seedRoles(client);
-            await seedSchool(client, school);
+            if (!created) {
+                await seedSchool(client, school);
+            }
             await seedAdministrators(client, administrators, schoolId);
             const websiteCount = await withDatabaseRetry(
                 () => client.query(`SELECT COUNT(*)::integer AS count FROM website_pages WHERE school_id = $1`, [schoolId]),
