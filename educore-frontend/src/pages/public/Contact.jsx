@@ -21,6 +21,7 @@ function Contact() {
     const [submitState, setSubmitState] = useState({ type: "", message: "" });
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const sections = page?.sections || [];
     const getSection = (key) =>
         sections.find((section) => section.section_key === key && section.is_active !== false);
@@ -131,10 +132,10 @@ function Contact() {
         <div className="bg-white">
             <section className="relative overflow-hidden bg-slate-950 px-4 py-20 text-white sm:px-6 sm:py-24 lg:px-8 lg:py-28">
                 <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full opacity-20" style={{ backgroundColor: primaryColor }} />
-                <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-blue-500/10" />
+                <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full opacity-10" style={{ backgroundColor: primaryColor }} />
                 <div className="relative mx-auto max-w-7xl">
                     <div className="max-w-3xl">
-                        <p className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: `${primaryColor}cc` }}>
+                        <p className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: secondaryColor }}>
                             {hero?.section_subtitle || "Contact Us"}
                         </p>
                         <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">

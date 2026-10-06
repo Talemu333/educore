@@ -14,6 +14,7 @@ function EventDetails() {
     const { data: settings } = useSchoolSettings();
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const schoolName = settings?.school_name || "Our School";
 
     if (isLoading) {

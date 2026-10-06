@@ -188,8 +188,7 @@ function Home() {
 
             <section className="relative overflow-hidden">
                 <div className="grid lg:min-h-[650px] lg:grid-cols-2">
-                    <div className="flex items-center px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20"
-                        style={{ backgroundColor: primaryColor }}>
+                    <div className="flex items-center bg-slate-950 px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20">
                         <div className="mx-auto w-full max-w-xl">
                             <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8">
                                 {settings?.school_logo ? (
