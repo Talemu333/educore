@@ -1,6 +1,7 @@
 const pool = require("../config/database");
 const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 const { runWithSchoolDatabase } = require("../config/databaseContext");
+const { getSchoolByHost } = require("../models/publicDomainModel");
 
 const getSchoolKey = (req) => {
     const explicitSlug = req.query?.schoolSlug;
@@ -70,7 +71,7 @@ const resolveSchoolDatabase = async (req, res, next) => {
 
         let registryResult;
         try {
-            registryResult = await pool.query(`
+            registryResult = await pool.centralPool.query(`
                 SELECT r.school_id, r.database_name, r.website_slug, r.is_active
                 FROM school_database_registry r
                 WHERE r.is_active = true
@@ -89,10 +90,35 @@ const resolveSchoolDatabase = async (req, res, next) => {
             throw error;
         }
 
-        const school = registryResult.rows[0];
+        let school = registryResult.rows[0];
+
+        /*
+         * Custom school domains (for example, a school's own .com.ng domain)
+         * are registered in the central schools table, not necessarily as the
+         * registry's website_slug. Resolve those domains through the same
+         * canonical public-domain resolver used by school settings, then use
+         * the resulting school_id to select the dedicated tenant database.
+         */
+        if (!school) {
+            const publicSchool = await getSchoolByHost(key);
+
+            if (publicSchool?.id) {
+                const domainRegistryResult = await pool.centralPool.query(
+                    `SELECT school_id, database_name, website_slug, is_active
+                     FROM school_database_registry
+                     WHERE school_id = $1
+                       AND is_active = true
+                     LIMIT 1`,
+                    [publicSchool.id]
+                );
+
+                school = domainRegistryResult.rows[0];
+            }
+        }
 
         // Registered but not yet provisioned schools continue using the
-        // existing central database until their dedicated DB is activated.
+        // existing shared-database website flow until their dedicated DB is
+        // activated.
         if (!school || !school.is_active) {
             return next();
         }
