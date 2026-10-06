@@ -61,7 +61,7 @@ function ResetPasswordPage() {
                             </div>
                             <div>
                                 <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-gray-700">Confirm Password</label>
-                                <input id="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:text-base" placeholder="Confirm new password" />
+                                <input id="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 outline-none focus:border-[var(--school-primary)] focus:ring-2 focus:ring-[var(--school-primary-light)] sm:text-base" placeholder="Confirm new password" />
                             </div>
                             {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
                             <button type="submit" disabled={loading} className="school-primary-button flex min-h-12 w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 sm:text-base">
