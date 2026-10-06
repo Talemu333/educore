@@ -21,6 +21,7 @@ function Gallery() {
     const [selectedCategory, setSelectedCategory] = useState("All");
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const sections = page?.sections || [];
 
     const getSection = (key) =>
@@ -93,7 +94,7 @@ function Gallery() {
                     <div className="max-w-3xl">
                         <p
                             className="text-sm font-bold uppercase tracking-[0.2em]"
-                            style={{ color: "color-mix(in srgb, var(--school-primary) 75%, white)" }}
+                            style={{ color: secondaryColor }}
                         >
                             {hero?.section_subtitle || "School Life"}
                         </p>
@@ -197,7 +198,7 @@ function Gallery() {
                                             {item.category && (
                                                 <p
                                                     className="text-xs font-semibold uppercase tracking-wider"
-                                                    style={{ color: "#bfdbfe" }}
+                                                    style={{ color: secondaryColor }}
                                                 >
                                                     {item.category}
                                                 </p>
