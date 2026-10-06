@@ -4,14 +4,12 @@ import { useForm } from "react-hook-form";
 import { login } from "../../services/authService";
 import ROLES from "../../constants/roles";
 import { useSchoolSettings } from "../../hooks/useSchoolSettings";
-import { useSchoolTheme } from "../../context/SchoolThemeContext";
 
 function LoginPage() {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
     const navigate = useNavigate();
     const { loginUser } = useAuth();
     const { data: schoolSettings, isLoading: isSchoolLoading } = useSchoolSettings();
-    const { theme } = useSchoolTheme();
 
     const schoolName = schoolSettings?.school_name || "EduProw";
     const schoolLogo = schoolSettings?.school_logo;
@@ -38,7 +36,7 @@ function LoginPage() {
     return (
         <div className="min-h-screen w-full bg-slate-50">
             <div className="flex min-h-screen flex-col lg:flex-row">
-                <div style={{ "--school-auth-primary": theme.primary }} className="school-auth-hero relative flex min-h-[260px] w-full flex-col justify-between overflow-hidden px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:w-[46%] lg:px-14 lg:py-12">
+                <div className="school-auth-hero relative flex min-h-[260px] w-full flex-col justify-between overflow-hidden px-6 py-8 text-white sm:px-10 lg:min-h-screen lg:w-[46%] lg:px-14 lg:py-12">
                     <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/10" />
                     <div className="school-auth-orb school-auth-orb-gold absolute -bottom-32 -left-24 h-80 w-80 rounded-full" />
 
