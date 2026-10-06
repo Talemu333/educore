@@ -3,6 +3,7 @@ import { useWebsitePage } from "@/hooks/useWebsite";
 
 function Admissions() {
     const primaryColor = "var(--school-primary, #1D4ED8)";
+    const secondaryColor = "var(--school-secondary, #D9B351)";
 
     const { data: page, isLoading, isError } = useWebsitePage("admissions");
     const sections = page?.sections || [];
