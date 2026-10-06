@@ -20,6 +20,7 @@ function Home() {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const schoolName = settings?.school_name || "Our School";
 
     useEffect(() => {
@@ -187,7 +188,8 @@ function Home() {
 
             <section className="relative overflow-hidden">
                 <div className="grid lg:min-h-[650px] lg:grid-cols-2">
-                    <div className="flex items-center bg-slate-950 px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20">
+                    <div className="flex items-center px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20"
+                        style={{ backgroundColor: primaryColor }}>
                         <div className="mx-auto w-full max-w-xl">
                             <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8">
                                 {settings?.school_logo ? (
