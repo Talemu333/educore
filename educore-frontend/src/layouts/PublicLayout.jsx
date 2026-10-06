@@ -99,6 +99,9 @@ function PublicLayout() {
 
     const primaryColor = settings.primary_color || "#1D4ED8";
     const secondaryColor = settings.secondary_color || "#D9B351";
+    const primaryLight = `color-mix(in srgb, ${primaryColor} 72%, white)`;
+    const primarySoft = `color-mix(in srgb, ${primaryColor} 12%, white)`;
+    const primaryDark = `color-mix(in srgb, ${primaryColor} 82%, black)`;
     const schoolName = settings.school_name || "Your School";
     const schoolInitial = schoolName.trim().charAt(0).toUpperCase() || "S";
     const schoolAddress = settings.school_address || "";
@@ -113,7 +116,7 @@ function PublicLayout() {
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
     return (
-        <div className="public-site min-h-screen bg-white text-slate-900">
+        <div\n            className="public-site min-h-screen bg-white text-slate-900"\n            style={{\n                "--school-primary": primaryColor,\n                "--school-secondary": secondaryColor,\n                "--school-primary-light": primaryLight,\n                "--school-primary-soft": primarySoft,\n                "--school-primary-dark": primaryDark\n            }}\n        >
             <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
                 <div className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
                     <Link
