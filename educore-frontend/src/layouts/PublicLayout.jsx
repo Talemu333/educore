@@ -98,6 +98,7 @@ function PublicLayout() {
     }
 
     const primaryColor = settings.primary_color || "#1D4ED8";
+    const secondaryColor = settings.secondary_color || "#D9B351";
     const schoolName = settings.school_name || "Your School";
     const schoolInitial = schoolName.trim().charAt(0).toUpperCase() || "S";
     const schoolAddress = settings.school_address || "";
@@ -325,7 +326,7 @@ function PublicLayout() {
                             <div className="mt-5 space-y-4 text-sm text-slate-400">
                                 {schoolAddress && (
                                     <div className="flex gap-3">
-                                        <span className="mt-0.5" style={{ color: primaryColor }}>●</span>
+                                        <span className="mt-0.5" style={{ color: secondaryColor }}>●</span>
                                         <span>{schoolAddress}</span>
                                     </div>
                                 )}
