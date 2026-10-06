@@ -1,7 +1,6 @@
 import { Bell, Menu, UserCircle } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
 const pageTitles = {
     "/dashboard": "Dashboard",
@@ -26,7 +25,6 @@ const pageTitles = {
 function Navbar({ onMenuClick }) {
     const location = useLocation();
     const { user } = useAuth();
-    const { theme } = useSchoolTheme();
     const title = pageTitles[location.pathname] || "EduProw";
     const displayName = user?.full_name || user?.name || "User";
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
