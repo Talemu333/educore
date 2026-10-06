@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../../services/authService";
-import { useSchoolTheme } from "../../context/SchoolThemeContext";
 import { useSchoolSettings } from "../../hooks/useSchoolSettings";
 
 function ResetPasswordPage() {
-    const { theme } = useSchoolTheme();
     const { data: schoolSettings } = useSchoolSettings();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
