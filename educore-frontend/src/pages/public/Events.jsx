@@ -9,6 +9,7 @@ function Events() {
     const { data: events = [], isLoading: eventsLoading } = usePublishedEvents();
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const sections = page?.sections || [];
     const getSection = (key) => sections.find((section) => section.section_key === key && section.is_active !== false);
 
@@ -34,7 +35,7 @@ function Events() {
                 <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full opacity-10" style={{ backgroundColor: primaryColor }} />
                 <div className="relative mx-auto max-w-7xl">
                     <div className="max-w-3xl">
-                        <p className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: `${primaryColor}cc` }}>
+                        <p className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: secondaryColor }}>
                             {hero?.section_subtitle || "School Events"}
                         </p>
                         <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
