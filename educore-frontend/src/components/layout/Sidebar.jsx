@@ -37,6 +37,7 @@ function Sidebar({ isOpen, onClose }) {
     const displayName = user?.full_name || user?.name || "User";
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
     const schoolName = settings?.school_name || "EDUPROW";
+    const schoolLogo = settings?.school_logo?.trim() || "";
 
     useLayoutEffect(() => {
         const restore = () => {
@@ -64,8 +65,16 @@ function Sidebar({ isOpen, onClose }) {
             <div className="school-sidebar-header border-b border-slate-800 px-5 py-5">
                 <div className="flex items-center justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                        <div className="school-sidebar-logo flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white shadow-lg">
-                            {schoolName.trim().slice(0, 2).toUpperCase()}
+                        <div className="school-sidebar-logo flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-sm font-extrabold text-white shadow-lg">
+                            {schoolLogo ? (
+                                <img
+                                    src={schoolLogo}
+                                    alt={schoolName + " logo"}
+                                    className="h-full w-full object-contain p-1"
+                                />
+                            ) : (
+                                schoolName.trim().slice(0, 2).toUpperCase()
+                            )}
                         </div>
                         <div className="min-w-0">
                             <h1 className="truncate text-base font-extrabold tracking-wide text-white">{schoolName}</h1>
