@@ -37,7 +37,9 @@ const repairSchoolDatabaseSchema = async (schoolId) => {
 
     const targetPool = new Pool(getDatabaseConfig(databaseName));
     try {
-        await applySchemaRepairMigrations(targetPool);
+        const cbtRepairFile = "20261005_repair_cbt_schema.sql";
+        const cbtRepairSql = await fs.readFile(path.join(MIGRATIONS_DIR, cbtRepairFile), "utf8");
+        await targetPool.query(cbtRepairSql);
         return { repaired: true, databaseName };
     } finally {
         await targetPool.end();
