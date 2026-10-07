@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS cbt_answers (
     selected_option_id INTEGER,
     is_correct BOOLEAN,
     marks_awarded NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (marks_awarded >= 0),
-    answered_at TIMESTAMP,
+    answered_at TIMESTAMPTZ,
     CONSTRAINT fk_cbt_answer_attempt FOREIGN KEY (attempt_id) REFERENCES cbt_attempts(id) ON DELETE CASCADE,
     CONSTRAINT fk_cbt_answer_question FOREIGN KEY (question_id) REFERENCES cbt_questions(id) ON DELETE CASCADE,
     CONSTRAINT fk_cbt_answer_option FOREIGN KEY (selected_option_id) REFERENCES cbt_question_options(id) ON DELETE SET NULL,
