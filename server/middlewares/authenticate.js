@@ -1,19 +1,6 @@
 const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 const { runWithSchoolDatabase } = require("../config/databaseContext");
-const { migrateSchoolData, repairSchoolDatabaseSchema } = require("../scripts/migrateSchoolData");
-
-const repairedSchoolIds = new Set();
-const schoolRepairPromises = new Map();
-
-const ensureSchoolSchema = async (schoolId) => {
-    if (repairedSchoolIds.has(schoolId)) return;
-    if (!schoolRepairPromises.has(schoolId)) {
-        schoolRepairPromises.set(schoolId, repairSchoolDatabaseSchema(schoolId)
-            .then(() => repairedSchoolIds.add(schoolId))
-            .finally(() => schoolRepairPromises.delete(schoolId)));
-    }
-    await schoolRepairPromises.get(schoolId);
-};
+const { migrateSchoolData } = require("../scripts/migrateSchoolData");
 
 module.exports = async (req, res, next) => {
     if (!req.isAuthenticated()) {
@@ -70,8 +57,6 @@ module.exports = async (req, res, next) => {
             // populated this becomes a no-op.
             if (schoolId === 1) {
                 await migrateSchoolData(1);
-            } else {
-                await ensureSchoolSchema(schoolId);
             }
 
             const schoolPool = await getSchoolDatabase(schoolId);
