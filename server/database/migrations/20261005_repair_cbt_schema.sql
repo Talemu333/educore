@@ -1,5 +1,3 @@
-BEGIN;
-
 -- Repair CBT schema for existing isolated school databases that were created
 -- before the versioned CBT schema was included in the new-school schema set.
 
@@ -217,4 +215,3 @@ END $$;
 ALTER TABLE cbt_question_options
     ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-COMMIT;
