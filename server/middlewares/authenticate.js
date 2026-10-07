@@ -51,15 +51,15 @@ module.exports = async (req, res, next) => {
 
     if (hasSchoolContext) {
         try {
+            const schoolPool = await getSchoolDatabase(schoolId);
+
             // School 1 is the only legacy school whose existing central data
-            // must be copied into its new database. The migration script has
-            // its own user-count guard, so after the dedicated database is
-            // populated this becomes a no-op.
+            // may still need to be copied into its dedicated database.
+            // Resolve/reconcile the dedicated schema first; migrateSchoolData()
+            // refuses to overwrite a populated live database.
             if (schoolId === 1) {
                 await migrateSchoolData(1);
             }
-
-            const schoolPool = await getSchoolDatabase(schoolId);
 
             req.schoolDatabase = schoolPool;
             req.schoolDatabaseSchoolId = schoolId;
