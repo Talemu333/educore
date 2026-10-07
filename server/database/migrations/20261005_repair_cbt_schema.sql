@@ -19,13 +19,13 @@ CREATE TABLE IF NOT EXISTS cbt_exams (
     randomize_questions BOOLEAN NOT NULL DEFAULT FALSE,
     randomize_options BOOLEAN NOT NULL DEFAULT FALSE,
     show_result_immediately BOOLEAN NOT NULL DEFAULT TRUE,
-    starts_at TIMESTAMP,
-    ends_at TIMESTAMP,
+    starts_at TIMESTAMPTZ,
+    ends_at TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL DEFAULT 'draft'
         CHECK (status IN ('draft', 'published', 'closed')),
     created_by INTEGER NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_exam_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_exam_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_exam_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT,
@@ -43,8 +43,8 @@ CREATE TABLE IF NOT EXISTS cbt_questions (
     marks NUMERIC(10,2) NOT NULL DEFAULT 1 CHECK (marks > 0),
     question_order INTEGER NOT NULL DEFAULT 1 CHECK (question_order > 0),
     explanation TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_question_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_question_exam FOREIGN KEY (exam_id) REFERENCES cbt_exams(id) ON DELETE CASCADE,
     CONSTRAINT uq_cbt_question_order UNIQUE (exam_id, question_order)
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS cbt_question_options (
     option_image_url TEXT,
     option_order INTEGER NOT NULL CHECK (option_order > 0),
     is_correct BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_option_question FOREIGN KEY (question_id) REFERENCES cbt_questions(id) ON DELETE CASCADE,
     CONSTRAINT uq_cbt_option_order UNIQUE (question_id, option_order)
 );
@@ -68,9 +68,9 @@ CREATE TABLE IF NOT EXISTS cbt_attempts (
     exam_id INTEGER NOT NULL,
     student_id INTEGER NOT NULL,
     attempt_number INTEGER NOT NULL CHECK (attempt_number > 0),
-    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    submitted_at TIMESTAMP,
-    expires_at TIMESTAMP,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    submitted_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL DEFAULT 'in_progress'
         CHECK (status IN ('in_progress', 'submitted', 'expired')),
     score NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (score >= 0),
@@ -78,8 +78,8 @@ CREATE TABLE IF NOT EXISTS cbt_attempts (
     correct_answers INTEGER NOT NULL DEFAULT 0 CHECK (correct_answers >= 0),
     wrong_answers INTEGER NOT NULL DEFAULT 0 CHECK (wrong_answers >= 0),
     unanswered INTEGER NOT NULL DEFAULT 0 CHECK (unanswered >= 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_attempt_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_attempt_exam FOREIGN KEY (exam_id) REFERENCES cbt_exams(id) ON DELETE CASCADE,
     CONSTRAINT fk_cbt_attempt_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS cbt_attempt_questions (
     attempt_id INTEGER NOT NULL,
     question_id INTEGER NOT NULL,
     question_order INTEGER NOT NULL CHECK (question_order > 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_attempt_question_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_attempt_question_attempt FOREIGN KEY (attempt_id) REFERENCES cbt_attempts(id) ON DELETE CASCADE,
     CONSTRAINT fk_cbt_attempt_question_question FOREIGN KEY (question_id) REFERENCES cbt_questions(id) ON DELETE CASCADE,
@@ -129,8 +129,8 @@ CREATE TABLE IF NOT EXISTS cbt_question_bank (
     explanation TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_by INTEGER NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_bank_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_bank_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_bank_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT,
@@ -163,5 +163,34 @@ CREATE INDEX IF NOT EXISTS idx_cbt_attempt_questions_school_attempt ON cbt_attem
 CREATE INDEX IF NOT EXISTS idx_cbt_bank_school_subject_class ON cbt_question_bank(school_id, subject_id, class_id);
 CREATE INDEX IF NOT EXISTS idx_cbt_bank_school_active ON cbt_question_bank(school_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_cbt_bank_options_question ON cbt_question_bank_options(bank_question_id);
+
+
+-- Keep every isolated school database on the same timezone-aware CBT timestamp schema.
+ALTER TABLE cbt_exams
+    ALTER COLUMN starts_at TYPE TIMESTAMPTZ USING starts_at AT TIME ZONE 'UTC',
+    ALTER COLUMN ends_at TYPE TIMESTAMPTZ USING ends_at AT TIME ZONE 'UTC',
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+
+ALTER TABLE cbt_questions
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+
+ALTER TABLE cbt_attempts
+    ALTER COLUMN started_at TYPE TIMESTAMPTZ USING started_at AT TIME ZONE 'UTC',
+    ALTER COLUMN submitted_at TYPE TIMESTAMPTZ USING submitted_at AT TIME ZONE 'UTC',
+    ALTER COLUMN expires_at TYPE TIMESTAMPTZ USING expires_at AT TIME ZONE 'UTC',
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+
+ALTER TABLE cbt_answers
+    ALTER COLUMN answered_at TYPE TIMESTAMPTZ USING answered_at AT TIME ZONE 'UTC';
+
+ALTER TABLE cbt_attempt_questions
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC';
+
+ALTER TABLE cbt_question_bank
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
 
 COMMIT;
