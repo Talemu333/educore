@@ -70,6 +70,8 @@ module.exports = async (req, res, next) => {
             // populated this becomes a no-op.
             if (schoolId === 1) {
                 await migrateSchoolData(1);
+            } else {
+                await ensureSchoolSchema(schoolId);
             }
 
             const schoolPool = await getSchoolDatabase(schoolId);
