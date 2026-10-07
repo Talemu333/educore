@@ -166,31 +166,55 @@ CREATE INDEX IF NOT EXISTS idx_cbt_bank_options_question ON cbt_question_bank_op
 
 
 -- Keep every isolated school database on the same timezone-aware CBT timestamp schema.
-ALTER TABLE cbt_exams
-    ALTER COLUMN starts_at TYPE TIMESTAMPTZ USING starts_at AT TIME ZONE 'UTC',
-    ALTER COLUMN ends_at TYPE TIMESTAMPTZ USING ends_at AT TIME ZONE 'UTC',
-    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
-    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+-- This migration is executed repeatedly by school reconciliation, so conversions
+-- must only run when a column is still TIMESTAMP WITHOUT TIME ZONE.
 
-ALTER TABLE cbt_questions
-    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
-    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+DO $$
+DECLARE
+    target_table TEXT;
+    target_column TEXT;
+BEGIN
+    FOREACH target_table IN ARRAY ARRAY[
+        'cbt_exams',
+        'cbt_questions',
+        'cbt_question_options',
+        'cbt_attempts',
+        'cbt_answers',
+        'cbt_attempt_questions',
+        'cbt_question_bank'
+    ] LOOP
+        FOREACH target_column IN ARRAY ARRAY[
+            'starts_at',
+            'ends_at',
+            'created_at',
+            'updated_at',
+            'started_at',
+            'submitted_at',
+            'expires_at',
+            'answered_at'
+        ] LOOP
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = target_table
+                  AND column_name = target_column
+                  AND data_type = 'timestamp without time zone'
+            ) THEN
+                EXECUTE format(
+                    'ALTER TABLE %I ALTER COLUMN %I TYPE TIMESTAMPTZ USING %I AT TIME ZONE ''UTC''',
+                    target_table,
+                    target_column,
+                    target_column
+                );
+            END IF;
+        END LOOP;
+    END LOOP;
+END $$;
 
-ALTER TABLE cbt_attempts
-    ALTER COLUMN started_at TYPE TIMESTAMPTZ USING started_at AT TIME ZONE 'UTC',
-    ALTER COLUMN submitted_at TYPE TIMESTAMPTZ USING submitted_at AT TIME ZONE 'UTC',
-    ALTER COLUMN expires_at TYPE TIMESTAMPTZ USING expires_at AT TIME ZONE 'UTC',
-    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
-    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
-
-ALTER TABLE cbt_answers
-    ALTER COLUMN answered_at TYPE TIMESTAMPTZ USING answered_at AT TIME ZONE 'UTC';
-
-ALTER TABLE cbt_attempt_questions
-    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC';
-
-ALTER TABLE cbt_question_bank
-    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC',
-    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+-- Some older CBT databases were created before these timestamp columns were
+-- standardized. Add the missing option timestamp without touching existing data.
+ALTER TABLE cbt_question_options
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 COMMIT;
