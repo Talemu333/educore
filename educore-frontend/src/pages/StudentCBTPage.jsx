@@ -7,13 +7,15 @@ import PageHeader from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 
-const ACTIVE_ATTEMPT_KEY="educore_active_cbt_attempt";
-const attemptAnswersKey=(id)=>`educore_cbt_answers_${id}`;
+const getCbtStorageScope=()=>{try{const selectedSchoolId=sessionStorage.getItem("educore_super_admin_school_id");if(selectedSchoolId)return "school_"+selectedSchoolId;const hostname=window.location.hostname.toLowerCase();return hostname||"unknown_school";}catch{return "unknown_school";}};
+const cbtStorageScope=()=>getCbtStorageScope();
+const activeAttemptKey=()=>`eduprow_cbt_${cbtStorageScope()}_active_attempt`;
+const attemptAnswersKey=(id)=>`eduprow_cbt_${cbtStorageScope()}_answers_${id}`;
 const formatTime=(seconds)=>{const safe=Math.max(0,Number(seconds)||0);return `${String(Math.floor(safe/60)).padStart(2,"0")}:${String(safe%60).padStart(2,"0")}`;};
 const formatDate=(value)=>(value?new Date(value).toLocaleString():"—");
-function readSavedAttemptId(){try{const id=Number(window.localStorage.getItem(ACTIVE_ATTEMPT_KEY));return Number.isInteger(id)&&id>0?id:null;}catch{return null;}}
-function saveActiveAttempt(id){try{window.localStorage.setItem(ACTIVE_ATTEMPT_KEY,String(id));}catch{}}
-function clearActiveAttempt(){try{window.localStorage.removeItem(ACTIVE_ATTEMPT_KEY);}catch{}}
+function readSavedAttemptId(){try{const id=Number(window.localStorage.getItem(activeAttemptKey()));return Number.isInteger(id)&&id>0?id:null;}catch{return null;}}
+function saveActiveAttempt(id){try{window.localStorage.setItem(activeAttemptKey(),String(id));}catch{}}
+function clearActiveAttempt(){try{window.localStorage.removeItem(activeAttemptKey());}catch{}}
 function readSavedAnswers(id){try{const raw=window.localStorage.getItem(attemptAnswersKey(id));return raw?JSON.parse(raw):{};}catch{return {};}}
 function saveAnswers(id,answers){try{window.localStorage.setItem(attemptAnswersKey(id),JSON.stringify(answers));}catch{}}
 function clearSavedAnswers(id){try{window.localStorage.removeItem(attemptAnswersKey(id));}catch{}}
