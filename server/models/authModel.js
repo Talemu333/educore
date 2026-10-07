@@ -148,7 +148,7 @@ const findUserById = async (id) => {
 
 const findUserByIdInSchool = async (id, schoolId) => {
     const result = await database.query(`
-        SELECT users.id, users.username, users.email, users.must_change_password,
+        SELECT users.id, users.username, users.email, users.student_id, users.must_change_password,
                users.last_login, users.admin_type, users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
