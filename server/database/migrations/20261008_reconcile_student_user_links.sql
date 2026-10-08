@@ -1,48 +1,42 @@
--- Establish the canonical students.user_id relationship for every
--- dedicated school database. Older databases may not have this column yet.
+-- Reconcile the established student-account relationship for every
+-- dedicated school database. The canonical relationship is users.student_id.
+-- Some older dedicated databases predate the migration that introduced it.
 
-ALTER TABLE students
-    ADD COLUMN IF NOT EXISTS user_id INTEGER;
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS student_id INTEGER;
 
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'students_user_id_fkey'
-          AND conrelid = 'students'::regclass
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'fk_users_student'
+          AND conrelid = 'users'::regclass
     ) THEN
-        ALTER TABLE students
-            ADD CONSTRAINT students_user_id_fkey
-            FOREIGN KEY (user_id) REFERENCES users(id)
+        ALTER TABLE users
+            ADD CONSTRAINT fk_users_student
+            FOREIGN KEY (student_id) REFERENCES students(id)
             ON DELETE SET NULL;
     END IF;
 END $$;
 
-CREATE INDEX IF NOT EXISTS idx_students_user_id_school
-    ON students(user_id, school_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_users_student_id
+    ON users(student_id)
+    WHERE student_id IS NOT NULL;
 
--- Keep existing student login accounts compatible with the current
--- students.user_id relationship. Older releases temporarily stored the
--- relationship in users.student_id.
+CREATE INDEX IF NOT EXISTS idx_users_student_id
+    ON users(student_id);
 
 DO $$
 BEGIN
     IF EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'users'
-          AND column_name = 'student_id'
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'students' AND column_name = 'user_id'
     ) THEN
-        EXECUTE $sql$
-            UPDATE students s
-            SET user_id = u.id,
-                updated_at = CURRENT_TIMESTAMP
-            FROM users u
-            WHERE u.student_id = s.id
-              AND u.school_id = s.school_id
-              AND s.user_id IS NULL
-        $sql$;
+        UPDATE users u
+        SET student_id = s.id
+        FROM students s
+        WHERE s.user_id = u.id
+          AND s.school_id = u.school_id
+          AND u.student_id IS NULL;
     END IF;
 END $$;
