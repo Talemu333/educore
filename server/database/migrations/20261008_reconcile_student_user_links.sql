@@ -1,14 +1,17 @@
 -- Reconcile both historical student/account link shapes used by Eduprow.
--- The student-account feature uses users.student_id, while the original
--- database schema also contains students.user_id. Existing school databases
--- can therefore contain either shape or both. Keep both columns available and
--- reconcile only missing links; never overwrite an existing conflicting link.
+-- Every school database must expose the same student-login schema as the model
+-- database. This migration is deliberately idempotent and repairs older
+-- school databases without overwriting existing conflicting links.
 
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS student_id INTEGER;
 
 ALTER TABLE students
-    ADD COLUMN IF NOT EXISTS user_id INTEGER;
+    ADD COLUMN IF NOT EXISTS user_id INTEGER,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE users
+    ALTER COLUMN email DROP NOT NULL;
 
 DO $$
 BEGIN
@@ -52,8 +55,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_students_user_id
 CREATE INDEX IF NOT EXISTS idx_students_user_id
     ON students(user_id);
 
--- First recover the established users.student_id link from older
--- students.user_id data, but only where users.student_id is empty.
+DO $$
+BEGIN
+    IF to_regclass('public.roles') IS NOT NULL
+       AND EXISTS (
+           SELECT 1
+           FROM information_schema.columns
+           WHERE table_schema = 'public'
+             AND table_name = 'roles'
+             AND column_name = 'role_name'
+       )
+       AND NOT EXISTS (
+           SELECT 1 FROM roles WHERE LOWER(role_name) = 'student'
+       ) THEN
+        INSERT INTO roles (role_name) VALUES ('student');
+    END IF;
+END $$;
+
 UPDATE users u
 SET student_id = s.id
 FROM students s
@@ -61,8 +79,6 @@ WHERE s.user_id = u.id
   AND s.school_id = u.school_id
   AND u.student_id IS NULL;
 
--- Then recover the original students.user_id link from the newer
--- users.student_id data, but only where students.user_id is empty.
 UPDATE students s
 SET user_id = u.id
 FROM users u
