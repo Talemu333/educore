@@ -20,6 +20,8 @@ function CBTResultsPage() {
     const [attempts, setAttempts] = useState([]);
     const [exams, setExams] = useState([]);
     const [search, setSearch] = useState("");
+    const [classFilter, setClassFilter] = useState("");
+    const [subjectFilter, setSubjectFilter] = useState("");
     const [examFilter, setExamFilter] = useState("");
     const [loading, setLoading] = useState(true);
     const [selectedAttempt, setSelectedAttempt] = useState(null);
@@ -47,11 +49,37 @@ function CBTResultsPage() {
         loadReports();
     }, []);
 
+    const classOptions = useMemo(() => {
+        const values = new Map();
+        exams.forEach((exam) => {
+            if (exam.class_id && exam.class_name) values.set(String(exam.class_id), exam.class_name);
+        });
+        return Array.from(values, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }, [exams]);
+
+    const subjectOptions = useMemo(() => {
+        const values = new Map();
+        exams
+            .filter((exam) => !classFilter || String(exam.class_id) === String(classFilter))
+            .forEach((exam) => {
+                if (exam.subject_id && exam.subject_name) values.set(String(exam.subject_id), exam.subject_name);
+            });
+        return Array.from(values, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }, [exams, classFilter]);
+
+    const filteredExams = useMemo(() => exams.filter((exam) =>
+        (!classFilter || String(exam.class_id) === String(classFilter)) &&
+        (!subjectFilter || String(exam.subject_id) === String(subjectFilter))
+    ), [exams, classFilter, subjectFilter]);
+
     const filteredAttempts = useMemo(() => {
         const term = search.trim().toLowerCase();
+        if (!classFilter || !subjectFilter) return [];
         return attempts.filter((item) => {
+            const matchesClass = String(item.class_id ?? "") === String(classFilter);
+            const matchesSubject = String(item.subject_id ?? "") === String(subjectFilter);
             const matchesExam = !examFilter || String(item.exam_id) === String(examFilter);
-            if (!matchesExam) return false;
+            if (!matchesClass || !matchesSubject || !matchesExam) return false;
             if (!term) return true;
             return [
                 studentName(item),
@@ -61,7 +89,7 @@ function CBTResultsPage() {
                 item.status
             ].filter(Boolean).some((value) => String(value).toLowerCase().includes(term));
         });
-    }, [attempts, examFilter, search]);
+    }, [attempts, classFilter, subjectFilter, examFilter, search]);
 
     const openAttempt = async (id) => {
         setDetailLoading(true);
@@ -114,12 +142,18 @@ function CBTResultsPage() {
                         />
                         <select className="rounded-lg border p-3" value={examFilter} onChange={(e) => setExamFilter(e.target.value)}>
                             <option value="">All examinations</option>
-                            {exams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title}</option>)}
+                            {filteredExams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title}</option>)}
                         </select>
                     </div>
 
                     {loading ? (
                         <p className="py-10 text-center text-sm text-slate-500">Loading CBT reports...</p>
+                    ) : !classFilter || !subjectFilter ? (
+                        <div className="rounded-xl border border-dashed p-10 text-center">
+                            <FileText className="mx-auto mb-3 h-8 w-8 text-slate-400" />
+                            <p className="font-medium text-slate-700">Select a class and subject</p>
+                            <p className="mt-1 text-sm text-slate-500">Choose a class and subject above to view only the relevant CBT results.</p>
+                        </div>
                     ) : filteredAttempts.length === 0 ? (
                         <div className="rounded-xl border border-dashed p-10 text-center">
                             <FileText className="mx-auto mb-3 h-8 w-8 text-slate-400" />
@@ -183,14 +217,16 @@ function CBTResultsPage() {
                         <BarChart3 className="h-5 w-5 text-blue-700" />
                         <div>
                             <h2 className="font-semibold">Examination Performance</h2>
-                            <p className="text-sm text-slate-500">View overall performance for each CBT examination.</p>
+                            <p className="text-sm text-slate-500">{classFilter && subjectFilter ? "Performance for the selected class and subject." : "Select a class and subject to view examination performance."}</p>
                         </div>
                     </div>
-                    {exams.length === 0 ? (
-                        <p className="py-6 text-sm text-slate-500">No examinations available.</p>
+                    {!classFilter || !subjectFilter ? (
+                        <p className="py-6 text-sm text-slate-500">Select a class and subject above.</p>
+                    ) : filteredExams.length === 0 ? (
+                        <p className="py-6 text-sm text-slate-500">No examinations found for this class and subject.</p>
                     ) : (
                         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                            {exams.map((exam) => (
+                            {filteredExams.map((exam) => (
                                 <button key={exam.id} type="button" onClick={() => openPerformance(exam)} className="rounded-xl border p-4 text-left transition hover:border-blue-300 hover:bg-blue-50/30">
                                     <div className="font-semibold text-slate-900">{exam.title}</div>
                                     <div className="mt-1 text-sm text-slate-500">{exam.subject_name} • {exam.class_name}</div>
