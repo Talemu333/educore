@@ -4,11 +4,14 @@ const getStudentAccount = async (studentId, schoolId, client = pool) => {
     const result = await client.query(
         `SELECT u.id, u.username, u.email, u.is_active, u.must_change_password,
                 s.id AS student_id, r.role_name
-         FROM users u
-         INNER JOIN students s ON s.id = u.student_id AND s.school_id = u.school_id
+         FROM students s
+         INNER JOIN users u
+            ON u.school_id = s.school_id
+           AND (u.student_id = s.id OR s.user_id = u.id)
          INNER JOIN roles r ON r.id = u.role_id
          WHERE s.id = $1
-           AND u.school_id = $2
+           AND s.school_id = $2
+         ORDER BY CASE WHEN u.student_id = s.id THEN 0 ELSE 1 END
          LIMIT 1;`,
         [studentId, schoolId]
     );
@@ -61,8 +64,19 @@ const createStudentAccount = async ({
             (username, email, password, role_id, school_id, student_id,
              is_active, must_change_password, created_at, updated_at)
          VALUES ($1, NULL, $2, $3, $4, $5, TRUE, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-         RETURNING id, username, school_id, is_active, must_change_password;`,
+         RETURNING id, username, school_id, student_id, is_active, must_change_password;`,
         [username, passwordHash, roleId, schoolId, studentId]
+    );
+
+    // Keep the original students.user_id relationship synchronized when the
+    // dedicated database still contains that legacy/current column.
+    await client.query(
+        `UPDATE students
+         SET user_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2
+           AND school_id = $3
+           AND (user_id IS NULL OR user_id = $1);`,
+        [result.rows[0].id, studentId, schoolId]
     );
 
     return result.rows[0];
