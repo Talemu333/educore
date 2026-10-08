@@ -44,7 +44,7 @@ const studentListSelect = `
     FROM students s
     INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id
     INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id
-    LEFT JOIN users u ON u.id = s.user_id AND u.school_id = s.school_id
+    LEFT JOIN users u ON u.student_id = s.id AND u.school_id = s.school_id
 `;
 
 const getAllStudents = async (limit, offset, schoolId, client = pool) => {
@@ -63,7 +63,7 @@ const getStudentById = async (id, schoolId, client = pool) => {
 };
 
 const getStudentByUserId = async (userId, schoolId, client = pool) => {
-    const result = await client.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN users u ON u.id = s.user_id AND u.id = $1 AND u.school_id = $2 INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.school_id = $2;`, [userId, schoolId]);
+    const result = await client.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN users u ON u.student_id = s.id AND u.id = $1 AND u.school_id = $2 INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.school_id = $2;`, [userId, schoolId]);
     return result.rows[0];
 };
 
