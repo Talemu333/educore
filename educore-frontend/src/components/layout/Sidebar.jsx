@@ -13,9 +13,32 @@ function Sidebar({ isOpen, onClose }) {
     const role = user?.role_name;
     const adminType = user?.admin_type;
 
+    // Keep sidebar authorization consistent with ProtectedRoute.
+    // School databases can return role names with different casing
+    // (for example "Student" vs "student"), but they represent the same role.
+    const normalizedRole = String(role || "").trim().toLowerCase();
+    const normalizedAdminType = String(adminType || "").trim().toLowerCase();
+
     const canAccess = (item) => {
-        if (item.roles && !item.roles.includes(role)) return false;
-        if (role === "Admin" && item.adminTypes && !item.adminTypes.includes(adminType?.toLowerCase())) return false;
+        if (
+            item.roles &&
+            !item.roles.some(itemRole =>
+                String(itemRole || "").trim().toLowerCase() === normalizedRole
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            normalizedRole === "admin" &&
+            item.adminTypes &&
+            !item.adminTypes.some(itemType =>
+                String(itemType || "").trim().toLowerCase() === normalizedAdminType
+            )
+        ) {
+            return false;
+        }
+
         return true;
     };
 
