@@ -14,7 +14,10 @@ passport.use(
         },
         async (login, password, done) => {
             try {
-                const user = await authModel.findUser(login);
+                // Login identifiers may be copied with accidental leading/trailing spaces.
+                // Normalize the identifier, but never trim the password because spaces can be intentional.
+                const normalizedLogin = String(login || "").trim();
+                const user = await authModel.findUser(normalizedLogin);
 
                 if (!user) {
                     return done(null, false, {
