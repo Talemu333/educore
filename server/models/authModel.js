@@ -127,7 +127,7 @@ const findUser = async (login) => {
                users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
-        LEFT JOIN students ON students.user_id = users.id
+        LEFT JOIN students ON students.id = users.student_id
             AND students.school_id = users.school_id
         WHERE users.username = $1 OR users.email = $1;
     `, [login]);
@@ -142,7 +142,7 @@ const findUserById = async (id) => {
                users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
-        LEFT JOIN students ON students.user_id = users.id
+        LEFT JOIN students ON students.id = users.student_id
             AND students.school_id = users.school_id
         WHERE users.id = $1;
     `, [id]);
@@ -156,7 +156,7 @@ const findUserByIdInSchool = async (id, schoolId) => {
                users.last_login, users.admin_type, users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
-        LEFT JOIN students ON students.user_id = users.id
+        LEFT JOIN students ON students.id = users.student_id
             AND students.school_id = users.school_id
         WHERE users.id = $1 AND users.school_id = $2;
     `, [id, schoolId]);
