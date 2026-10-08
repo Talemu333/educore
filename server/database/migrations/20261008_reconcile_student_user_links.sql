@@ -1,3 +1,27 @@
+-- Establish the canonical students.user_id relationship for every
+-- dedicated school database. Older databases may not have this column yet.
+
+ALTER TABLE students
+    ADD COLUMN IF NOT EXISTS user_id INTEGER;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'students_user_id_fkey'
+          AND conrelid = 'students'::regclass
+    ) THEN
+        ALTER TABLE students
+            ADD CONSTRAINT students_user_id_fkey
+            FOREIGN KEY (user_id) REFERENCES users(id)
+            ON DELETE SET NULL;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_students_user_id_school
+    ON students(user_id, school_id);
+
 -- Keep existing student login accounts compatible with the current
 -- students.user_id relationship. Older releases temporarily stored the
 -- relationship in users.student_id.
