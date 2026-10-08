@@ -123,10 +123,12 @@ const hydrateAdministratorType = async (user) => {
 const findUser = async (login) => {
     const result = await database.query(`
         SELECT users.id, users.username, users.email, users.password,
-               users.student_id, users.must_change_password, users.last_login, users.admin_type,
+               students.id AS student_id, users.must_change_password, users.last_login, users.admin_type,
                users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
+        LEFT JOIN students ON students.user_id = users.id
+            AND students.school_id = users.school_id
         WHERE users.username = $1 OR users.email = $1;
     `, [login]);
 
@@ -135,11 +137,13 @@ const findUser = async (login) => {
 
 const findUserById = async (id) => {
     const result = await database.query(`
-        SELECT users.id, users.username, users.email, users.student_id, users.must_change_password,
+        SELECT users.id, users.username, users.email, students.id AS student_id, users.must_change_password,
                users.last_login, users.admin_type, users.school_id,
                users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
+        LEFT JOIN students ON students.user_id = users.id
+            AND students.school_id = users.school_id
         WHERE users.id = $1;
     `, [id]);
 
@@ -148,10 +152,12 @@ const findUserById = async (id) => {
 
 const findUserByIdInSchool = async (id, schoolId) => {
     const result = await database.query(`
-        SELECT users.id, users.username, users.email, users.student_id, users.must_change_password,
+        SELECT users.id, users.username, users.email, students.id AS student_id, users.must_change_password,
                users.last_login, users.admin_type, users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
+        LEFT JOIN students ON students.user_id = users.id
+            AND students.school_id = users.school_id
         WHERE users.id = $1 AND users.school_id = $2;
     `, [id, schoolId]);
 
