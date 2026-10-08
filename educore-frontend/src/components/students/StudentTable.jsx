@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useClasses } from "../../hooks/useClasses";
 import { Link } from "react-router-dom";
 import { Copy, Eye, KeyRound, Pencil, UserPlus, UserX } from "lucide-react";
 import toast from "react-hot-toast";
@@ -19,15 +20,19 @@ function StudentTable() {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
+    const [classId, setClassId] = useState("");
     const [studentToDeactivate, setStudentToDeactivate] = useState(null);
     const [accountActionId, setAccountActionId] = useState(null);
     const [credentials, setCredentials] = useState(null);
 
     const debouncedSearch = useDebounce(search);
     const deactivateStudentMutation = useDeactivateStudent();
-    const { data, isLoading, isFetching, error } = useStudents(debouncedSearch, page, limit);
+    const { data: classData } = useClasses();
+    const { data, isLoading, isFetching, error } = useStudents(debouncedSearch, page, limit, classId);
 
-    useEffect(() => setPage(1), [debouncedSearch]);
+    useEffect(() => setPage(1), [debouncedSearch, classId]);
+
+    const classes = Array.isArray(classData) ? classData : classData?.data ?? [];
 
     const students = data?.data ?? [];
     const total = Number(data?.total ?? students.length);
@@ -85,6 +90,10 @@ function StudentTable() {
             <CardContent className="p-4 sm:p-6">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <Input placeholder="Search students..." value={search} onChange={(event) => setSearch(event.target.value)} className="w-full sm:max-w-md" />
+                    <select value={classId} onChange={(event) => { setClassId(event.target.value); setPage(1); }} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 sm:w-56">
+                        <option value="">All Classes</option>
+                        {classes.map((item) => <option key={item.id} value={item.id}>{item.class_name}</option>)}
+                    </select>
                     <div className="flex items-center gap-2 text-sm text-slate-500">
                         <span className="whitespace-nowrap">Rows per page</span>
                         <select value={limit} onChange={(event) => { setLimit(Number(event.target.value)); setPage(1); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-700 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200">
