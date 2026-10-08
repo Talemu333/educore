@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, Eye, FileText, RefreshCw, X } from "lucide-react";
+import { BarChart3, Download, Eye, FileText, Printer, RefreshCw, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
 import PageHeader from "@/components/common/PageHeader";
@@ -23,6 +23,7 @@ function CBTResultsPage() {
     const [classFilter, setClassFilter] = useState("");
     const [subjectFilter, setSubjectFilter] = useState("");
     const [examFilter, setExamFilter] = useState("");
+    const [sortOrder, setSortOrder] = useState("percentage_desc");
     const [loading, setLoading] = useState(true);
     const [selectedAttempt, setSelectedAttempt] = useState(null);
     const [performance, setPerformance] = useState(null);
@@ -91,6 +92,50 @@ function CBTResultsPage() {
         });
     }, [attempts, classFilter, subjectFilter, examFilter, search]);
 
+    const sortedAttempts = useMemo(() => {
+        const rows = [...filteredAttempts];
+        rows.sort((a, b) => {
+            if (sortOrder === "name_asc") return studentName(a).localeCompare(studentName(b));
+            if (sortOrder === "percentage_asc") return Number(a.percentage ?? 0) - Number(b.percentage ?? 0);
+            return Number(b.percentage ?? 0) - Number(a.percentage ?? 0);
+        });
+        return rows;
+    }, [filteredAttempts, sortOrder]);
+
+    const selectedExam = useMemo(
+        () => filteredExams.find((exam) => String(exam.id) === String(examFilter)) || null,
+        [filteredExams, examFilter]
+    );
+
+    const resultSummary = useMemo(() => {
+        const completed = filteredAttempts.filter((item) => ["submitted", "expired"].includes(item.status));
+        const passed = completed.filter((item) => Number(item.percentage ?? 0) >= Number(item.pass_mark ?? 0));
+        const average = completed.length
+            ? completed.reduce((sum, item) => sum + Number(item.percentage ?? 0), 0) / completed.length
+            : 0;
+        return { total: filteredAttempts.length, completed: completed.length, passed: passed.length, failed: Math.max(0, completed.length - passed.length), average };
+    }, [filteredAttempts]);
+
+    const exportResults = () => {
+        if (!sortedAttempts.length) return;
+        const headers = ["Student", "Admission Number", "Examination", "Subject", "Attempt", "Score", "Total Marks", "Percentage", "Status"];
+        const rows = sortedAttempts.map((item) => [
+            studentName(item), item.admission_number || "", item.title || "", item.subject_name || "",
+            item.attempt_number ?? "", item.score ?? 0, item.total_marks ?? 0,
+            Number(item.percentage ?? 0).toFixed(2) + "%", item.status || ""
+        ]);
+        const csv = [headers, ...rows].map((row) => row.map((value) => String(value).replace(/"/g, '""')).map((value) => '"' + value + '"').join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "cbt-results-" + (selectedExam?.title || "selected") + ".csv";
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const printResults = () => window.print();
+
     const openAttempt = async (id) => {
         setDetailLoading(true);
         try {
@@ -125,7 +170,7 @@ function CBTResultsPage() {
                     <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <h2 className="font-semibold text-slate-900">Student Attempts</h2>
-                            <p className="text-sm text-slate-500">{filteredAttempts.length} attempt(s) shown.</p>
+                            <p className="text-sm text-slate-500">{filteredAttempts.length} attempt(s) shown{selectedExam ? ` for ${selectedExam.title}` : ""}.</p>
                         </div>
                         <Button variant="outline" onClick={loadReports} disabled={loading}>
                             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -133,18 +178,55 @@ function CBTResultsPage() {
                         </Button>
                     </div>
 
-                    <div className="mb-5 grid gap-3 md:grid-cols-2">
-                        <input
-                            className="rounded-lg border p-3"
-                            placeholder="Search student, admission number, exam or subject..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                        <select className="rounded-lg border p-3" value={examFilter} onChange={(e) => setExamFilter(e.target.value)}>
+                    <div className="mb-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                        <select className="rounded-lg border p-3" value={classFilter} onChange={(e) => { setClassFilter(e.target.value); setSubjectFilter(""); setExamFilter(""); }}>
+                            <option value="">Select class</option>
+                            {classOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        </select>
+                        <select className="rounded-lg border p-3" value={subjectFilter} onChange={(e) => { setSubjectFilter(e.target.value); setExamFilter(""); }} disabled={!classFilter}>
+                            <option value="">{classFilter ? "Select subject" : "Select class first"}</option>
+                            {subjectOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        </select>
+                        <select className="rounded-lg border p-3" value={examFilter} onChange={(e) => setExamFilter(e.target.value)} disabled={!subjectFilter}>
                             <option value="">All examinations</option>
                             {filteredExams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title}</option>)}
                         </select>
+                        <input className="rounded-lg border p-3" placeholder="Search student or admission number..." value={search} onChange={(e) => setSearch(e.target.value)} />
                     </div>
+                    {classFilter && subjectFilter && (
+                        <div className="mb-5 flex flex-col gap-3 rounded-xl border bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="font-semibold text-slate-900">{selectedExam?.title || "All examinations"}</p>
+                                <p className="text-sm text-slate-500">{classOptions.find((item) => String(item.id) === String(classFilter))?.name} • {subjectOptions.find((item) => String(item.id) === String(subjectFilter))?.name} • {resultSummary.total} attempt(s)</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <select className="rounded-lg border bg-white px-3 py-2 text-sm" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                                    <option value="percentage_desc">Highest score first</option>
+                                    <option value="percentage_asc">Lowest score first</option>
+                                    <option value="name_asc">Student name A–Z</option>
+                                </select>
+                                <Button variant="outline" onClick={exportResults} disabled={!sortedAttempts.length}><Download className="mr-2 h-4 w-4" />Export CSV</Button>
+                                <Button variant="outline" onClick={printResults} disabled={!sortedAttempts.length}><Printer className="mr-2 h-4 w-4" />Print</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {!loading && classFilter && subjectFilter && filteredAttempts.length > 0 && (
+                        <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                            {[
+                                ["Attempts", resultSummary.total],
+                                ["Completed", resultSummary.completed],
+                                ["Passed", resultSummary.passed],
+                                ["Failed", resultSummary.failed],
+                                ["Average", resultSummary.average.toFixed(2) + "%"]
+                            ].map(([label, value]) => (
+                                <div key={label} className="rounded-xl border bg-white p-4">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+                                    <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {loading ? (
                         <p className="py-10 text-center text-sm text-slate-500">Loading CBT reports...</p>
@@ -177,7 +259,7 @@ function CBTResultsPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">
-                                    {filteredAttempts.map((item) => {
+                                    {sortedAttempts.map((item) => {
                                         const passed = Number(item.percentage) >= Number(item.pass_mark);
                                         return (
                                             <tr key={item.id} className="hover:bg-slate-50">
