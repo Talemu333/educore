@@ -47,13 +47,17 @@ const studentListSelect = `
     LEFT JOIN users u ON u.student_id = s.id AND u.school_id = s.school_id
 `;
 
-const getAllStudents = async (limit, offset, schoolId, client = pool) => {
-    const result = await client.query(`${studentListSelect} WHERE s.school_id = $3 AND s.status = 'Active' ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, [limit, offset, schoolId]);
+const getAllStudents = async (limit, offset, schoolId, classId = null, client = pool) => {
+    const where = classId ? "AND s.class_id = $4" : "";
+    const values = classId ? [limit, offset, schoolId, classId] : [limit, offset, schoolId];
+    const result = await client.query(`${studentListSelect} WHERE s.school_id = $3 AND s.status = 'Active' ${where} ORDER BY s.surname, s.first_name LIMIT $1 OFFSET $2;`, values);
     return result.rows;
 };
 
-const countStudents = async (schoolId, client = pool) => {
-    const result = await client.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $1;`, [schoolId]);
+const countStudents = async (schoolId, classId = null, client = pool) => {
+    const where = classId ? "AND class_id = $2" : "";
+    const values = classId ? [schoolId, classId] : [schoolId];
+    const result = await client.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $1 AND status = 'Active' ${where};`, values);
     return Number(result.rows[0].total);
 };
 
@@ -81,18 +85,21 @@ const updateCurrentClass = async (studentId, classId, armId, schoolId, client = 
     await client.query(`UPDATE students SET class_id = $2, arm_id = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND school_id = $4;`, [studentId, classId, armId, schoolId]);
 };
 
-const searchStudents = async (searchTerm, limit, offset, schoolId, client = pool) => {
+const searchStudents = async (searchTerm, limit, offset, schoolId, classId = null, client = pool) => {
     const result = await client.query(`
         ${studentListSelect}
         WHERE s.school_id = $4 AND s.status = 'Active'
           AND (LOWER(s.surname) LIKE LOWER($1) OR LOWER(s.first_name) LIKE LOWER($1) OR LOWER(COALESCE(s.middle_name,'')) LIKE LOWER($1) OR LOWER(s.admission_number) LIKE LOWER($1))
+        AND s.status = 'Active' ${classId ? "AND s.class_id = $5" : ""}
         ORDER BY s.surname, s.first_name LIMIT $2 OFFSET $3;
-    `, [`%${searchTerm}%`, limit, offset, schoolId]);
+    `, classId ? [`%${searchTerm}%`, limit, offset, schoolId, classId] : [`%${searchTerm}%`, limit, offset, schoolId]);
     return result.rows;
 };
 
-const countSearchStudents = async (searchTerm, schoolId, client = pool) => {
-    const result = await client.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $2 AND (LOWER(surname) LIKE LOWER($1) OR LOWER(first_name) LIKE LOWER($1) OR LOWER(COALESCE(middle_name,'')) LIKE LOWER($1) OR LOWER(admission_number) LIKE LOWER($1));`, [`%${searchTerm}%`, schoolId]);
+const countSearchStudents = async (searchTerm, schoolId, classId = null, client = pool) => {
+    const result = await client.query(`SELECT COUNT(*) AS total FROM students WHERE school_id = $2 AND status = 'Active'
+        AND (LOWER(surname) LIKE LOWER($1) OR LOWER(first_name) LIKE LOWER($1) OR LOWER(COALESCE(middle_name,'')) LIKE LOWER($1) OR LOWER(admission_number) LIKE LOWER($1))
+        ${classId ? "AND class_id = $3" : ""};`, classId ? [`%${searchTerm}%`, schoolId, classId] : [`%${searchTerm}%`, schoolId]);
     return Number(result.rows[0].total);
 };
 
