@@ -7,7 +7,9 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
     const conditions = ["a.school_id = $1"];
     let i = 2;
     if (filters.examId) { conditions.push(`a.exam_id = $${i++}`); values.push(filters.examId); }
-    if (filters.studentId) { conditions.push(`a.student_id = $${i++}`); values.push(filters.studentId); }
+    if (filters.studentId) { conditions.push(`a.student_id = ${i++}`); values.push(filters.studentId); }
+    if (filters.classId) { conditions.push(`e.class_id = ${i++}`); values.push(filters.classId); }
+    if (filters.subjectId) { conditions.push(`e.subject_id = ${i++}`); values.push(filters.subjectId); }
 
     const result = await pool.query(`
         SELECT a.id, a.exam_id, a.student_id, a.attempt_number, a.status,
@@ -15,11 +17,12 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
                a.percentage, a.correct_answers, a.wrong_answers, a.unanswered,
                e.title, e.total_marks AS exam_total_marks,
                ${attemptMarksSql} AS total_marks,
-               e.pass_mark, s.subject_name,
+               e.pass_mark, e.class_id, c.class_name, e.subject_id, s.subject_name,
                st.admission_number, st.surname, st.first_name, st.middle_name
         FROM cbt_attempts a
         JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id
         JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id
+        JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id
         JOIN students st ON st.id=a.student_id AND st.school_id=a.school_id
         WHERE ${conditions.join(" AND ")}
         ORDER BY a.created_at DESC, a.id DESC;
