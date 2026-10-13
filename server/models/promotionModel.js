@@ -871,12 +871,19 @@ const processStudentDecisions = async ({
                 ---------------------------------
                 */
 
-                if (
-                    String(
-                        currentEnrollment.class_name
-                    ).trim().toUpperCase() !==
-                    "SS3"
-                ) {
+                const graduationClassLabel = [
+                    currentEnrollment.class_name,
+                    currentEnrollment.class_level
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "");
+
+                const isFinalSecondaryClass =
+                    /SS3|SENIORSECONDARY(?:SCHOOL)?3/.test(graduationClassLabel);
+
+                if (!isFinalSecondaryClass) {
 
                     throw new Error(
 
