@@ -3,6 +3,7 @@ const router = express.Router();
 const studentResultController = require("../controllers/studentResultController");
 const resultPublicationController = require("../controllers/resultPublicationController");
 const publishedStudentResultController = require("../controllers/publishedStudentResultController");
+const resultCorrectionController = require("../controllers/resultCorrectionController");
 const authenticate = require("../middlewares/authenticate");
 const authorize = require("../middlewares/authorize");
 const authorizeAdminType = require("../middlewares/authorizeAdminType");
@@ -12,6 +13,9 @@ const ROLES = require("../config/roles");
 
 router.post("/", authenticate, authorize(ROLES.ADMIN, ROLES.TEACHER), validate(createResultSchema), studentResultController.createResult);
 router.post("/bulk", authenticate, authorize(ROLES.ADMIN, ROLES.TEACHER), validate(createBulkResultsSchema), studentResultController.createBulkResults);
+router.post("/corrections", authenticate, authorize(ROLES.TEACHER, ROLES.ADMIN), resultCorrectionController.createCorrectionRequests);
+router.get("/corrections", authenticate, authorize(ROLES.ADMIN), authorizeAdminType("proprietor", "principal"), resultCorrectionController.listCorrectionRequests);
+router.patch("/corrections/:id/review", authenticate, authorize(ROLES.ADMIN), authorizeAdminType("proprietor", "principal"), resultCorrectionController.reviewCorrectionRequest);
 
 const resultPublicationManagers = authorizeAdminType("proprietor", "principal");
 router.post("/publish", authenticate, authorize(ROLES.ADMIN), resultPublicationManagers, resultPublicationController.publishClassTermResults);
