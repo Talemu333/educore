@@ -87,3 +87,17 @@ export const getDetailedClassResultSheet = async ({
     return response.data.data;
 
 };
+export const createResultCorrectionRequests = async (data) => {
+    const response = await api.post("/results/corrections", data);
+    return response.data;
+};
+
+export const getResultCorrectionRequests = async (status = "pending") => {
+    const response = await api.get("/results/corrections", { params: { status } });
+    return response.data.data;
+};
+
+export const reviewResultCorrectionRequest = async (id, decision, review_note = "") => {
+    const response = await api.patch(`/results/corrections/${id}/review`, { decision, review_note });
+    return response.data;
+};
