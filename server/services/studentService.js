@@ -81,14 +81,15 @@ const getAllStudents = async (query, schoolId) => {
     const { page, limit, offset } = getPagination(query);
     const search = query.search?.trim();
     const classId = query.classId ? Number(query.classId) : null;
+    const includeInactive = query.include_inactive === "true";
     let students, total;
 
     if (search) {
-        students = await studentModel.searchStudents(search, limit, offset, schoolId, classId);
-        total = await studentModel.countSearchStudents(search, schoolId, classId);
+        students = await studentModel.searchStudents(search, limit, offset, schoolId, classId, undefined, includeInactive);
+        total = await studentModel.countSearchStudents(search, schoolId, classId, undefined, includeInactive);
     } else {
-        students = await studentModel.getAllStudents(limit, offset, schoolId, classId);
-        total = await studentModel.countStudents(schoolId, classId);
+        students = await studentModel.getAllStudents(limit, offset, schoolId, classId, undefined, includeInactive);
+        total = await studentModel.countStudents(schoolId, classId, undefined, includeInactive);
     }
 
     return { page, limit, total, totalPages: Math.ceil(total / limit), data: students };
