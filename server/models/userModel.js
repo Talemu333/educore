@@ -40,9 +40,11 @@ const changePassword = async (userId, hashedPassword, schoolId = null, client = 
 
 const getParents = async (schoolId, client = pool) => {
     const result = await client.query(`
-        SELECT p.id, p.user_id, p.surname, p.first_name, p.middle_name, p.phone_number, p.email, p.gender
+        SELECT p.id, p.user_id, p.surname, p.first_name, p.middle_name, p.phone_number, p.email, p.gender,
+               u.is_active
         FROM parents p INNER JOIN users u ON u.id = p.user_id
-        WHERE u.school_id = $1 ORDER BY p.surname, p.first_name;
+        WHERE u.school_id = $1
+        ORDER BY u.is_active DESC, p.surname, p.first_name;
     `, [schoolId]);
     return result.rows;
 };
@@ -53,7 +55,7 @@ const getAdmins = async (schoolId, client = pool) => {
                u.is_active, u.created_at, u.updated_at
         FROM users u INNER JOIN roles r ON r.id = u.role_id
         WHERE LOWER(r.role_name) = 'admin' AND u.school_id = $1
-        ORDER BY CASE
+        ORDER BY u.is_active DESC, CASE
             WHEN LOWER(u.admin_type) = 'proprietor' THEN 1
             WHEN LOWER(u.admin_type) = 'principal' THEN 2
             WHEN LOWER(u.admin_type) = 'vice_principal' THEN 3
