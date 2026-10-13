@@ -1,6 +1,7 @@
 const model = require("../models/cbtQuestionBankModel");
 
 const schoolId = (req) => req.user.school_id;
+const ownerId = (req) => String(req.user?.role_name || "").trim().toLowerCase() === "admin" ? null : Number(req.user.id);
 const sendError = (res, error) => res.status(error.statusCode || 400).json({ success:false, message:error.message || "Unable to process request." });
 
 // Match the frontend: an option may contain text, an image, or both.
@@ -19,8 +20,8 @@ const normalizeOptions = (options) => Array.isArray(options)
 const validOptions = (options) =>
     options.length >= 2 && options.filter((option) => option.is_correct).length === 1;
 
-exports.list = async (req,res) => { try { return res.json({success:true,data:await model.list(schoolId(req),{subjectId:req.query.subjectId,classId:req.query.classId,active:req.query.active === undefined ? undefined : req.query.active !== "false"})}); } catch(e){return sendError(res,e);} };
-exports.get = async (req,res) => { try { const data=await model.getById(Number(req.params.id),schoolId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,data}); } catch(e){return sendError(res,e);} };
+exports.list = async (req,res) => { try { return res.json({success:true,data:await model.list(schoolId(req),{subjectId:req.query.subjectId,classId:req.query.classId,active:req.query.active === undefined ? undefined : req.query.active !== "false",createdById:ownerId(req)})}); } catch(e){return sendError(res,e);} };
+exports.get = async (req,res) => { try { const data=await model.getById(Number(req.params.id),schoolId(req),ownerId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,data}); } catch(e){return sendError(res,e);} };
 exports.create = async (req,res) => {
     try {
         const options = normalizeOptions(req.body.options);
@@ -33,10 +34,10 @@ exports.update = async (req,res) => {
     try {
         const options = normalizeOptions(req.body.options);
         if (!validOptions(options)) return res.status(400).json({success:false,message:"Provide at least two options containing text or an image, and mark exactly one as correct."});
-        const data = await model.update(Number(req.params.id),{ ...req.body, options },schoolId(req));
+        const data = await model.update(Number(req.params.id),{ ...req.body, options },schoolId(req),ownerId(req));
         if(!data)return res.status(404).json({success:false,message:"Question not found."});
         return res.json({success:true,message:"Question bank item updated.",data});
     } catch(e){return sendError(res,e);}
 };
-exports.remove = async (req,res) => { try { const data=await model.remove(Number(req.params.id),schoolId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,message:"Question removed from the question bank."}); } catch(e){return sendError(res,e);} };
-exports.copyToExam = async (req,res) => { try { const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req)); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
+exports.remove = async (req,res) => { try { const data=await model.remove(Number(req.params.id),schoolId(req),ownerId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,message:"Question removed from the question bank."}); } catch(e){return sendError(res,e);} };
+exports.copyToExam = async (req,res) => { try { const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),ownerId(req)); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
