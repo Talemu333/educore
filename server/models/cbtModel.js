@@ -26,7 +26,7 @@ const setExamResultVisibility = async (examId, visible, schoolId) => {
         `UPDATE cbt_exams e
          SET show_result_immediately = $3, updated_at = CURRENT_TIMESTAMP
          WHERE e.id = $1 AND e.school_id = $2
-           AND e.status = 'published'
+           AND e.status IN ('published', 'closed')
            AND ($3 = FALSE OR EXISTS (
                SELECT 1 FROM cbt_attempts a
                WHERE a.exam_id = e.id AND a.school_id = e.school_id
