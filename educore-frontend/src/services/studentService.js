@@ -1,6 +1,6 @@
 import api from "../api/axios";
 
-export const getStudents = async (search = "", page = 1, limit = 10, classId = "") => {
+export const getStudents = async (search = "", page = 1, limit = 10, classId = "", includeInactive = false) => {
 
     const response = await api.get(
 
@@ -14,7 +14,9 @@ export const getStudents = async (search = "", page = 1, limit = 10, classId = "
 
                 page,
 
-                limit
+                limit,
+                classId,
+                include_inactive: includeInactive ? "true" : "false"
 
             }
 
