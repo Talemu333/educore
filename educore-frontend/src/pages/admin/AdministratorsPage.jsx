@@ -119,6 +119,8 @@ function AdministratorsPage() {
         });
     };
 
+    const sortedAdministrators = [...administrators].sort((a, b) => Number(Boolean(b.is_active)) - Number(Boolean(a.is_active)));
+
     const formatAdminType = (value) =>
         value
             ? value.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
@@ -251,7 +253,7 @@ function AdministratorsPage() {
                 <div className="divide-y md:hidden">
                     {administrators.length === 0 ? (
                         <div className="px-4 py-12 text-center text-sm text-muted-foreground">No administrators found.</div>
-                    ) : administrators.map((administrator) => {
+                    ) : sortedAdministrators.map((administrator) => {
                         const processing = selectedAdminId === administrator.id;
                         const isProprietor = administrator.admin_type?.toLowerCase() === "proprietor";
                         return (
@@ -302,7 +304,7 @@ function AdministratorsPage() {
                         <tbody className="divide-y">
                             {administrators.length === 0 ? (
                                 <tr><td colSpan="5" className="px-5 py-12 text-center text-muted-foreground">No administrators found.</td></tr>
-                            ) : administrators.map((administrator) => {
+                            ) : sortedAdministrators.map((administrator) => {
                                 const processing = selectedAdminId === administrator.id;
                                 const isProprietor = administrator.admin_type?.toLowerCase() === "proprietor";
                                 return (
