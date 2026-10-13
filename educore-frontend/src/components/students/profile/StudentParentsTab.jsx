@@ -109,7 +109,7 @@ function StudentParentsTab({ studentId }) {
                                     <div className="min-w-0 space-y-1">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <h4 className="font-semibold break-words">{parent.surname} {parent.first_name}</h4>
-                                            {parent.is_primary_contact && <Badge>Primary</Badge>}
+                                            {parent.is_active === false && <Badge variant="secondary">Inactive</Badge>}{parent.is_primary_contact && <Badge>Primary</Badge>}
                                         </div>
                                         <p className="text-sm text-muted-foreground">{parent.relationship_name}</p>
                                         <p className="text-sm break-all">📞 {parent.phone_number}</p>
