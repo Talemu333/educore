@@ -30,22 +30,41 @@ const getClassCount = async (schoolId) => {
     return Number(result.rows[0].total);
 };
 
+const getSchoolName = async (schoolId) => {
+    const result = await pool.query(`
+        SELECT COALESCE(NULLIF(TRIM(s.school_name), ''), NULLIF(TRIM(ss.school_name), '')) AS school_name
+        FROM school_settings ss
+        LEFT JOIN schools s ON s.id = ss.school_id
+        WHERE ss.school_id = $1
+        LIMIT 1
+    `, [schoolId]);
+    return result.rows[0]?.school_name || null;
+};
+
 const getCurrentSession = async (schoolId) => {
     const result = await pool.query(`
-        SELECT id, session_name
-        FROM academic_sessions
-        WHERE is_current = TRUE AND school_id = $1
-        ORDER BY id DESC LIMIT 1
+        SELECT ac.id, ac.session_name
+        FROM academic_sessions ac
+        LEFT JOIN school_settings ss ON ss.school_id = $1
+        WHERE ac.school_id = $1
+          AND (ac.id = ss.current_session_id OR ac.is_current = TRUE)
+        ORDER BY CASE WHEN ac.id = ss.current_session_id THEN 0 ELSE 1 END,
+                 ac.id DESC
+        LIMIT 1
     `, [schoolId]);
     return result.rows[0] || null;
 };
 
 const getCurrentTerm = async (schoolId) => {
     const result = await pool.query(`
-        SELECT id, term_name
-        FROM terms
-        WHERE is_current = TRUE AND school_id = $1
-        ORDER BY id DESC LIMIT 1
+        SELECT tr.id, tr.term_name
+        FROM terms tr
+        LEFT JOIN school_settings ss ON ss.school_id = $1
+        WHERE tr.school_id = $1
+          AND (tr.id = ss.current_term_id OR tr.is_current = TRUE)
+        ORDER BY CASE WHEN tr.id = ss.current_term_id THEN 0 ELSE 1 END,
+                 tr.id DESC
+        LIMIT 1
     `, [schoolId]);
     return result.rows[0] || null;
 };
@@ -170,7 +189,7 @@ const getRecentAnnouncements = async (schoolId, limit = 5) => {
 
 module.exports = {
     getStudentCount, getActiveStudentCount, getTeacherCount, getParentCount,
-    getClassCount, getCurrentSession, getCurrentTerm, getGenderDistribution,
+    getClassCount, getSchoolName, getCurrentSession, getCurrentTerm, getGenderDistribution,
     getClassPopulation, getRecentStudents, getTodayAttendance, getTopStudents,
     getExpectedFees, getTotalPayments, getStudentsWithPayments,
     getRecentPayments, getRecentAnnouncements
