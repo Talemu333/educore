@@ -75,6 +75,7 @@ function DashboardPage() {
     }
 
     const {
+        school_name,
         students = 0,
         active_students = 0,
         teachers = 0,
@@ -120,7 +121,9 @@ function DashboardPage() {
                             </button>
                         )}
                     </div>
-                    <p className="mt-1.5 text-sm text-slate-500 sm:text-base">Welcome to EDUCORE. Here is your school overview.</p>
+                    <p className="mt-1.5 text-sm text-slate-500 sm:text-base">
+                        Welcome to {school_name || "your school"}. Here is your school overview.
+                    </p>
                 </div>
                 <div className="w-full rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 sm:w-auto sm:px-5">
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">Academic Period</p>
