@@ -790,6 +790,9 @@ const processStudentDecisions = async ({
 
                 FROM student_enrollments se
 
+                INNER JOIN students s
+                    ON s.id = se.student_id AND s.school_id = se.school_id
+
                 INNER JOIN classes c
                     ON c.id = se.class_id AND c.school_id = se.school_id
 
@@ -907,7 +910,7 @@ const processStudentDecisions = async ({
 
                         SELECT
 
-                            id
+                            h.id
 
                         FROM student_promotion_history h
                         INNER JOIN students s ON s.id = h.student_id
