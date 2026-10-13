@@ -5,11 +5,11 @@ const getDashboard = async (schoolId) => {
         throw new Error("School context is required to load the dashboard.");
     }
 
-    const [schoolName, session, term] = await Promise.all([
+    const [schoolName, session] = await Promise.all([
         dashboardModel.getSchoolName(schoolId),
-        dashboardModel.getCurrentSession(schoolId),
-        dashboardModel.getCurrentTerm(schoolId)
+        dashboardModel.getCurrentSession(schoolId)
     ]);
+    const term = await dashboardModel.getCurrentTerm(schoolId, session?.id || null);
 
     const [students, activeStudents, teachers, parents, classes,
         genderDistribution, classPopulation, recentStudents,
