@@ -1244,10 +1244,14 @@ const processStudentDecisions = async ({
             */
 
             const targetArmId =
-                student.armId ||
-                defaultArmId ||
-                currentEnrollment.arm_id ||
-                null;
+                action === "Repeated"
+                    ? (currentEnrollment.arm_id || null)
+                    : (
+                        student.armId ||
+                        defaultArmId ||
+                        currentEnrollment.arm_id ||
+                        null
+                    );
 
 
             /*
