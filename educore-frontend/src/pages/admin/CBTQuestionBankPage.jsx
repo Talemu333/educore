@@ -67,6 +67,16 @@ function CBTQuestionBankPage() {
         setShowForm(false);
     };
 
+    const uniqueClasses = useMemo(() => {
+        const seen = new Set();
+        return classes.filter((item) => {
+            const key = String(item.class_name || "").trim().replace(/\s+/g, " ").toLowerCase();
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    }, [classes]);
+
     const filteredQuestions = useMemo(() => {
         const term = search.trim().toLowerCase();
         return questions.filter((q) => {
@@ -228,7 +238,7 @@ function CBTQuestionBankPage() {
                                 </select>
                                 <select className="rounded-lg border p-3" required value={question.class_id} onChange={(e) => setQuestion({ ...question, class_id: e.target.value })}>
                                     <option value="">Select class</option>
-                                    {classes.map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+                                    {uniqueClasses.map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
                                 </select>
                             </div>
                             <textarea className="w-full rounded-lg border p-3" rows="4" required placeholder="Question text" value={question.question_text} onChange={(e) => setQuestion({ ...question, question_text: e.target.value })} />
