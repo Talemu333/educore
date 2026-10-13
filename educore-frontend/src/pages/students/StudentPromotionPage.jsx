@@ -113,20 +113,16 @@ function StudentPromotionPage() {
             return false;
         }
 
-        const className =
-            String(currentClass.class_name || "")
-                .trim()
-                .toUpperCase();
+        const classLabel = [
+            currentClass.class_name,
+            currentClass.class_level
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "");
 
-        const classLevel =
-            String(currentClass.class_level || "")
-                .trim()
-                .toUpperCase();
-
-        return (
-            className === "SS3" ||
-            classLevel === "SS3"
-        );
+        return /SS3|SENIORSECONDARY(?:SCHOOL)?3/.test(classLabel);
 
     }, [currentClass]);
 
