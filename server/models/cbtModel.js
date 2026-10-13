@@ -1,12 +1,13 @@
 const pool = require("../config/database");
 
-const getExams = async (schoolId, filters = {}) => {
+const getExams = async (schoolId, filters = {}, createdById = null) => {
     const values = [schoolId];
     const conditions = ["e.school_id = $1"];
     let i = 2;
     if (filters.classId) { conditions.push(`e.class_id = $${i++}`); values.push(filters.classId); }
     if (filters.subjectId) { conditions.push(`e.subject_id = $${i++}`); values.push(filters.subjectId); }
-    if (filters.status) { conditions.push(`e.status = $${i++}`); values.push(filters.status); }
+    if (filters.status) { conditions.push(`e.status = ${i++}`); values.push(filters.status); }
+    if (createdById !== null && createdById !== undefined) { conditions.push(`e.created_by = ${i++}`); values.push(createdById); }
     const result = await pool.query(`SELECT e.*, s.subject_name, c.class_name, a.arm_name, u.username AS creator_name FROM cbt_exams e JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id JOIN users u ON u.id=e.created_by AND u.school_id=e.school_id WHERE ${conditions.join(" AND ")} ORDER BY e.created_at DESC,e.id DESC;`, values);
     return result.rows;
 };
