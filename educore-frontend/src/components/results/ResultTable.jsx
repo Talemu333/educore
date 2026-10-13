@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { useSchoolSettings } from "@/hooks/useSchoolSettings";
 
 import { useStudentsForResultEntry } from "@/hooks/useStudentsForResultEntry";
-import { createBulkResults } from "@/services/resultService";
+import { createBulkResults, createResultCorrectionRequests } from "@/services/resultService";
 import {useGradingScales} from "@/hooks/useGradingScales";
 
 
@@ -122,7 +122,10 @@ function ResultTable({ assignment }) {
 
     const saveMutation = useMutation({
 
-        mutationFn: createBulkResults,
+        mutationFn: async ({ newPayload, correctionPayload }) => {
+            if (correctionPayload?.results?.length) await createResultCorrectionRequests(correctionPayload);
+            if (newPayload?.results?.length) await createBulkResults(newPayload);
+        },
 
         onSuccess: async () => {
 
@@ -139,7 +142,7 @@ function ResultTable({ assignment }) {
             });
 
             toast.success(
-                "Results saved successfully."
+                "First-time results saved and correction requests submitted where needed. Existing marks change only after approval."
             );
 
         },
@@ -283,33 +286,50 @@ function ResultTable({ assignment }) {
 
         }
 
-        const payload = {
+        const existingByStudent = new Map(students.map(student => [Number(student.id), student]));
+        const newResults = [];
+        const changedResults = [];
 
-            teacher_assignment_id:
-                assignment.id,
+        data.results.forEach(result => {
+            const studentId = Number(result.student_id);
+            const ca = Number(result.ca_score);
+            const exam = Number(result.exam_score);
+            const existing = existingByStudent.get(studentId);
 
-            session_id:
-                assignment.session_id,
+            if (!existing?.result_id) {
+                newResults.push({ student_id: studentId, ca_score: ca, exam_score: exam });
+                return;
+            }
 
-            term_id:
-                assignment.term_id,
+            if (Number(existing.ca_score) !== ca || Number(existing.exam_score) !== exam) {
+                changedResults.push({ student_id: studentId, ca_score: ca, exam_score: exam });
+            }
+        });
 
-            results: data.results.map(result => ({
+        let reason = "";
+        if (changedResults.length) {
+            reason = window.prompt("Some saved marks have been changed. Enter the reason for requesting approval from the proprietor/principal:") || "";
+            if (reason.trim().length < 8) {
+                toast.error("A correction request needs a reason of at least 8 characters. No changes were submitted.");
+                return;
+            }
+        }
 
-                student_id:
-                    Number(result.student_id),
+        if (!newResults.length && !changedResults.length) {
+            toast("There are no new results or changed marks to submit.");
+            return;
+        }
 
-                ca_score:
-                    Number(result.ca_score),
-
-                exam_score:
-                    Number(result.exam_score)
-
-            }))
-
+        const base = {
+            teacher_assignment_id: Number(assignment.id),
+            session_id: Number(assignment.session_id),
+            term_id: Number(assignment.term_id)
         };
 
-        saveMutation.mutate(payload);
+        saveMutation.mutate({
+            newPayload: { ...base, results: newResults },
+            correctionPayload: changedResults.length ? { ...base, reason: reason.trim(), results: changedResults } : null
+        });
 
     };
 
