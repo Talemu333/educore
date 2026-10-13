@@ -47,7 +47,6 @@ const getCurrentSession = async (schoolId) => {
         FROM academic_sessions ac
         LEFT JOIN school_settings ss ON ss.school_id = $1
         WHERE ac.school_id = $1
-          AND (ac.id = ss.current_session_id OR ac.is_current = TRUE)
         ORDER BY CASE WHEN ac.id = ss.current_session_id THEN 0 ELSE 1 END,
                  CASE WHEN ac.is_current = TRUE THEN 0 ELSE 1 END,
                  CASE WHEN CURRENT_DATE BETWEEN ac.start_date AND ac.end_date THEN 0 ELSE 1 END,
