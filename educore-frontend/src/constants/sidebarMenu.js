@@ -58,7 +58,8 @@ const sidebarMenu = [
             { title: "Result Entry", path: "/results", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
             { title: "Class Result Sheet", path: "/results/class-sheet", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
             { title: "Detailed Class Result Sheet", path: "/results/detailed-class-sheet", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
-            { title: "Publish Results", icon: Send, path: "/reports", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] }
+            { title: "Publish Results", icon: Send, path: "/reports", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
+            { title: "Correction Approvals", icon: Send, path: "/results/correction-approvals", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] }
         ]
     },
     { title: "Results", icon: FileText, path: "/parent-results", roles: [ROLES.PARENT] },
