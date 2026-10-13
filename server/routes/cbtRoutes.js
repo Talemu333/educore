@@ -23,6 +23,7 @@ router.get("/exams", authorize(...staffRoles), controller.getExams);
 router.get("/exams/:id", authorize(...staffRoles), controller.getExam);
 router.post("/exams", authorize(...staffRoles), controller.createExam);
 router.put("/exams/:id", authorize(...staffRoles), controller.updateExam);
+router.patch("/exams/:id/result-visibility", authorize(ROLES.ADMIN), controller.setExamResultVisibility);
 router.delete("/exams/:id", authorize(...staffRoles), controller.deleteExam);
 router.post("/exams/:examId/questions", authorize(...staffRoles), controller.createQuestion);
 router.put("/questions/:id", authorize(...staffRoles), controller.updateQuestion);
