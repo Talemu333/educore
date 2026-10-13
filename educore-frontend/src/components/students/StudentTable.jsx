@@ -28,7 +28,7 @@ function StudentTable() {
     const debouncedSearch = useDebounce(search);
     const deactivateStudentMutation = useDeactivateStudent();
     const { data: classData } = useClasses();
-    const { data, isLoading, isFetching, error } = useStudents(debouncedSearch, page, limit, classId);
+    const { data, isLoading, isFetching, error } = useStudents(debouncedSearch, page, limit, classId, true);
 
     useEffect(() => setPage(1), [debouncedSearch, classId]);
 
@@ -109,9 +109,9 @@ function StudentTable() {
 
                 {isLoading ? <div className="py-10 text-center"><p className="text-sm text-muted-foreground">Loading students...</p></div> : students.length === 0 ? <div className="py-10 text-center"><p className="text-sm text-muted-foreground">No students found.</p></div> : (
                     <div className="w-full overflow-x-auto rounded-lg border">
-                        <Table className="min-w-[1100px]">
+                        <Table className="min-w-[1200px]">
                             <TableHeader><TableRow>
-                                <TableHead className="whitespace-nowrap">Admission No</TableHead><TableHead className="whitespace-nowrap">Name</TableHead><TableHead className="whitespace-nowrap">Gender</TableHead><TableHead className="whitespace-nowrap">Class</TableHead><TableHead className="whitespace-nowrap">Arm</TableHead><TableHead className="whitespace-nowrap">Login</TableHead><TableHead className="whitespace-nowrap text-right">Actions</TableHead>
+                                <TableHead className="whitespace-nowrap">Admission No</TableHead><TableHead className="whitespace-nowrap">Name</TableHead><TableHead className="whitespace-nowrap">Gender</TableHead><TableHead className="whitespace-nowrap">Class</TableHead><TableHead className="whitespace-nowrap">Arm</TableHead><TableHead className="whitespace-nowrap">Status</TableHead><TableHead className="whitespace-nowrap">Login</TableHead><TableHead className="whitespace-nowrap text-right">Actions</TableHead>
                             </TableRow></TableHeader>
                             <TableBody>{students.map((student) => (
                                 <TableRow key={student.id}>
@@ -123,7 +123,7 @@ function StudentTable() {
                                         {student.user_id ? <Button variant="outline" size="icon-sm" title="Reset Student Password" disabled={accountActionId === student.id} onClick={() => handleResetPassword(student)}><KeyRound className="h-4 w-4" /></Button> : <Button variant="outline" size="icon-sm" title="Create Student Login" disabled={accountActionId === student.id} onClick={() => handleCreateAccount(student)}><UserPlus className="h-4 w-4" /></Button>}
                                         <Button asChild variant="outline" size="icon-sm" title="View Student"><Link to={`/students/${student.id}`}><Eye className="h-4 w-4" /></Link></Button>
                                         <Button asChild size="icon-sm" title="Edit Student"><Link to={`/students/${student.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                                        <Button variant="destructive" size="icon-sm" title="Deactivate Student" onClick={() => setStudentToDeactivate(student)}><UserX className="h-4 w-4" /></Button>
+                                        {String(student.status).toLowerCase() === "active" && <Button variant="destructive" size="icon-sm" title="Deactivate Student" onClick={() => setStudentToDeactivate(student)}><UserX className="h-4 w-4" /></Button>}
                                     </div></TableCell>
                                 </TableRow>
                             ))}</TableBody>
