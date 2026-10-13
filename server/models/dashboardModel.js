@@ -49,23 +49,31 @@ const getCurrentSession = async (schoolId) => {
         WHERE ac.school_id = $1
           AND (ac.id = ss.current_session_id OR ac.is_current = TRUE)
         ORDER BY CASE WHEN ac.id = ss.current_session_id THEN 0 ELSE 1 END,
-                 ac.id DESC
+                 CASE WHEN ac.is_current = TRUE THEN 0 ELSE 1 END,
+                 CASE WHEN CURRENT_DATE BETWEEN ac.start_date AND ac.end_date THEN 0 ELSE 1 END,
+                 ac.start_date DESC, ac.id DESC
         LIMIT 1
     `, [schoolId]);
     return result.rows[0] || null;
 };
 
-const getCurrentTerm = async (schoolId) => {
+const getCurrentTerm = async (schoolId, sessionId = null) => {
     const result = await pool.query(`
         SELECT tr.id, tr.term_name
         FROM terms tr
         LEFT JOIN school_settings ss ON ss.school_id = $1
         WHERE tr.school_id = $1
-          AND (tr.id = ss.current_term_id OR tr.is_current = TRUE)
+          AND (
+              tr.id = ss.current_term_id
+              OR tr.is_current = TRUE
+              OR ($2::integer IS NOT NULL AND tr.session_id = $2)
+          )
         ORDER BY CASE WHEN tr.id = ss.current_term_id THEN 0 ELSE 1 END,
-                 tr.id DESC
+                 CASE WHEN $2::integer IS NOT NULL AND tr.session_id = $2 THEN 0 ELSE 1 END,
+                 CASE WHEN tr.is_current = TRUE THEN 0 ELSE 1 END,
+                 tr.start_date DESC, tr.id DESC
         LIMIT 1
-    `, [schoolId]);
+    `, [schoolId, sessionId]);
     return result.rows[0] || null;
 };
 
