@@ -6,7 +6,7 @@ const list = async (schoolId, filters = {}) => {
     let n = 2;
     if (filters.subjectId) { where.push(`q.subject_id=$${n++}`); values.push(filters.subjectId); }
     if (filters.classId) { where.push(`q.class_id=$${n++}`); values.push(filters.classId); }
-    if (filters.active !== undefined) { where.push(`q.is_active=${n++}`); values.push(filters.active); }
+    if (filters.active !== undefined) { where.push(`q.is_active=$${n++}`); values.push(filters.active); }
     if (filters.createdById !== undefined && filters.createdById !== null) { where.push(`q.created_by=${n++}`); values.push(filters.createdById); }
     const result = await pool.query(`
         SELECT q.*, s.subject_name, c.class_name, u.username AS creator_name,
