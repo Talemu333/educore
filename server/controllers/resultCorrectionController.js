@@ -41,7 +41,10 @@ const createCorrectionRequests = asyncHandler(async (req, res) => {
              LIMIT 1`,
             [assignmentId, schoolId, sessionId, termId]
         );
-        if (!assignment.rows[0]) throw new ApiError(404, "Teacher assignment not found for this school and academic period.");\n        if (String(req.user?.role_name || "").trim().toLowerCase() === "teacher" && Number(assignment.rows[0].assigned_user_id) !== requestedBy) {\n            throw new ApiError(403, "You can request corrections only for your own assigned subject.");\n        }
+        if (!assignment.rows[0]) throw new ApiError(404, "Teacher assignment not found for this school and academic period.");
+        if (String(req.user?.role_name || "").trim().toLowerCase() === "teacher" && Number(assignment.rows[0].assigned_user_id) !== requestedBy) {
+            throw new ApiError(403, "You can request corrections only for your own assigned subject.");
+        }
 
         for (const item of results) {
             const studentId = Number(item.student_id);
