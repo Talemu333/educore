@@ -41,7 +41,7 @@ const createCorrectionRequests = asyncHandler(async (req, res) => {
              LIMIT 1`,
             [assignmentId, schoolId, sessionId, termId]
         );
-        if (!assignment.rows[0]) throw new ApiError(404, "Teacher assignment not found for this school and academic period.");
+        if (!assignment.rows[0]) throw new ApiError(404, "Teacher assignment not found for this school and academic period.");\n        if (String(req.user?.role_name || "").trim().toLowerCase() === "teacher" && Number(assignment.rows[0].assigned_user_id) !== requestedBy) {\n            throw new ApiError(403, "You can request corrections only for your own assigned subject.");\n        }
 
         for (const item of results) {
             const studentId = Number(item.student_id);
@@ -141,7 +141,7 @@ const reviewCorrectionRequest = asyncHandler(async (req, res) => {
         );
         const request = result.rows[0];
         if (!request) throw new ApiError(404, "Correction request not found.");
-        if (request.status !== "pending") throw new ApiError(409, "This correction request has already been reviewed.");
+        if (request.status !== "pending") throw new ApiError(409, "This correction request has already been reviewed.");\n        if (Number(request.requested_by) === reviewerId) throw new ApiError(403, "A correction request must be reviewed by a different proprietor or principal.");
 
         if (decision === "approved") {
             const current = await client.query(
