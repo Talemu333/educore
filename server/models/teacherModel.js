@@ -68,7 +68,7 @@ const getTeachers = async (schoolId, options = {}) => {
         LEFT JOIN departments d ON d.id = t.department_id
         LEFT JOIN qualifications q ON q.id = t.qualification_id
         WHERE ${conditions.join(" AND ")}
-        ORDER BY t.surname, t.first_name
+        ORDER BY t.status DESC, t.surname, t.first_name
         LIMIT $${limitIndex} OFFSET $${offsetIndex};
     `, [...values, limit, offset]);
 
