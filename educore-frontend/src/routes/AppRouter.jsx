@@ -1046,7 +1046,8 @@ function AppRouter() {
                                 ]}
 
                                 allowedAdminTypes={[
-                                    "proprietor"
+                                    "proprietor",
+                                    "principal"
                                 ]}
 
                             >
