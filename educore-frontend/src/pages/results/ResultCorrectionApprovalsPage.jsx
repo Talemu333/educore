@@ -95,8 +95,8 @@ function ResultCorrectionApprovalsPage() {
                                     <td className="px-4 py-4 text-slate-700">{request.class_name}{request.arm_name ? ` · ${request.arm_name}` : ""}</td>
                                     <td className="px-4 py-4 tabular-nums">{formatScore(request.old_ca_score)} / {formatScore(request.old_exam_score)}</td>
                                     <td className="px-4 py-4 font-semibold tabular-nums">{formatScore(request.proposed_ca_score)} / {formatScore(request.proposed_exam_score)}</td>
-                                    <td className="max-w-xs whitespace-normal px-4 py-4 text-slate-700">{request.reason}</td>
-                                    <td className="px-4 py-4 capitalize">{request.status}</td>
+                                    <td className="max-w-xs whitespace-normal px-4 py-4 text-slate-700"><p>{request.reason}</p><p className="mt-2 text-xs text-slate-500">Requested by {request.requester_username || `user #${request.requested_by}`} · {request.created_at ? new Date(request.created_at).toLocaleString() : ""}</p></td>
+                                    <td className="px-4 py-4"><p className="capitalize">{request.status}</p>{request.reviewer_username && <p className="mt-1 text-xs text-slate-500">Reviewed by {request.reviewer_username}</p>}{request.review_note && <p className="mt-1 max-w-xs whitespace-normal text-xs text-slate-600">{request.review_note}</p>}</td>
                                     {(status === "pending" || status === "all") && (
                                         <td className="px-4 py-4">
                                             {request.status === "pending" ? (
