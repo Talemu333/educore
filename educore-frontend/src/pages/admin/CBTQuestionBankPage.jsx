@@ -114,15 +114,36 @@ function CBTQuestionBankPage() {
             toast.error("Subject, class and question text are required.");
             return;
         }
-        const filled = question.options.filter((o) => o.option_text.trim());
-        if (filled.length < 2 || question.options.filter((o) => o.is_correct && o.option_text.trim()).length !== 1) {
-            toast.error("Provide at least two non-empty options and exactly one correct option.");
+        // An option is usable when it contains text or an image. Ignore untouched option rows.
+        const filled = question.options
+            .map((option, index) => ({
+                ...option,
+                option_text: String(option.option_text || "").trim(),
+                option_image_url: String(option.option_image_url || "").trim(),
+                option_order: index + 1,
+                is_correct: Boolean(option.is_correct),
+            }))
+            .filter((option) => option.option_text || option.option_image_url);
+
+        if (filled.length < 2) {
+            toast.error("Enter at least two options. Each option needs text or an image.");
             return;
         }
+        if (filled.filter((option) => option.is_correct).length !== 1) {
+            toast.error("Mark exactly one of your completed options as the correct answer.");
+            return;
+        }
+
+        const payload = {
+            ...question,
+            question_text: question.question_text.trim(),
+            options: filled,
+        };
+
         setSaving(true);
         try {
-            if (editingId) await api.put(`/cbt-question-bank/${editingId}`, question);
-            else await api.post("/cbt-question-bank", question);
+            if (editingId) await api.put(`/cbt-question-bank/${editingId}`, payload);
+            else await api.post("/cbt-question-bank", payload);
             toast.success(editingId ? "Question bank item updated." : "Question added to question bank.");
             resetForm();
             await load();
