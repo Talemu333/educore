@@ -81,7 +81,8 @@ const processStudentDecisions = async ({
         nextSessionId: nextSession?.id || null,
         destinationClassId,
         defaultArmId,
-        processedBy
+        processedBy,
+        schoolId
     });
 };
 
