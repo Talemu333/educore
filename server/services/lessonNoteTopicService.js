@@ -1,7 +1,12 @@
 const ApiError = require("../utils/ApiError");
 const topicModel = require("../models/lessonNoteTopicModel");
 
-const ACADEMIC_ROLES = new Set(["Admin", "Teacher"]);
+const normalizeRole = role => {
+    const normalized = String(role || "").trim().toLowerCase();
+    return normalized === "administrator" ? "admin" : normalized;
+};
+
+const ACADEMIC_ROLES = new Set(["admin", "teacher"]);
 
 const validate = data => {
     if (!data.session_id || !data.term_id || !data.class_id || !data.subject_id) {
@@ -15,18 +20,18 @@ const validate = data => {
 };
 
 const list = async (filters, user) => {
-    if (!ACADEMIC_ROLES.has(user?.role_name)) throw new ApiError(403, "You are not authorized to access lesson topics.");
+    if (!ACADEMIC_ROLES.has(normalizeRole(user?.role_name))) throw new ApiError(403, "You are not authorized to access lesson topics.");
     return topicModel.list(filters, user.school_id, user);
 };
 
 const create = async (data, user) => {
-    if (user?.role_name !== "Admin") throw new ApiError(403, "Only school administrators can manage syllabus topics.");
+    if (normalizeRole(user?.role_name) !== "admin") throw new ApiError(403, "Only school administrators can manage syllabus topics.");
     validate(data);
     return topicModel.create(data, user.school_id);
 };
 
 const update = async (id, data, user) => {
-    if (user?.role_name !== "Admin") throw new ApiError(403, "Only school administrators can manage syllabus topics.");
+    if (normalizeRole(user?.role_name) !== "admin") throw new ApiError(403, "Only school administrators can manage syllabus topics.");
     validate(data);
     const existing = await topicModel.getById(id, user.school_id);
     if (!existing) throw new ApiError(404, "Syllabus topic not found.");
@@ -34,7 +39,7 @@ const update = async (id, data, user) => {
 };
 
 const remove = async (id, user) => {
-    if (user?.role_name !== "Admin") throw new ApiError(403, "Only school administrators can manage syllabus topics.");
+    if (normalizeRole(user?.role_name) !== "admin") throw new ApiError(403, "Only school administrators can manage syllabus topics.");
     const removed = await topicModel.remove(id, user.school_id);
     if (!removed) throw new ApiError(404, "Syllabus topic not found.");
     return { id: Number(id) };
