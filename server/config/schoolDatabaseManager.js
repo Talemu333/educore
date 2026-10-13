@@ -14,6 +14,8 @@ const schoolSchemaPromises = new Map();
 const DATABASE_ROOT = path.resolve(__dirname, "../database");
 const MIGRATIONS_DIR = path.join(DATABASE_ROOT, "migrations");
 const MIGRATION_CUTOFF = "20260912_sync_current_school_settings.sql";
+const RESULT_APPROVAL_MIGRATION = "20261013_result_correction_approval_and_cbt_visibility.sql";
+let sharedResultApprovalMigrationPromise;
 
 const listCurrentMigrations = async () => {
     const entries = await fs.readdir(MIGRATIONS_DIR, { withFileTypes: true });
@@ -60,6 +62,20 @@ const ensureSchoolDatabaseSchema = async (schoolId, databaseName, schoolPool) =>
     }
 
     await schemaPromise;
+};
+
+const ensureSharedDatabaseResultApprovalMigration = async () => {
+    if (!sharedResultApprovalMigrationPromise) {
+        sharedResultApprovalMigrationPromise = (async () => {
+            const migrationPath = path.join(MIGRATIONS_DIR, RESULT_APPROVAL_MIGRATION);
+            const sql = await fs.readFile(migrationPath, "utf8");
+            if (sql.trim()) await centralPool.query(sql);
+        })().catch((error) => {
+            sharedResultApprovalMigrationPromise = undefined;
+            throw new Error(`Shared database result approval migration failed: ${error.message}`);
+        });
+    }
+    await sharedResultApprovalMigrationPromise;
 };
 
 const getSchoolDatabase = async (schoolId) => {
