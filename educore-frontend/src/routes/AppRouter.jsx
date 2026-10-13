@@ -76,6 +76,9 @@ import ClassSubjectsPage
 import ResultEntryPage
     from "../pages/results/ResultEntryPage";
 
+import ResultCorrectionApprovalsPage
+    from "../pages/results/ResultCorrectionApprovalsPage";
+
 
 import ProtectedRoute
     from "./ProtectedRoute";
@@ -753,6 +756,18 @@ function AppRouter() {
                     {/* =====================================
                         CLASS RESULT SHEET
                     ===================================== */}
+
+                    <Route
+                        path="/results/correction-approvals"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[ROLES.ADMIN]}
+                                allowedAdminTypes={["proprietor", "principal"]}
+                            >
+                                <ResultCorrectionApprovalsPage />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     <Route
                         path="/results/class-sheet"
