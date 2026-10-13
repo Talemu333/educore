@@ -25,7 +25,8 @@ const NOTE_FIELDS = [
 
 function LessonSyllabusPage() {
     const { user } = useAuth();
-    const isAdmin = user?.role_name === "Admin";
+    const normalizedRole = String(user?.role_name || user?.role || "").trim().toLowerCase();
+    const isAdmin = normalizedRole === "admin" || normalizedRole === "administrator";
     const [meta, setMeta] = useState(null);
     const [topics, setTopics] = useState([]);
     const [notes, setNotes] = useState([]);
