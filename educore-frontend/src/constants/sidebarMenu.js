@@ -50,7 +50,6 @@ const sidebarMenu = [
     { title: "Teachers", icon: Users, path: "/teachers", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "My Students", icon: GraduationCap, path: "/teacher-students", roles: [ROLES.TEACHER] },
     { title: "My Payments", icon: CreditCard, path: "/parent/payments", roles: [ROLES.PARENT] },
-    { title: "Class Subjects", icon: BookOpen, path: "/class-subjects", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Attendance", icon: ClipboardList, path: "/attendance", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Attendance", icon: ClipboardList, path: "/parent-attendance", roles: [ROLES.PARENT] },
     {
