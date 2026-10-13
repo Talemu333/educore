@@ -367,8 +367,13 @@ const processStudentDecisions = async ({
     nextSessionId,
     destinationClassId,
     defaultArmId,
-    processedBy
+    processedBy,
+    schoolId
 }) => {
+
+    if (!schoolId) {
+        throw new Error("School context is required to process student promotion.");
+    }
 
     const client =
         await pool.connect();
@@ -424,14 +429,15 @@ const processStudentDecisions = async ({
 
                 FROM academic_sessions
 
-                WHERE id = $1
+                WHERE id = $1 AND school_id = $2
 
                 LIMIT 1;
 
                 `,
 
                 [
-                    currentSessionId
+                    currentSessionId,
+                    schoolId
                 ]
 
             );
@@ -573,14 +579,15 @@ const processStudentDecisions = async ({
 
                     FROM academic_sessions
 
-                    WHERE id = $1
+                    WHERE id = $1 AND school_id = $2
 
                     LIMIT 1;
 
                     `,
 
                     [
-                        nextSessionId
+                        nextSessionId,
+                        schoolId
                     ]
 
                 );
@@ -666,14 +673,15 @@ const processStudentDecisions = async ({
 
                     FROM classes
 
-                    WHERE id = $1
+                    WHERE id = $1 AND school_id = $2
 
                     LIMIT 1;
 
                     `,
 
                     [
-                        destinationClassId
+                        destinationClassId,
+                        schoolId
                     ]
 
                 );
@@ -783,10 +791,10 @@ const processStudentDecisions = async ({
                 FROM student_enrollments se
 
                 INNER JOIN classes c
-                    ON c.id = se.class_id
+                    ON c.id = se.class_id AND c.school_id = se.school_id
 
                 LEFT JOIN arms a
-                    ON a.id = se.arm_id
+                    ON a.id = se.arm_id AND a.school_id = se.school_id
 
                 WHERE
 
@@ -794,13 +802,16 @@ const processStudentDecisions = async ({
 
                     AND se.session_id = $2
 
+                    AND se.school_id = $3
+
                 FOR UPDATE OF se;
 
                 `,
 
                 [
                     studentId,
-                    currentSessionId
+                    currentSessionId,
+                    schoolId
                 ]
 
             );
@@ -891,15 +902,17 @@ const processStudentDecisions = async ({
 
                             id
 
-                        FROM student_promotion_history
+                        FROM student_promotion_history h
+                        INNER JOIN students s ON s.id = h.student_id
 
                         WHERE
 
-                            student_id = $1
+                            h.student_id = $1
 
-                            AND from_session_id = $2
+                            AND h.from_session_id = $2
 
-                            AND action = 'Graduated'
+                            AND h.action = 'Graduated'
+                            AND s.school_id = $3
 
                         LIMIT 1;
 
@@ -909,7 +922,8 @@ const processStudentDecisions = async ({
 
                             studentId,
 
-                            currentSessionId
+                            currentSessionId,
+                            schoolId
 
                         ]
 
@@ -1024,13 +1038,14 @@ const processStudentDecisions = async ({
                         updated_at =
                             CURRENT_TIMESTAMP
 
-                    WHERE id = $1;
+                    WHERE id = $1 AND school_id = $2;
 
                     `,
 
                     [
 
-                        currentEnrollment.id
+                        currentEnrollment.id,
+                        schoolId
 
                     ]
 
@@ -1056,13 +1071,14 @@ const processStudentDecisions = async ({
                         updated_at =
                             CURRENT_TIMESTAMP
 
-                    WHERE id = $1;
+                    WHERE id = $1 AND school_id = $2;
 
                     `,
 
                     [
 
-                        studentId
+                        studentId,
+                        schoolId
 
                     ]
 
@@ -1249,14 +1265,15 @@ const processStudentDecisions = async ({
 
                         FROM arms
 
-                        WHERE id = $1
+                        WHERE id = $1 AND school_id = $2
 
                         LIMIT 1;
 
                         `,
 
                         [
-                            targetArmId
+                            targetArmId,
+                            schoolId
                         ]
 
                     );
@@ -1333,6 +1350,7 @@ const processStudentDecisions = async ({
                         student_id = $1
 
                         AND session_id = $2
+                        AND school_id = $3
 
                     LIMIT 1;
 
@@ -1342,7 +1360,8 @@ const processStudentDecisions = async ({
 
                         studentId,
 
-                        nextSession.id
+                        nextSession.id,
+                        schoolId
 
                     ]
 
@@ -1384,6 +1403,8 @@ const processStudentDecisions = async ({
 
                         arm_id,
 
+                        school_id,
+
                         enrollment_date,
 
                         enrollment_status
@@ -1400,6 +1421,8 @@ const processStudentDecisions = async ({
                         $3,
 
                         $4,
+
+                        $5,
 
                         CURRENT_DATE,
 
@@ -1433,7 +1456,9 @@ const processStudentDecisions = async ({
 
                         targetClassId,
 
-                        targetArmId
+                        targetArmId,
+
+                        schoolId
 
                     ]
 
@@ -1460,13 +1485,14 @@ const processStudentDecisions = async ({
                     updated_at =
                         CURRENT_TIMESTAMP
 
-                WHERE id = $1;
+                WHERE id = $1 AND school_id = $2;
 
                 `,
 
                 [
 
-                    currentEnrollment.id
+                    currentEnrollment.id,
+                    schoolId
 
                 ]
 
@@ -1496,7 +1522,7 @@ const processStudentDecisions = async ({
                     updated_at =
                         CURRENT_TIMESTAMP
 
-                WHERE id = $3;
+                WHERE id = $3 AND school_id = $4;
 
                 `,
 
@@ -1506,7 +1532,8 @@ const processStudentDecisions = async ({
 
                     targetArmId,
 
-                    studentId
+                    studentId,
+                    schoolId
 
                 ]
 
