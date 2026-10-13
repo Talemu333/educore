@@ -1,7 +1,7 @@
 const model = require("../models/cbtQuestionBankModel");
 
 const schoolId = (req) => req.user.school_id;
-const ownerId = (req) => String(req.user?.role_name || "").trim().toLowerCase() === "admin" ? null : Number(req.user.id);
+const ownerId = (req) => ["admin", "administrator"].includes(String(req.user?.role_name || "").trim().toLowerCase()) ? null : Number(req.user.id);
 const sendError = (res, error) => res.status(error.statusCode || 400).json({ success:false, message:error.message || "Unable to process request." });
 
 // Match the frontend: an option may contain text, an image, or both.
