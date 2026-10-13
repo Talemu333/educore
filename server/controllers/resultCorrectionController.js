@@ -33,7 +33,7 @@ const createCorrectionRequests = asyncHandler(async (req, res) => {
     try {
         await client.query("BEGIN");
         const assignment = await client.query(
-            `SELECT ta.id, ta.class_id, ta.arm_id, ta.session_id, ta.term_id
+            `SELECT ta.id, ta.class_id, ta.arm_id, ta.session_id, ta.term_id, u.id AS assigned_user_id
              FROM teacher_assignments ta
              JOIN teachers t ON t.id=ta.teacher_id
              JOIN users u ON u.id=t.user_id
