@@ -6,7 +6,8 @@ const list = async (schoolId, filters = {}) => {
     let n = 2;
     if (filters.subjectId) { where.push(`q.subject_id=$${n++}`); values.push(filters.subjectId); }
     if (filters.classId) { where.push(`q.class_id=$${n++}`); values.push(filters.classId); }
-    if (filters.active !== undefined) { where.push(`q.is_active=$${n++}`); values.push(filters.active); }
+    if (filters.active !== undefined) { where.push(`q.is_active=${n++}`); values.push(filters.active); }
+    if (filters.createdById !== undefined && filters.createdById !== null) { where.push(`q.created_by=${n++}`); values.push(filters.createdById); }
     const result = await pool.query(`
         SELECT q.*, s.subject_name, c.class_name, u.username AS creator_name,
           COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
@@ -22,7 +23,7 @@ const list = async (schoolId, filters = {}) => {
     return result.rows;
 };
 
-const getById = async (id, schoolId) => {
+const getById = async (id, schoolId, createdById = null) => {
     const result = await pool.query(`
         SELECT q.*, s.subject_name, c.class_name,
           COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
@@ -30,9 +31,9 @@ const getById = async (id, schoolId) => {
         JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
         JOIN classes c ON c.id=q.class_id AND c.school_id=q.school_id
         LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id
-        WHERE q.id=$1 AND q.school_id=$2
+        WHERE q.id=$1 AND q.school_id=$2 AND ($3::integer IS NULL OR q.created_by=$3)
         GROUP BY q.id,s.subject_name,c.class_name
-    `, [id, schoolId]);
+    `, [id, schoolId, createdById]);
     return result.rows[0];
 };
 
@@ -80,27 +81,32 @@ const bulkCreate = async (questions, schoolId, userId) => {
     } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
 };
 
-const update = async (id, data, schoolId) => {
+const update = async (id, data, schoolId, createdById = null) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        const q = await client.query(`UPDATE cbt_question_bank SET subject_id=$3,class_id=$4,question_text=$5,image_url=$6,marks=$7,explanation=$8,is_active=$9,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 RETURNING *`, [id,schoolId,data.subject_id,data.class_id,data.question_text,data.image_url||null,data.marks||1,data.explanation||null,data.is_active!==false]);
+        const ownerClause = createdById === null ? "" : " AND created_by=$10";
+        const values = [id,schoolId,data.subject_id,data.class_id,data.question_text,data.image_url||null,data.marks||1,data.explanation||null,data.is_active!==false];
+        if (createdById !== null) values.push(createdById);
+        const q = await client.query(`UPDATE cbt_question_bank SET subject_id=$3,class_id=$4,question_text=$5,image_url=$6,marks=$7,explanation=$8,is_active=$9,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2${ownerClause} RETURNING *`, values);
         if (!q.rows[0]) { await client.query("ROLLBACK"); return null; }
         if (Array.isArray(data.options)) {
             await client.query("DELETE FROM cbt_question_bank_options WHERE bank_question_id=$1", [id]);
             for (const o of data.options) await client.query(`INSERT INTO cbt_question_bank_options(bank_question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`, [id,o.option_text,o.option_image_url||null,o.option_order,Boolean(o.is_correct)]);
         }
         await client.query("COMMIT");
-        return getById(id, schoolId);
+        return getById(id, schoolId, createdById);
     } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
 };
 
-const remove = async (id, schoolId) => {
-    const result = await pool.query("DELETE FROM cbt_question_bank WHERE id=$1 AND school_id=$2 RETURNING id", [id,schoolId]);
+const remove = async (id, schoolId, createdById = null) => {
+    const ownerClause = createdById === null ? "" : " AND created_by=$3";
+    const values = createdById === null ? [id, schoolId] : [id, schoolId, createdById];
+    const result = await pool.query(`DELETE FROM cbt_question_bank WHERE id=$1 AND school_id=$2${ownerClause} RETURNING id`, values);
     return result.rows[0];
 };
 
-const copyToExam = async (examId, bankIds, schoolId) => {
+const copyToExam = async (examId, bankIds, schoolId, createdById = null) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -108,7 +114,7 @@ const copyToExam = async (examId, bankIds, schoolId) => {
         if (!exam.rows[0]) throw new Error("Examination not found.");
         const requested = [...new Set((bankIds || []).map(Number).filter(Number.isInteger))];
         if (!requested.length) throw new Error("Select at least one question.");
-        const selected = await client.query(`SELECT q.*,COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options FROM cbt_question_bank q LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id WHERE q.id=ANY($1::int[]) AND q.school_id=$2 AND q.is_active=true AND q.subject_id=$3 AND q.class_id=$4 GROUP BY q.id ORDER BY array_position($1::int[],q.id)`, [requested,schoolId,exam.rows[0].subject_id,exam.rows[0].class_id]);
+        const selected = await client.query(`SELECT q.*,COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options FROM cbt_question_bank q LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id WHERE q.id=ANY($1::int[]) AND q.school_id=$2 AND q.is_active=true AND q.subject_id=$3 AND q.class_id=$4 AND ($5::integer IS NULL OR q.created_by=$5) GROUP BY q.id ORDER BY array_position($1::int[],q.id)`, [requested,schoolId,exam.rows[0].subject_id,exam.rows[0].class_id,createdById]);
         if (selected.rows.length !== requested.length) throw new Error("Some selected questions do not belong to this examination's school, subject, or class.");
         const maxOrder = await client.query("SELECT COALESCE(MAX(question_order),0)::int AS max_order FROM cbt_questions WHERE exam_id=$1 AND school_id=$2", [examId,schoolId]);
         let order = maxOrder.rows[0].max_order;
