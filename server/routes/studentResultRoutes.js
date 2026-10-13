@@ -5,6 +5,7 @@ const resultPublicationController = require("../controllers/resultPublicationCon
 const publishedStudentResultController = require("../controllers/publishedStudentResultController");
 const authenticate = require("../middlewares/authenticate");
 const authorize = require("../middlewares/authorize");
+const authorizeAdminType = require("../middlewares/authorizeAdminType");
 const validate = require("../middlewares/validate");
 const { createResultSchema, createBulkResultsSchema } = require("../validators/studentResultValidator");
 const ROLES = require("../config/roles");
@@ -12,8 +13,9 @@ const ROLES = require("../config/roles");
 router.post("/", authenticate, authorize(ROLES.ADMIN, ROLES.TEACHER), validate(createResultSchema), studentResultController.createResult);
 router.post("/bulk", authenticate, authorize(ROLES.ADMIN, ROLES.TEACHER), validate(createBulkResultsSchema), studentResultController.createBulkResults);
 
-router.post("/publish", authenticate, authorize(ROLES.ADMIN), resultPublicationController.publishClassTermResults);
-router.get("/publication", authenticate, authorize(ROLES.ADMIN), resultPublicationController.getPublication);
+const resultPublicationManagers = authorizeAdminType("proprietor", "principal");
+router.post("/publish", authenticate, authorize(ROLES.ADMIN), resultPublicationManagers, resultPublicationController.publishClassTermResults);
+router.get("/publication", authenticate, authorize(ROLES.ADMIN), resultPublicationManagers, resultPublicationController.getPublication);
 
 router.get("/class-sheet", authenticate, authorize(ROLES.ADMIN), studentResultController.getClassResultSheet);
 router.get("/broadsheet", authenticate, authorize(ROLES.ADMIN), studentResultController.getClassBroadsheet);
