@@ -99,6 +99,7 @@ const getSchoolDatabase = async (schoolId) => {
         // The registry is introduced during the migration window. Until it
         // exists, keep every school on the existing central database.
         if (error.code === "42P01") {
+            await ensureSharedDatabaseResultApprovalMigration();
             return centralPool;
         }
         throw error;
@@ -109,10 +110,12 @@ const getSchoolDatabase = async (schoolId) => {
     // A school remains on the current central database until its dedicated
     // database has been provisioned and activated in the central registry.
     if (!config || !config.is_active) {
+        await ensureSharedDatabaseResultApprovalMigration();
         return centralPool;
     }
 
     if (config.database_name === process.env.DB_NAME) {
+        await ensureSharedDatabaseResultApprovalMigration();
         return centralPool;
     }
 
