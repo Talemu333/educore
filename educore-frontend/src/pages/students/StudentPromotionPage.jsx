@@ -1925,7 +1925,7 @@ function StudentPromotionPage() {
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    color: #2563eb;
+                    color: var(--school-primary, var(--primary, #1D4ED8));
                     font-size: 12px;
                     font-weight: 700;
                     letter-spacing: .05em;
@@ -1957,7 +1957,7 @@ function StudentPromotionPage() {
                 }
 
                 .session-box svg {
-                    color: #2563eb;
+                    color: var(--school-primary, var(--primary, #1D4ED8));
                 }
 
                 .session-box div {
@@ -2013,7 +2013,7 @@ function StudentPromotionPage() {
                 }
 
                 .summary-card .selected-number {
-                    color: #2563eb;
+                    color: var(--school-primary, var(--primary, #1D4ED8));
                 }
 
                 .summary-icon {
@@ -2026,8 +2026,8 @@ function StudentPromotionPage() {
                 }
 
                 .summary-icon.blue {
-                    color: #2563eb;
-                    background: #eff6ff;
+                    color: var(--school-primary, var(--primary, #1D4ED8));
+                    background: var(--school-primary-light, #E8EEFF);
                 }
 
                 .summary-icon.green {
@@ -2036,8 +2036,8 @@ function StudentPromotionPage() {
                 }
 
                 .summary-icon.indigo {
-                    color: #4f46e5;
-                    background: #eef2ff;
+                    color: var(--school-primary, var(--primary, #1D4ED8));
+                    background: var(--school-primary-soft, #F2F5FF);
                 }
 
 
@@ -2142,7 +2142,7 @@ function StudentPromotionPage() {
                 }
 
                 .form-select:focus {
-                    border-color: #93c5fd;
+                    border-color: color-mix(in srgb, var(--school-primary, #1D4ED8) 42%, white);
                 }
 
                 .form-select:disabled {
@@ -2167,9 +2167,9 @@ function StudentPromotionPage() {
                 .next-class-field {
                     height: 42px;
                     border-radius: 7px;
-                    border: 1px solid #bfdbfe;
-                    background: #eff6ff;
-                    color: #1d4ed8;
+                    border: 1px solid color-mix(in srgb, var(--school-primary, #1D4ED8) 24%, white);
+                    background: var(--school-primary-light, #E8EEFF);
+                    color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
                     display: flex;
                     align-items: center;
                     gap: 9px;
@@ -2180,7 +2180,7 @@ function StudentPromotionPage() {
                     width: 27px;
                     height: 27px;
                     border-radius: 6px;
-                    background: #dbeafe;
+                    background: var(--school-primary-light, #E8EEFF);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -2228,7 +2228,7 @@ function StudentPromotionPage() {
                 }
 
                 .progression-item.next {
-                    background: #eff6ff;
+                    background: var(--school-primary-light, #E8EEFF);
                 }
 
                 .progression-item span {
@@ -2245,7 +2245,7 @@ function StudentPromotionPage() {
                 }
 
                 .progression-item.next strong {
-                    color: #1d4ed8;
+                    color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
                 }
 
                 .progression-arrow {
@@ -2274,8 +2274,8 @@ function StudentPromotionPage() {
                 }
 
                 .count-badge.selected {
-                    background: #eff6ff;
-                    color: #1d4ed8;
+                    background: var(--school-primary-light, #E8EEFF);
+                    color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
                 }
 
                 .count-badge.promoted {
@@ -2343,8 +2343,8 @@ function StudentPromotionPage() {
                 }
 
                 .form-check-input:checked {
-                    background-color: #2563eb;
-                    border-color: #2563eb;
+                    background-color: var(--school-primary, var(--primary, #1D4ED8));
+                    border-color: var(--school-primary, var(--primary, #1D4ED8));
                 }
 
                 .admission-number {
@@ -2376,8 +2376,8 @@ function StudentPromotionPage() {
                 }
 
                 .student-selected .student-avatar {
-                    background: #dbeafe;
-                    color: #1d4ed8;
+                    background: var(--school-primary-light, #E8EEFF);
+                    color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
                 }
 
                 .student-name strong {
@@ -2479,7 +2479,7 @@ function StudentPromotionPage() {
                     height: 40px;
                     border: none;
                     border-radius: 7px;
-                    background: #2563eb;
+                    background: var(--school-primary, var(--primary, #1D4ED8));
                     color: #fff;
                     padding: 0 17px;
                     font-size: 12px;
@@ -2491,7 +2491,7 @@ function StudentPromotionPage() {
                 }
 
                 .process-button:hover:not(:disabled) {
-                    background: #1d4ed8;
+                    background: var(--school-primary-dark, var(--school-primary, #1D4ED8));
                 }
 
                 .process-button:disabled {
@@ -2621,11 +2621,11 @@ function StudentPromotionPage() {
                 }
 
                 .promoted-box {
-                    background: #eff6ff;
+                    background: var(--school-primary-light, #E8EEFF);
                 }
 
                 .promoted-box strong {
-                    color: #2563eb;
+                    color: var(--school-primary, var(--primary, #1D4ED8));
                 }
 
                 .repeated-box {
@@ -4568,7 +4568,7 @@ export default StudentPromotionPage;
 //                     display: flex;
 //                     align-items: center;
 //                     gap: 8px;
-//                     color: #2563eb;
+//                     color: var(--school-primary, var(--primary, #1D4ED8));
 //                     font-size: 12px;
 //                     font-weight: 700;
 //                     letter-spacing: .05em;
@@ -4600,7 +4600,7 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .session-box svg {
-//                     color: #2563eb;
+//                     color: var(--school-primary, var(--primary, #1D4ED8));
 //                 }
 
 //                 .session-box div {
@@ -4656,7 +4656,7 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .summary-card .selected-number {
-//                     color: #2563eb;
+//                     color: var(--school-primary, var(--primary, #1D4ED8));
 //                 }
 
 //                 .summary-icon {
@@ -4669,8 +4669,8 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .summary-icon.blue {
-//                     color: #2563eb;
-//                     background: #eff6ff;
+//                     color: var(--school-primary, var(--primary, #1D4ED8));
+//                     background: var(--school-primary-light, #E8EEFF);
 //                 }
 
 //                 .summary-icon.green {
@@ -4679,8 +4679,8 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .summary-icon.indigo {
-//                     color: #4f46e5;
-//                     background: #eef2ff;
+//                     color: var(--school-primary, var(--primary, #1D4ED8));
+//                     background: var(--school-primary-soft, #F2F5FF);
 //                 }
 
 
@@ -4778,7 +4778,7 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .form-select:focus {
-//                     border-color: #93c5fd;
+//                     border-color: color-mix(in srgb, var(--school-primary, #1D4ED8) 42%, white);
 //                 }
 
 //                 .form-select:disabled {
@@ -4822,8 +4822,8 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .count-badge.selected {
-//                     background: #eff6ff;
-//                     color: #1d4ed8;
+//                     background: var(--school-primary-light, #E8EEFF);
+//                     color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
 //                 }
 
 //                 .count-badge.promoted {
@@ -4891,8 +4891,8 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .form-check-input:checked {
-//                     background-color: #2563eb;
-//                     border-color: #2563eb;
+//                     background-color: var(--school-primary, var(--primary, #1D4ED8));
+//                     border-color: var(--school-primary, var(--primary, #1D4ED8));
 //                 }
 
 //                 .admission-number {
@@ -4924,8 +4924,8 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .student-selected .student-avatar {
-//                     background: #dbeafe;
-//                     color: #1d4ed8;
+//                     background: var(--school-primary-light, #E8EEFF);
+//                     color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
 //                 }
 
 //                 .student-name strong {
@@ -5010,7 +5010,7 @@ export default StudentPromotionPage;
 //                     height: 40px;
 //                     border: none;
 //                     border-radius: 7px;
-//                     background: #2563eb;
+//                     background: var(--school-primary, var(--primary, #1D4ED8));
 //                     color: #fff;
 //                     padding: 0 17px;
 //                     font-size: 12px;
@@ -5022,7 +5022,7 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .process-button:hover:not(:disabled) {
-//                     background: #1d4ed8;
+//                     background: var(--school-primary-dark, var(--school-primary, #1D4ED8));
 //                 }
 
 //                 .process-button:disabled {
@@ -5152,11 +5152,11 @@ export default StudentPromotionPage;
 //                 }
 
 //                 .promoted-box {
-//                     background: #eff6ff;
+//                     background: var(--school-primary-light, #E8EEFF);
 //                 }
 
 //                 .promoted-box strong {
-//                     color: #2563eb;
+//                     color: var(--school-primary, var(--primary, #1D4ED8));
 //                 }
 
 //                 .repeated-box {
