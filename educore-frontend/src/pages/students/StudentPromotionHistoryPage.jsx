@@ -751,7 +751,7 @@ function StudentPromotionHistoryPage() {
                         <strong
                             className="stat-number"
                             style={{
-                                color: "#2563eb"
+                                color: "var(--school-primary, var(--primary, #1D4ED8))"
                             }}
                         >
                             {
@@ -1536,8 +1536,8 @@ const pageStyles = `
         width: 48px;
         height: 48px;
         border-radius: 12px;
-        background: #eef2ff;
-        color: #4f46e5;
+        background: var(--school-primary-soft, #F2F5FF);
+        color: var(--school-primary, var(--primary, #1D4ED8));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1630,8 +1630,8 @@ const pageStyles = `
     }
 
     .stat-icon.total {
-        background: #eff6ff;
-        color: #2563eb;
+        background: var(--school-primary-light, #E8EEFF);
+        color: var(--school-primary, var(--primary, #1D4ED8));
     }
 
     .stat-icon.promoted {
@@ -1645,8 +1645,8 @@ const pageStyles = `
     }
 
     .stat-icon.graduated {
-        background: #eef2ff;
-        color: #4f46e5;
+        background: var(--school-primary-soft, #F2F5FF);
+        color: var(--school-primary, var(--primary, #1D4ED8));
     }
 
     /* =====================================
@@ -1673,8 +1673,8 @@ const pageStyles = `
         width: 38px;
         height: 38px;
         border-radius: 9px;
-        background: #eef2ff;
-        color: #4f46e5;
+        background: var(--school-primary-soft, #F2F5FF);
+        color: var(--school-primary, var(--primary, #1D4ED8));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1725,7 +1725,7 @@ const pageStyles = `
     }
 
     .search-input-wrapper input:focus {
-        border-color: #6366f1;
+        border-color: var(--school-primary, var(--primary, #1D4ED8));
         box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
     }
 
@@ -1887,8 +1887,8 @@ const pageStyles = `
         width: 38px;
         height: 38px;
         border-radius: 10px;
-        background: #eef2ff;
-        color: #4338ca;
+        background: var(--school-primary-soft, #F2F5FF);
+        color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1942,9 +1942,9 @@ const pageStyles = `
     }
 
     .promotion-status.graduated {
-        background: #eff6ff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
+        background: var(--school-primary-light, #E8EEFF);
+        color: var(--school-primary-dark, var(--school-primary, #1D4ED8));
+        border: 1px solid color-mix(in srgb, var(--school-primary, #1D4ED8) 24%, white);
     }
 
     .promotion-status.default {
@@ -2114,9 +2114,9 @@ const pageStyles = `
     }
 
     .pagination-button.primary {
-        background: #2563eb;
+        background: var(--school-primary, var(--primary, #1D4ED8));
         color: #ffffff;
-        border-color: #2563eb;
+        border-color: var(--school-primary, var(--primary, #1D4ED8));
     }
 
     .pagination-button:disabled {
@@ -2174,8 +2174,8 @@ const pageStyles = `
         width: 58px;
         height: 58px;
         border-radius: 14px;
-        background: #eef2ff;
-        color: #4f46e5;
+        background: var(--school-primary-soft, #F2F5FF);
+        color: var(--school-primary, var(--primary, #1D4ED8));
         display: flex;
         align-items: center;
         justify-content: center;
