@@ -1921,7 +1921,7 @@ DELETE EVENT
                 PAGE / NEWS / GALLERY SELECTOR
             ================================= */}
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
                 {PAGE_OPTIONS.map(page => (
 
@@ -1942,9 +1942,14 @@ DELETE EVENT
 
                         }}
                         className={`
+                            flex
+                            min-h-[88px]
+                            min-w-0
+                            flex-col
+                            justify-center
                             rounded-xl
                             border
-                            p-4
+                            p-3 sm:p-4
                             text-left
                             transition-all
                             duration-200
@@ -1960,14 +1965,17 @@ DELETE EVENT
                         `}
                     >
 
-                        <p className="font-semibold">
+                        <p className="min-w-0 break-words text-sm font-semibold leading-5 sm:text-base">
                             {page.label}
                         </p>
 
                         <p
                             className={`
                                 mt-1
+                                min-w-0
+                                break-words
                                 text-xs
+                                leading-4
 
                                 ${
                                     selectedManagementTab === "page" &&
@@ -2001,9 +2009,14 @@ DELETE EVENT
 
                     }}
                     className={`
+                        flex
+                        min-h-[88px]
+                        min-w-0
+                        flex-col
+                        justify-center
                         rounded-xl
                         border
-                        p-4
+                        p-3 sm:p-4
                         text-left
                         transition-all
                         duration-200
@@ -2025,7 +2038,10 @@ DELETE EVENT
                     <p
                         className={`
                             mt-1
+                            min-w-0
+                            break-words
                             text-xs
+                            leading-4
 
                             ${
                                 selectedManagementTab === "news"
@@ -2056,9 +2072,14 @@ DELETE EVENT
 
                     }}
                     className={`
+                        flex
+                        min-h-[88px]
+                        min-w-0
+                        flex-col
+                        justify-center
                         rounded-xl
                         border
-                        p-4
+                        p-3 sm:p-4
                         text-left
                         transition-all
                         duration-200
@@ -2080,7 +2101,10 @@ DELETE EVENT
                     <p
                         className={`
                             mt-1
+                            min-w-0
+                            break-words
                             text-xs
+                            leading-4
 
                             ${
                                 selectedManagementTab === "gallery"
@@ -2114,9 +2138,14 @@ DELETE EVENT
 
                     }}
                     className={`
+                        flex
+                        min-h-[88px]
+                        min-w-0
+                        flex-col
+                        justify-center
                         rounded-xl
                         border
-                        p-4
+                        p-3 sm:p-4
                         text-left
                         transition-all
                         duration-200
@@ -2138,7 +2167,10 @@ DELETE EVENT
                     <p
                         className={`
                             mt-1
+                            min-w-0
+                            break-words
                             text-xs
+                            leading-4
 
                             ${
                                 selectedManagementTab === "events"
