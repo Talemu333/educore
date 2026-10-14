@@ -45,6 +45,8 @@ function statusClasses(status) {
 
 function PaymentsPage() {
     const [studentId, setStudentId] = useState("");
+    const [studentSearch, setStudentSearch] = useState("");
+    const [selectedStudent, setSelectedStudent] = useState(null);
     const [sessionId, setSessionId] = useState("");
     const [termId, setTermId] = useState("");
     const [amountPaid, setAmountPaid] = useState("");
@@ -64,7 +66,7 @@ function PaymentsPage() {
     const {
         data: studentsResponse,
         isLoading: isStudentsLoading
-    } = useStudents("", 1, 1000);
+    } = useStudents(studentSearch.trim(), 1, 10);
 
     const students = studentsResponse?.data || [];
 
@@ -166,7 +168,7 @@ function PaymentsPage() {
         });
     };
 
-    if (isStudentsLoading || isSessionsLoading || isTermsLoading) {
+    if (isSessionsLoading || isTermsLoading) {
         return <Loading message="Loading payment information..." />;
     }
 
@@ -231,18 +233,74 @@ function PaymentsPage() {
                                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                                     Student
                                 </label>
-                                <select
-                                    value={studentId}
-                                    onChange={event => setStudentId(event.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                                >
-                                    <option value="">Select Student</option>
-                                    {students.map(student => (
-                                        <option key={student.id} value={student.id}>
-                                            {student.first_name} {student.surname} — {student.admission_number}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="search"
+                                        value={studentSearch}
+                                        onChange={event => {
+                                            setStudentSearch(event.target.value);
+                                            setStudentId("");
+                                            setSelectedStudent(null);
+                                        }}
+                                        placeholder="Search by student name or admission number"
+                                        autoComplete="off"
+                                        aria-label="Search for a student"
+                                        aria-expanded={!studentId && studentSearch.trim().length >= 2}
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                                    />
+                                    {studentId && selectedStudent && (
+                                        <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm">
+                                            <span className="min-w-0 text-emerald-800">
+                                                Selected: <strong>{selectedStudent.first_name} {selectedStudent.surname}</strong>
+                                                {selectedStudent.admission_number ? ` — ${selectedStudent.admission_number}` : ""}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setStudentId("");
+                                                    setSelectedStudent(null);
+                                                    setStudentSearch("");
+                                                }}
+                                                className="shrink-0 font-medium text-emerald-800 hover:underline"
+                                            >
+                                                Change
+                                            </button>
+                                        </div>
+                                    )}
+                                    {!studentId && studentSearch.trim().length >= 2 && (
+                                        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                            {isStudentsLoading ? (
+                                                <p className="px-3 py-3 text-sm text-slate-500">Searching students...</p>
+                                            ) : students.length > 0 ? (
+                                                students.map(student => (
+                                                    <button
+                                                        type="button"
+                                                        key={student.id}
+                                                        onClick={() => {
+                                                            setStudentId(String(student.id));
+                                                            setSelectedStudent(student);
+                                                            setStudentSearch(`${student.first_name || ""} ${student.surname || ""}`.trim());
+                                                        }}
+                                                        className="block w-full border-b border-slate-100 px-3 py-3 text-left last:border-b-0 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                                                    >
+                                                        <span className="block text-sm font-medium text-slate-900">
+                                                            {student.first_name} {student.surname}
+                                                        </span>
+                                                        <span className="mt-0.5 block text-xs text-slate-500">
+                                                            {student.admission_number || "No admission number"}
+                                                            {student.class_name ? ` • ${student.class_name}` : ""}
+                                                        </span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <p className="px-3 py-3 text-sm text-slate-500">No matching students found.</p>
+                                            )}
+                                        </div>
+                                    )}
+                                    {!studentId && studentSearch.trim().length > 0 && studentSearch.trim().length < 2 && (
+                                        <p className="mt-1 text-xs text-slate-500">Enter at least 2 characters to search.</p>
+                                    )}
+                                </div>
                             </div>
 
                             <div>
