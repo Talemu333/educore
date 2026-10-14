@@ -363,7 +363,38 @@ textarea:focus {
         left: 0;
         top: 0;
         width: 100%;
-        padding: 20px;
+        max-width: 100%;
+        padding: 0;
+        overflow: visible !important;
+    }
+
+    /* Screen tables may scroll horizontally; printed reports must fit the page. */
+    .printable-result .overflow-x-auto,
+    .printable-result .overflow-auto {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+    }
+
+    .printable-result table {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        table-layout: fixed;
+        font-size: 8.5pt;
+    }
+
+    .printable-result thead th,
+    .printable-result tbody td {
+        min-width: 0 !important;
+        padding: 4px 5px !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .printable-result * {
+        max-width: 100%;
     }
 }
 
