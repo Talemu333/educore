@@ -277,7 +277,7 @@ function CBTResultsPage() {
                                                         {item.status === "in_progress" ? "In progress" : passed ? "Passed" : "Failed"}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap">{formatDate(item.submitted_at)}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap">{formatDate(item.submitted_at || item.started_at || item.created_at)}</td>
                                                 <td className="px-4 py-3">
                                                     <Button variant="outline" onClick={() => openAttempt(item.id)}>
                                                         <Eye className="mr-2 h-4 w-4" />View
@@ -359,6 +359,7 @@ function CBTResultsPage() {
                                 <h2 className="text-lg font-bold">Attempt Details</h2>
                                 <p className="text-sm text-slate-500">{studentName(selectedAttempt)} • {selectedAttempt.title}</p>
                                 <p className="text-sm text-slate-500">{selectedAttempt.subject_name} • Attempt #{selectedAttempt.attempt_number}</p>
+                                <p className="mt-1 text-sm text-slate-500">Submitted: {formatDate(selectedAttempt.submitted_at || selectedAttempt.started_at || selectedAttempt.created_at)}</p>
                             </div>
                             <Button variant="outline" onClick={() => setSelectedAttempt(null)}><X className="mr-2 h-4 w-4" />Close</Button>
                         </div>
