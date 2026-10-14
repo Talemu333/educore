@@ -187,20 +187,6 @@ function StudentDashboardPage() {
                     </div>
                 }
             </div>
-
-            <div className="app-surface p-6">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                        <GraduationCap className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h2 className="font-semibold text-slate-900">Student Portal</h2>
-                        <p className="text-sm text-slate-500">
-                            More student services will be added here as EduCore grows.
-                        </p>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
