@@ -373,7 +373,14 @@ textarea:focus {
 }
 
 .school-auth-hero {
-    background: linear-gradient(145deg, #020617 0%, #0f172a 62%, color-mix(in srgb, var(--school-primary-dark) 28%, #020617) 100%);
+    /* Keep the login hero recognisably branded for each tenant instead of
+       using the same near-black background for every school. */
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--school-primary-dark) 92%, #0f172a) 0%,
+        var(--school-primary-dark) 46%,
+        color-mix(in srgb, var(--school-primary) 82%, var(--school-secondary)) 100%
+    );
 }
 
 .school-auth-orb-gold {
