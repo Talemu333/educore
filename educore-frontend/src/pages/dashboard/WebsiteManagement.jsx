@@ -2031,7 +2031,7 @@ DELETE EVENT
                     `}
                 >
 
-                    <p className="font-semibold">
+                    <p className="min-w-0 break-words text-sm font-semibold leading-5 sm:text-base">
                         News
                     </p>
 
@@ -2094,7 +2094,7 @@ DELETE EVENT
                     `}
                 >
 
-                    <p className="font-semibold">
+                    <p className="min-w-0 break-words text-sm font-semibold leading-5 sm:text-base">
                         Gallery
                     </p>
 
@@ -2160,7 +2160,7 @@ DELETE EVENT
                     `}
                 >
 
-                    <p className="font-semibold">
+                    <p className="min-w-0 break-words text-sm font-semibold leading-5 sm:text-base">
                         Events
                     </p>
 
