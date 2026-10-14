@@ -52,6 +52,7 @@ const sidebarMenu = [
     { title: "My Payments", icon: CreditCard, path: "/parent/payments", roles: [ROLES.PARENT] },
     { title: "Attendance", icon: ClipboardList, path: "/attendance", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Timetable", icon: Calendar, path: "/timetable", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "My Timetable", icon: Calendar, path: "/teacher-timetable", roles: [ROLES.TEACHER] },
     { title: "Attendance", icon: ClipboardList, path: "/parent-attendance", roles: [ROLES.PARENT] },
     {
         title: "Results", icon: FileText, roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL],
