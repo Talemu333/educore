@@ -17,7 +17,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "", "website", "dashboard", "students", "teachers", "parents",
     "attendance", "results", "timetable", "payments", "announcements",
     "settings", "administrators", "student-promotion", "promotion-history",
-    "class-subjects", "admin", "login"
+    "class-subjects", "teacher-timetable", "admin", "login"
 ]);
 
 api.interceptors.request.use((config) => {
