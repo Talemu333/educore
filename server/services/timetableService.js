@@ -7,6 +7,9 @@ const requireSchool = (schoolId) => {
 };
 
 const validateConflicts = async (data, assignment, schoolId, excludeId = null) => {
+    if (data.end_time <= data.start_time) {
+        throw new ApiError(400, "Lesson end time must be later than its start time.");
+    }
     const teacherConflict = await timetableModel.hasTeacherConflict(
         assignment.teacher_id,
         data.day_of_week,
