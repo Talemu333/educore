@@ -19,8 +19,8 @@ router.post("/attempts/:attemptId/answers", authorize(ROLES.STUDENT), controller
 router.post("/attempts/:attemptId/submit", authorize(ROLES.STUDENT), controller.submitAttempt);
 
 // Staff routes
-router.get("/exams", authorize(...staffRoles), controller.getExams);
-router.get("/exams/:id", authorize(...staffRoles), controller.getExam);
+router.get("/exams", authorize(...staffRoles, ROLES.PROPRIETOR), controller.getExams);
+router.get("/exams/:id", authorize(...staffRoles, ROLES.PROPRIETOR), controller.getExam);
 router.post("/exams", authorize(...staffRoles), controller.createExam);
 router.put("/exams/:id", authorize(...staffRoles), controller.updateExam);
 router.patch("/exams/:id/result-visibility", authorize(ROLES.ADMIN, ROLES.PROPRIETOR, ROLES.PRINCIPAL), controller.setExamResultVisibility);
