@@ -478,6 +478,20 @@ function TeacherDashboardPage() {
                     </button>
 
 
+                    {/* MY TIMETABLE */}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/teacher-timetable")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+                        <div className="text-2xl">🗓️</div>
+                        <h3 className="mt-3 font-semibold text-gray-800">My Timetable</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            View your weekly lessons, classes, and teaching times.
+                        </p>
+                    </button>
+
+
                     {/* MY STUDENTS */}
 
                     <button
