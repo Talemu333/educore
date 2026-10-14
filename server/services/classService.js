@@ -3,9 +3,11 @@ const ApiError = require("../utils/ApiError");
 
 const createClass = async (classData, schoolId, client) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
-    const existing = await classModel.getClassByName(classData.class_name, schoolId, client);
+    const normalizedName = String(classData.class_name || "").trim().replace(/\s+/g, " ");
+    const normalizedClassData = { ...classData, class_name: normalizedName };
+    const existing = await classModel.getClassByName(normalizedName, schoolId, client);
     if (existing) throw new ApiError(409, "Class already exists.");
-    return classModel.createClass(classData, schoolId, client);
+    return classModel.createClass(normalizedClassData, schoolId, client);
 };
 
 const getClasses = async (schoolId, client) => {
