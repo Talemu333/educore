@@ -114,7 +114,7 @@ function TimetablePage() {
     const loadError = timetableQuery.error || assignmentsQuery.error;
 
     return (
-        <div className="space-y-6">
+        <div className="timetable-printable space-y-6">
             <PageHeader title="Timetable" description="Create and manage the school's weekly lesson schedule." />
 
             <section className="app-surface overflow-hidden">
