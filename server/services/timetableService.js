@@ -56,6 +56,14 @@ const getTimetables = async (schoolId) => {
     return timetableModel.getTimetables(schoolId);
 };
 
+const getMyTimetable = async (userId, schoolId) => {
+    requireSchool(schoolId);
+    if (!Number.isInteger(Number(userId)) || Number(userId) < 1) {
+        throw new ApiError(403, "Teacher account context is required.");
+    }
+    return timetableModel.getTimetablesForTeacher(Number(userId), schoolId);
+};
+
 const updateTimetable = async (id, data, schoolId) => {
     requireSchool(schoolId);
     const existing = await timetableModel.getTimetableById(id, schoolId);
@@ -76,4 +84,4 @@ const deleteTimetable = async (id, schoolId) => {
     if (!deleted) throw new ApiError(404, "Timetable entry not found.");
 };
 
-module.exports = { createTimetable, getTimetables, updateTimetable, deleteTimetable };
+module.exports = { createTimetable, getTimetables, getMyTimetable, updateTimetable, deleteTimetable };
