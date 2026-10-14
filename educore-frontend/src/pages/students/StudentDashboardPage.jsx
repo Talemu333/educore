@@ -6,6 +6,12 @@ import api from "@/api/axios";
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/common/PageHeader";
 
+const formatCbtDate = (value) => {
+    if (!value) return "Date unavailable";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Date unavailable" : date.toLocaleString();
+};
+
 function StudentDashboardPage() {
     const { user } = useAuth();
 
@@ -165,6 +171,7 @@ function StudentDashboardPage() {
                                 <div>
                                     <h3 className="font-semibold text-slate-900">{item.title || "CBT Examination"}</h3>
                                     <p className="mt-1 text-sm text-slate-500">{item.subject_name || "Subject"} · Attempt #{item.attempt_number}</p>
+                                    <p className="mt-1 text-xs text-slate-500">Submitted: {formatCbtDate(item.submitted_at || item.started_at || item.created_at)}</p>
                                     {item.result_available === true && item.score !== null && item.score !== undefined ? <p className="mt-1 text-xs text-emerald-700">Result released</p> : <p className="mt-1 text-xs text-amber-700">Submitted · Result not released yet</p>}
                                 </div>
                                 <div className="sm:text-right">
