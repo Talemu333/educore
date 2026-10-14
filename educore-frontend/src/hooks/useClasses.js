@@ -13,6 +13,20 @@ export function useClasses() {
 
         queryFn: getClasses,
 
+        // Keep every class dropdown/list clean even if older records contain duplicates.
+        select: (classes = []) => {
+            const seen = new Set();
+            return classes.filter((schoolClass) => {
+                const key = String(schoolClass?.class_name || "")
+                    .trim()
+                    .replace(/\s+/g, " ")
+                    .toLocaleLowerCase();
+                if (!key || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        },
+
         enabled: !!schoolId
 
     });
