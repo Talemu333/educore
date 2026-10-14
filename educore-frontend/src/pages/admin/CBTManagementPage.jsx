@@ -11,7 +11,9 @@ const emptyExam={title:"",description:"",subject_id:"",class_id:"",arm_id:"",dur
 const emptyQuestion={question_text:"",image_url:"",marks:1,question_order:1,explanation:"",options:[{option_text:"",option_order:1,is_correct:true,option_image_url:""},{option_text:"",option_order:2,is_correct:false,option_image_url:""},{option_text:"",option_order:3,is_correct:false,option_image_url:""},{option_text:"",option_order:4,is_correct:false,option_image_url:""}]};
 function CBTManagementPage(){
  const { user } = useAuth();
- const canPublishCbtResults = ["admin", "administrator"].includes(String(user?.role_name || "").trim().toLowerCase()) && ["proprietor", "principal"].includes(String(user?.admin_type || "").trim().toLowerCase());
+ const userRole = String(user?.role_name || "").trim().toLowerCase();
+ const adminType = String(user?.admin_type || "").trim().toLowerCase();
+ const canPublishCbtResults = ["proprietor", "principal"].includes(userRole) || (["admin", "administrator"].includes(userRole) && ["proprietor", "principal"].includes(adminType));
  const [exams,setExams]=useState([]),[subjects,setSubjects]=useState([]),[classes,setClasses]=useState([]),[arms,setArms]=useState([]),[exam,setExam]=useState(emptyExam),[question,setQuestion]=useState(emptyQuestion),[editingId,setEditingId]=useState(null),[selectedExam,setSelectedExam]=useState(null),[editingQuestionId,setEditingQuestionId]=useState(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[examSearch,setExamSearch]=useState(""),[examClassFilter,setExamClassFilter]=useState(""),[examSubjectFilter,setExamSubjectFilter]=useState(""),[examStatusFilter,setExamStatusFilter]=useState("");
  const load=async()=>{setLoading(true);try{const[a,b,c]=await Promise.all([api.get("/cbt/exams"),api.get("/subjects"),api.get("/classes")]);setExams(a.data?.data||[]);setSubjects(b.data?.data||[]);setClasses(c.data?.data||[]);}catch(e){toast.error(e.response?.data?.message||"Unable to load CBT management data.");}finally{setLoading(false);}};
  useEffect(()=>{load();},[]);
