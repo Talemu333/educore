@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, ClipboardList, FileText, GraduationCap, RefreshCw } from "lucide-react";
+import { BookOpen, ClipboardList, FileText, GraduationCap, RefreshCw, School, UserRound } from "lucide-react";
 import api from "@/api/axios";
 
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +9,8 @@ import PageHeader from "@/components/common/PageHeader";
 function StudentDashboardPage() {
     const { user } = useAuth();
 
-    const displayName = user?.full_name || user?.username || "Student";
+    const [studentProfile, setStudentProfile] = useState(null);
+    const [studentProfileLoading, setStudentProfileLoading] = useState(true);
     const [cbtAttempts, setCbtAttempts] = useState([]);
     const [cbtResultsLoading, setCbtResultsLoading] = useState(true);
     const [cbtResultsError, setCbtResultsError] = useState("");
@@ -30,7 +31,38 @@ function StudentDashboardPage() {
         }
     };
 
-    useEffect(() => { loadCbtResults(); }, []);
+    useEffect(() => {
+        let active = true;
+
+        const loadStudentProfile = async () => {
+            setStudentProfileLoading(true);
+            try {
+                const response = await api.get("/students/me");
+                if (active) setStudentProfile(response.data?.data || null);
+            } catch (error) {
+                // Keep the dashboard usable if profile details cannot be loaded.
+                console.error("Unable to load student profile:", error);
+                if (active) setStudentProfile(null);
+            } finally {
+                if (active) setStudentProfileLoading(false);
+            }
+        };
+
+        loadStudentProfile();
+        loadCbtResults();
+
+        return () => { active = false; };
+    }, []);
+
+    const profileName = [
+        studentProfile?.first_name,
+        studentProfile?.middle_name,
+        studentProfile?.surname,
+    ].filter(value => String(value || "").trim()).join(" ");
+    const displayName = profileName || user?.full_name || user?.username || "Student";
+    const className = [studentProfile?.class_name, studentProfile?.arm_name]
+        .filter(value => String(value || "").trim())
+        .join(" · ");
 
     const cards = [
         {
@@ -59,6 +91,36 @@ function StudentDashboardPage() {
                 title={`Welcome, ${displayName}`}
                 description="Your EduCore student portal."
             />
+
+            <section className="app-surface p-5 sm:p-6" aria-label="Student profile">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                            <UserRound className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Student name</p>
+                            <h2 className="mt-1 break-words text-lg font-semibold text-slate-900">
+                                {studentProfileLoading ? "Loading profile…" : displayName}
+                            </h2>
+                            {studentProfile?.admission_number && (
+                                <p className="mt-1 text-sm text-slate-500">Admission No.: {studentProfile.admission_number}</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-3 sm:max-w-[50%]">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                            <School className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Class</p>
+                            <p className="mt-1 break-words font-semibold text-slate-900">
+                                {studentProfileLoading ? "Loading class…" : className || "Class not available"}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {cards.map(({ title, description, icon: Icon, path }) => (
