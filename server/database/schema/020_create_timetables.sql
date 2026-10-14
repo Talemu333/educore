@@ -4,6 +4,8 @@ CREATE TABLE timetables (
 
     teacher_assignment_id INTEGER NOT NULL,
 
+    school_id INTEGER NOT NULL,
+
     day_of_week VARCHAR(10) NOT NULL,
 
     start_time TIME NOT NULL,
@@ -15,6 +17,11 @@ CREATE TABLE timetables (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_timetable_school
+        FOREIGN KEY (school_id)
+        REFERENCES schools(id)
+        ON DELETE RESTRICT,
 
     CONSTRAINT fk_timetable_assignment
         FOREIGN KEY (teacher_assignment_id)
