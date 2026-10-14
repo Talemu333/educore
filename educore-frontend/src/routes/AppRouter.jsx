@@ -52,6 +52,9 @@ import SettingsPage
 import TimetablePage
     from "../pages/timetable/TimetablePage";
 
+import TeacherTimetablePage
+    from "../pages/timetable/TeacherTimetablePage";
+
 
 import AnnouncementsPage
     from "../pages/announcements/AnnouncementsPage";
@@ -858,6 +861,15 @@ function AppRouter() {
                         }
                     />
 
+
+                    <Route
+                        path="/teacher-timetable"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.TEACHER]}>
+                                <TeacherTimetablePage />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* =====================================
                         ANNOUNCEMENTS
