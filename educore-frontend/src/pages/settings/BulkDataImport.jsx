@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "@/api/axios";
 
 const IMPORTS = {
@@ -51,6 +52,7 @@ const downloadText = (filename, text) => {
 };
 
 function BulkDataImport() {
+    const queryClient = useQueryClient();
     const [type, setType] = useState("students");
     const [file, setFile] = useState(null);
     const [busy, setBusy] = useState(false);
@@ -77,6 +79,11 @@ function BulkDataImport() {
                 timeout: 120000
             });
             setResult(response.data.result);
+            // Refresh dashboard totals and any student lists after imported records are saved.
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+                queryClient.invalidateQueries({ queryKey: ["students"] })
+            ]);
             setMessage(response.data.message || "Import completed.");
             setFile(null);
         } catch (error) {
