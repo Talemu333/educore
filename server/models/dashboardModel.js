@@ -7,10 +7,25 @@ const getStudentCount = async (schoolId) => {
 
 const getActiveStudentCount = async (schoolId) => {
     const result = await pool.query(`
-        SELECT COUNT(DISTINCT se.student_id) AS total
-        FROM student_enrollments se
-        JOIN students s ON s.id = se.student_id
-        WHERE se.enrollment_status = 'Active' AND s.school_id = $1
+        SELECT COUNT(*) AS total
+        FROM students s
+        WHERE s.school_id = $1
+          AND (
+              EXISTS (
+                  SELECT 1
+                  FROM student_enrollments se
+                  WHERE se.student_id = s.id
+                    AND se.enrollment_status = 'Active'
+              )
+              OR (
+                  LOWER(COALESCE(s.status, 'Active')) = 'active'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM student_enrollments se
+                      WHERE se.student_id = s.id
+                  )
+              )
+          )
     `, [schoolId]);
     return Number(result.rows[0].total);
 };
