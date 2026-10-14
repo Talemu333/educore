@@ -89,6 +89,21 @@ const getTimetables = async (schoolId) => {
     return result.rows;
 };
 
+const getTimetablesForTeacher = async (userId, schoolId) => {
+    const result = await pool.query(`
+        ${timetableSelect}
+        WHERE tt.school_id = $1
+          AND u.school_id = $1
+          AND t.user_id = $2
+        ORDER BY CASE tt.day_of_week
+            WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+            WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
+            WHEN 'Sunday' THEN 7 ELSE 8 END,
+            tt.start_time, c.class_name, s.subject_name;
+    `, [schoolId, userId]);
+    return result.rows;
+};
+
 const getTimetableById = async (id, schoolId) => {
     const result = await pool.query(`
         ${timetableSelect}
@@ -129,6 +144,7 @@ const deleteTimetable = async (id, schoolId) => {
 module.exports = {
     createTimetable,
     getTimetables,
+    getTimetablesForTeacher,
     getTimetableById,
     updateTimetable,
     deleteTimetable,
