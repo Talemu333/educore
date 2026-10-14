@@ -6,6 +6,11 @@ const getTimetables = asyncHandler(async (req, res) => {
     res.json({ success: true, data });
 });
 
+const getMyTimetable = asyncHandler(async (req, res) => {
+    const data = await timetableService.getMyTimetable(req.user?.id, req.user?.school_id);
+    res.json({ success: true, data });
+});
+
 const createTimetable = asyncHandler(async (req, res) => {
     const timetable = await timetableService.createTimetable(req.body, req.user?.school_id);
     res.status(201).json({
@@ -25,4 +30,4 @@ const deleteTimetable = asyncHandler(async (req, res) => {
     res.json({ success: true, message: "Timetable entry deleted successfully." });
 });
 
-module.exports = { getTimetables, createTimetable, updateTimetable, deleteTimetable };
+module.exports = { getTimetables, getMyTimetable, createTimetable, updateTimetable, deleteTimetable };
