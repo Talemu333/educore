@@ -454,3 +454,37 @@ textarea:focus {
 .school-sidebar-child-active {
     border-color: color-mix(in srgb, var(--school-primary) 20%, #334155);
 }
+
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .timetable-printable,
+    .timetable-printable * {
+        visibility: visible;
+    }
+
+    .timetable-printable {
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+        overflow: visible !important;
+        color: #111827;
+        background: #fff;
+    }
+
+    .timetable-printable button,
+    .timetable-printable select {
+        display: none !important;
+    }
+
+    .timetable-printable section {
+        break-inside: avoid;
+        border-color: #d1d5db !important;
+    }
+}
