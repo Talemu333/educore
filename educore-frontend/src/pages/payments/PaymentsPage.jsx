@@ -210,8 +210,8 @@ function PaymentsPage() {
                     }
                 />
 
-                <section className="app-surface overflow-hidden">
-                    <div className="border-b border-slate-200 bg-slate-50/80 px-5 py-5 sm:px-6">
+                <section className="app-surface relative overflow-visible">
+                    <div className="rounded-t-2xl border-b border-slate-200 bg-slate-50/80 px-5 py-5 sm:px-6">
                         <div className="flex items-start gap-3">
                             <div className="rounded-xl bg-white p-2.5 text-slate-700 shadow-sm ring-1 ring-slate-200">
                                 <WalletCards className="h-5 w-5" />
@@ -229,7 +229,7 @@ function PaymentsPage() {
 
                     <div className="p-5 sm:p-6">
                         <div className="grid gap-5 md:grid-cols-3">
-                            <div>
+                            <div className="relative z-30">
                                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                                     Student
                                 </label>
@@ -268,7 +268,7 @@ function PaymentsPage() {
                                         </div>
                                     )}
                                     {!studentId && studentSearch.trim().length >= 2 && (
-                                        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                                             {isStudentsLoading ? (
                                                 <p className="px-3 py-3 text-sm text-slate-500">Searching students...</p>
                                             ) : students.length > 0 ? (
