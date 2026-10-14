@@ -115,6 +115,7 @@ function TimetablePage() {
 
     return (
         <div className="timetable-printable space-y-6">
+            <div className="timetable-screen-content">
             <PageHeader title="Timetable" description="Create and manage the school's weekly lesson schedule." />
 
             <section className="app-surface overflow-hidden">
@@ -251,6 +252,49 @@ function TimetablePage() {
                     )}
                 </div>
             </section>
+            </div>
+
+            <div className="timetable-print-only">
+                <h1 className="text-2xl font-bold">Weekly Timetable</h1>
+                <p className="mt-1 mb-4 text-sm">
+                    {selectedClass === "all"
+                        ? "All classes"
+                        : classes.find((schoolClass) => String(schoolClass.class_id) === selectedClass)?.class_name || "Selected class"}
+                </p>
+                {filteredEntries.length === 0 ? (
+                    <p>No lessons are scheduled for this selection.</p>
+                ) : (
+                    <table className="timetable-print-table">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Time</th>
+                                <th>Class / Arm</th>
+                                <th>Subject</th>
+                                <th>Teacher</th>
+                                <th>Session / Term</th>
+                                <th>Room</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[...filteredEntries]
+                                .sort((a, b) => DAYS.indexOf(a.day_of_week) - DAYS.indexOf(b.day_of_week)
+                                    || String(a.start_time).localeCompare(String(b.start_time)))
+                                .map((entry) => (
+                                    <tr key={entry.id}>
+                                        <td>{entry.day_of_week}</td>
+                                        <td>{entry.start_time}–{entry.end_time}</td>
+                                        <td>{entry.class_name}{entry.arm_name ? ` / ${entry.arm_name}` : ""}</td>
+                                        <td>{entry.subject_name}</td>
+                                        <td>{entry.teacher_name}</td>
+                                        <td>{entry.session_name} / {entry.term_name}</td>
+                                        <td>{entry.room || "—"}</td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
         </div>
     );
 }
