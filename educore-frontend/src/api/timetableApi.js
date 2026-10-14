@@ -5,6 +5,11 @@ export const getTimetables = async () => {
     return response.data.data;
 };
 
+export const getMyTimetable = async () => {
+    const response = await api.get("/timetables/my");
+    return response.data.data;
+};
+
 export const createTimetable = async (data) => {
     const response = await api.post("/timetables", data);
     return response.data.data;
