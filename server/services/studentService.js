@@ -50,6 +50,13 @@ const getStudentById = async (id, schoolId) => {
     return student;
 };
 
+const getStudentByUserId = async (userId, schoolId) => {
+    requireSchool(schoolId);
+    const student = await studentModel.getStudentByUserId(userId, schoolId);
+    if (!student) throw new ApiError(404, "Student profile not found.");
+    return student;
+};
+
 const updateStudent = async (id, studentData, schoolId) => {
     requireSchool(schoolId);
     const client = await pool.connect();
@@ -116,4 +123,4 @@ const getStudentParents = async (studentId, schoolId) => {
     return studentModel.getStudentParents(studentId, schoolId);
 };
 
-module.exports = { createStudent, getAllStudents, getStudentById, updateStudent, searchStudents, deactivateStudent, getStudentParents };
+module.exports = { createStudent, getAllStudents, getStudentById, getStudentByUserId, updateStudent, searchStudents, deactivateStudent, getStudentParents };
