@@ -98,8 +98,24 @@ const uniqueUsername = async (client, requested, fallback, schoolId) => {
 
 const tempPassword = () => crypto.randomBytes(5).toString("hex");
 
+const getCurrentSessionId = async (client, schoolId) => {
+    const result = await client.query(`
+        SELECT ac.id
+        FROM academic_sessions ac
+        LEFT JOIN school_settings ss ON ss.school_id = $1
+        WHERE ac.school_id = $1
+        ORDER BY CASE WHEN ac.id = ss.current_session_id THEN 0 ELSE 1 END,
+                 CASE WHEN ac.is_current = TRUE THEN 0 ELSE 1 END,
+                 CASE WHEN CURRENT_DATE BETWEEN ac.start_date AND ac.end_date THEN 0 ELSE 1 END,
+                 ac.start_date DESC, ac.id DESC
+        LIMIT 1
+    `, [schoolId]);
+    return result.rows[0]?.id || null;
+};
+
 const importStudents = async (client, rows, schoolId, result) => {
     let nextSequence = Number((await client.query("SELECT COALESCE(MAX(admission_sequence),0) AS value FROM students WHERE school_id = $1", [schoolId])).rows[0].value) + 1;
+    const currentSessionId = await getCurrentSessionId(client, schoolId);
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         try {
@@ -114,7 +130,28 @@ const importStudents = async (client, rows, schoolId, result) => {
             if (duplicate.rowCount) { result.skipped++; result.messages.push(`Row ${i + 2}: ${admissionNumber} already exists.`); continue; }
             const state = clean(row.state_id) ? (await client.query("SELECT id FROM states WHERE id = $1", [Number(row.state_id)])).rows[0] : (clean(row.state_name) ? await findOne(client, "states", "state_name", row.state_name) : null);
             const nationality = clean(row.nationality_id) ? (await client.query("SELECT id FROM nationalities WHERE id = $1", [Number(row.nationality_id)])).rows[0] : (clean(row.nationality_name) ? await findOne(client, "nationalities", "nationality_name", row.nationality_name) : null);
-            await client.query(`INSERT INTO students (school_id, admission_number, admission_sequence, surname, first_name, middle_name, gender, date_of_birth, state_id, nationality_id, religion, blood_group, genotype, residential_address, class_id, arm_id, admission_date, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, [schoolId, admissionNumber, Number(row.admission_sequence) || nextSequence++, clean(row.surname), clean(row.first_name), clean(row.middle_name) || null, clean(row.gender), dateValue(row.date_of_birth), state?.id || null, nationality?.id || null, clean(row.religion) || null, clean(row.blood_group) || null, clean(row.genotype) || null, clean(row.residential_address) || null, cls.id, arm.id, dateValue(row.admission_date), clean(row.status) || "Active"]);
+            const studentStatus = clean(row.status) || "Active";
+            const insertedStudent = await client.query(`
+                INSERT INTO students (
+                    school_id, admission_number, admission_sequence, surname, first_name,
+                    middle_name, gender, date_of_birth, state_id, nationality_id, religion,
+                    blood_group, genotype, residential_address, class_id, arm_id, admission_date, status
+                )
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+                RETURNING id
+            `, [schoolId, admissionNumber, Number(row.admission_sequence) || nextSequence++, clean(row.surname), clean(row.first_name), clean(row.middle_name) || null, clean(row.gender), dateValue(row.date_of_birth), state?.id || null, nationality?.id || null, clean(row.religion) || null, clean(row.blood_group) || null, clean(row.genotype) || null, clean(row.residential_address) || null, cls.id, arm.id, dateValue(row.admission_date), studentStatus]);
+
+            // Bulk-imported active students should follow the same enrollment flow
+            // as students created individually, so attendance and dashboard counts stay in sync.
+            if (currentSessionId && studentStatus.toLowerCase() === "active") {
+                await client.query(`
+                    INSERT INTO student_enrollments (
+                        student_id, session_id, class_id, arm_id, enrollment_date, enrollment_status
+                    )
+                    VALUES ($1, $2, $3, $4, $5, 'Active')
+                    ON CONFLICT DO NOTHING
+                `, [insertedStudent.rows[0].id, currentSessionId, cls.id, arm.id, dateValue(row.admission_date)]);
+            }
             result.imported++;
         } catch (error) { result.failed++; result.errors.push({ row: i + 2, message: error.message }); }
     }
