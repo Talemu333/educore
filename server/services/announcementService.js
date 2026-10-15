@@ -137,7 +137,7 @@ const uploadAnnouncementAttachments = async (announcementId, files, schoolId, us
     if (existingCount + files.length > 10) throw new ApiError(400, "An announcement can have at most 10 attachments.");
     const uploaded = [];
     for (const file of files) {
-        const fileName = String(file.originalname || "").replace(/[\\r\\n\\0]/g, "").trim().slice(0, 255);
+        const fileName = String(file.originalname || "").split("").filter((character) => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127).join("").trim().slice(0, 255);
         const extension = fileName.includes(".") ? fileName.slice(fileName.lastIndexOf(".")).toLowerCase() : "";
         const allowedMimes = ALLOWED_FILE_TYPES.get(extension);
         if (!fileName || !allowedMimes || !allowedMimes.includes(file.mimetype)) {
