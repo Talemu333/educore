@@ -1,5 +1,6 @@
 import {
-    useState
+    useState,
+    useEffect
 } from "react";
 
 import {
@@ -83,13 +84,18 @@ function SidebarItem({
     const isChildActive =
         hasChildren &&
         children.some(child =>
-            location.pathname === child.path
+            location.pathname === child.path ||
+            (child.path !== "/" && location.pathname.startsWith(child.path + "/"))
         );
 
     const [
         isOpen,
         setIsOpen
     ] = useState(isChildActive);
+
+    useEffect(() => {
+        if (isChildActive) setIsOpen(true);
+    }, [isChildActive, location.pathname]);
 
     if (hasChildren) {
         return (
@@ -126,7 +132,10 @@ function SidebarItem({
                                 key={child.path}
                                 to={child.path}
                                 end
-                                onClick={preserveSidebarScroll}
+                                onClick={() => {
+                                    preserveSidebarScroll();
+                                    onClose?.();
+                                }}
                                 className={({ isActive }) => `
                                     block rounded-lg px-3 py-2 text-sm transition-colors
                                     ${
