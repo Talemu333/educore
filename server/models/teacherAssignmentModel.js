@@ -130,24 +130,49 @@ const getStudentsByTeacher = async (teacherId, schoolId) => {
         JOIN students s
           ON s.school_id = u.school_id
          AND (
-              EXISTS (
-                  SELECT 1
-                  FROM student_enrollments active_se
-                  WHERE active_se.student_id = s.id
-                    AND active_se.session_id = ta.session_id
-                    AND active_se.class_id = ta.class_id
-                    AND (ta.arm_id IS NULL OR active_se.arm_id = ta.arm_id)
-                    AND active_se.enrollment_status = 'Active'
-              )
-              OR (
-                  NOT EXISTS (
-                      SELECT 1
-                      FROM student_enrollments any_se
-                      WHERE any_se.student_id = s.id
-                        AND any_se.session_id = ta.session_id
-                  )
+              (
+                  ac.is_current = TRUE
                   AND s.class_id = ta.class_id
                   AND (ta.arm_id IS NULL OR s.arm_id = ta.arm_id)
+                  AND (
+                      EXISTS (
+                          SELECT 1
+                          FROM student_enrollments current_se
+                          WHERE current_se.student_id = s.id
+                            AND current_se.session_id = ta.session_id
+                            AND current_se.enrollment_status = 'Active'
+                      )
+                      OR NOT EXISTS (
+                          SELECT 1
+                          FROM student_enrollments any_current_se
+                          WHERE any_current_se.student_id = s.id
+                            AND any_current_se.session_id = ta.session_id
+                      )
+                  )
+              )
+              OR (
+                  COALESCE(ac.is_current, FALSE) = FALSE
+                  AND (
+                      EXISTS (
+                          SELECT 1
+                          FROM student_enrollments active_se
+                          WHERE active_se.student_id = s.id
+                            AND active_se.session_id = ta.session_id
+                            AND active_se.class_id = ta.class_id
+                            AND (ta.arm_id IS NULL OR active_se.arm_id = ta.arm_id)
+                            AND active_se.enrollment_status = 'Active'
+                      )
+                      OR (
+                          NOT EXISTS (
+                              SELECT 1
+                              FROM student_enrollments any_se
+                              WHERE any_se.student_id = s.id
+                                AND any_se.session_id = ta.session_id
+                          )
+                          AND s.class_id = ta.class_id
+                          AND (ta.arm_id IS NULL OR s.arm_id = ta.arm_id)
+                      )
+                  )
               )
          )
         LEFT JOIN student_enrollments se
