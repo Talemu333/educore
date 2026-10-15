@@ -43,7 +43,9 @@ const createAnnouncement = async (data, schoolId, db) => {
 const getAnnouncementsForManagement = async (schoolId, db) => {
     const result = await resolveDb(db).query(
         `SELECT a.*, u.username AS created_by_username,
-                c.class_name AS target_class_name, ar.arm_name AS target_arm_name
+                c.class_name AS target_class_name, ar.arm_name AS target_arm_name,
+                COALESCE((SELECT json_agg(json_build_object('id', aa.id, 'file_name', aa.file_name, 'mime_type', aa.mime_type, 'file_size', aa.file_size, 'created_at', aa.created_at) ORDER BY aa.created_at)
+                          FROM announcement_attachments aa WHERE aa.school_id = a.school_id AND aa.announcement_id = a.id), '[]'::json) AS attachments
          FROM announcements a
          LEFT JOIN users u ON u.id = a.created_by AND u.school_id = a.school_id
          LEFT JOIN classes c ON c.id = a.target_class_id AND c.school_id = a.school_id
@@ -61,6 +63,8 @@ const getAnnouncementsForAudience = async (schoolId, audience, userId, db) => {
                 a.created_at, a.is_pinned, a.attachment_url, a.attachment_label,
                 a.target_class_id, a.target_arm_id,
                 c.class_name AS target_class_name, ar.arm_name AS target_arm_name,
+                COALESCE((SELECT json_agg(json_build_object('id', aa.id, 'file_name', aa.file_name, 'mime_type', aa.mime_type, 'file_size', aa.file_size, 'created_at', aa.created_at) ORDER BY aa.created_at)
+                          FROM announcement_attachments aa WHERE aa.school_id = a.school_id AND aa.announcement_id = a.id), '[]'::json) AS attachments,
                 r.read_at, (r.id IS NOT NULL) AS is_read
          FROM announcements a
          LEFT JOIN announcement_reads r
@@ -162,6 +166,49 @@ const markAllAnnouncementsRead = async (schoolId, userId, ids, db) => {
     return result.rowCount;
 };
 
+
+const countAnnouncementAttachments = async (announcementId, schoolId, db) => {
+    const result = await resolveDb(db).query(
+        "SELECT COUNT(*)::int AS total FROM announcement_attachments WHERE announcement_id = $1 AND school_id = $2",
+        [announcementId, schoolId]
+    );
+    return result.rows[0].total;
+};
+
+const createAnnouncementAttachment = async (announcementId, schoolId, userId, file, db) => {
+    const result = await resolveDb(db).query(
+        `INSERT INTO announcement_attachments
+            (school_id, announcement_id, uploaded_by, file_name, mime_type, file_size, file_data)
+         SELECT $1, a.id, $4, $5, $6, $7, $8
+         FROM announcements a
+         WHERE a.id = $2 AND a.school_id = $1
+         RETURNING id, file_name, mime_type, file_size, created_at`,
+        [schoolId, announcementId, userId, userId, file.file_name, file.mime_type, file.file_size, file.file_data]
+    );
+    return result.rows[0];
+};
+
+const getAnnouncementAttachment = async (announcementId, attachmentId, schoolId, db) => {
+    const result = await resolveDb(db).query(
+        `SELECT id, announcement_id, school_id, file_name, mime_type, file_size, file_data, created_at
+         FROM announcement_attachments
+         WHERE id = $1 AND announcement_id = $2 AND school_id = $3
+         LIMIT 1`,
+        [attachmentId, announcementId, schoolId]
+    );
+    return result.rows[0];
+};
+
+const deleteAnnouncementAttachment = async (announcementId, attachmentId, schoolId, db) => {
+    const result = await resolveDb(db).query(
+        `DELETE FROM announcement_attachments
+         WHERE id = $1 AND announcement_id = $2 AND school_id = $3
+         RETURNING id`,
+        [attachmentId, announcementId, schoolId]
+    );
+    return result.rows[0];
+};
+
 module.exports = {
     createAnnouncement,
     getAnnouncementsForManagement,
@@ -169,5 +216,9 @@ module.exports = {
     updateAnnouncement,
     deactivateAnnouncement,
     markAnnouncementRead,
-    markAllAnnouncementsRead
+    markAllAnnouncementsRead,
+    countAnnouncementAttachments,
+    createAnnouncementAttachment,
+    getAnnouncementAttachment,
+    deleteAnnouncementAttachment
 };
