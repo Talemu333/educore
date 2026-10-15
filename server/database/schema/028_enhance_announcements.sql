@@ -1,10 +1,10 @@
--- Announcement enhancements: per-user read tracking, pinning, links, and class/arm targeting.
+-- Announcement enhancements: per-user read tracking, pinning, class/arm targeting, and stored attachments.
 ALTER TABLE announcements
     ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS attachment_url TEXT,
     ADD COLUMN IF NOT EXISTS attachment_label VARCHAR(160),
-    ADD COLUMN IF NOT EXISTS target_class_id INTEGER REFERENCES classes(id) ON DELETE SET NULL,
-    ADD COLUMN IF NOT EXISTS target_arm_id INTEGER REFERENCES arms(id) ON DELETE SET NULL;
+    ADD COLUMN IF NOT EXISTS target_class_id INTEGER REFERENCES classes(id) ON DELETE RESTRICT,
+    ADD COLUMN IF NOT EXISTS target_arm_id INTEGER REFERENCES arms(id) ON DELETE RESTRICT;
 
 ALTER TABLE announcements
     DROP CONSTRAINT IF EXISTS announcements_audience_check;
@@ -40,11 +40,35 @@ CREATE INDEX IF NOT EXISTS idx_announcements_pinned
 CREATE TABLE IF NOT EXISTS announcement_reads (
     id BIGSERIAL PRIMARY KEY,
     school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
-    announcement_id INTEGER NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+    announcement_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     read_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_announcement_read_per_user UNIQUE (school_id, announcement_id, user_id)
+    CONSTRAINT uq_announcement_read_per_user UNIQUE (school_id, announcement_id, user_id),
+    CONSTRAINT fk_announcement_reads_announcement
+        FOREIGN KEY (announcement_id, school_id)
+        REFERENCES announcements(id, school_id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_announcement_reads_user
     ON announcement_reads (school_id, user_id, read_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_announcements_id_school
+    ON announcements (id, school_id);
+
+CREATE TABLE IF NOT EXISTS announcement_attachments (
+    id BIGSERIAL PRIMARY KEY,
+    school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
+    announcement_id INTEGER NOT NULL,
+    uploaded_by INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    file_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(150) NOT NULL,
+    file_size INTEGER NOT NULL CHECK (file_size > 0 AND file_size <= 5242880),
+    file_data BYTEA NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_announcement_attachments_announcement
+        FOREIGN KEY (announcement_id, school_id)
+        REFERENCES announcements(id, school_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_announcement_attachments_lookup
+    ON announcement_attachments (school_id, announcement_id, created_at);
