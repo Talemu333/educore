@@ -48,7 +48,7 @@ function AnnouncementsPage() {
     const [classes, setClasses] = useState([]);
     const [arms, setArms] = useState([]);
     const [search, setSearch] = useState("");
-    const [audienceFilter, setAudienceFilter] = useState("all");
+    const [audienceFilter, setAudienceFilter] = useState("__any__");
     const [statusFilter, setStatusFilter] = useState("all");
     const [page, setPage] = useState(1);
     const pageSize = 8;
@@ -89,7 +89,7 @@ function AnnouncementsPage() {
         const normalizedSearch = search.trim().toLowerCase();
         return [...announcements].filter((item) => {
             const matchesSearch = !normalizedSearch || [item.title, item.message, item.target_class_name, item.target_arm_name].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
-            const matchesAudience = audienceFilter === "all" || item.audience === audienceFilter;
+            const matchesAudience = audienceFilter === "__any__" || item.audience === audienceFilter;
             let matchesStatus = true;
             if (canManage && statusFilter === "active") matchesStatus = Boolean(item.is_active);
             if (canManage && statusFilter === "inactive") matchesStatus = !item.is_active;
@@ -235,7 +235,7 @@ function AnnouncementsPage() {
 
         <section className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:p-4">
             <label className="relative block"><Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search announcements..." className="h-11 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
-            <select value={audienceFilter} onChange={(event) => { setAudienceFilter(event.target.value); setPage(1); }} aria-label="Filter by audience" className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">{[{ value: "all", label: "All audiences" }, ...AUDIENCES].map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
+            <select value={audienceFilter} onChange={(event) => { setAudienceFilter(event.target.value); setPage(1); }} aria-label="Filter by audience" className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">{[{ value: "__any__", label: "All audiences" }, ...AUDIENCES].map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
             <select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }} aria-label="Filter by status" className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">{(canManage ? [["all","All statuses"],["active","Active"],["inactive","Inactive"],["scheduled","Scheduled"],["expired","Expired"]] : [["all","Read and unread"],["unread","Unread"],["read","Read"]]).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
         </section>
 
