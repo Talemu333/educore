@@ -132,6 +132,8 @@ function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <AnnouncementNotifications />
+
                 {overviewCards.map(card => (
                     <div key={card.title} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                         <div className="flex items-start justify-between gap-3">
