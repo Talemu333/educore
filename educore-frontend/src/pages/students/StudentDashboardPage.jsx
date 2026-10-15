@@ -5,6 +5,7 @@ import api from "@/api/axios";
 
 import { useAuth } from "@/context/AuthContext";
 import PageHeader from "@/components/common/PageHeader";
+import AnnouncementSummary from "@/components/announcements/AnnouncementSummary";
 
 const formatCbtDate = (value) => {
     if (!value) return "Date unavailable";
@@ -98,7 +99,9 @@ function StudentDashboardPage() {
                 description="Your EduCore student portal."
             />
 
-            <section className="app-surface p-5 sm:p-6" aria-label="Student profile">
+<AnnouncementSummary />
+
+                        <section className="app-surface p-5 sm:p-6" aria-label="Student profile">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
