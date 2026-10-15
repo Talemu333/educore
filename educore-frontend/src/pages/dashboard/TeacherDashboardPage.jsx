@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getMyAssignments } from "../../api/teacherAssignmentApi";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import AnnouncementSummary from "@/components/announcements/AnnouncementSummary";
 
 function TeacherDashboardPage() {
 
@@ -188,7 +189,9 @@ function TeacherDashboardPage() {
             </div>
 
 
-            {/* STAT CARDS */}
+<AnnouncementSummary />
+
+                        {/* STAT CARDS */}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
