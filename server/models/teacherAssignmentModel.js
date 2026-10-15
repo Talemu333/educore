@@ -105,15 +105,68 @@ const getAssignmentForAttendance = async (id, schoolId) => {
 
 const getStudentsByTeacher = async (teacherId, schoolId) => {
     const result = await pool.query(`
-        SELECT s.id,s.admission_number,CONCAT(s.surname,' ',s.first_name,CASE WHEN s.middle_name IS NOT NULL AND s.middle_name<>'' THEN ' '||s.middle_name ELSE '' END) student_name,s.gender,se.session_id,ac.session_name,se.class_id,c.class_name,se.arm_id,a.arm_name,
-        STRING_AGG(DISTINCT sub.subject_name,', ' ORDER BY sub.subject_name) subjects
-        FROM teacher_assignments ta JOIN teachers t ON t.id=ta.teacher_id JOIN users u ON u.id=t.user_id
-        JOIN student_enrollments se ON se.session_id=ta.session_id AND se.class_id=ta.class_id AND (ta.arm_id IS NULL OR se.arm_id=ta.arm_id)
-        JOIN students s ON s.id=se.student_id JOIN classes c ON c.id=se.class_id LEFT JOIN arms a ON a.id=se.arm_id JOIN academic_sessions ac ON ac.id=se.session_id JOIN subjects sub ON sub.id=ta.subject_id
-        WHERE ta.teacher_id=$1 AND u.school_id=$2 AND se.enrollment_status='Active'
-        GROUP BY s.id,s.admission_number,s.surname,s.first_name,s.middle_name,s.gender,se.session_id,ac.session_name,se.class_id,c.class_name,se.arm_id,a.arm_name
-        ORDER BY ac.session_name DESC,c.class_name,a.arm_name,s.surname,s.first_name;
-    `, [teacherId,schoolId]);
+        SELECT
+            s.id,
+            s.admission_number,
+            CONCAT(
+                s.surname, ' ', s.first_name,
+                CASE WHEN s.middle_name IS NOT NULL AND s.middle_name <> ''
+                    THEN ' ' || s.middle_name ELSE '' END
+            ) AS student_name,
+            s.gender,
+            ta.session_id,
+            ac.session_name,
+            ta.class_id,
+            c.class_name,
+            COALESCE(se.arm_id, s.arm_id) AS arm_id,
+            a.arm_name,
+            STRING_AGG(DISTINCT sub.subject_name, ', ' ORDER BY sub.subject_name) AS subjects
+        FROM teacher_assignments ta
+        JOIN teachers t ON t.id = ta.teacher_id
+        JOIN users u ON u.id = t.user_id
+        JOIN classes c ON c.id = ta.class_id AND c.school_id = u.school_id
+        JOIN academic_sessions ac ON ac.id = ta.session_id AND ac.school_id = u.school_id
+        JOIN subjects sub ON sub.id = ta.subject_id AND sub.school_id = u.school_id
+        JOIN students s
+          ON s.school_id = u.school_id
+         AND (
+              EXISTS (
+                  SELECT 1
+                  FROM student_enrollments active_se
+                  WHERE active_se.student_id = s.id
+                    AND active_se.session_id = ta.session_id
+                    AND active_se.class_id = ta.class_id
+                    AND (ta.arm_id IS NULL OR active_se.arm_id = ta.arm_id)
+                    AND active_se.enrollment_status = 'Active'
+              )
+              OR (
+                  NOT EXISTS (
+                      SELECT 1
+                      FROM student_enrollments any_se
+                      WHERE any_se.student_id = s.id
+                        AND any_se.session_id = ta.session_id
+                  )
+                  AND s.class_id = ta.class_id
+                  AND (ta.arm_id IS NULL OR s.arm_id = ta.arm_id)
+              )
+         )
+        LEFT JOIN student_enrollments se
+          ON se.student_id = s.id
+         AND se.session_id = ta.session_id
+         AND se.class_id = ta.class_id
+         AND (ta.arm_id IS NULL OR se.arm_id = ta.arm_id)
+         AND se.enrollment_status = 'Active'
+        LEFT JOIN arms a
+          ON a.id = COALESCE(se.arm_id, s.arm_id)
+         AND a.school_id = u.school_id
+        WHERE ta.teacher_id = $1
+          AND u.school_id = $2
+        GROUP BY
+            s.id, s.admission_number, s.surname, s.first_name, s.middle_name,
+            s.gender, ta.session_id, ac.session_name, ta.class_id,
+            c.class_name, COALESCE(se.arm_id, s.arm_id), a.arm_name
+        ORDER BY ac.session_name DESC, c.class_name, a.arm_name, s.surname, s.first_name;
+    `, [teacherId, schoolId]);
     return result.rows;
 };
 
