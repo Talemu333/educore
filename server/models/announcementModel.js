@@ -179,11 +179,11 @@ const createAnnouncementAttachment = async (announcementId, schoolId, userId, fi
     const result = await resolveDb(db).query(
         `INSERT INTO announcement_attachments
             (school_id, announcement_id, uploaded_by, file_name, mime_type, file_size, file_data)
-         SELECT $1, a.id, $4, $5, $6, $7, $8
+         SELECT $1, a.id, $3, $4, $5, $6, $7
          FROM announcements a
          WHERE a.id = $2 AND a.school_id = $1
          RETURNING id, file_name, mime_type, file_size, created_at`,
-        [schoolId, announcementId, userId, userId, file.file_name, file.mime_type, file.file_size, file.file_data]
+        [schoolId, announcementId, userId, file.file_name, file.mime_type, file.file_size, file.file_data]
     );
     return result.rows[0];
 };
