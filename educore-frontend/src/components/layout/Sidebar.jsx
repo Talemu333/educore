@@ -1,10 +1,79 @@
 import { useLayoutEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { X, Settings, Handshake, SlidersHorizontal } from "lucide-react";
+import {
+    X,
+    Settings,
+    Handshake,
+    SlidersHorizontal,
+    GraduationCap,
+    BookOpen,
+    Wallet,
+    MessageSquare,
+    Globe,
+    ShieldCheck
+} from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
 import SidebarItem from "./SidebarItem";
 import { useAuth } from "@/context/AuthContext";
 import { useSchoolTheme } from "@/context/SchoolThemeContext";
+
+const makeAdminMenuGroups = (items) => {
+    const academicPaths = new Set([
+        "/students", "/teachers", "/attendance", "/timetable",
+        "/student-promotion", "/promotion-history"
+    ]);
+    const teachingPaths = new Set([
+        "/cbt-management", "/cbt-question-bank", "/cbt-question-bank/import",
+        "/cbt-results", "/lesson-notes", "/lesson-syllabus"
+    ]);
+    const financePaths = new Set([
+        "/payments", "/parent-overview", "/payments/reports", "/admin/fees", "/expenses"
+    ]);
+    const communicationPaths = new Set(["/announcements", "/contact-messages"]);
+    const websitePaths = new Set(["/dashboard/website"]);
+    const administrationPaths = new Set(["/administrators", "/change-password"]);
+
+    const groups = [
+        { title: "Academic Management", icon: GraduationCap, paths: academicPaths, children: [] },
+        { title: "Teaching & Assessment", icon: BookOpen, paths: teachingPaths, children: [] },
+        { title: "Finance", icon: Wallet, paths: financePaths, children: [] },
+        { title: "Communication", icon: MessageSquare, paths: communicationPaths, children: [] },
+        { title: "Website & Settings", icon: Globe, paths: websitePaths, children: [] },
+        { title: "Administration", icon: ShieldCheck, paths: administrationPaths, children: [] }
+    ];
+
+    const remaining = [];
+
+    for (const item of items) {
+        if (item.title === "Results" && item.children) {
+            const group = groups.find(entry => entry.title === "Teaching & Assessment");
+            group.children.push(...item.children);
+            continue;
+        }
+
+        if (item.title === "Settings" && item.children) {
+            const group = groups.find(entry => entry.title === "Website & Settings");
+            group.children.push(...item.children);
+            continue;
+        }
+
+        const group = groups.find(entry => entry.paths.has(item.path));
+        if (group) group.children.push(item);
+        else remaining.push(item);
+    }
+
+    const populatedGroups = groups
+        .filter(group => group.children.length > 0)
+        .map(({ paths, ...group }) => group);
+
+    // Keep Dashboard at the top and leave items not assigned to a category
+    // (including Logout) in their original order.
+    return [
+        ...remaining.filter(item => item.path === "/dashboard"),
+        ...populatedGroups,
+        ...remaining.filter(item => item.path !== "/dashboard")
+    ];
+};
 
 function Sidebar({ isOpen, onClose }) {
     const { user } = useAuth();
@@ -14,8 +83,6 @@ function Sidebar({ isOpen, onClose }) {
     const adminType = user?.admin_type;
 
     // Keep sidebar authorization consistent with ProtectedRoute.
-    // School databases can return role names with different casing
-    // (for example "Student" vs "student"), but they represent the same role.
     const normalizedRole = String(role || "").trim().toLowerCase();
     const normalizedAdminType = String(adminType || "").trim().toLowerCase();
 
@@ -57,6 +124,14 @@ function Sidebar({ isOpen, onClose }) {
             })
             .filter(Boolean);
 
+    const shouldGroupAdminMenu =
+        normalizedRole === "admin" &&
+        ["proprietor", "principal"].includes(normalizedAdminType);
+
+    const visibleMenu = shouldGroupAdminMenu
+        ? makeAdminMenuGroups(filteredMenu)
+        : filteredMenu;
+
     const displayName = user?.full_name || user?.name || "User";
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
     const schoolName = settings?.school_name || "EDUPROW";
@@ -90,11 +165,7 @@ function Sidebar({ isOpen, onClose }) {
                     <div className="flex min-w-0 items-center gap-3">
                         <div className="school-sidebar-logo flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-sm font-extrabold text-white shadow-lg">
                             {schoolLogo ? (
-                                <img
-                                    src={schoolLogo}
-                                    alt={schoolName + " logo"}
-                                    className="h-full w-full object-contain p-1"
-                                />
+                                <img src={schoolLogo} alt={schoolName + " logo"} className="h-full w-full object-contain p-1" />
                             ) : (
                                 schoolName.trim().slice(0, 2).toUpperCase()
                             )}
@@ -111,7 +182,14 @@ function Sidebar({ isOpen, onClose }) {
                     <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-100">{displayName}</p><p className="truncate text-xs capitalize text-slate-400">{adminType?.replace(/_/g, " ") || role || "Account"}</p></div>
                 </div>
             </div>
-            <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4"><p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p><div className="space-y-1">{filteredMenu.map(item => <SidebarItem key={item.path || item.title} {...item} onClose={onClose} />)}</div></nav>
+            <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
+                <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Main Menu</p>
+                <div className="space-y-1">
+                    {visibleMenu.map((item, index) => (
+                        <SidebarItem key={item.path || item.title + "-" + index} {...item} onClose={onClose} />
+                    ))}
+                </div>
+            </nav>
             <div className="school-sidebar-footer border-t border-slate-800 px-4 py-3"><p className="text-center text-[10px] font-medium text-slate-500">EduProw • School Administration</p></div>
         </aside>
     );
