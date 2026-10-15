@@ -38,7 +38,34 @@ const deactivateAnnouncement = asyncHandler(async (req, res) => {
     res.json({ success: true, message: "Announcement deactivated successfully.", data: announcement });
 });
 
+
+const uploadAnnouncementAttachments = asyncHandler(async (req, res) => {
+    const attachments = await announcementService.uploadAnnouncementAttachments(
+        req.params.id, req.files, getSchoolId(req), req.user, req.schoolDatabase
+    );
+    res.status(201).json({ success: true, message: "Attachments uploaded successfully.", data: attachments });
+});
+
+const downloadAnnouncementAttachment = asyncHandler(async (req, res) => {
+    const attachment = await announcementService.getAnnouncementAttachmentForUser(
+        req.params.id, req.params.attachmentId, getSchoolId(req), req.user, req.schoolDatabase
+    );
+    res.setHeader("Content-Type", attachment.mime_type);
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(attachment.file_name)}`);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(200).send(attachment.file_data);
+});
+
+const deleteAnnouncementAttachment = asyncHandler(async (req, res) => {
+    const attachment = await announcementService.deleteAnnouncementAttachment(
+        req.params.id, req.params.attachmentId, getSchoolId(req), req.user, req.schoolDatabase
+    );
+    res.status(200).json({ success: true, message: "Attachment deleted.", data: attachment });
+});
+
 module.exports = {
     createAnnouncement, getAnnouncements, getAnnouncementNotifications,
-    markAnnouncementRead, markAllAnnouncementsRead, updateAnnouncement, deactivateAnnouncement
+    markAnnouncementRead, markAllAnnouncementsRead, updateAnnouncement, deactivateAnnouncement,
+    uploadAnnouncementAttachments, downloadAnnouncementAttachment, deleteAnnouncementAttachment
 };
