@@ -4,7 +4,8 @@ ALTER TABLE announcements
     ADD COLUMN IF NOT EXISTS attachment_name VARCHAR(255),
     ADD COLUMN IF NOT EXISTS class_ids INTEGER[] NOT NULL DEFAULT '{}',
     ADD COLUMN IF NOT EXISTS arm_ids INTEGER[] NOT NULL DEFAULT '{}',
-    ADD COLUMN IF NOT EXISTS student_ids INTEGER[] NOT NULL DEFAULT '{}';
+    ADD COLUMN IF NOT EXISTS student_ids INTEGER[] NOT NULL DEFAULT '{}',
+    ADD COLUMN IF NOT EXISTS parent_ids INTEGER[] NOT NULL DEFAULT '{}';
 
 CREATE INDEX IF NOT EXISTS idx_announcements_school_pinned
     ON announcements (school_id, is_pinned DESC, publish_date DESC, created_at DESC);
