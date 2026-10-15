@@ -104,8 +104,8 @@ function SidebarItem({
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className={`
-                        flex w-full items-center justify-between gap-2 rounded-xl
-                        px-3 py-2.5 text-[13px] leading-5 font-medium transition-all duration-150
+                        flex w-full min-h-11 items-center justify-between gap-2 rounded-xl
+                        px-2.5 py-2 text-xs leading-4 font-medium transition-all duration-150
                         ${
                             isChildActive
                                 ? "school-sidebar-group-active"
@@ -113,9 +113,9 @@ function SidebarItem({
                         }
                     `}
                 >
-                    <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                        <Icon className="shrink-0" size={18} strokeWidth={1.9} />
-                        <span className="min-w-0 flex-1 whitespace-nowrap text-left">{title}</span>
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                        <Icon className="shrink-0" size={17} strokeWidth={1.9} />
+                        <span className="min-w-0 flex-1 whitespace-nowrap text-left text-[12px] tracking-tight">{title}</span>
                     </span>
 
                     {isOpen ? (
