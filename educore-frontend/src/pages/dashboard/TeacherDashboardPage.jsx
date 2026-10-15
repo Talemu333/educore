@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getMyAssignments } from "../../api/teacherAssignmentApi";
-import axios from "../../api/axios";
+import axios from "../../api/axios";\nimport AnnouncementNotifications from "@/components/AnnouncementNotifications";
 import { useNavigate } from "react-router-dom";
 
 function TeacherDashboardPage() {
@@ -134,7 +134,7 @@ function TeacherDashboardPage() {
             </div>
 
 
-            {/* TEACHER PROFILE */}
+            <AnnouncementNotifications />\n\n\n            {/* TEACHER PROFILE */}
 
             <div className="rounded-2xl bg-blue-600 p-6 text-white shadow">
 
