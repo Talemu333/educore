@@ -23,7 +23,7 @@ function AnnouncementSummary() {
     const [error, setError] = useState("");
     useEffect(() => {
         let active = true;
-        getAnnouncements({ page: 1, limit: 5 }).then(result => {
+        getAnnouncements({ page: 1, limit: 5, status: manager ? "active" : "" }).then(result => {
             if (!active) return;
             const rows = Array.isArray(result) ? result : result?.items || [];
             const visible = manager ? rows.filter(item => item.is_active && String(item.publish_date || "").slice(0, 10) <= today() && (!item.expiry_date || String(item.expiry_date).slice(0, 10) >= today())) : rows;
