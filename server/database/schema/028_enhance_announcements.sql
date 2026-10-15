@@ -37,6 +37,9 @@ CREATE INDEX IF NOT EXISTS idx_announcements_pinned
     ON announcements (school_id, is_pinned DESC, publish_date DESC)
     WHERE is_active = TRUE;
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_announcements_id_school
+    ON announcements (id, school_id);
+
 CREATE TABLE IF NOT EXISTS announcement_reads (
     id BIGSERIAL PRIMARY KEY,
     school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
@@ -51,9 +54,6 @@ CREATE TABLE IF NOT EXISTS announcement_reads (
 
 CREATE INDEX IF NOT EXISTS idx_announcement_reads_user
     ON announcement_reads (school_id, user_id, read_at DESC);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_announcements_id_school
-    ON announcements (id, school_id);
 
 CREATE TABLE IF NOT EXISTS announcement_attachments (
     id BIGSERIAL PRIMARY KEY,
