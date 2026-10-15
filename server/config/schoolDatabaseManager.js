@@ -15,6 +15,7 @@ const DATABASE_ROOT = path.resolve(__dirname, "../database");
 const MIGRATIONS_DIR = path.join(DATABASE_ROOT, "migrations");
 const MIGRATION_CUTOFF = "20260912_sync_current_school_settings.sql";
 const RESULT_APPROVAL_MIGRATION = "20261013_result_correction_approval_and_cbt_visibility.sql";
+const ANNOUNCEMENT_MIGRATION = "20261015_enhance_announcements.sql";
 let sharedResultApprovalMigrationPromise;
 
 const listCurrentMigrations = async () => {
@@ -70,9 +71,11 @@ const ensureSharedDatabaseResultApprovalMigration = async () => {
             const migrationPath = path.join(MIGRATIONS_DIR, RESULT_APPROVAL_MIGRATION);
             const sql = await fs.readFile(migrationPath, "utf8");
             if (sql.trim()) await centralPool.query(sql);
+            const announcementSql = await fs.readFile(path.join(MIGRATIONS_DIR, ANNOUNCEMENT_MIGRATION), "utf8");
+            if (announcementSql.trim()) await centralPool.query(announcementSql);
         })().catch((error) => {
             sharedResultApprovalMigrationPromise = undefined;
-            throw new Error(`Shared database result approval migration failed: ${error.message}`);
+            throw new Error(`Shared database schema migration failed: ${error.message}`);
         });
     }
     await sharedResultApprovalMigrationPromise;
