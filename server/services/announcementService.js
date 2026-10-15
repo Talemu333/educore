@@ -40,9 +40,20 @@ const getAudienceForUser = (user) => {
     return "administrators";
 };
 
-const createAnnouncement = async (data, schoolId, userId, db) => {
+const requireManager = (user) => {
+    if (!canManageAnnouncements(user)) {
+        throw new ApiError(403, "You do not have permission to manage announcements.");
+    }
+};
+
+const createAnnouncement = async (data, schoolId, user, db) => {
     requireSchool(schoolId);
-    return announcementModel.createAnnouncement({ ...normalizeAnnouncement(data), created_by: userId }, schoolId, db);
+    requireManager(user);
+    return announcementModel.createAnnouncement(
+        { ...normalizeAnnouncement(data), created_by: user.id },
+        schoolId,
+        db
+    );
 };
 
 const getAnnouncements = async (schoolId, user, db) => {
@@ -51,15 +62,17 @@ const getAnnouncements = async (schoolId, user, db) => {
     return announcementModel.getAnnouncementsForAudience(schoolId, getAudienceForUser(user), db);
 };
 
-const updateAnnouncement = async (id, data, schoolId, db) => {
+const updateAnnouncement = async (id, data, schoolId, user, db) => {
     requireSchool(schoolId);
+    requireManager(user);
     const announcement = await announcementModel.updateAnnouncement(id, normalizeAnnouncement(data), schoolId, db);
     if (!announcement) throw new ApiError(404, "Announcement not found.");
     return announcement;
 };
 
-const deactivateAnnouncement = async (id, schoolId, db) => {
+const deactivateAnnouncement = async (id, schoolId, user, db) => {
     requireSchool(schoolId);
+    requireManager(user);
     const announcement = await announcementModel.deactivateAnnouncement(id, schoolId, db);
     if (!announcement) throw new ApiError(404, "Announcement not found.");
     return announcement;
