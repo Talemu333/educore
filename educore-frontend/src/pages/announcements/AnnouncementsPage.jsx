@@ -15,7 +15,7 @@ const today = () => {
     const d = new Date();
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 };
-const emptyForm = () => ({ title: "", message: "", audience: "all", publish_date: today(), expiry_date: "", is_active: true, is_pinned: false, attachment_url: "", attachment_name: "", class_ids: [], arm_ids: [], student_ids: [] });
+const emptyForm = () => ({ title: "", message: "", audience: "all", publish_date: today(), expiry_date: "", is_active: true, is_pinned: false, attachment_url: "", attachment_name: "", class_ids: [], arm_ids: [], student_ids: [], parent_ids: [] });
 const dateLabel = value => {
     if (!value) return "No expiry date";
     const d = new Date(String(value).slice(0, 10) + "T00:00:00");
@@ -33,7 +33,7 @@ function AnnouncementsPage() {
     const { user } = useAuth();
     const canManage = isManager(user);
     const [announcements, setAnnouncements] = useState([]);
-    const [targets, setTargets] = useState({ classes: [], arms: [], students: [] });
+    const [targets, setTargets] = useState({ classes: [], arms: [], students: [], parents: [] });
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [loadError, setLoadError] = useState("");
@@ -69,7 +69,7 @@ function AnnouncementsPage() {
     useEffect(() => { loadAnnouncements(); }, [loadAnnouncements]);
     useEffect(() => {
         if (!canManage) return;
-        getAnnouncementTargets().then(data => setTargets(data || { classes: [], arms: [], students: [] }))
+        getAnnouncementTargets().then(data => setTargets(data || { classes: [], arms: [], students: [], parents: [] }))
             .catch(error => toast.error(error?.response?.data?.message || "Could not load class and student targeting options."));
     }, [canManage]);
 
@@ -90,7 +90,7 @@ function AnnouncementsPage() {
             expiry_date: item.expiry_date ? String(item.expiry_date).slice(0, 10) : "",
             is_active: Boolean(item.is_active), is_pinned: Boolean(item.is_pinned),
             attachment_url: item.attachment_url || "", attachment_name: item.attachment_name || "",
-            class_ids: selectedIds(item.class_ids), arm_ids: selectedIds(item.arm_ids), student_ids: selectedIds(item.student_ids)
+            class_ids: selectedIds(item.class_ids), arm_ids: selectedIds(item.arm_ids), student_ids: selectedIds(item.student_ids), parent_ids: selectedIds(item.parent_ids)
         });
         setFormOpen(true);
     };
