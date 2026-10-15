@@ -3,7 +3,7 @@ import { Bell, CalendarDays, CircleAlert, Edit3, ExternalLink, Megaphone, Pin, P
 import toast from "react-hot-toast";
 import api from "@/api/axios";
 import { useAuth } from "@/context/AuthContext";
-import { createAnnouncement, deactivateAnnouncement, deleteAnnouncementAttachment, downloadAnnouncementAttachment, getAnnouncements, markAnnouncementRead, updateAnnouncement, uploadAnnouncementAttachments } from "@/api/announcementApi";
+import { createAnnouncement, deactivateAnnouncement, deleteAnnouncementAttachment, downloadAnnouncementAttachment, getAnnouncements, markAllAnnouncementsRead, markAnnouncementRead, updateAnnouncement, uploadAnnouncementAttachments } from "@/api/announcementApi";
 
 const AUDIENCES = [
     { value: "all", label: "Everyone in the school" },
@@ -112,6 +112,7 @@ function AnnouncementsPage() {
     const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
     const currentPage = Math.min(page, pageCount);
     const pageItems = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const unreadCount = announcements.filter((item) => !item.is_read).length;
 
     const updateField = (event) => {
         const { name, value, type, checked } = event.target;
@@ -184,6 +185,14 @@ function AnnouncementsPage() {
         } catch (error) { toast.error(error?.response?.data?.message || "Could not update read status."); }
     };
 
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllAnnouncementsRead();
+            setAnnouncements((old) => old.map((entry) => ({ ...entry, is_read: true, read_at: entry.read_at || new Date().toISOString() })));
+            toast.success("All announcements marked as read.");
+        } catch (error) { toast.error(error?.response?.data?.message || "Could not mark announcements as read."); }
+    };
+
     const handleDeleteAttachment = async (item, attachment) => {
         if (!window.confirm("Delete attachment \"" + attachment.file_name + "\"?")) return;
         try {
@@ -213,6 +222,7 @@ function AnnouncementsPage() {
             </div>
             <div className="flex gap-2">
                 <button type="button" onClick={() => loadAnnouncements(true)} disabled={refreshing || loading} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"><RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />Refresh</button>
+                {!canManage && unreadCount > 0 && <button type="button" onClick={handleMarkAllRead} className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"><CheckCheck size={16} />Mark all read</button>}
                 {canManage && <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"><Plus size={17} />New announcement</button>}
             </div>
         </header>
