@@ -30,7 +30,11 @@ function ProtectedRoute({
     }
 
     if (!isAuthenticated) {
-        return <Navigate to="/" replace />;
+        // On school custom domains, "/" is the public school homepage rather
+        // than the login screen. Send expired/missing sessions to the explicit
+        // login route so protected dashboard links never appear to fall back
+        // to the school website.
+        return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
     const userRole = normalizeRole(user?.role_name);
