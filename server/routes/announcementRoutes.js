@@ -40,4 +40,8 @@ router.patch(
     announcementController.deactivateAnnouncement
 );
 
+router.get("/targets", authenticate, schoolDatabaseContext, authorize(ROLES.ADMIN, ROLES.PRINCIPAL), announcementController.getTargetOptions);
+router.patch("/:id/pin", authenticate, schoolDatabaseContext, authorize(ROLES.ADMIN, ROLES.PRINCIPAL), announcementController.setPinned);
+router.post("/:id/read", authenticate, schoolDatabaseContext, announcementController.markRead);
+
 module.exports = router;
