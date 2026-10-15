@@ -8,7 +8,7 @@ import {
     ArrowRight
 } from "lucide-react";
 
-import { getParentDashboard } from "@/api/parentApi";
+import { getParentDashboard } from "@/api/parentApi";\nimport AnnouncementNotifications from "@/components/AnnouncementNotifications";
 
 function ParentDashboardPage() {
 
@@ -79,7 +79,7 @@ function ParentDashboardPage() {
             </div>
 
 
-            {/* Summary Cards */}
+            <AnnouncementNotifications />\n\n\n            {/* Summary Cards */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
