@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useExpenseSummary } from "@/hooks/useExpenses";
 import { useAuth } from "@/context/AuthContext";
+import AnnouncementSummary from "@/components/announcements/AnnouncementSummary";
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("en-NG", {
@@ -143,7 +144,9 @@ function DashboardPage() {
                 ))}
             </div>
 
-            <section>
+<AnnouncementSummary />
+
+                        <section>
                 <div className="mb-2"><h2 className="text-xl font-bold text-slate-900">Finance Overview</h2><p className="mt-0.5 text-sm text-slate-500">Current session and term fee collection.</p></div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-sm font-medium text-slate-500">Expected Fees</p><p className="mt-1.5 break-words text-xl font-bold text-slate-900 sm:text-2xl">{formatCurrency(expected_fees)}</p></div>
