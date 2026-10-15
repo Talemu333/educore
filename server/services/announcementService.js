@@ -1,7 +1,7 @@
 const announcementModel = require("../models/announcementModel");
 const ApiError = require("../utils/ApiError");
 
-const ALLOWED_AUDIENCES = new Set(["all", "students", "teachers", "parents", "administrators"]);
+const ALLOWED_AUDIENCES = new Set(["all", "students", "teachers", "parents", "administrators", "class"]);
 const requireSchool = (schoolId) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
 };
@@ -13,6 +13,11 @@ const normalizeAnnouncement = (data) => {
     const publishDate = data.publish_date || new Date().toISOString().slice(0, 10);
     const expiryDate = data.expiry_date || null;
     const isActive = data.is_active === undefined ? true : data.is_active;
+    const isPinned = data.is_pinned === undefined ? false : data.is_pinned;
+    const attachmentUrl = String(data.attachment_url || "").trim() || null;
+    const attachmentLabel = String(data.attachment_label || "").trim() || null;
+    const targetClassId = data.target_class_id === "" || data.target_class_id == null ? null : Number(data.target_class_id);
+    const targetArmId = data.target_arm_id === "" || data.target_arm_id == null ? null : Number(data.target_arm_id);
 
     if (!title) throw new ApiError(400, "Announcement title is required.");
     if (title.length > 200) throw new ApiError(400, "Announcement title must be 200 characters or fewer.");
@@ -21,9 +26,25 @@ const normalizeAnnouncement = (data) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(publishDate))) throw new ApiError(400, "A valid publication date is required.");
     if (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(String(expiryDate))) throw new ApiError(400, "Please provide a valid expiry date.");
     if (expiryDate && expiryDate < publishDate) throw new ApiError(400, "The expiry date cannot be earlier than the publication date.");
-    if (typeof isActive !== "boolean") throw new ApiError(400, "Announcement status must be active or inactive.");
-
-    return { title, message, audience, publish_date: publishDate, expiry_date: expiryDate, is_active: isActive };
+    if (typeof isActive !== "boolean" || typeof isPinned !== "boolean") throw new ApiError(400, "Announcement status and pin setting must be boolean values.");
+    if (attachmentUrl) {
+        let parsed;
+        try { parsed = new URL(attachmentUrl); } catch { throw new ApiError(400, "Enter a valid attachment URL."); }
+        if (parsed.protocol !== "https:") throw new ApiError(400, "Attachment links must use HTTPS.");
+        if (attachmentUrl.length > 2000) throw new ApiError(400, "Attachment URL is too long.");
+    }
+    if (attachmentLabel && attachmentLabel.length > 160) throw new ApiError(400, "Attachment label must be 160 characters or fewer.");
+    if (audience === "class") {
+        if (!Number.isInteger(targetClassId) || targetClassId < 1) throw new ApiError(400, "Select a class for a class-specific announcement.");
+        if (targetArmId !== null && (!Number.isInteger(targetArmId) || targetArmId < 1)) throw new ApiError(400, "Select a valid class arm.");
+    } else if (targetClassId !== null || targetArmId !== null) {
+        throw new ApiError(400, "Class and arm targeting can only be used for class-specific announcements.");
+    }
+    return {
+        title, message, audience, publish_date: publishDate, expiry_date: expiryDate,
+        is_active: isActive, is_pinned: isPinned, attachment_url: attachmentUrl,
+        attachment_label: attachmentLabel, target_class_id: targetClassId, target_arm_id: targetArmId
+    };
 };
 
 const canManageAnnouncements = (user) => {
@@ -41,25 +62,24 @@ const getAudienceForUser = (user) => {
 };
 
 const requireManager = (user) => {
-    if (!canManageAnnouncements(user)) {
-        throw new ApiError(403, "You do not have permission to manage announcements.");
-    }
+    if (!canManageAnnouncements(user)) throw new ApiError(403, "You do not have permission to manage announcements.");
 };
 
 const createAnnouncement = async (data, schoolId, user, db) => {
     requireSchool(schoolId);
     requireManager(user);
-    return announcementModel.createAnnouncement(
-        { ...normalizeAnnouncement(data), created_by: user.id },
-        schoolId,
-        db
-    );
+    return announcementModel.createAnnouncement({ ...normalizeAnnouncement(data), created_by: user.id }, schoolId, db);
 };
 
 const getAnnouncements = async (schoolId, user, db) => {
     requireSchool(schoolId);
     if (canManageAnnouncements(user)) return announcementModel.getAnnouncementsForManagement(schoolId, db);
-    return announcementModel.getAnnouncementsForAudience(schoolId, getAudienceForUser(user), db);
+    return announcementModel.getAnnouncementsForAudience(schoolId, getAudienceForUser(user), user.id, db);
+};
+
+const getAnnouncementNotifications = async (schoolId, user, db) => {
+    requireSchool(schoolId);
+    return announcementModel.getAnnouncementsForAudience(schoolId, getAudienceForUser(user), user.id, db);
 };
 
 const updateAnnouncement = async (id, data, schoolId, user, db) => {
@@ -78,4 +98,20 @@ const deactivateAnnouncement = async (id, schoolId, user, db) => {
     return announcement;
 };
 
-module.exports = { createAnnouncement, getAnnouncements, updateAnnouncement, deactivateAnnouncement };
+const markAnnouncementRead = async (id, schoolId, user, db) => {
+    requireSchool(schoolId);
+    const visible = await getAnnouncementNotifications(schoolId, user, db);
+    if (!visible.some((item) => Number(item.id) === Number(id))) throw new ApiError(404, "Announcement not found.");
+    return announcementModel.markAnnouncementRead(id, schoolId, user.id, db);
+};
+
+const markAllAnnouncementsRead = async (schoolId, user, db) => {
+    requireSchool(schoolId);
+    const visible = await getAnnouncementNotifications(schoolId, user, db);
+    return announcementModel.markAllAnnouncementsRead(schoolId, user.id, visible.filter((item) => !item.is_read).map((item) => Number(item.id)), db);
+};
+
+module.exports = {
+    createAnnouncement, getAnnouncements, getAnnouncementNotifications, updateAnnouncement,
+    deactivateAnnouncement, markAnnouncementRead, markAllAnnouncementsRead
+};
