@@ -880,26 +880,19 @@ function AppRouter() {
                     <Route
                         path="/announcements"
                         element={
-
                             <ProtectedRoute
-
                                 allowedRoles={[
-                                    ROLES.ADMIN
+                                    ROLES.ADMIN,
+                                    ROLES.TEACHER,
+                                    ROLES.PARENT,
+                                    ROLES.STUDENT,
+                                    ROLES.PRINCIPAL,
+                                    ROLES.VICE_PRINCIPAL,
+                                    ROLES.BURSAR
                                 ]}
-
-                                allowedAdminTypes={[
-                                    "proprietor",
-                                    "principal",
-                                    "vice_principal",
-                                    "bursar"
-                                ]}
-
                             >
-
                                 <AnnouncementsPage />
-
                             </ProtectedRoute>
-
                         }
                     />
 

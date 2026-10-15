@@ -53,6 +53,10 @@ const sidebarMenu = [
     { title: "Attendance", icon: ClipboardList, path: "/attendance", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Timetable", icon: Calendar, path: "/timetable", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "My Timetable", icon: Calendar, path: "/teacher-timetable", roles: [ROLES.TEACHER] },
+    { title: "Announcements", icon: Bell, path: "/announcements", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL, BURSAR] },
+    { title: "Announcements", icon: Bell, path: "/announcements", roles: [ROLES.TEACHER] },
+    { title: "Announcements", icon: Bell, path: "/announcements", roles: [ROLES.PARENT] },
+    { title: "Announcements", icon: Bell, path: "/announcements", roles: [ROLES.STUDENT] },
     { title: "Attendance", icon: ClipboardList, path: "/parent-attendance", roles: [ROLES.PARENT] },
     {
         title: "Results", icon: FileText, roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL],
