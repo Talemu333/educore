@@ -134,8 +134,8 @@ const uploadAnnouncementAttachments = async (announcementId, files, schoolId, us
     if (!announcements.some((item) => Number(item.id) === Number(announcementId))) throw new ApiError(404, "Announcement not found.");
     if (!Array.isArray(files) || files.length === 0) throw new ApiError(400, "Choose at least one file to upload.");
     const existingCount = await announcementModel.countAnnouncementAttachments(announcementId, schoolId, db);
-    if (existingCount + files.length > 10) throw new ApiError(400, "An announcement can have at most 10 attachments.");
-    const uploaded = [];
+    if (existingCount + files.length > 5) throw new ApiError(400, "An announcement can have at most 5 attachments.");
+    const validatedFiles = [];
     for (const file of files) {
         const fileName = String(file.originalname || "").split("").filter((character) => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127).join("").trim().slice(0, 255);
         const extension = fileName.includes(".") ? fileName.slice(fileName.lastIndexOf(".")).toLowerCase() : "";
@@ -144,9 +144,13 @@ const uploadAnnouncementAttachments = async (announcementId, files, schoolId, us
             throw new ApiError(400, `File "${fileName || "unnamed"}" has an unsupported type. Use PDF, JPG, PNG, TXT, CSV, Word, Excel or PowerPoint files.`);
         }
         if (!file.buffer || !file.size || file.size > 5 * 1024 * 1024) throw new ApiError(400, "Each attachment must be smaller than or equal to 5 MB.");
-        uploaded.push(await announcementModel.createAnnouncementAttachment(announcementId, schoolId, user.id, {
+        validatedFiles.push({
             file_name: fileName, mime_type: file.mimetype, file_size: file.size, file_data: file.buffer
-        }, db));
+        });
+    }
+    const uploaded = [];
+    for (const file of validatedFiles) {
+        uploaded.push(await announcementModel.createAnnouncementAttachment(announcementId, schoolId, user.id, file, db));
     }
     return uploaded;
 };
