@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, ExternalLink, Pin, RefreshCw } from "lucide-react";
-import { getAnnouncementNotifications, markAllAnnouncementsRead, markAnnouncementRead } from "@/api/announcementApi";
+import { downloadAnnouncementAttachment, getAnnouncementNotifications, markAllAnnouncementsRead, markAnnouncementRead } from "@/api/announcementApi";
 
 const formatDate = (value) => {
     if (!value) return "";
@@ -69,7 +69,11 @@ export default function AnnouncementNotifications() {
             <div className="min-w-0 flex-1">
                 <button type="button" onClick={() => navigate("/announcements")} className="text-left text-sm font-semibold text-slate-900 hover:text-blue-700">{item.is_pinned && <Pin size={13} className="mr-1 inline text-amber-600" />}{item.title}</button>
                 <p className="mt-1 line-clamp-2 whitespace-pre-wrap break-words text-sm text-slate-600">{item.message}</p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-slate-400"><span>{formatDate(item.publish_date)}</span>{!item.is_read && <button type="button" disabled={busy} onClick={() => markRead(item.id)} className="font-semibold text-blue-700 hover:underline disabled:opacity-50">Mark read</button>}{item.attachment_url && <a href={item.attachment_url} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">Attachment <ExternalLink size={12} /></a>}</div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-slate-400"><span>{formatDate(item.publish_date)}</span>{!item.is_read && <button type="button" disabled={busy} onClick={() => markRead(item.id)} className="font-semibold text-blue-700 hover:underline disabled:opacity-50">Mark read</button>}{item.attachment_url && <a href={item.attachment_url} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">Attachment <ExternalLink size={12} /></a>}
+                    {Array.isArray(item.attachments) && item.attachments.map((attachment) => <button key={attachment.id} type="button" onClick={async () => {
+                        try { await downloadAnnouncementAttachment(item.id, attachment); }
+                        catch (err) { setError(err?.response?.data?.message || "Could not download attachment."); }
+                    }} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">{attachment.file_name} <ExternalLink size={12} /></button>)}</div>
             </div>
         </div>)}</div>}
         <div className="mt-4 border-t border-slate-100 pt-3"><button type="button" onClick={() => navigate("/announcements")} className="text-sm font-semibold text-blue-700 hover:underline">View all announcements →</button></div>
