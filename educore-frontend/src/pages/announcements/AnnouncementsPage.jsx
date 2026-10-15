@@ -15,7 +15,7 @@ const today = () => {
     const d = new Date();
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 };
-const emptyForm = () => ({ title: "", message: "", audience: "all", publish_date: today(), expiry_date: "", is_active: true, is_pinned: false, attachment_url: "", attachment_name: "", class_ids: [], arm_ids: [], student_ids: [], parent_ids: [] });
+const emptyForm = () => ({ title: "", message: "", audience: "all", publish_date: today(), expiry_date: "", is_active: true, is_pinned: false, attachment_url: "", attachment_name: "", class_ids: [], arm_ids: [], student_ids: [], parent_ids: [], files: [] });
 const dateLabel = value => {
     if (!value) return "No expiry date";
     const d = new Date(String(value).slice(0, 10) + "T00:00:00");
