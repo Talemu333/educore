@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { getParentDashboard } from "@/api/parentApi";
+import AnnouncementSummary from "@/components/announcements/AnnouncementSummary";
 
 function ParentDashboardPage() {
 
@@ -79,7 +80,9 @@ function ParentDashboardPage() {
             </div>
 
 
-            {/* Summary Cards */}
+<AnnouncementSummary />
+
+                        {/* Summary Cards */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
