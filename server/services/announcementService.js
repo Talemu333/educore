@@ -111,7 +111,72 @@ const markAllAnnouncementsRead = async (schoolId, user, db) => {
     return announcementModel.markAllAnnouncementsRead(schoolId, user.id, visible.filter((item) => !item.is_read).map((item) => Number(item.id)), db);
 };
 
+
+const ALLOWED_FILE_TYPES = new Map([
+    [".pdf", ["application/pdf"]],
+    [".jpg", ["image/jpeg"]],
+    [".jpeg", ["image/jpeg"]],
+    [".png", ["image/png"]],
+    [".txt", ["text/plain"]],
+    [".csv", ["text/csv", "application/vnd.ms-excel"]],
+    [".doc", ["application/msword"]],
+    [".docx", ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]],
+    [".xls", ["application/vnd.ms-excel"]],
+    [".xlsx", ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]],
+    [".ppt", ["application/vnd.ms-powerpoint"]],
+    [".pptx", ["application/vnd.openxmlformats-officedocument.presentationml.presentation"]]
+]);
+
+const uploadAnnouncementAttachments = async (announcementId, files, schoolId, user, db) => {
+    requireSchool(schoolId);
+    requireManager(user);
+    const announcements = await announcementModel.getAnnouncementsForManagement(schoolId, db);
+    if (!announcements.some((item) => Number(item.id) === Number(announcementId))) throw new ApiError(404, "Announcement not found.");
+    if (!Array.isArray(files) || files.length === 0) throw new ApiError(400, "Choose at least one file to upload.");
+    const existingCount = await announcementModel.countAnnouncementAttachments(announcementId, schoolId, db);
+    if (existingCount + files.length > 10) throw new ApiError(400, "An announcement can have at most 10 attachments.");
+    const uploaded = [];
+    for (const file of files) {
+        const fileName = String(file.originalname || "").replace(/[\\r\\n\\0]/g, "").trim().slice(0, 255);
+        const extension = fileName.includes(".") ? fileName.slice(fileName.lastIndexOf(".")).toLowerCase() : "";
+        const allowedMimes = ALLOWED_FILE_TYPES.get(extension);
+        if (!fileName || !allowedMimes || !allowedMimes.includes(file.mimetype)) {
+            throw new ApiError(400, `File "${fileName || "unnamed"}" has an unsupported type. Use PDF, JPG, PNG, TXT, CSV, Word, Excel or PowerPoint files.`);
+        }
+        if (!file.buffer || !file.size || file.size > 5 * 1024 * 1024) throw new ApiError(400, "Each attachment must be smaller than or equal to 5 MB.");
+        uploaded.push(await announcementModel.createAnnouncementAttachment(announcementId, schoolId, user.id, {
+            file_name: fileName, mime_type: file.mimetype, file_size: file.size, file_data: file.buffer
+        }, db));
+    }
+    return uploaded;
+};
+
+const getAnnouncementAttachmentForUser = async (announcementId, attachmentId, schoolId, user, db) => {
+    requireSchool(schoolId);
+    if (canManageAnnouncements(user)) {
+        const announcements = await announcementModel.getAnnouncementsForManagement(schoolId, db);
+        if (!announcements.some((item) => Number(item.id) === Number(announcementId))) throw new ApiError(404, "Announcement not found.");
+    } else {
+        const visible = await getAnnouncementNotifications(schoolId, user, db);
+        if (!visible.some((item) => Number(item.id) === Number(announcementId))) throw new ApiError(404, "Announcement not found.");
+    }
+    const attachment = await announcementModel.getAnnouncementAttachment(announcementId, attachmentId, schoolId, db);
+    if (!attachment) throw new ApiError(404, "Attachment not found.");
+    return attachment;
+};
+
+const deleteAnnouncementAttachment = async (announcementId, attachmentId, schoolId, user, db) => {
+    requireSchool(schoolId);
+    requireManager(user);
+    const announcements = await announcementModel.getAnnouncementsForManagement(schoolId, db);
+    if (!announcements.some((item) => Number(item.id) === Number(announcementId))) throw new ApiError(404, "Announcement not found.");
+    const deleted = await announcementModel.deleteAnnouncementAttachment(announcementId, attachmentId, schoolId, db);
+    if (!deleted) throw new ApiError(404, "Attachment not found.");
+    return deleted;
+};
+
 module.exports = {
     createAnnouncement, getAnnouncements, getAnnouncementNotifications, updateAnnouncement,
-    deactivateAnnouncement, markAnnouncementRead, markAllAnnouncementsRead
+    deactivateAnnouncement, markAnnouncementRead, markAllAnnouncementsRead,
+    uploadAnnouncementAttachments, getAnnouncementAttachmentForUser, deleteAnnouncementAttachment
 };
