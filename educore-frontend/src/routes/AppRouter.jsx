@@ -20,6 +20,9 @@ import DashboardPage
 import TeacherDashboardPage
     from "../pages/dashboard/TeacherDashboardPage";
 
+import StudentDashboardPage
+    from "../pages/students/StudentDashboardPage";
+
 
 import StudentsPage
     from "../pages/students/StudentsPage";
@@ -1134,6 +1137,20 @@ function AppRouter() {
 
                             </ProtectedRoute>
 
+                        }
+                    />
+
+
+                    {/* =====================================
+                        STUDENT DASHBOARD
+                    ===================================== */}
+
+                    <Route
+                        path="/student-dashboard"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                                <StudentDashboardPage />
+                            </ProtectedRoute>
                         }
                     />
 
