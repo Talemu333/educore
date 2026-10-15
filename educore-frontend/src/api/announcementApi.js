@@ -11,9 +11,7 @@ export const deactivateAnnouncement = async (id) => (await api.patch(`/announcem
 export const uploadAnnouncementAttachments = async (id, files) => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
-    return (await api.post(`/announcements/${id}/attachments`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-    })).data.data || [];
+    return (await api.post(`/announcements/${id}/attachments`, formData)).data.data || [];
 };
 
 export const deleteAnnouncementAttachment = async (announcementId, attachmentId) =>
@@ -28,5 +26,5 @@ export const downloadAnnouncementAttachment = async (announcementId, attachment)
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(objectUrl);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 };
