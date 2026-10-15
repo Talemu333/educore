@@ -1,81 +1,20 @@
-const announcementModel = require("../models/announcementModel");
-const ApiError = require("../utils/ApiError");
-
-const ALLOWED_AUDIENCES = new Set(["all", "students", "teachers", "parents", "administrators"]);
-const requireSchool = (schoolId) => {
-    if (!schoolId) throw new ApiError(403, "School context is required.");
-};
-
-const normalizeAnnouncement = (data) => {
-    const title = String(data.title || "").trim();
-    const message = String(data.message || "").trim();
-    const audience = String(data.audience || "all").trim().toLowerCase();
-    const publishDate = data.publish_date || new Date().toISOString().slice(0, 10);
-    const expiryDate = data.expiry_date || null;
-    const isActive = data.is_active === undefined ? true : data.is_active;
-
-    if (!title) throw new ApiError(400, "Announcement title is required.");
-    if (title.length > 200) throw new ApiError(400, "Announcement title must be 200 characters or fewer.");
-    if (!message) throw new ApiError(400, "Announcement message is required.");
-    if (!ALLOWED_AUDIENCES.has(audience)) throw new ApiError(400, "Please select a valid announcement audience.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(publishDate))) throw new ApiError(400, "A valid publication date is required.");
-    if (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(String(expiryDate))) throw new ApiError(400, "Please provide a valid expiry date.");
-    if (expiryDate && expiryDate < publishDate) throw new ApiError(400, "The expiry date cannot be earlier than the publication date.");
-    if (typeof isActive !== "boolean") throw new ApiError(400, "Announcement status must be active or inactive.");
-
-    return { title, message, audience, publish_date: publishDate, expiry_date: expiryDate, is_active: isActive };
-};
-
-const canManageAnnouncements = (user) => {
-    const role = String(user?.role_name || user?.role || "").trim().toLowerCase();
-    const type = String(user?.admin_type || "").trim().toLowerCase();
-    return role === "principal" || (role === "admin" && ["proprietor", "principal", "vice_principal"].includes(type));
-};
-
-const getAudienceForUser = (user) => {
-    const role = String(user?.role_name || user?.role || "").trim().toLowerCase();
-    if (role === "student") return "students";
-    if (role === "teacher") return "teachers";
-    if (role === "parent") return "parents";
-    return "administrators";
-};
-
-const requireManager = (user) => {
-    if (!canManageAnnouncements(user)) {
-        throw new ApiError(403, "You do not have permission to manage announcements.");
-    }
-};
-
-const createAnnouncement = async (data, schoolId, user, db) => {
-    requireSchool(schoolId);
-    requireManager(user);
-    return announcementModel.createAnnouncement(
-        { ...normalizeAnnouncement(data), created_by: user.id },
-        schoolId,
-        db
-    );
-};
-
-const getAnnouncements = async (schoolId, user, db) => {
-    requireSchool(schoolId);
-    if (canManageAnnouncements(user)) return announcementModel.getAnnouncementsForManagement(schoolId, db);
-    return announcementModel.getAnnouncementsForAudience(schoolId, getAudienceForUser(user), db);
-};
-
-const updateAnnouncement = async (id, data, schoolId, user, db) => {
-    requireSchool(schoolId);
-    requireManager(user);
-    const announcement = await announcementModel.updateAnnouncement(id, normalizeAnnouncement(data), schoolId, db);
-    if (!announcement) throw new ApiError(404, "Announcement not found.");
-    return announcement;
-};
-
-const deactivateAnnouncement = async (id, schoolId, user, db) => {
-    requireSchool(schoolId);
-    requireManager(user);
-    const announcement = await announcementModel.deactivateAnnouncement(id, schoolId, db);
-    if (!announcement) throw new ApiError(404, "Announcement not found.");
-    return announcement;
-};
-
-module.exports = { createAnnouncement, getAnnouncements, updateAnnouncement, deactivateAnnouncement };
+const model=require("../models/announcementModel");
+const ApiError=require("../utils/ApiError");
+const ALLOWED=new Set(["all","students","teachers","parents","administrators"]);
+const requireSchool=id=>{if(!id)throw new ApiError(403,"School context is required.");};
+const canManageAnnouncements=user=>{const role=String(user?.role_name||user?.role||"").trim().toLowerCase();const type=String(user?.admin_type||"").trim().toLowerCase();return role==="principal"||(role==="admin"&&["proprietor","principal","vice_principal"].includes(type));};
+const requireManager=user=>{if(!canManageAnnouncements(user))throw new ApiError(403,"You do not have permission to manage announcements.");};
+const ids=(value,label)=>{if(value===undefined||value===null)return [];if(!Array.isArray(value))throw new ApiError(400,label+" must be a list.");const result=[...new Set(value.map(Number))];if(result.some(id=>!Number.isInteger(id)||id<1))throw new ApiError(400,label+" contains an invalid ID.");return result;};
+const normalize=data=>{const title=String(data.title||"").trim(),message=String(data.message||"").trim(),audience=String(data.audience||"all").trim().toLowerCase(),publish=data.publish_date||new Date().toISOString().slice(0,10),expiry=data.expiry_date||null,isActive=data.is_active===undefined?true:data.is_active,isPinned=data.is_pinned===undefined?false:data.is_pinned,attachmentUrl=String(data.attachment_url||"").trim()||null,attachmentName=String(data.attachment_name||"").trim().slice(0,255)||null,classIds=ids(data.class_ids,"Class targets"),armIds=ids(data.arm_ids,"Arm targets"),studentIds=ids(data.student_ids,"Student targets");
+if(!title)throw new ApiError(400,"Announcement title is required.");if(title.length>200)throw new ApiError(400,"Announcement title must be 200 characters or fewer.");if(!message)throw new ApiError(400,"Announcement message is required.");if(!ALLOWED.has(audience))throw new ApiError(400,"Please select a valid audience.");if(!/^\d{4}-\d{2}-\d{2}$/.test(String(publish)))throw new ApiError(400,"A valid publication date is required.");if(expiry&&!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry)))throw new ApiError(400,"Please provide a valid expiry date.");if(expiry&&expiry<publish)throw new ApiError(400,"The expiry date cannot be earlier than the publication date.");if(typeof isActive!=="boolean"||typeof isPinned!=="boolean")throw new ApiError(400,"Announcement status must be active or inactive.");
+if(attachmentUrl){let parsed;try{parsed=new URL(attachmentUrl);}catch{throw new ApiError(400,"Attachment must be a valid web link.");}if(!["https:","http:"].includes(parsed.protocol)||parsed.username||parsed.password)throw new ApiError(400,"Attachment must be a valid HTTP or HTTPS link.");}
+if((classIds.length||armIds.length||studentIds.length)&&!["students","parents","all"].includes(audience))throw new ApiError(400,"Targeting is only available for students, parents, or everyone.");
+return {title,message,audience,publish_date:publish,expiry_date:expiry,is_active:isActive,is_pinned:isPinned,attachment_url:attachmentUrl,attachment_name:attachmentName,class_ids:classIds,arm_ids:armIds,student_ids:studentIds};};
+const createAnnouncement=async(data,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);const item=normalize(data);await model.validateTargets(item,schoolId,db);return model.createAnnouncement({...item,created_by:user.id},schoolId,db);};
+const getAnnouncements=async(schoolId,user,query={},db)=>{requireSchool(schoolId);const options={q:String(query.q||"").trim().slice(0,120),audience:String(query.audience||"").trim().toLowerCase(),status:String(query.status||"").trim().toLowerCase(),read:String(query.read||"").trim().toLowerCase(),pinned:String(query.pinned||"").trim().toLowerCase(),page:Math.max(1,parseInt(query.page,10)||1),limit:Math.max(1,Math.min(50,parseInt(query.limit,10)||10))};if(canManageAnnouncements(user))return {...await model.getAnnouncementsForManagement(schoolId,options,db),page:options.page,limit:options.limit};return {...await model.getAnnouncementsForAudience(schoolId,user,options,db),page:options.page,limit:options.limit};};
+const updateAnnouncement=async(id,data,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);const item=normalize(data);await model.validateTargets(item,schoolId,db);const result=await model.updateAnnouncement(id,item,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found.");return result;};
+const deactivateAnnouncement=async(id,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);const result=await model.deactivateAnnouncement(id,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found.");return result;};
+const setPinned=async(id,value,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);if(typeof value!=="boolean")throw new ApiError(400,"Pinned status must be true or false.");const result=await model.setPinned(id,value,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found.");return result;};
+const markRead=async(id,schoolId,user,db)=>{requireSchool(schoolId);const result=await model.markRead(id,user.id,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found or no longer available.");return result;};
+const getTargetOptions=async(schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);return model.getTargetOptions(schoolId,db);};
+module.exports={createAnnouncement,getAnnouncements,updateAnnouncement,deactivateAnnouncement,setPinned,markRead,getTargetOptions,canManageAnnouncements};
