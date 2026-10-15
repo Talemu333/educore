@@ -2,7 +2,7 @@ import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useExpenseSummary } from "@/hooks/useExpenses";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";\nimport AnnouncementNotifications from "@/components/AnnouncementNotifications";
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("en-NG", {
