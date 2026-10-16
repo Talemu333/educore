@@ -15,6 +15,11 @@ export const getCurrentUser = async () => {
     return response.data;
 };
 
+export const changeUsername = async (data) => {
+    const response = await api.post("/auth/change-username", data);
+    return response.data;
+};
+
 export const changePassword = async (data) => {
     const response = await api.post("/auth/change-password", data);
     return response.data;
