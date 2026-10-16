@@ -208,4 +208,4 @@ const resetPassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-module.exports = { login, logout, getCurrentUser, changePassword, resetPasswordByAdmin, requestPasswordReset, resetPassword };
+module.exports = { login, logout, getCurrentUser, changeUsername, changePassword, resetPasswordByAdmin, requestPasswordReset, resetPassword };
