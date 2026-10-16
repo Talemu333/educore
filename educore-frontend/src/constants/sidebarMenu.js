@@ -1,5 +1,6 @@
 import {
     LayoutDashboard,
+    UserRound,
     GraduationCap,
     Users,
     BookOpen,
@@ -33,6 +34,7 @@ const sidebarMenu = [
     { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL, BURSAR] },
     { title: "Dashboard", icon: LayoutDashboard, path: "/parent-dashboard", roles: [ROLES.PARENT] },
     { title: "Dashboard", icon: LayoutDashboard, path: "/teacher-dashboard", roles: [ROLES.TEACHER] },
+    { title: "My Profile", icon: UserRound, path: "/teacher-profile", roles: [ROLES.TEACHER] },
     { title: "Dashboard", icon: LayoutDashboard, path: "/student-dashboard", roles: [ROLES.STUDENT] },
     { title: "CBT Practice", icon: ClipboardList, path: "/student-cbt", roles: [ROLES.STUDENT] },
     { title: "My Results", icon: FileText, path: "/student-results", roles: [ROLES.STUDENT] },
