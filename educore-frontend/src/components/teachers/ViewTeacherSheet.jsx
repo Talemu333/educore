@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useTeacher } from "@/hooks/useTeacher";
 import { adminResetPassword } from "@/api/authApi";
@@ -19,7 +19,9 @@ function ViewTeacherSheet({ teacherId, open, onOpenChange }) {
     const [usernameDraft, setUsernameDraft] = useState("");
     const [savingUsername, setSavingUsername] = useState(false);
 
-    useState(() => { if (teacher?.username) setUsernameDraft(teacher.username); });
+    useEffect(() => {
+        if (teacher?.username) setUsernameDraft(teacher.username);
+    }, [teacher?.username]);
 
     const saveUsername = async () => {
         const username = usernameDraft.trim();
