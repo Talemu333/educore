@@ -20,6 +20,9 @@ import DashboardPage
 import TeacherDashboardPage
     from "../pages/dashboard/TeacherDashboardPage";
 
+import TeacherProfilePage
+    from "../pages/teachers/TeacherProfilePage";
+
 
 import StudentsPage
     from "../pages/students/StudentsPage";
@@ -1158,6 +1161,16 @@ function AppRouter() {
 
                             </ProtectedRoute>
 
+                        }
+                    />
+
+
+                    <Route
+                        path="/teacher-profile"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.TEACHER]}>
+                                <TeacherProfilePage />
+                            </ProtectedRoute>
                         }
                     />
 
