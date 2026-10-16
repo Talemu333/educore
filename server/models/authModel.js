@@ -164,6 +164,49 @@ const findUserByIdInSchool = async (id, schoolId) => {
     return result.rows[0];
 };
 
+const updateUsername = async (userId, schoolId, username) => {
+    const normalizedSchoolId = Number(schoolId);
+    if (!Number.isInteger(normalizedSchoolId) || normalizedSchoolId < 1) {
+        throw new Error("School context is required to update a username.");
+    }
+
+    const duplicate = await database.query(
+        `SELECT id FROM users
+         WHERE school_id = $1 AND LOWER(username) = LOWER($2) AND id <> $3
+         LIMIT 1`,
+        [normalizedSchoolId, username, userId]
+    );
+    if (duplicate.rows[0]) {
+        const error = new Error("That username is already in use in your school.");
+        error.statusCode = 409;
+        throw error;
+    }
+
+    const result = await database.query(
+        `UPDATE users
+         SET username = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2 AND school_id = $3
+         RETURNING id, username, email, school_id, admin_type`,
+        [username, userId, normalizedSchoolId]
+    );
+    const updatedUser = result.rows[0];
+    if (!updatedUser) return null;
+
+    // Keep the central account record in step with the school's dedicated
+    // database, which is used by some platform-level account workflows.
+    try {
+        await pool.query(
+            `UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND school_id = $3`,
+            [username, userId, normalizedSchoolId]
+        );
+    } catch (error) {
+        console.error("Failed to synchronize username to central account record:", error);
+    }
+
+    return updatedUser;
+};
+
 const updateLastLogin = async (userId) => {
     await database.query(
         `UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`,
@@ -253,6 +296,7 @@ module.exports = {
     findUserById,
     findUserByIdInSchool,
     updateLastLogin,
+    updateUsername,
     updatePassword,
     resetPasswordByAdmin,
     findUserByEmail,

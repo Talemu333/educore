@@ -46,6 +46,65 @@ const getCurrentUser = (req, res) => {
     res.json({ success: true, user: req.user });
 };
 
+const changeUsername = async (req, res, next) => {
+    try {
+        const roleName = String(req.user?.role_name || "").trim().toLowerCase();
+        const adminType = String(req.user?.admin_type || "").trim().toLowerCase().replace(/\\s+/g, "_");
+        if (roleName !== "admin" || adminType !== "proprietor") {
+            return res.status(403).json({
+                success: false,
+                message: "Only the school proprietor can change this username."
+            });
+        }
+
+        const currentPassword = String(req.body?.current_password || "");
+        const username = String(req.body?.new_username || "").trim();
+        if (!currentPassword) {
+            return res.status(400).json({ success: false, message: "Current password is required." });
+        }
+        if (!/^[a-zA-Z0-9._-]{4,30}$/.test(username)) {
+            return res.status(400).json({
+                success: false,
+                message: "Username must be 4–30 characters and may contain only letters, numbers, dots, underscores or hyphens."
+            });
+        }
+        if (username.toLowerCase() === String(req.user.username || "").toLowerCase()) {
+            return res.status(400).json({ success: false, message: "The new username must be different from your current username." });
+        }
+
+        const schoolId = Number(req.user.school_id);
+        if (!Number.isInteger(schoolId) || schoolId < 1) {
+            return res.status(400).json({ success: false, message: "School context is required." });
+        }
+
+        const user = await authModel.findUser(req.user.username);
+        if (!user || Number(user.id) !== Number(req.user.id)) {
+            return res.status(404).json({ success: false, message: "User account not found." });
+        }
+        if (!(await bcrypt.compare(currentPassword, user.password))) {
+            return res.status(401).json({ success: false, message: "Current password is incorrect." });
+        }
+
+        const updated = await authModel.updateUsername(req.user.id, schoolId, username);
+        if (!updated) return res.status(404).json({ success: false, message: "Unable to update this account." });
+
+        // Refresh the in-memory Passport user for this request. The session
+        // itself stores the user ID and school ID, so later requests reload
+        // the new username from the database.
+        req.user.username = updated.username;
+        return res.json({
+            success: true,
+            message: "Username updated successfully. Use your new username the next time you log in.",
+            user: { id: updated.id, username: updated.username, school_id: updated.school_id }
+        });
+    } catch (error) {
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({ success: false, message: error.message });
+        }
+        return next(error);
+    }
+};
+
 const changePassword = async (req, res, next) => {
     try {
         const { current_password, new_password } = req.body;
@@ -149,4 +208,4 @@ const resetPassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-module.exports = { login, logout, getCurrentUser, changePassword, resetPasswordByAdmin, requestPasswordReset, resetPassword };
+module.exports = { login, logout, getCurrentUser, changeUsername, changePassword, resetPasswordByAdmin, requestPasswordReset, resetPassword };
