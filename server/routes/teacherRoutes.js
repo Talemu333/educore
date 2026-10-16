@@ -8,8 +8,20 @@ const authorizeAdminType = require("../middlewares/authorizeAdminType");
 const validate = require("../middlewares/validate");
 const {createTeacherSchema,updateTeacherSchema} = require("../validators/teacherValidator");
 const ROLES = require("../constants/roles");
+const Joi = require("joi");
+
+const usernameSchema = Joi.object({
+    username: Joi.string().trim().min(4).max(50).required()
+});
 
 const academicAdmin = authorizeAdminType("proprietor", "principal", "vice_principal");
+
+router.get(
+    "/me",
+    authenticate,
+    authorize(ROLES.TEACHER),
+    teacherController.getMyProfile
+);
 
 router.post(
     "/",
@@ -23,6 +35,14 @@ router.get(
     "/",
     authenticate,
     teacherController.getTeachers
+);
+router.patch(
+    "/:id/username",
+    authenticate,
+    authorize(ROLES.ADMIN),
+    academicAdmin,
+    validate(usernameSchema),
+    teacherController.updateTeacherUsername
 );
 router.put(
     "/:id",
