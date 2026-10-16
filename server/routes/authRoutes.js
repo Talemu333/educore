@@ -45,6 +45,14 @@ router.get(
 );
 
 router.post(
+    "/change-username",
+    keepSuperAdminOnPlatformDatabase,
+    schoolDatabaseMiddleware,
+    authenticate,
+    authController.changeUsername
+);
+
+router.post(
     "/change-password",
     keepSuperAdminOnPlatformDatabase,
     schoolDatabaseMiddleware,
