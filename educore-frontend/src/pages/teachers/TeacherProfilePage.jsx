@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { UserRound, BriefcaseBusiness, Phone, Mail, MapPin, GraduationCap } from "lucide-react";
+import { UserRound, BriefcaseBusiness, Phone } from "lucide-react";
 import { getMyTeacherProfile } from "@/api/teacherApi";
 import { useAuth } from "@/context/AuthContext";
 
