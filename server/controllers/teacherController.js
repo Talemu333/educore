@@ -18,6 +18,20 @@ const getTeacherById = asyncHandler(async (req, res) => {
     res.json({ success: true, data: teacher });
 });
 
+const getMyProfile = asyncHandler(async (req, res) => {
+    const teacher = await teacherService.getMyProfile(req.user);
+    res.json({ success: true, data: teacher });
+});
+
+const updateTeacherUsername = asyncHandler(async (req, res) => {
+    const result = await teacherService.updateTeacherUsername(
+        req.params.id,
+        req.body.username,
+        getSchoolId(req)
+    );
+    res.json({ success: true, message: "Teacher username updated successfully.", data: result });
+});
+
 const updateTeacher = asyncHandler(async (req, res) => {
     const teacher = await teacherService.updateTeacher(req.params.id, req.body, getSchoolId(req));
     res.json({ success: true, message: "Teacher updated successfully.", data: teacher });
@@ -28,4 +42,4 @@ const deactivateTeacher = asyncHandler(async (req, res) => {
     res.json({ success: true, message: "Teacher deactivated successfully." });
 });
 
-module.exports = { createTeacher, getTeachers, getTeacherById, updateTeacher, deactivateTeacher };
+module.exports = { createTeacher, getTeachers, getTeacherById, getMyProfile, updateTeacherUsername, updateTeacher, deactivateTeacher };
