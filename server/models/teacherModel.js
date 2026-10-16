@@ -131,6 +131,18 @@ const deactivateTeacher = async (client, id, schoolId) => {
     return result.rows[0];
 };
 
+const updateTeacherUsername = async (client, teacherId, username, schoolId) => {
+    const result = await client.query(`
+        UPDATE users u
+        SET username = $1, updated_at = CURRENT_TIMESTAMP
+        FROM teachers t
+        WHERE t.id = $2 AND t.school_id = $3
+          AND t.user_id = u.id AND u.school_id = $3
+        RETURNING u.id, u.username;
+    `, [username, teacherId, schoolId]);
+    return result.rows[0];
+};
+
 const getTeacherByUserId = async (userId, schoolId) => {
     const result = await pool.query(`
         SELECT t.* FROM teachers t
@@ -147,5 +159,6 @@ module.exports = {
     getTeacherById,
     updateTeacher,
     deactivateTeacher,
-    getTeacherByUserId
+    getTeacherByUserId,
+    updateTeacherUsername
 };
