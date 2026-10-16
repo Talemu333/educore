@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useTeacher } from "@/hooks/useTeacher";
 import { adminResetPassword } from "@/api/authApi";
+import { updateTeacherUsername } from "@/api/teacherApi";
+import { Input } from "@/components/ui/Input";
 import toast from "react-hot-toast";
 import { Copy, KeyRound } from "lucide-react";
 
@@ -14,6 +16,29 @@ function ViewTeacherSheet({ teacherId, open, onOpenChange }) {
     const { data: teacher, isLoading, refetch } = useTeacher(teacherId, open);
     const [resetting, setResetting] = useState(false);
     const [credentials, setCredentials] = useState(null);
+    const [usernameDraft, setUsernameDraft] = useState("");
+    const [savingUsername, setSavingUsername] = useState(false);
+
+    useState(() => { if (teacher?.username) setUsernameDraft(teacher.username); });
+
+    const saveUsername = async () => {
+        const username = usernameDraft.trim();
+        if (username.length < 4 || username.length > 50) {
+            toast.error("Username must be between 4 and 50 characters.");
+            return;
+        }
+        if (username === teacher?.username) return;
+        setSavingUsername(true);
+        try {
+            await updateTeacherUsername(teacher.id, username);
+            toast.success("Teacher username updated.");
+            await refetch();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update username.");
+        } finally {
+            setSavingUsername(false);
+        }
+    };
 
     const resetTeacherPassword = async () => {
         if (!teacher?.user_id) return;
@@ -60,7 +85,13 @@ function ViewTeacherSheet({ teacherId, open, onOpenChange }) {
                                         {resetting ? "Generating..." : "Reset Password"}
                                     </button>
                                 </div>
-                                <DetailRow label="Username" value={teacher.username} />
+                                <div className="grid grid-cols-1 gap-2 border-b border-slate-100 py-3 sm:grid-cols-3 sm:items-center sm:gap-4">
+                                    <label htmlFor="teacher-username" className="font-medium text-slate-600">Username</label>
+                                    <div className="flex min-w-0 flex-col gap-2 sm:col-span-2 sm:flex-row">
+                                        <Input id="teacher-username" value={usernameDraft || teacher.username || ""} onChange={(event) => setUsernameDraft(event.target.value)} maxLength={50} className="min-w-0 flex-1" />
+                                        <button type="button" onClick={saveUsername} disabled={savingUsername || (usernameDraft.trim() || teacher.username) === teacher.username} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{savingUsername ? "Saving..." : "Save Username"}</button>
+                                    </div>
+                                </div>
                                 <DetailRow label="Password" value={teacher.must_change_password ? "Temporary password — change required" : "Password set by user"} />
                                 <p className="mt-4 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">Passwords are never stored or displayed as plain text. If the original temporary password is forgotten, use Reset Password to generate a new one.</p>
                             </section>
