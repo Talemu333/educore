@@ -115,7 +115,7 @@ function SidebarItem({
                 >
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                         <Icon className="shrink-0" size={17} strokeWidth={1.9} />
-                        <span className="min-w-0 flex-1 whitespace-nowrap text-left text-[12px] tracking-tight">{title}</span>
+                        <span className="flex-none whitespace-nowrap text-left text-[11px] leading-none tracking-tight">{title}</span>
                     </span>
 
                     {isOpen ? (
