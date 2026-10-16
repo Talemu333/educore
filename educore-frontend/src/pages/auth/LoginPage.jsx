@@ -11,7 +11,10 @@ function LoginPage() {
     const { loginUser } = useAuth();
     const { data: schoolSettings, isLoading: isSchoolLoading } = useSchoolSettings();
 
-    const schoolName = schoolSettings?.school_name || "EduProw";
+    const hostname = window.location.hostname.toLowerCase();
+    const isEduProwPlatformLogin = ["eduprow.com", "www.eduprow.com"].includes(hostname);
+    // Keep school portals from showing generic EduProw branding while settings load.
+    const schoolName = schoolSettings?.school_name || (isEduProwPlatformLogin ? "EduProw" : "School Portal");
     const schoolLogo = schoolSettings?.school_logo;
     const isSchoolPortal = Boolean(schoolSettings?.school_name);
 
