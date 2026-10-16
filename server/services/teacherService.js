@@ -107,6 +107,33 @@ const updateTeacher = async (id, teacherData, schoolId) => {
     });
 };
 
+const getMyProfile = async (user) => {
+    const schoolId = user?.school_id;
+    if (!schoolId || !user?.id) throw new ApiError(403, "School context is required.");
+    const teacher = await teacherModel.getTeacherByUserId(user.id, schoolId);
+    if (!teacher) throw new ApiError(404, "Teacher profile not found.");
+    return teacherModel.getTeacherById(teacher.id, schoolId);
+};
+
+const updateTeacherUsername = async (id, username, schoolId) => {
+    if (!schoolId) throw new ApiError(403, "School context is required.");
+    const normalizedUsername = String(username || "").trim();
+    if (normalizedUsername.length < 4 || normalizedUsername.length > 50) {
+        throw new ApiError(400, "Username must be between 4 and 50 characters.");
+    }
+    return withTransaction(async (client) => {
+        const teacher = await teacherModel.getTeacherById(id, schoolId);
+        if (!teacher) throw new ApiError(404, "Teacher not found.");
+        const existingUser = await userModel.getUserByUsername(normalizedUsername, schoolId, client);
+        if (existingUser && Number(existingUser.id) !== Number(teacher.user_id)) {
+            throw new ApiError(409, "Username already exists in this school.");
+        }
+        const updated = await teacherModel.updateTeacherUsername(client, id, normalizedUsername, schoolId);
+        if (!updated) throw new ApiError(404, "Teacher account not found.");
+        return updated;
+    });
+};
+
 const deactivateTeacher = async (id, schoolId) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
     return withTransaction(async (client) => {
@@ -116,4 +143,4 @@ const deactivateTeacher = async (id, schoolId) => {
     });
 };
 
-module.exports = { createTeacher, getTeachers, getTeacherById, updateTeacher, deactivateTeacher }; 
+module.exports = { createTeacher, getTeachers, getTeacherById, getMyProfile, updateTeacher, updateTeacherUsername, deactivateTeacher }; 
