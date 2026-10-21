@@ -18,6 +18,7 @@ function Home() {
 
     const [gallery, setGallery] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
     const secondaryColor = settings?.secondary_color || "#D9B351";
@@ -71,7 +72,7 @@ function Home() {
     }, [carouselSlides.length]);
 
     useEffect(() => {
-        if (carouselSlides.length < 2) return undefined;
+        if (carouselSlides.length < 2 || isCarouselPaused) return undefined;
 
         const timer = window.setInterval(() => {
             setCurrentSlide(previous =>
@@ -80,7 +81,7 @@ function Home() {
         }, 5000);
 
         return () => window.clearInterval(timer);
-    }, [carouselSlides.length]);
+    }, [carouselSlides.length, isCarouselPaused]);
 
     const goToSlide = index => {
         setCurrentSlide(
@@ -186,162 +187,172 @@ function Home() {
                 </div>
             )}
 
-            <section className="relative overflow-hidden">
-                <div className="grid lg:min-h-[650px] lg:grid-cols-2">
-                    <div className="flex items-center bg-slate-950 px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20">
-                        <div className="mx-auto w-full max-w-xl">
-                            <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8">
-                                {settings?.school_logo ? (
-                                    <img
-                                        src={settings.school_logo}
-                                        alt={`${schoolName} logo`}
-                                        className="h-12 w-12 shrink-0 rounded-xl bg-white object-contain p-1 shadow-lg sm:h-14 sm:w-14"
-                                    />
-                                ) : (
-                                    <div
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-extrabold shadow-lg sm:h-14 sm:w-14 sm:text-xl"
-                                        style={{ color: primaryColor }}
-                                    >
-                                        {schoolName.slice(0, 2).toUpperCase()}
-                                    </div>
-                                )}
+            <section
+                className="relative isolate min-h-[620px] overflow-hidden bg-slate-950 text-white sm:min-h-[700px] lg:min-h-[min(88vh,900px)]"
+                onMouseEnter={() => setIsCarouselPaused(true)}
+                onMouseLeave={() => setIsCarouselPaused(false)}
+                onFocusCapture={() => setIsCarouselPaused(true)}
+                onBlurCapture={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setIsCarouselPaused(false);
+                    }
+                }}
+            >
+                {activeSlide?.image_url ? (
+                    <div className="absolute inset-0">
+                        {carouselSlides.map((slide, index) => (
+                            <img
+                                key={slide.id || slide.image_url || index}
+                                src={slide.image_url}
+                                alt={slide.title || `${schoolName} school`}
+                                aria-hidden={index !== currentSlide}
+                                className={`absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-1000 ease-out motion-reduce:transition-none ${
+                                    index === currentSlide
+                                        ? "scale-100 opacity-100"
+                                        : "scale-105 opacity-0"
+                                }`}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div
+                        className="absolute inset-0"
+                        style={{ background: `linear-gradient(135deg, ${primaryColor}, #0f172a 82%)` }}
+                    />
+                )}
 
-                                <div className="min-w-0">
-                                    <p className="break-words text-sm font-bold leading-tight sm:text-lg">
-                                        {schoolName}
-                                    </p>
-                                    {settings?.school_level && (
-                                        <p className="truncate text-xs text-slate-400">
-                                            {settings.school_level}
-                                        </p>
-                                    )}
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/65 to-slate-950/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-slate-950/20" />
+
+                <div className="relative z-10 mx-auto flex min-h-[620px] w-full max-w-[1600px] flex-col justify-center px-5 pb-28 pt-20 sm:min-h-[700px] sm:px-8 sm:pb-32 sm:pt-24 lg:min-h-[min(88vh,900px)] lg:px-16 xl:px-24">
+                    <div className="max-w-3xl">
+                        <div className="mb-8 flex min-w-0 items-center gap-3 sm:mb-10">
+                            {settings?.school_logo ? (
+                                <img
+                                    src={settings.school_logo}
+                                    alt={`${schoolName} logo`}
+                                    className="h-12 w-12 shrink-0 rounded-xl border border-white/20 bg-white object-contain p-1 shadow-lg sm:h-14 sm:w-14"
+                                />
+                            ) : (
+                                <div
+                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white text-lg font-extrabold shadow-lg sm:h-14 sm:w-14 sm:text-xl"
+                                    style={{ color: primaryColor }}
+                                >
+                                    {schoolName.slice(0, 2).toUpperCase()}
                                 </div>
-                            </div>
+                            )}
 
-                            <p
-                                className="mb-4 text-xs font-bold uppercase tracking-[0.18em] sm:mb-5 sm:text-sm sm:tracking-[0.25em]"
-                                style={{ color: secondaryColor }}
-                            >
-                                {hero.section_subtitle || "Welcome to Our School"}
-                            </p>
-
-                            <h1 className="break-words text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-                                {hero.section_title || "Excellence in Education"}
-                            </h1>
-
-                            <p className="mt-5 max-w-lg text-sm leading-7 text-slate-300 sm:mt-6 sm:text-lg sm:leading-8">
-                                {hero.section_content ||
-                                    "Tell visitors about your school, its educational approach, and what makes your school a place where learners can grow and thrive."}
-                            </p>
-
-                            <div className="mt-7 sm:mt-8">
-                                {hero.button_text && hero.button_url ? (
-                                    <Link
-                                        to={hero.button_url}
-                                        className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                                    >
-                                        {hero.button_text}
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to="/about"
-                                        className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                                    >
-                                        Explore Our School
-                                    </Link>
+                            <div className="min-w-0">
+                                <p className="break-words text-sm font-bold leading-tight sm:text-lg">{schoolName}</p>
+                                {settings?.school_level && (
+                                    <p className="mt-1 text-xs text-white/70 sm:text-sm">{settings.school_level}</p>
                                 )}
                             </div>
                         </div>
+
+                        <p
+                            className="mb-4 text-xs font-bold uppercase tracking-[0.2em] sm:mb-5 sm:text-sm sm:tracking-[0.28em]"
+                            style={{ color: secondaryColor }}
+                        >
+                            {hero.section_subtitle || "Welcome to Our School"}
+                        </p>
+
+                        <h1 className="max-w-3xl break-words text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl">
+                            {hero.section_title || "Excellence in Education"}
+                        </h1>
+
+                        <p className="mt-5 max-w-2xl text-base leading-7 text-white/85 sm:mt-7 sm:text-lg sm:leading-8 lg:text-xl">
+                            {hero.section_content ||
+                                "Tell visitors about your school, its educational approach, and what makes your school a place where learners can grow and thrive."}
+                        </p>
+
+                        <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
+                            <Link
+                                to={hero.button_text && hero.button_url ? hero.button_url : "/about"}
+                                className="inline-flex min-h-12 items-center justify-center rounded-xl px-7 py-3.5 text-center text-sm font-bold shadow-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:w-auto"
+                                style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                            >
+                                {hero.button_text || "Explore Our School"}
+                                <span className="ml-2" aria-hidden="true">→</span>
+                            </Link>
+                            <Link
+                                to="/admissions"
+                                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/45 bg-white/10 px-7 py-3.5 text-center text-sm font-bold text-white backdrop-blur-sm transition duration-300 hover:bg-white/20 sm:w-auto"
+                            >
+                                Discover Admissions
+                            </Link>
+                        </div>
                     </div>
 
-                    <div className="relative min-h-[420px] overflow-hidden bg-slate-900 sm:min-h-[500px] lg:min-h-full">
-                        {activeSlide?.image_url ? (
-                            <div className="absolute inset-0">
-                                {carouselSlides.map((slide, index) => (
-                                    <img
-                                        key={slide.id || slide.image_url || index}
-                                        src={slide.image_url}
-                                        alt={slide.title || `${schoolName} school`}
-                                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
-                                            index === currentSlide
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div
-                                className="absolute inset-0"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                <div className="flex h-full items-center justify-center p-8 text-center text-white/80">
-                                    <p className="max-w-sm text-sm leading-6 sm:text-base">
-                                        Add up to four published images in Website Management → Gallery to create the Home page carousel.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="absolute inset-0 bg-slate-950/25" />
-
-                        {carouselSlides.length > 1 && (
-                            <>
-                                <button
-                                    type="button"
-                                    aria-label="Previous slide"
-                                    onClick={() => goToSlide(currentSlide - 1)}
-                                    className="absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
-                                >
-                                    ‹
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Next slide"
-                                    onClick={() => goToSlide(currentSlide + 1)}
-                                    className="absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
-                                >
-                                    ›
-                                </button>
-
-                                <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
-                                    {carouselSlides.map((slide, index) => (
-                                        <button
-                                            key={slide.id || index}
-                                            type="button"
-                                            aria-label={`Go to slide ${index + 1}`}
-                                            aria-current={index === currentSlide}
-                                            onClick={() => goToSlide(index)}
-                                            className={`h-2.5 rounded-full transition-all ${
-                                                index === currentSlide
-                                                    ? "w-7 bg-white"
-                                                    : "w-2.5 bg-white/55 hover:bg-white/80"
-                                            }`}
-                                        />
-                                    ))}
-                                </div>
-                            </>
-                        )}
-
-                        <div className="absolute bottom-5 left-4 right-4 z-10 rounded-2xl bg-white/95 p-4 shadow-2xl backdrop-blur sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
-                            <p
-                                className="text-xs font-bold uppercase tracking-wider"
-                                style={{ color: secondaryColor }}
-                            >
+                    {(promise.section_title || promise.section_content) && (
+                        <div className="mt-10 max-w-xl rounded-2xl border border-white/20 bg-slate-950/45 p-5 shadow-2xl backdrop-blur-md sm:mt-12 sm:p-6">
+                            <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: secondaryColor }}>
                                 {promise.section_subtitle || "Our Commitment"}
                             </p>
-                            <p className="mt-2 text-base font-bold leading-6 text-slate-900 sm:text-lg">
-                                {promise.section_title || "Shape this section around your school's promise"}
+                            <p className="mt-2 text-lg font-bold leading-6 sm:text-xl">
+                                {promise.section_title || "Committed to every learner"}
                             </p>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">
-                                {promise.section_content ||
-                                    "Use this space to describe the commitment your school makes to learners, parents, and the wider community."}
-                            </p>
+                            {promise.section_content && (
+                                <p className="mt-2 text-sm leading-6 text-white/75">{promise.section_content}</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {carouselSlides.length > 1 && (
+                    <div className="absolute bottom-5 left-5 right-5 z-20 flex items-center justify-between gap-4 sm:bottom-8 sm:left-8 sm:right-8 lg:left-16 lg:right-16 xl:left-24 xl:right-24">
+                        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-3 py-2 backdrop-blur-md">
+                            {carouselSlides.map((slide, index) => (
+                                <button
+                                    key={slide.id || slide.image_url || index}
+                                    type="button"
+                                    aria-label={`Go to slide ${index + 1}`}
+                                    aria-current={index === currentSlide ? "true" : undefined}
+                                    onClick={() => {
+                                        goToSlide(index);
+                                        setIsCarouselPaused(true);
+                                    }}
+                                    className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                                        index === currentSlide ? "w-8 bg-white" : "w-2.5 bg-white/55 hover:bg-white/90"
+                                    }`}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                aria-label="Previous slide"
+                                onClick={() => {
+                                    goToSlide(currentSlide - 1);
+                                    setIsCarouselPaused(true);
+                                }}
+                                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/35 text-2xl text-white backdrop-blur-md transition hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                            ><span aria-hidden="true">‹</span></button>
+                            <button
+                                type="button"
+                                aria-label="Next slide"
+                                onClick={() => {
+                                    goToSlide(currentSlide + 1);
+                                    setIsCarouselPaused(true);
+                                }}
+                                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/35 text-2xl text-white backdrop-blur-md transition hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                            ><span aria-hidden="true">›</span></button>
+                            <button
+                                type="button"
+                                aria-label={isCarouselPaused ? "Resume automatic slides" : "Pause automatic slides"}
+                                onClick={() => setIsCarouselPaused(paused => !paused)}
+                                className="hidden h-11 items-center justify-center rounded-full border border-white/25 bg-black/35 px-4 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
+                            >{isCarouselPaused ? "Play" : "Pause"}</button>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {carouselSlides.length === 0 && (
+                    <p className="absolute bottom-5 right-5 z-20 max-w-xs text-right text-xs text-white/65 sm:bottom-8 sm:right-8">
+                        Add published photos in Website Management → Gallery to create your school photo carousel.
+                    </p>
+                )}
             </section>
 
             <section className="px-5 py-14 sm:px-8 sm:py-20 lg:px-16">
