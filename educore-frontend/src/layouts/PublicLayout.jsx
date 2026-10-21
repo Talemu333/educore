@@ -262,78 +262,81 @@ function PublicLayout() {
                 <Outlet />
             </main>
 
-            <footer className="relative overflow-hidden border-t border-slate-800 bg-slate-950 text-white">
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${primaryColor}, ${secondaryColor}, transparent)` }} />
-                <div className="mx-auto max-w-7xl px-5 py-12 sm:px-6 sm:py-16 lg:px-8">
-                    <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12">
-                        <div className="lg:col-span-5">
+            <footer className="mt-16 text-white">
+                <section className="relative overflow-hidden" style={{ backgroundColor: primaryColor }}>
+                    <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full border-[32px] border-white/10" />
+                    <div className="pointer-events-none absolute -bottom-28 right-1/4 h-56 w-56 rounded-full border-[24px] border-white/10" />
+                    <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-5 py-10 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8 lg:py-12">
+                        <div className="max-w-2xl">
+                            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">Your future starts here</p>
+                            <h2 className="mt-2 text-2xl font-extrabold leading-tight sm:text-3xl">Building knowledge. Shaping character. Inspiring success.</h2>
+                            <p className="mt-3 max-w-xl text-sm leading-6 text-white/80">Discover a learning community committed to helping every student grow and achieve their potential.</p>
+                        </div>
+                        <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+                            <Link to={publicPath("/admissions")} className="inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-bold shadow-sm transition hover:-translate-y-0.5" style={{ backgroundColor: secondaryColor, color: "#172033" }}>
+                                Explore Admissions <span className="ml-2" aria-hidden="true">→</span>
+                            </Link>
+                            <Link to={publicPath("/contact")} className="inline-flex items-center justify-center rounded-lg border border-white/50 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10">
+                                Contact the School
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+
+                <div className="bg-slate-950">
+                    <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:py-14">
+                        <div className="lg:col-span-4">
                             <Link to={publicPath("/")} className="inline-flex max-w-full items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
                                 {settings.school_logo ? (
-                                    <img src={settings.school_logo} alt={`${schoolName} logo`} className="h-14 w-14 shrink-0 rounded-xl bg-white object-contain p-1.5 shadow-sm" />
+                                    <img src={settings.school_logo} alt={`${schoolName} logo`} className="h-14 w-14 shrink-0 rounded-xl bg-white object-contain p-1.5" />
                                 ) : (
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xl font-extrabold text-white shadow-sm" style={{ backgroundColor: primaryColor }}>
-                                        {schoolInitial}
-                                    </div>
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xl font-extrabold text-white" style={{ backgroundColor: primaryColor }}>{schoolInitial}</div>
                                 )}
                                 <div className="min-w-0">
-                                    <h2 className="break-words text-lg font-extrabold tracking-tight text-white sm:text-xl">{schoolName}</h2>
+                                    <h2 className="break-words text-lg font-extrabold leading-snug text-white sm:text-xl">{schoolName}</h2>
                                     {settings.school_motto && <p className="mt-1 break-words text-xs leading-5 text-slate-400">{settings.school_motto}</p>}
                                 </div>
                             </Link>
-                            {footerDescription && (
-                                <p className="mt-5 max-w-md whitespace-pre-line text-sm leading-7 text-slate-400">{footerDescription}</p>
-                            )}
-                            <p className="mt-5 text-xs leading-5 text-slate-500">A place to learn, grow and build a brighter future.</p>
+                            {footerDescription && <p className="mt-5 max-w-sm whitespace-pre-line text-sm leading-7 text-slate-400">{footerDescription}</p>}
+                            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-500">A community where learners are encouraged to grow, discover their strengths, and prepare for the future.</p>
                         </div>
 
-                        <div className="lg:col-span-3">
-                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Explore</h3>
-                            <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-1">
-                                {NAVIGATION.map((item) => (
-                                    <Link key={item.path} to={publicPath(item.path)} className="w-fit text-sm text-slate-400 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-                                        {item.label}
-                                    </Link>
+                        <div className="lg:col-span-2">
+                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Quick links</h3>
+                            <div className="mt-5 flex flex-col items-start gap-3">
+                                {NAVIGATION.filter((item) => ["/", "/about", "/academics", "/news", "/events"].includes(item.path)).map((item) => (
+                                    <Link key={item.path} to={publicPath(item.path)} className="text-sm text-slate-400 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">{item.label}</Link>
                                 ))}
-                                <Link to={publicPath("/login")} className="w-fit text-sm font-semibold transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white" style={{ color: secondaryColor }}>
-                                    Portal Sign In <span aria-hidden="true">↗</span>
-                                </Link>
+                            </div>
+                        </div>
+
+                        <div className="lg:col-span-2">
+                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Admissions</h3>
+                            <div className="mt-5 flex flex-col items-start gap-3">
+                                <Link to={publicPath("/admissions")} className="text-sm text-slate-400 transition-colors hover:text-white">Admission information</Link>
+                                <Link to={publicPath("/gallery")} className="text-sm text-slate-400 transition-colors hover:text-white">School gallery</Link>
+                                <Link to={publicPath("/contact")} className="text-sm text-slate-400 transition-colors hover:text-white">Contact us</Link>
+                                <Link to={publicPath("/login")} className="inline-flex items-center gap-2 pt-1 text-sm font-bold transition-colors hover:opacity-80" style={{ color: secondaryColor }}>Student & Staff Portal <span aria-hidden="true">↗</span></Link>
                             </div>
                         </div>
 
                         <div className="lg:col-span-4">
-                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Get in touch</h3>
-                            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">Have a question about our school? We would be happy to hear from you.</p>
-                            <div className="mt-5 space-y-4 text-sm">
-                                {schoolAddress && (
-                                    <div className="flex items-start gap-3 text-slate-400">
-                                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 20%, transparent)`, color: secondaryColor }} aria-hidden="true">⌖</span>
-                                        <span className="pt-1 leading-6">{schoolAddress}</span>
-                                    </div>
-                                )}
-                                {schoolPhone && (
-                                    <a href={`tel:${schoolPhone.replace(/[^+\d]/g, "")}`} className="flex min-w-0 items-start gap-3 text-slate-400 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 20%, transparent)`, color: secondaryColor }} aria-hidden="true">☎</span>
-                                        <span className="break-words pt-1">{schoolPhone}</span>
-                                    </a>
-                                )}
-                                {schoolEmail && (
-                                    <a href={`mailto:${schoolEmail}`} className="flex min-w-0 items-start gap-3 text-slate-400 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 20%, transparent)`, color: secondaryColor }} aria-hidden="true">@</span>
-                                        <span className="break-all pt-1">{schoolEmail}</span>
-                                    </a>
-                                )}
-                                {!schoolAddress && !schoolPhone && !schoolEmail && (
-                                    <p className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-500">
-                                        School contact details will appear here when added in School Settings.
-                                    </p>
-                                )}
+                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Contact information</h3>
+                            <p className="mt-4 text-sm leading-6 text-slate-400">We welcome your questions and enquiries. Reach out to the school using the details below.</p>
+                            <div className="mt-5 space-y-4">
+                                {schoolAddress && <div className="flex items-start gap-3 text-sm text-slate-400"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: secondaryColor }} aria-hidden="true">⌖</span><span className="pt-1 leading-6">{schoolAddress}</span></div>}
+                                {schoolPhone && <a href={`tel:${schoolPhone.replace(/[^+\\d]/g, "")}`} className="flex items-start gap-3 text-sm text-slate-400 transition-colors hover:text-white"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: secondaryColor }} aria-hidden="true">☎</span><span className="pt-2">{schoolPhone}</span></a>}
+                                {schoolEmail && <a href={`mailto:${schoolEmail}`} className="flex min-w-0 items-start gap-3 text-sm text-slate-400 transition-colors hover:text-white"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm" style={{ backgroundColor: "rgba(255,255,255,0.08)", color: secondaryColor }} aria-hidden="true">@</span><span className="break-all pt-2">{schoolEmail}</span></a>}
+                                {!schoolAddress && !schoolPhone && !schoolEmail && <p className="text-sm leading-6 text-slate-500">Contact details will appear here when added in School Settings.</p>}
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs leading-5 text-slate-500 sm:mt-14 sm:flex-row sm:items-center sm:justify-between">
+                <div className="bg-black">
+                    <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs leading-5 text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
                         <p>© {new Date().getFullYear()} {schoolName}. All rights reserved.</p>
-                        <p>Website designed for the school community <span className="px-1 text-slate-700">·</span> Powered by <a href="https://eduprow.com" className="font-semibold text-slate-300 transition-colors hover:text-white">EduProw</a></p>
+                        <p>Designed for the school community <span className="px-1 text-slate-700">·</span> Powered by <a href="https://eduprow.com" className="font-semibold text-slate-300 transition-colors hover:text-white">EduProw</a></p>
                     </div>
                 </div>
             </footer>
