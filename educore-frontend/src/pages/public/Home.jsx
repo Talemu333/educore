@@ -217,7 +217,7 @@ function Home() {
             )}
 
             <section
-                className="relative isolate h-[80vh] min-h-0 overflow-hidden bg-slate-950 text-white"
+                className="relative isolate h-[90vh] min-h-0 overflow-hidden bg-slate-950 text-white"
             >
                 {activeSlide?.image_url ? (
                     <div className="absolute inset-0 z-0">
@@ -240,9 +240,9 @@ function Home() {
                     />
                 )}
 
-                <div className="absolute inset-0 z-10 bg-slate-950/20" />
-                <div className="absolute inset-0 z-10 bg-gradient-to-r from-slate-950/55 via-slate-950/30 to-slate-950/10" />
-                <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950/30 via-slate-950/5 to-slate-950/10" />
+                <div className="absolute inset-0 z-10 bg-slate-950/10" />
+                <div className="absolute inset-0 z-10 bg-gradient-to-r from-slate-950/40 via-slate-950/20 to-slate-950/5" />
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950/20 via-slate-950/0 to-slate-950/5" />
 
                 <div className="relative z-20 mx-auto flex min-h-[70vh] w-full max-w-[1600px] flex-col justify-center sm:min-h-0 sm:h-full px-5 pb-28 pt-20 sm:px-8 sm:pb-32 sm:pt-24 lg:px-16 xl:px-24">
                     <div className="max-w-3xl">
