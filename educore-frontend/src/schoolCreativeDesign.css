@@ -48,8 +48,8 @@
     background: color-mix(in srgb, var(--school-shape-primary) 7%, transparent);
 }
 
-.school-creative-site main > div > section:nth-of-type(2) > div,
-.school-creative-site main > div > section:first-of-type > div {
+.school-creative-site main > div > section:nth-of-type(2) > div:not(.absolute),
+.school-creative-site main > div > section:first-of-type > div:not(.absolute) {
     position: relative;
     z-index: 1;
 }
@@ -189,9 +189,9 @@
     transform: rotate(-18deg);
 }
 
-.school-creative-site main > div > section:nth-of-type(2) > *,
-.school-creative-site main > div > section:nth-of-type(3) > *,
-.school-creative-site main > div > section:nth-of-type(4) > * {
+.school-creative-site main > div > section:nth-of-type(2) > *:not(.absolute),
+.school-creative-site main > div > section:nth-of-type(3) > *:not(.absolute),
+.school-creative-site main > div > section:nth-of-type(4) > *:not(.absolute) {
     position: relative;
     z-index: 1;
 }
