@@ -748,19 +748,45 @@ textarea:focus {
     }
 }
 
-/* Give the two-column school login screen a smooth wave-shaped divider.
-   The pale wave belongs to the form side and only appears on desktop. */
+/* Responsive wave divider for the school login layout.
+   On stacked screens it separates the hero from the form horizontally;
+   on wide screens it separates the two columns vertically. */
+.school-auth-hero {
+    position: relative;
+    isolation: isolate;
+}
+
+.school-auth-hero::after {
+    content: "";
+    position: absolute;
+    z-index: 20;
+    pointer-events: none;
+    background: #f8fafc;
+}
+
+/* Mobile and tablet: the login form follows beneath the hero. */
+@media (max-width: 1023px) {
+    .school-auth-hero::after {
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: clamp(1.5rem, 5vw, 2.75rem);
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 24 C180 70 360 4 540 32 S900 72 1080 30 S1320 4 1440 34 L1440 80 L0 80 Z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 24 C180 70 360 4 540 32 S900 72 1080 30 S1320 4 1440 34 L1440 80 L0 80 Z'/%3E%3C/svg%3E");
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+    }
+}
+
+/* Desktop: the form sits to the right of the hero. */
 @media (min-width: 1024px) {
     .school-auth-hero::after {
-        content: "";
-        position: absolute;
-        z-index: 20;
         top: 0;
         right: -1px;
         bottom: 0;
         width: clamp(2rem, 4vw, 4rem);
-        background: #f8fafc;
-        pointer-events: none;
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 0 C100 8 0 17 45 25 S100 42 45 50 S0 67 45 75 S100 92 0 100 L100 100 L100 0 Z'/%3E%3C/svg%3E");
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 0 C100 8 0 17 45 25 S100 42 45 50 S0 67 45 75 S100 92 0 100 L100 100 L100 0 Z'/%3E%3C/svg%3E");
         -webkit-mask-size: 100% 100%;
