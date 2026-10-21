@@ -189,14 +189,6 @@ function Home() {
 
             <section
                 className="relative isolate min-h-[620px] overflow-hidden bg-slate-950 text-white sm:min-h-[700px] lg:min-h-[min(88vh,900px)]"
-                onMouseEnter={() => setIsCarouselPaused(true)}
-                onMouseLeave={() => setIsCarouselPaused(false)}
-                onFocusCapture={() => setIsCarouselPaused(true)}
-                onBlurCapture={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget)) {
-                        setIsCarouselPaused(false);
-                    }
-                }}
             >
                 {activeSlide?.image_url ? (
                     <div className="absolute inset-0">
@@ -342,7 +334,7 @@ function Home() {
                                 type="button"
                                 aria-label={isCarouselPaused ? "Resume automatic slides" : "Pause automatic slides"}
                                 onClick={() => setIsCarouselPaused(paused => !paused)}
-                                className="hidden h-11 items-center justify-center rounded-full border border-white/25 bg-black/35 px-4 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
+                                className="inline-flex h-11 items-center justify-center rounded-full border border-white/25 bg-black/35 px-3 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-4"
                             >{isCarouselPaused ? "Play" : "Pause"}</button>
                         </div>
                     </div>
