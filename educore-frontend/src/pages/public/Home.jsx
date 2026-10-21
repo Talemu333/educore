@@ -217,7 +217,7 @@ function Home() {
             )}
 
             <section
-                className="relative isolate min-h-[620px] overflow-hidden bg-slate-950 text-white sm:min-h-[700px] lg:min-h-[min(88vh,900px)]"
+                className="relative isolate min-h-[80vh] overflow-hidden bg-slate-950 text-white"
             >
                 {activeSlide?.image_url ? (
                     <div className="absolute inset-0">
@@ -245,7 +245,7 @@ function Home() {
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-slate-950/30 to-slate-950/5" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-slate-950/10" />
 
-                <div className="relative z-10 mx-auto flex min-h-[620px] w-full max-w-[1600px] flex-col justify-center px-5 pb-28 pt-20 sm:min-h-[700px] sm:px-8 sm:pb-32 sm:pt-24 lg:min-h-[min(88vh,900px)] lg:px-16 xl:px-24">
+                <div className="relative z-10 mx-auto flex min-h-[80vh] w-full max-w-[1600px] flex-col justify-center px-5 pb-28 pt-20 sm:px-8 sm:pb-32 sm:pt-24 lg:px-16 xl:px-24">
                     <div className="max-w-3xl">
                         <div className="mb-8 flex min-w-0 items-center gap-3 sm:mb-10">
                             {settings?.school_logo ? (
