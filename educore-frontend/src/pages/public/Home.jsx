@@ -264,7 +264,7 @@ function Home() {
                                 <Link
                                     to={hero.button_text && hero.button_url ? hero.button_url : "/about"}
                                     className="inline-flex w-full items-center justify-center rounded-lg px-6 py-3.5 text-center text-sm font-bold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                    style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                                    style={{ backgroundColor: secondaryColor, color: "var(--school-secondary-foreground, #0f172a)" }}
                                 >
                                     {hero.button_text || "Explore Our School"}
                                 </Link>
