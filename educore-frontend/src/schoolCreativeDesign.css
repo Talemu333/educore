@@ -405,24 +405,3 @@
 .school-creative-site main button.text-white[class*="bg-[var(--school-secondary)]"] {
     color: var(--school-secondary-foreground, #0f172a) !important;
 }
-
-
-/* Make section transitions unmistakably wavy. A slim school-colour ribbon follows
-   the wave contour, so the divider remains visible even when both sections are light. */
-.school-creative-site main > div > section:not(:last-of-type)::after {
-    height: clamp(1.1rem, 2.2vw, 1.65rem);
-    bottom: -1px;
-    background: var(--school-shape-secondary, #d9b351);
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 24 C180 70 360 4 540 32 S900 72 1080 30 S1320 4 1440 34 L1440 48 C1320 18 1260 45 1080 46 S720 88 540 48 S180 86 0 40 Z'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 24 C180 70 360 4 540 32 S900 72 1080 30 S1320 4 1440 34 L1440 48 C1320 18 1260 45 1080 46 S720 88 540 48 S180 86 0 40 Z'/%3E%3C/svg%3E");
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-}
-
-@media (max-width: 640px) {
-    .school-creative-site main > div > section:not(:last-of-type)::after {
-        height: 1.1rem;
-    }
-}
