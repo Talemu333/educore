@@ -289,6 +289,17 @@ function Home() {
                             }
                         }}
                     >
+                        <svg
+                            aria-hidden="true"
+                            viewBox="0 0 100 650"
+                            preserveAspectRatio="none"
+                            className="pointer-events-none absolute -left-px top-0 z-10 hidden h-full w-20 lg:block xl:w-28"
+                        >
+                            <path
+                                d="M0 0 H88 C48 70 28 126 60 181 C88 229 35 273 28 326 C18 385 83 421 54 478 C31 523 42 586 0 650 Z"
+                                fill="#020617"
+                            />
+                        </svg>
                         {activeSlide?.image_url ? (
                             <div className="absolute inset-0">
                                 {carouselSlides.map((slide, index) => (
