@@ -880,3 +880,61 @@ textarea:focus {
         object-fit: contain !important;
     }
 }
+
+
+/* Keep detailed class result sheets to a single landscape page when their
+   content fits at a compact print scale. Screen styling remains unchanged. */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 6mm;
+    }
+
+    .printable-result {
+        zoom: 0.72 !important;
+        width: 138.8% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    .printable-result .school-report-page {
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    .printable-result .school-report-header {
+        margin-bottom: 8px !important;
+        padding-bottom: 6px !important;
+    }
+
+    .printable-result h1 {
+        font-size: 16pt !important;
+        line-height: 1.1 !important;
+    }
+
+    .printable-result h2 {
+        font-size: 11pt !important;
+        line-height: 1.15 !important;
+    }
+
+    .printable-result p {
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        line-height: 1.15 !important;
+    }
+
+    .printable-result th,
+    .printable-result td {
+        padding: 2px 3px !important;
+        line-height: 1.05 !important;
+        font-size: 7pt !important;
+    }
+
+    .printable-result tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+}
