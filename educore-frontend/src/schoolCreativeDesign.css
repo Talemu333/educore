@@ -1,0 +1,135 @@
+/* Shared visual language for all public school websites.
+   Decorative geometry is intentionally subtle and respects reduced-motion preferences. */
+.school-creative-site {
+    --school-shape-primary: var(--school-primary, #1d4ed8);
+    --school-shape-secondary: var(--school-secondary, #d9b351);
+    overflow-x: clip;
+}
+
+.school-creative-site main > div > section:first-of-type {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 0 0 0 5.5rem;
+}
+
+.school-creative-site main > div > section:first-of-type::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    width: clamp(9rem, 24vw, 22rem);
+    aspect-ratio: 1;
+    right: -5rem;
+    bottom: -8rem;
+    border: clamp(1.2rem, 3vw, 2.5rem) solid color-mix(in srgb, var(--school-shape-secondary) 42%, transparent);
+    border-radius: 42% 58% 63% 37% / 42% 43% 57% 58%;
+    transform: rotate(-18deg);
+}
+
+.school-creative-site main > div > section:first-of-type > div {
+    position: relative;
+}
+
+.school-creative-site main > div > section:nth-of-type(2) {
+    position: relative;
+}
+
+.school-creative-site main > div > section:nth-of-type(2)::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    top: 2.5rem;
+    left: -4rem;
+    width: 8rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--school-shape-primary) 7%, transparent);
+}
+
+.school-creative-site main > div > section:nth-of-type(2) > div,
+.school-creative-site main > div > section:first-of-type > div {
+    position: relative;
+    z-index: 1;
+}
+
+.school-creative-site main article {
+    border-radius: 1.25rem 1.25rem 2.75rem 1.25rem;
+    transition: border-radius 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+
+.school-creative-site main article:nth-child(3n + 2) {
+    border-radius: 2.75rem 1.25rem 1.25rem 1.25rem;
+}
+
+.school-creative-site main article:nth-child(3n) {
+    border-radius: 1.25rem 2.75rem 1.25rem 1.25rem;
+}
+
+.school-creative-site main article img {
+    transition: transform 500ms ease;
+}
+
+.school-creative-site main img {
+    max-width: 100%;
+}
+
+.school-creative-site main section .grid > div > img,
+.school-creative-site main section .grid > div > a > img {
+    border-radius: 1rem 3rem 1rem 3rem;
+}
+
+.school-creative-site main section a[class*="rounded-full"],
+.school-creative-site main section a[class*="rounded-xl"],
+.school-creative-site main section a[class*="rounded-2xl"] {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.school-creative-site main section a[class*="rounded-full"]:hover,
+.school-creative-site main section a[class*="rounded-xl"]:hover,
+.school-creative-site main section a[class*="rounded-2xl"]:hover {
+    transform: translateY(-2px);
+}
+
+.school-creative-site footer > section:first-child {
+    border-radius: 4rem 0 4rem 0;
+    margin-inline: clamp(0rem, 2vw, 1.5rem);
+}
+
+.school-creative-site footer > div:nth-child(2) {
+    border-radius: 3rem 3rem 0 0;
+    margin-top: -1.25rem;
+    padding-top: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    .school-creative-site main > div > section:first-of-type {
+        border-bottom-left-radius: 3rem;
+    }
+
+    .school-creative-site main > div > section:first-of-type::after {
+        right: -6rem;
+        bottom: -6rem;
+        opacity: 0.65;
+    }
+
+    .school-creative-site footer > section:first-child {
+        border-radius: 2.25rem 0 2.25rem 0;
+        margin-inline: 0.5rem;
+    }
+
+    .school-creative-site footer > div:nth-child(2) {
+        border-radius: 2rem 2rem 0 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .school-creative-site main article,
+    .school-creative-site main article img,
+    .school-creative-site main section a[class*="rounded-full"],
+    .school-creative-site main section a[class*="rounded-xl"],
+    .school-creative-site main section a[class*="rounded-2xl"] {
+        transition: none;
+    }
+}
