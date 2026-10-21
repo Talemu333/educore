@@ -12,13 +12,14 @@ function SchoolReportHeader() {
         || "#173b68";
     const motto = settings?.school_motto || settings?.motto;
     const headName = settings?.principal_name || settings?.head_teacher_name || settings?.headteacher_name;
+    const logo = settings?.school_logo || settings?.school_logo_url || settings?.logo_url || settings?.logo || settings?.schoolLogo || "";
 
     return (
         <header className="school-report-header mb-5 border-b-2 pb-4" style={{ borderColor: accent }}>
             <div className="flex items-center gap-4">
-                {settings?.school_logo ? (
+                {logo ? (
                     <img
-                        src={settings.school_logo}
+                        src={logo}
                         alt={`${settings?.school_name || "School"} logo`}
                         className="h-20 w-20 shrink-0 object-contain"
                     />
@@ -37,7 +38,7 @@ function SchoolReportHeader() {
                     </div>
                     {motto ? <p className="mt-2 text-xs italic sm:text-sm">“{motto}”</p> : null}
                 </div>
-                {settings?.school_logo ? <div className="w-20 shrink-0" aria-hidden="true" /> : null}
+                {logo ? <div className="w-20 shrink-0" aria-hidden="true" /> : null}
             </div>
             {headName ? <p className="mt-2 text-center text-xs">Head of School: {headName}</p> : null}
             <div className="mt-3 text-center">
