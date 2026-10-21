@@ -339,3 +339,26 @@
         transform: none !important;
     }
 }
+
+/* Soft curved transitions between homepage content sections. */
+.school-creative-site main > div > section:not(:first-of-type) {
+    position: relative;
+    border-top-left-radius: clamp(2.5rem, 7vw, 6rem);
+    border-top-right-radius: clamp(2.5rem, 7vw, 6rem);
+}
+
+.school-creative-site main > div > section:not(:first-of-type) + section {
+    margin-top: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    .school-creative-site main > div > section:not(:first-of-type) {
+        border-top-left-radius: 2.5rem;
+        border-top-right-radius: 2.5rem;
+    }
+
+    .school-creative-site main > div > section:not(:first-of-type) + section {
+        margin-top: 0.75rem;
+    }
+}
+
