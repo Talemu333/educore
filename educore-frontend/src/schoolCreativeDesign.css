@@ -27,7 +27,7 @@
     transform: rotate(-18deg);
 }
 
-.school-creative-site main > div > section:first-of-type > div {
+.school-creative-site main > div > section:first-of-type > div:not(.absolute) {
     position: relative;
 }
 
