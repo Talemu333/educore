@@ -805,3 +805,78 @@ textarea:focus {
         visibility: visible !important;
     }
 }
+
+
+/* Standard, school-branded academic result print layout. */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 12mm;
+    }
+
+    body {
+        background: #fff !important;
+        color: #111827 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .printable-result {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #111827 !important;
+        font-size: 10pt !important;
+    }
+
+    .printable-result .school-report-page {
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        color: #111827 !important;
+    }
+
+    .printable-result table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 8.5pt !important;
+    }
+
+    .printable-result thead {
+        display: table-header-group;
+    }
+
+    .printable-result tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .printable-result th,
+    .printable-result td {
+        border: 1px solid #9ca3af !important;
+        padding: 5px 6px !important;
+        color: #111827 !important;
+        vertical-align: middle !important;
+    }
+
+    .printable-result th {
+        background: #e5e7eb !important;
+        font-weight: 700 !important;
+    }
+
+    .printable-result .overflow-x-auto {
+        overflow: visible !important;
+    }
+
+    .printable-result .text-muted-foreground {
+        color: #374151 !important;
+    }
+
+    .printable-result img {
+        max-height: 72px !important;
+        max-width: 72px !important;
+        object-fit: contain !important;
+    }
+}
