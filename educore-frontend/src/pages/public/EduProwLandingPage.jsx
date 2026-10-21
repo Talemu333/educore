@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 const modules = [
     { icon: "🎓", title: "Academic Management", description: "Manage students, classes, subjects, sessions, terms, grading, results and promotion from one connected workspace.", items: ["Student records", "Classes & subjects", "Results & grading", "Promotion history"] },
     { icon: "👩‍🏫", title: "Teaching & Learning", description: "Give teachers the tools they need to manage attendance, students, assessments and everyday classroom activities.", items: ["Teacher portal", "Attendance", "Assessments", "Student performance"] },
@@ -45,13 +47,55 @@ function ContactIcon({ children }) {
     return <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xl">{children}</span>;
 }
 
+const heroSlides = [
+    {
+        eyebrow: "Modern school management",
+        title: "Run your school with",
+        accent: "clarity.",
+        description: "Bring administration, academics, finance, communication and everyday school operations together in one connected platform.",
+        image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=2200&q=85"
+    },
+    {
+        eyebrow: "Teaching and learning",
+        title: "Give teachers more room to",
+        accent: "teach.",
+        description: "Organise attendance, assessments, class records and computer-based tests while keeping school information connected.",
+        image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=2200&q=85"
+    },
+    {
+        eyebrow: "Stronger school community",
+        title: "Keep your school community",
+        accent: "connected.",
+        description: "Help parents and students stay informed about results, attendance, payments, announcements and school updates.",
+        image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=2200&q=85"
+    },
+    {
+        eyebrow: "Your school's online presence",
+        title: "Make your school stand out",
+        accent: "online.",
+        description: "Give your school a professional branded website with admissions information, news, events and a gallery.",
+        image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=2200&q=85"
+    }
+];
+
 export default function EduProwLandingPage() {
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [carouselPaused, setCarouselPaused] = useState(false);
+
+    useEffect(() => {
+        if (carouselPaused) return undefined;
+        const timer = window.setInterval(() => {
+            setCurrentSlide((current) => (current + 1) % heroSlides.length);
+        }, 6500);
+        return () => window.clearInterval(timer);
+    }, [carouselPaused]);
+
     const sendEmail = () => {
         window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent("EduProw Enquiry")}`;
     };
 
     return (
-        <div className="min-h-screen bg-white text-slate-900">
+        <div className="eduprow-landing min-h-screen bg-white text-slate-900">
             <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
                     <a href="/eduprow" className="flex items-center gap-3">
@@ -75,27 +119,68 @@ export default function EduProwLandingPage() {
             </header>
 
             <main>
-                <section className="relative overflow-hidden bg-slate-950 px-5 py-20 text-white sm:px-6 sm:py-28 lg:px-8 lg:py-32">
-                    <div className="absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-blue-600/20 blur-3xl" />
-                    <div className="absolute -bottom-48 -left-32 h-[30rem] w-[30rem] rounded-full bg-indigo-500/10 blur-3xl" />
-                    <div className="relative mx-auto grid max-w-7xl gap-14 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
-                        <div>
-                            <span className="inline-flex rounded-full border border-blue-400/25 bg-blue-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-300">Modern school management</span>
-                            <h1 className="mt-7 max-w-4xl text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">Run your school with <span className="text-blue-400">clarity.</span></h1>
-                            <p className="mt-7 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">EduProw brings school administration, academics, teachers, parents, students, finance, communication, CBT and your public website together in one powerful platform.</p>
+                <section
+                    className="eduprow-hero-carousel relative isolate flex min-h-[660px] items-center overflow-hidden bg-slate-950 text-white sm:min-h-[720px] lg:min-h-[min(820px,calc(100vh-76px))]"
+                    aria-label="EduProw highlights"
+                    onMouseEnter={() => setCarouselPaused(true)}
+                    onMouseLeave={() => setCarouselPaused(false)}
+                    onFocusCapture={() => setCarouselPaused(true)}
+                    onBlurCapture={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget)) setCarouselPaused(false);
+                    }}
+                >
+                    <div className="absolute inset-0 -z-20">
+                        {heroSlides.map((slide, index) => (
+                            <img
+                                key={slide.title}
+                                src={slide.image}
+                                alt=""
+                                aria-hidden="true"
+                                fetchPriority={index === 0 ? "high" : "auto"}
+                                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 scale-100" : "scale-105 opacity-0"}`}
+                                style={{ transitionProperty: "opacity, transform" }}
+                            />
+                        ))}
+                    </div>
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/45" />
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/15" />
+                    <div className="absolute -right-40 top-10 -z-10 h-[30rem] w-[30rem] rounded-full bg-blue-500/20 blur-3xl" />
+                    <div className="absolute -bottom-48 -left-24 -z-10 h-[30rem] w-[30rem] rounded-full bg-indigo-500/20 blur-3xl" />
+
+                    <div className="relative mx-auto grid w-full max-w-7xl items-center gap-12 px-5 py-20 sm:px-6 sm:py-24 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-28">
+                        <div key={currentSlide} className="eduprow-slide-copy max-w-3xl">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-blue-300/30 bg-blue-400/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-100 backdrop-blur">
+                                <span className="h-2 w-2 rounded-full bg-sky-300 shadow-[0_0_12px_rgba(125,211,252,0.9)]" />
+                                {heroSlides[currentSlide].eyebrow}
+                            </span>
+                            <h1 className="mt-7 max-w-4xl text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+                                {heroSlides[currentSlide].title}{" "}
+                                <span className="bg-gradient-to-r from-sky-300 via-blue-300 to-indigo-300 bg-clip-text text-transparent">
+                                    {heroSlides[currentSlide].accent}
+                                </span>
+                            </h1>
+                            <p className="mt-7 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
+                                {heroSlides[currentSlide].description}
+                            </p>
                             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                                <a href="#contact" className="rounded-xl bg-blue-600 px-7 py-3.5 text-center text-sm font-bold shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-500">Talk to EduProw</a>
-                                <a href="#solutions" className="rounded-xl border border-white/15 px-7 py-3.5 text-center text-sm font-semibold transition hover:bg-white/10">Explore Solutions</a>
+                                <a href="#contact" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition duration-300 hover:-translate-y-1 hover:bg-blue-500 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                                    Talk to EduProw <span aria-hidden="true">→</span>
+                                </a>
+                                <a href="#demo" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-7 py-3.5 text-center text-sm font-semibold text-white backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                                    <span aria-hidden="true">▶</span> Watch the demo
+                                </a>
                             </div>
-                            <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-sm text-slate-400">
-                                <span>✓ Role-based access</span>
-                                <span>✓ Multi-school ready</span>
-                                <span>✓ School-branded websites</span>
+                            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-200">
+                                <span className="flex items-center gap-2"><span className="text-sky-300">✓</span> Connected school operations</span>
+                                <span className="flex items-center gap-2"><span className="text-sky-300">✓</span> Multi-school ready</span>
+                                <span className="flex items-center gap-2"><span className="text-sky-300">✓</span> Branded school websites</span>
                             </div>
                         </div>
-                        <div className="relative">
-                            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur sm:p-5">
-                                <div className="rounded-2xl bg-white p-5 text-slate-900 shadow-xl sm:p-6">
+
+                        <div className="relative hidden lg:block">
+                            <div className="absolute -inset-5 rounded-[2rem] bg-blue-400/15 blur-2xl" />
+                            <div className="relative rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-slate-950/40 backdrop-blur-xl">
+                                <div className="overflow-hidden rounded-[1.5rem] bg-white p-5 text-slate-900 shadow-xl sm:p-6">
                                     <div className="flex items-center justify-between border-b border-slate-100 pb-5">
                                         <div>
                                             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">School dashboard</p>
@@ -104,14 +189,15 @@ export default function EduProwLandingPage() {
                                         <div className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">EduProw</div>
                                     </div>
                                     <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                        {["Student records", "Results", "Attendance", "Finance"].map(label => (
-                                            <div key={label} className="rounded-xl bg-slate-50 p-3">
-                                                <p className="text-[11px] font-medium text-slate-500">{label}</p>
-                                                <p className="mt-2 h-2 rounded-full bg-blue-100"><span className="block h-2 w-3/4 rounded-full bg-blue-500" /></p>
+                                        {["Student records", "Results", "Attendance", "Finance"].map((label, index) => (
+                                            <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 transition duration-300 hover:-translate-y-1 hover:border-blue-200">
+                                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-xs font-black text-blue-700">{["S", "R", "A", "₦"][index]}</span>
+                                                <p className="mt-2 text-[11px] font-semibold text-slate-600">{label}</p>
+                                                <p className="mt-2 h-1.5 rounded-full bg-blue-100"><span className="block h-1.5 w-3/4 rounded-full bg-blue-500" /></p>
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="mt-5 rounded-2xl bg-slate-950 p-5 text-white">
+                                    <div className="mt-5 rounded-2xl bg-gradient-to-br from-slate-950 to-blue-950 p-5 text-white">
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <p className="text-xs text-slate-400">Academic operations</p>
@@ -119,12 +205,41 @@ export default function EduProwLandingPage() {
                                             </div>
                                             <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">Connected</span>
                                         </div>
-                                        <div className="mt-5 flex h-20 items-end gap-2">
-                                            {[35, 52, 46, 68, 60, 78, 88, 82, 94, 86].map((height, index) => <div key={index} className="flex-1 rounded-t-md bg-blue-500/80" style={{ height: `${height}%` }} />)}
+                                        <div className="mt-5 flex h-20 items-end gap-2" aria-label="Illustrative performance chart">
+                                            {[35, 52, 46, 68, 60, 78, 88, 82, 94, 86].map((height, index) => <div key={index} className="eduprow-chart-bar flex-1 rounded-t-md bg-gradient-to-t from-blue-700 to-sky-400" style={{ height: `${height}%`, animationDelay: `${index * 55}ms` }} />)}
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="absolute -bottom-6 -left-8 rounded-2xl border border-white/20 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
+                                <p className="text-xs text-slate-400">One connected platform</p>
+                                <p className="mt-1 text-sm font-bold text-white">Less admin. More impact.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-5 z-10 mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-2" aria-label="Choose a slide">
+                            {heroSlides.map((slide, index) => (
+                                <button
+                                    key={slide.title}
+                                    type="button"
+                                    aria-label={`Show slide ${index + 1}: ${slide.eyebrow}`}
+                                    aria-current={index === currentSlide ? "true" : undefined}
+                                    onClick={() => setCurrentSlide(index)}
+                                    className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${index === currentSlide ? "w-9 bg-sky-300" : "w-2.5 bg-white/50 hover:bg-white/80"}`}
+                                />
+                            ))}
+                            <span className="ml-2 hidden text-xs font-semibold tracking-widest text-white/70 sm:inline">
+                                0{currentSlide + 1} <span className="text-white/40">/</span> 0{heroSlides.length}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => setCurrentSlide((currentSlide - 1 + heroSlides.length) % heroSlides.length)} aria-label="Previous slide" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-slate-950/30 text-lg text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">←</button>
+                            <button type="button" onClick={() => setCurrentSlide((currentSlide + 1) % heroSlides.length)} aria-label="Next slide" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-slate-950/30 text-lg text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">→</button>
+                            <button type="button" onClick={() => setCarouselPaused((paused) => !paused)} aria-label={carouselPaused ? "Resume carousel autoplay" : "Pause carousel autoplay"} className="hidden h-10 items-center justify-center rounded-full border border-white/30 bg-slate-950/30 px-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:inline-flex">
+                                {carouselPaused ? "Play" : "Pause"}
+                            </button>
                         </div>
                     </div>
                 </section>
