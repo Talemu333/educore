@@ -611,13 +611,13 @@ function DetailedClassResultSheetPage() {
                         </div>
 
 
-                        <div className="printable-result">
+                        <div className="printable-result detailed-class-result-sheet">
 
                             <div className="school-report-page rounded-xl border bg-white p-5 text-slate-900 shadow-sm print:border-0 print:p-0 print:shadow-none">
 
                                 <SchoolReportHeader />
 
-                                <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-slate-300 pb-3">
+                                <div className="detailed-result-meta mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-slate-300 pb-3">
                                     <div>
                                         <h2 className="text-lg font-bold uppercase">Detailed Class Result Sheet</h2>
                                         <p className="mt-1 text-sm">
@@ -634,21 +634,21 @@ function DetailedClassResultSheetPage() {
 
                                 {/* Result Table */}
 
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto detailed-result-table-wrap">
 
-                                    <table className="w-full text-sm">
+                                    <table className="detailed-result-table w-full text-sm">
 
                                         <thead className="bg-muted">
 
                                             <tr>
 
-                                                <th className="sticky left-0 bg-muted px-4 py-3 text-left">
+                                                <th className="bg-muted px-4 py-3 text-left">
 
                                                     S/N
 
                                                 </th>
 
-                                                <th className="sticky left-12 bg-muted px-4 py-3 text-left">
+                                                <th className="bg-muted px-4 py-3 text-left">
 
                                                     Student Name
 
@@ -851,7 +851,7 @@ function DetailedClassResultSheetPage() {
 
                                 {/* Summary */}
 
-                                <div className="border-t p-6 text-sm text-muted-foreground">
+                                <div className="detailed-result-summary mt-4 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-slate-300 px-2 py-3 text-sm text-muted-foreground">
 
                                     <p>
 
