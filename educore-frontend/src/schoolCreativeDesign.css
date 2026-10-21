@@ -276,3 +276,66 @@
         box-shadow: none;
     }
 }
+
+
+/* Scroll-linked reveals: progressive enhancement for browsers with view timelines. */
+@keyframes school-section-reveal {
+    from {
+        opacity: 0.45;
+        transform: translateY(28px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@supports (animation-timeline: view()) {
+    .school-creative-site main > div > section:not(:first-of-type) {
+        animation: school-section-reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 32%;
+    }
+
+    .school-creative-site main article {
+        animation: school-section-reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 24%;
+    }
+}
+
+/* Subtle school-colour wash gives consecutive content areas a more deliberate rhythm. */
+.school-creative-site main > div > section:nth-of-type(odd):not(:first-of-type) {
+    background-image: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--school-shape-primary) 3.5%, white),
+        white 62%
+    );
+}
+
+.school-creative-site main > div > section:nth-of-type(even):not(:first-of-type) {
+    background-image: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--school-shape-secondary) 8%, white),
+        white 70%
+    );
+}
+
+/* Lift feature imagery slightly for depth without changing page content or layout flow. */
+.school-creative-site main section .grid > div:has(> img),
+.school-creative-site main section .grid > div:has(> a > img) {
+    position: relative;
+}
+
+.school-creative-site main section .grid > div:has(> img) > img,
+.school-creative-site main section .grid > div:has(> a > img) > a > img {
+    filter: drop-shadow(0 14px 22px rgba(15, 23, 42, 0.12));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .school-creative-site main > div > section:not(:first-of-type),
+    .school-creative-site main article {
+        animation: none !important;
+        transform: none !important;
+    }
+}
