@@ -796,3 +796,12 @@ textarea:focus {
     }
 }
 
+
+/* Result print fix: the later timetable print rules hide all body content with
+   !important. Explicitly restore visibility for the academic result report. */
+@media print {
+    .printable-result,
+    .printable-result * {
+        visibility: visible !important;
+    }
+}
