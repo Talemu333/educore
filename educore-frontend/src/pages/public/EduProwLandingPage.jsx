@@ -83,6 +83,35 @@ export default function EduProwLandingPage() {
     const [carouselPaused, setCarouselPaused] = useState(false);
 
     useEffect(() => {
+        const pageRoot = document.querySelector(".eduprow-landing");
+        if (!pageRoot || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+        const revealTargets = pageRoot.querySelectorAll(
+            "main > section, main section .grid > *"
+        );
+
+        if (!("IntersectionObserver" in window)) return undefined;
+
+        revealTargets.forEach((element) => {
+            element.setAttribute("data-scroll-reveal", "pending");
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.setAttribute("data-scroll-reveal", "visible");
+                observer.unobserve(entry.target);
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: "0px 0px -40px 0px"
+        });
+
+        revealTargets.forEach((element) => observer.observe(element));
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
         if (carouselPaused) return undefined;
         const timer = window.setInterval(() => {
             setCurrentSlide((current) => (current + 1) % heroSlides.length);
