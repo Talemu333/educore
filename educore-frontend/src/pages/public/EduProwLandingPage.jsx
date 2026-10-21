@@ -124,7 +124,7 @@ export default function EduProwLandingPage() {
     };
 
     return (
-        <div className="eduprow-landing min-h-screen bg-white text-slate-900">
+        <div id="top" className="eduprow-landing min-h-screen bg-white text-slate-900">
             <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
                     <a href="/eduprow" className="flex items-center gap-3">
@@ -443,16 +443,58 @@ export default function EduProwLandingPage() {
                 </section>
             </main>
 
-            <footer className="bg-slate-950 px-5 py-12 text-white sm:px-6 lg:px-8">
-                <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="lg:col-span-2">
-                        <div className="flex items-center gap-3"><img src="https://res.cloudinary.com/xg3fx2ic/image/upload/v1791152547/EduProw-Logo_033051.png" alt="EduProw" className="h-11 w-auto object-contain" /><div><p className="font-extrabold">EduProw</p><p className="text-xs text-slate-500">School Management Platform</p></div></div>
-                        <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">A modern school management platform built to connect administration, academics, finance, communication and the school community.</p>
+            <footer id="footer" className="relative overflow-hidden border-t border-white/10 bg-slate-950 px-5 text-white sm:px-6 lg:px-8">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/80 to-transparent" />
+                <div className="mx-auto max-w-7xl py-12 sm:py-16">
+                    <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12">
+                        <div className="lg:col-span-5">
+                            <a href="#top" className="inline-flex items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+                                <img src="https://res.cloudinary.com/xg3fx2ic/image/upload/v1791152547/EduProw-Logo_033051.png" alt="EduProw logo" className="h-12 w-auto object-contain sm:h-14" />
+                                <span className="min-w-0">
+                                    <span className="block text-lg font-extrabold tracking-tight text-white sm:text-xl">EduProw</span>
+                                    <span className="mt-1 block text-xs text-slate-400">School Management Platform</span>
+                                </span>
+                            </a>
+                            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">A connected platform for school administration, teaching, learning, finance and communication — helping schools manage everyday work with greater clarity.</p>
+                            <a href="#contact" className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-400 px-5 py-3 text-sm font-bold text-slate-950 transition duration-200 hover:-translate-y-0.5 hover:bg-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+                                Talk to our team <span aria-hidden="true">↗</span>
+                            </a>
+                        </div>
+                        <div className="lg:col-span-3">
+                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Platform</h3>
+                            <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-1">
+                                <a href="#solutions" className="w-fit text-slate-400 transition-colors hover:text-white">Solutions</a>
+                                <a href="#portals" className="w-fit text-slate-400 transition-colors hover:text-white">User Portals</a>
+                                <a href="#how-it-works" className="w-fit text-slate-400 transition-colors hover:text-white">How It Works</a>
+                                <a href="#why-eduprow" className="w-fit text-slate-400 transition-colors hover:text-white">Why EduProw</a>
+                                <a href="#partners" className="w-fit text-slate-400 transition-colors hover:text-white">Partner Network</a>
+                            </div>
+                        </div>
+                        <div className="lg:col-span-4">
+                            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">Contact</h3>
+                            <p className="mt-4 text-sm leading-6 text-slate-400">Want to see how EduProw could work for your school? Get in touch with us.</p>
+                            <div className="mt-5 space-y-4 text-sm">
+                                <a href={`mailto:${contactEmail}`} className="flex min-w-0 items-start gap-3 text-slate-400 transition-colors hover:text-white">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] text-sky-300" aria-hidden="true">@</span>
+                                    <span className="break-all pt-1">{contactEmail}</span>
+                                </a>
+                                <a href={`tel:${primaryPhone}`} className="flex items-start gap-3 text-slate-400 transition-colors hover:text-white">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] text-sky-300" aria-hidden="true">☎</span>
+                                    <span className="pt-1">{primaryPhone}</span>
+                                </a>
+                                <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="flex items-start gap-3 text-slate-400 transition-colors hover:text-white">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] text-sky-300" aria-hidden="true">↗</span>
+                                    <span className="pt-1">Chat with us on WhatsApp</span>
+                                </a>
+                                <p className="text-xs leading-5 text-slate-500">{address}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div><p className="font-bold">Platform</p><div className="mt-4 space-y-3 text-sm text-slate-400"><a href="#solutions" className="block hover:text-white">Solutions</a><a href="#how-it-works" className="block hover:text-white">How It Works</a><a href="#partners" className="block hover:text-white">Partner Network</a></div></div>
-                    <div><p className="font-bold">Contact</p><div className="mt-4 space-y-3 text-sm text-slate-400"><a href={`mailto:${contactEmail}`} className="block break-all hover:text-white">{contactEmail}</a><a href={`mailto:${secondaryEmail}`} className="block break-all hover:text-white">{secondaryEmail}</a><a href={`tel:${primaryPhone}`} className="block hover:text-white">{primaryPhone}</a><a href="#contact" className="block hover:text-white">Contact EduProw</a></div></div>
+                    <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs leading-5 text-slate-500 sm:mt-14 sm:flex-row sm:items-center sm:justify-between">
+                        <p>© {new Date().getFullYear()} EduProw. All rights reserved.</p>
+                        <p>Built for schools. Designed to grow. <span className="px-1 text-slate-700">·</span> <a href="#top" className="font-semibold text-slate-300 transition-colors hover:text-white">Back to top ↑</a></p>
+                    </div>
                 </div>
-                <div className="mx-auto mt-10 max-w-7xl border-t border-white/10 pt-7 text-sm text-slate-500">© {new Date().getFullYear()} EduProw. All rights reserved.</div>
             </footer>
         </div>
     );
