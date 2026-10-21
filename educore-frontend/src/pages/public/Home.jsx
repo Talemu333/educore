@@ -25,6 +25,35 @@ function Home() {
     const schoolName = settings?.school_name || "Our School";
 
     useEffect(() => {
+        const pageRoot = document.querySelector(".public-site");
+        if (!pageRoot || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+        const revealTargets = pageRoot.querySelectorAll(
+            "main > section, main section .grid > *"
+        );
+
+        if (!("IntersectionObserver" in window)) return undefined;
+
+        revealTargets.forEach((element) => {
+            element.setAttribute("data-scroll-reveal", "pending");
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.setAttribute("data-scroll-reveal", "visible");
+                observer.unobserve(entry.target);
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: "0px 0px -40px 0px"
+        });
+
+        revealTargets.forEach((element) => observer.observe(element));
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
         let mounted = true;
 
         getPublishedGallery()
@@ -180,7 +209,7 @@ function Home() {
     const activeSlide = carouselSlides[currentSlide];
 
     return (
-        <div className="w-full max-w-full overflow-x-hidden bg-white">
+        <div className="public-site w-full max-w-full overflow-x-hidden bg-white">
             {hasPageError && (
                 <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 text-center text-xs text-slate-500 sm:text-sm">
                     Website content is using editable fallback text. Update the Home page in Website Management to replace it with your school content.
