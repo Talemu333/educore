@@ -377,3 +377,31 @@
         height: 1.5rem;
     }
 }
+
+
+/* Keep text readable on tenant-branded filled actions, even when a school
+   chooses a very light primary or secondary colour. */
+.school-creative-site main a.text-white[style*="background-color"],
+.school-creative-site main button.text-white[style*="background-color"],
+.school-creative-site main a.text-white[class~="bg-primary"],
+.school-creative-site main button.text-white[class~="bg-primary"],
+.school-creative-site main a.text-white[class~="bg-blue-500"],
+.school-creative-site main button.text-white[class~="bg-blue-500"],
+.school-creative-site main a.text-white[class~="bg-blue-600"],
+.school-creative-site main button.text-white[class~="bg-blue-600"],
+.school-creative-site main a.text-white[class~="bg-blue-700"],
+.school-creative-site main button.text-white[class~="bg-blue-700"],
+.school-creative-site main a.text-white[class~="bg-blue-800"],
+.school-creative-site main button.text-white[class~="bg-blue-800"],
+.school-creative-site main a.text-white[class*="bg-[var(--school-primary)]"],
+.school-creative-site main button.text-white[class*="bg-[var(--school-primary)]"] {
+    color: var(--school-primary-foreground, #ffffff) !important;
+}
+
+/* Secondary-colour filled actions use the foreground chosen for that colour. */
+.school-creative-site main a.text-white[class~="bg-secondary"],
+.school-creative-site main button.text-white[class~="bg-secondary"],
+.school-creative-site main a.text-white[class*="bg-[var(--school-secondary)]"],
+.school-creative-site main button.text-white[class*="bg-[var(--school-secondary)]"] {
+    color: var(--school-secondary-foreground, #0f172a) !important;
+}
