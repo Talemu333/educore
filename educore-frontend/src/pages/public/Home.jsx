@@ -217,7 +217,7 @@ function Home() {
             )}
 
             <section
-                className="relative isolate min-h-[80vh] overflow-hidden bg-slate-950 text-white"
+                className="relative isolate min-h-[70vh] overflow-hidden bg-slate-950 text-white"
             >
                 {activeSlide?.image_url ? (
                     <div className="absolute inset-0">
@@ -227,10 +227,8 @@ function Home() {
                                 src={slide.image_url}
                                 alt={slide.title || `${schoolName} school`}
                                 aria-hidden={index !== currentSlide}
-                                className={`absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-1000 ease-out motion-reduce:transition-none ${
-                                    index === currentSlide
-                                        ? "scale-100 opacity-100"
-                                        : "scale-105 opacity-0"
+                                className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ease-out motion-reduce:transition-none ${
+                                    index === currentSlide ? "opacity-100" : "opacity-0"
                                 }`}
                             />
                         ))}
@@ -245,7 +243,7 @@ function Home() {
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-slate-950/30 to-slate-950/5" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-slate-950/10" />
 
-                <div className="relative z-10 mx-auto flex min-h-[80vh] w-full max-w-[1600px] flex-col justify-center px-5 pb-28 pt-20 sm:px-8 sm:pb-32 sm:pt-24 lg:px-16 xl:px-24">
+                <div className="relative z-10 mx-auto flex min-h-[70vh] w-full max-w-[1600px] flex-col justify-center px-5 pb-28 pt-20 sm:px-8 sm:pb-32 sm:pt-24 lg:px-16 xl:px-24">
                     <div className="max-w-3xl">
                         <div className="mb-8 flex min-w-0 items-center gap-3 sm:mb-10">
                             {settings?.school_logo ? (
