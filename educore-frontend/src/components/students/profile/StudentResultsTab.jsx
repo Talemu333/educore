@@ -610,7 +610,7 @@ function StudentResultsTab({
                         PRINTABLE RESULT
                     ===================================== */}
 
-                    <div className="printable-result">
+                    <div className="printable-result student-academic-report">
 
 
                         <div className="
@@ -1172,12 +1172,7 @@ function StudentResultsTab({
                                 PERFORMANCE SUMMARY
                             ================================= */}
 
-                            <div className="
-                                border-t
-                                bg-muted/20
-                                p-4
-                                sm:p-6
-                            ">
+                            <div className="student-report-performance-summary border-t bg-muted/20 p-4 sm:p-6">
 
                                 <h3
                                     className="
