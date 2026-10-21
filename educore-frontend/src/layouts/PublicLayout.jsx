@@ -8,6 +8,7 @@ import {
 
 import { useWebsitePage } from "@/hooks/useWebsite";
 import { useSchoolSettings } from "@/hooks/useSchoolSettings";
+import "@/schoolCreativeDesign.css";
 
 const NAVIGATION = [
     { label: "Home", path: "/" },
@@ -113,7 +114,7 @@ function PublicLayout() {
     const closeMobileMenu = () => setMobileMenuOpen(false);
 
     return (
-        <div className="public-site min-h-screen bg-white text-slate-900">
+        <div className="public-site school-creative-site min-h-screen bg-white text-slate-900" style={{ "--school-primary": primaryColor, "--school-secondary": secondaryColor }}>
             <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
                 <div className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
                     <Link
