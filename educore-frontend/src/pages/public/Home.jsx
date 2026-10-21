@@ -17,6 +17,7 @@ function Home() {
     const { data: settings } = useSchoolSettings();
 
     const [gallery, setGallery] = useState([]);
+    const [failedImageUrls, setFailedImageUrls] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
@@ -86,9 +87,13 @@ function Home() {
     const admissionsCta = getSection("admissions_cta") || {};
     const promise = getSection("promise") || {};
 
-    const carouselSlides = gallery.length
-        ? gallery
-        : hero.image_url
+    const availableGallery = gallery.filter(
+        item => item.image_url && !failedImageUrls.includes(item.image_url)
+    );
+
+    const carouselSlides = availableGallery.length
+        ? availableGallery
+        : hero.image_url && !failedImageUrls.includes(hero.image_url)
             ? [{
                 id: "hero-fallback",
                 image_url: hero.image_url,
@@ -218,6 +223,7 @@ function Home() {
 
             <section
                 className="relative isolate min-h-[620px] overflow-hidden bg-slate-950 text-white sm:min-h-[700px] lg:min-h-[min(88vh,900px)]"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, #0f172a 82%)` }}
             >
                 {activeSlide?.image_url ? (
                     <div className="absolute inset-0">
@@ -225,6 +231,11 @@ function Home() {
                             <img
                                 key={slide.id || slide.image_url || index}
                                 src={slide.image_url}
+                                onError={() => setFailedImageUrls(previous =>
+                                    previous.includes(slide.image_url)
+                                        ? previous
+                                        : [...previous, slide.image_url]
+                                )}
                                 alt={slide.title || `${schoolName} school`}
                                 aria-hidden={index !== currentSlide}
                                 className={`absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-1000 ease-out motion-reduce:transition-none ${
