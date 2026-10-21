@@ -1,138 +1,52 @@
-import { useSchoolSettings }
-from "@/hooks/useSchoolSettings";
+import { useSchoolSettings } from "@/hooks/useSchoolSettings";
 
 function SchoolReportHeader() {
+    const { data: settings, isLoading } = useSchoolSettings();
 
-    const {
+    if (isLoading) return null;
 
-        data: settings,
-
-        isLoading
-
-    } = useSchoolSettings();
-
-
-    if (isLoading) {
-
-        return null;
-
-    }
-
+    // Settings are school-scoped, so branding follows each school's own profile.
+    const accent = settings?.school_primary_color
+        || settings?.primary_color
+        || settings?.theme_primary_color
+        || "#173b68";
+    const motto = settings?.school_motto || settings?.motto;
+    const headName = settings?.principal_name || settings?.head_teacher_name || settings?.headteacher_name;
 
     return (
-
-        <div className="border-b pb-5">
-
-            <div className="flex flex-col items-center">
-
-                {
-
-                    settings?.school_logo && (
-
-                        <img
-
-                            src={settings.school_logo}
-
-                            alt={`${settings.school_name} logo`}
-
-                            className="mb-3 h-20 w-20 object-contain"
-
-                        />
-
-                    )
-
-                }
-
-
-                <h1 className="text-center text-2xl font-bold uppercase">
-
-                    {
-
-                        settings?.school_name ||
-
-                        "SCHOOL NAME"
-
-                    }
-
-                </h1>
-
-
-                {
-
-                    settings?.school_address && (
-
-                        <p className="mt-1 text-center text-sm">
-
-                            {settings.school_address}
-
-                        </p>
-
-                    )
-
-                }
-
-
-                <div className="mt-1 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
-
-                    {
-
-                        settings?.school_phone && (
-
-                            <span>
-
-                                Tel: {settings.school_phone}
-
-                            </span>
-
-                        )
-
-                    }
-
-
-                    {
-
-                        settings?.school_email && (
-
-                            <span>
-
-                                Email: {settings.school_email}
-
-                            </span>
-
-                        )
-
-                    }
-
+        <header className="school-report-header mb-5 border-b-2 pb-4" style={{ borderColor: accent }}>
+            <div className="flex items-center gap-4">
+                {settings?.school_logo ? (
+                    <img
+                        src={settings.school_logo}
+                        alt={`${settings?.school_name || "School"} logo`}
+                        className="h-20 w-20 shrink-0 object-contain"
+                    />
+                ) : null}
+                <div className="min-w-0 flex-1 text-center">
+                    <h1 className="text-xl font-extrabold uppercase tracking-wide sm:text-2xl" style={{ color: accent }}>
+                        {settings?.school_name || "SCHOOL NAME"}
+                    </h1>
+                    {settings?.school_address ? (
+                        <p className="mt-1 text-sm">{settings.school_address}</p>
+                    ) : null}
+                    <div className="mt-1 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs sm:text-sm">
+                        {settings?.school_phone ? <span>Tel: {settings.school_phone}</span> : null}
+                        {settings?.school_email ? <span>Email: {settings.school_email}</span> : null}
+                        {settings?.school_code ? <span>School Code: {settings.school_code}</span> : null}
+                    </div>
+                    {motto ? <p className="mt-2 text-xs italic sm:text-sm">“{motto}”</p> : null}
                 </div>
-
-
-                {
-
-                    settings?.school_code && (
-
-                        <p className="mt-1 text-xs text-muted-foreground">
-
-                            School Code: {settings.school_code}
-
-                        </p>
-
-                    )
-
-                }
-
-
-                <h2 className="mt-4 text-lg font-semibold uppercase">
-
-                    Student Academic Report
-
-                </h2>
-
+                {settings?.school_logo ? <div className="w-20 shrink-0" aria-hidden="true" /> : null}
             </div>
-
-        </div>
-
+            {headName ? <p className="mt-2 text-center text-xs">Head of School: {headName}</p> : null}
+            <div className="mt-3 text-center">
+                <span className="inline-block border px-5 py-1 text-sm font-bold uppercase tracking-widest" style={{ borderColor: accent, color: accent }}>
+                    Student Academic Report
+                </span>
+            </div>
+        </header>
     );
-
 }
 
 export default SchoolReportHeader;
