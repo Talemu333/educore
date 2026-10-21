@@ -575,32 +575,7 @@ function Home() {
                 </section>
             )}
 
-            <section
-                className="px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-16"
-                style={{ backgroundColor: primaryColor }}
-            >
-                <div className="mx-auto max-w-4xl text-center">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 sm:text-sm sm:tracking-[0.2em]">
-                        {admissionsCta.section_subtitle || "Admissions"}
-                    </p>
-                    <h2 className="mt-3 text-2xl font-extrabold sm:mt-4 sm:text-5xl">
-                        {admissionsCta.section_title || "Tell families how to begin"}
-                    </h2>
-                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:mt-5 sm:text-base">
-                        {admissionsCta.section_content ||
-                            "Use this call-to-action to guide prospective families to your admission information, application process, or enquiry channel."}
-                    </p>
-                    <div className="mt-7 sm:mt-8">
-                        <Link
-                            to={admissionsCta.button_text && admissionsCta.button_url ? admissionsCta.button_url : "/admissions"}
-                            className="inline-flex w-full rounded-lg px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
-                            style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                        >
-                            {admissionsCta.button_text || "View Admissions"}
-                        </Link>
-                    </div>
-                </div>
-            </section>
+
         </div>
     );
 }
