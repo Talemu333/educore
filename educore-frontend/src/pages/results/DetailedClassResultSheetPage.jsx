@@ -21,6 +21,7 @@ import {
 } from "@/hooks/useDetailedClassResultSheet";
 
 import Loading from "@/components/common/Loading";
+import SchoolReportHeader from "@/components/results/SchoolReportHeader";
 
 import { Button } from "@/components/ui/Button";
 
@@ -612,54 +613,22 @@ function DetailedClassResultSheetPage() {
 
                         <div className="printable-result">
 
-                            <div className="rounded-xl border bg-background shadow-sm print:border-0 print:shadow-none">
+                            <div className="school-report-page rounded-xl border bg-white p-5 text-slate-900 shadow-sm print:border-0 print:p-0 print:shadow-none">
 
+                                <SchoolReportHeader />
 
-                                {/* Sheet Header */}
-
-                                <div className="border-b p-6 text-center">
-
-                                    <h2 className="text-2xl font-bold">
-
-                                        Detailed Class Result Sheet
-
-                                    </h2>
-
-                                    <p className="mt-2 text-sm text-muted-foreground">
-
-                                        {
-                                            resultSheet.class
-                                                .class_name
-                                        }
-
-                                        {" "}
-
-                                        {
-
-                                            resultSheet.arm
-                                                ? `- ${resultSheet.arm.arm_name}`
-                                                : ""
-
-                                        }
-
-                                    </p>
-
-                                    <p className="text-sm text-muted-foreground">
-
-                                        {
-                                            resultSheet.session
-                                                .session_name
-                                        }
-
-                                        {" • "}
-
-                                        {
-                                            resultSheet.term
-                                                .term_name
-                                        }
-
-                                    </p>
-
+                                <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-slate-300 pb-3">
+                                    <div>
+                                        <h2 className="text-lg font-bold uppercase">Detailed Class Result Sheet</h2>
+                                        <p className="mt-1 text-sm">
+                                            {resultSheet.class.class_name}
+                                            {resultSheet.arm ? ` — ${resultSheet.arm.arm_name}` : ""}
+                                        </p>
+                                    </div>
+                                    <div className="text-left text-sm sm:text-right">
+                                        <p><span className="font-semibold">Session:</span> {resultSheet.session.session_name}</p>
+                                        <p><span className="font-semibold">Term:</span> {resultSheet.term.term_name}</p>
+                                    </div>
                                 </div>
 
 
