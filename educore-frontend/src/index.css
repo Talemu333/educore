@@ -882,59 +882,124 @@ textarea:focus {
 }
 
 
-/* Keep detailed class result sheets to a single landscape page when their
-   content fits at a compact print scale. Screen styling remains unchanged. */
+/* Detailed class result sheet: print-first layout, without shrinking the entire
+   report. The table may continue onto another page rather than becoming unreadable. */
 @media print {
-    @page {
-        size: A4 landscape;
-        margin: 6mm;
+    @page { size: A4 landscape; margin: 8mm; }
+
+    .detailed-class-result-sheet {
+        position: absolute !important; top: 0 !important; left: 0 !important;
+        width: 100% !important; max-width: 100% !important;
+        margin: 0 !important; padding: 0 !important; zoom: 1 !important;
+        overflow: visible !important; color: #111827 !important; background: #fff !important;
     }
 
-    .printable-result {
-        zoom: 0.72 !important;
-        width: 138.8% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+    .detailed-class-result-sheet .school-report-page {
+        width: 100% !important; max-width: none !important; margin: 0 !important;
+        padding: 0 !important; border: 0 !important; border-radius: 0 !important;
+        box-shadow: none !important; overflow: visible !important; background: #fff !important;
     }
 
-    .printable-result .school-report-page {
-        padding: 0 !important;
-        overflow: visible !important;
+    .detailed-class-result-sheet .school-report-header {
+        margin: 0 0 10px !important; padding: 0 0 9px !important;
+        border-bottom-width: 2px !important; break-inside: avoid; page-break-inside: avoid;
     }
 
-    .printable-result .school-report-header {
-        margin-bottom: 8px !important;
-        padding-bottom: 6px !important;
+    .detailed-class-result-sheet .school-report-header img {
+        width: 58px !important; height: 58px !important;
+        max-width: 58px !important; max-height: 58px !important;
     }
 
-    .printable-result h1 {
-        font-size: 16pt !important;
-        line-height: 1.1 !important;
+    .detailed-class-result-sheet .school-report-header h1 {
+        margin: 0 !important; font-size: 18pt !important; line-height: 1.15 !important;
+        letter-spacing: 0.04em !important;
     }
 
-    .printable-result h2 {
-        font-size: 11pt !important;
-        line-height: 1.15 !important;
+    .detailed-class-result-sheet .school-report-header p,
+    .detailed-class-result-sheet .school-report-header span { line-height: 1.25 !important; }
+
+    .detailed-class-result-sheet .school-report-header > div:last-child { margin-top: 7px !important; }
+
+    .detailed-class-result-sheet .school-report-header > div:last-child span {
+        padding: 3px 12px !important; font-size: 8pt !important; letter-spacing: 0.12em !important;
     }
 
-    .printable-result p {
-        margin-top: 2px !important;
-        margin-bottom: 2px !important;
-        line-height: 1.15 !important;
+    .detailed-class-result-sheet .detailed-result-meta {
+        margin: 0 0 10px !important; padding: 0 2px 8px !important;
+        break-inside: avoid; page-break-inside: avoid;
     }
 
-    .printable-result th,
-    .printable-result td {
-        padding: 2px 3px !important;
-        line-height: 1.05 !important;
-        font-size: 7pt !important;
+    .detailed-class-result-sheet .detailed-result-meta h2 {
+        margin: 0 0 3px !important; font-size: 12pt !important;
+        line-height: 1.2 !important; color: #111827 !important;
     }
 
-    .printable-result tr {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+    .detailed-class-result-sheet .detailed-result-meta p {
+        margin: 2px 0 !important; font-size: 8.5pt !important;
+        line-height: 1.25 !important; color: #374151 !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table-wrap {
+        width: 100% !important; max-width: 100% !important; overflow: visible !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table {
+        width: 100% !important; min-width: 0 !important; max-width: 100% !important;
+        border-collapse: collapse !important; table-layout: fixed !important;
+        font-size: 8pt !important; color: #111827 !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table thead { display: table-header-group !important; }
+
+    .detailed-class-result-sheet .detailed-result-table tr {
+        break-inside: avoid !important; page-break-inside: avoid !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table th,
+    .detailed-class-result-sheet .detailed-result-table td {
+        min-width: 0 !important; padding: 4px !important;
+        border: 1px solid #cbd5e1 !important; color: #111827 !important;
+        vertical-align: middle !important; text-align: center;
+        line-height: 1.2 !important; white-space: normal !important;
+        overflow-wrap: anywhere !important; word-break: normal !important; background: #fff !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table th {
+        background: #eaf0f7 !important; color: #173b68 !important;
+        font-weight: 700 !important; font-size: 7.5pt !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table th:first-child,
+    .detailed-class-result-sheet .detailed-result-table td:first-child { width: 3.5% !important; }
+
+    .detailed-class-result-sheet .detailed-result-table th:nth-child(2),
+    .detailed-class-result-sheet .detailed-result-table td:nth-child(2) {
+        width: 21% !important; text-align: left !important; overflow-wrap: break-word !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table th:nth-last-child(-n+3),
+    .detailed-class-result-sheet .detailed-result-table td:nth-last-child(-n+3) { width: 7% !important; }
+
+    .detailed-class-result-sheet .detailed-result-table tbody tr:nth-child(even) td {
+        background: #f8fafc !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-table tbody td:nth-last-child(-n+3),
+    .detailed-class-result-sheet .detailed-result-table tbody td:nth-child(2) { font-weight: 600 !important; }
+
+    .detailed-class-result-sheet .detailed-result-table tbody td:nth-child(2) p {
+        margin: 2px 0 0 !important; font-size: 7pt !important;
+        color: #64748b !important; font-weight: 400 !important;
+    }
+
+    .detailed-class-result-sheet .detailed-result-summary {
+        margin-top: 10px !important; padding: 8px 2px !important;
+        border-top: 1px solid #cbd5e1 !important; color: #374151 !important;
+        font-size: 8.5pt !important; break-inside: avoid; page-break-inside: avoid;
+    }
+
+    .detailed-class-result-sheet .detailed-result-summary p { margin: 0 !important; }
+    .detailed-class-result-sheet .detailed-result-summary span {
+        color: #111827 !important; font-weight: 700 !important;
     }
 }
