@@ -66,6 +66,7 @@ import StudentFormPage
 
 import StudentProfilePage
     from "../pages/students/StudentProfilePage";
+import StudentIdCardsPage from "../pages/students/StudentIdCardsPage";
 
 
 import CreateParentPage
@@ -451,6 +452,18 @@ function AppRouter() {
                     {/* =====================================
                         CREATE STUDENT
                     ===================================== */}
+
+                    <Route
+                        path="/student-id-cards"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[ROLES.ADMIN]}
+                                allowedAdminTypes={["proprietor", "principal"]}
+                            >
+                                <StudentIdCardsPage />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     <Route
                         path="/students/new"
