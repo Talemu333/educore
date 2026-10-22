@@ -1,6 +1,7 @@
 import {
     LayoutDashboard,
     GraduationCap,
+    CreditCard,
     Users,
     BookOpen,
     ClipboardList,
@@ -45,6 +46,7 @@ const sidebarMenu = [
     { title: "Lesson Syllabus", icon: BookOpen, path: "/lesson-syllabus", roles: [ADMIN, ROLES.TEACHER], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Administrators", icon: Users, path: "/administrators", roles: [ADMIN], adminTypes: [PROPRIETOR] },
     { title: "Students", icon: GraduationCap, path: "/students", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "Student ID Cards", icon: CreditCard, path: "/student-id-cards", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Student Promotion", icon: GraduationCap, path: "/student-promotion", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Promotion History", icon: History, path: "/promotion-history", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Teachers", icon: Users, path: "/teachers", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
