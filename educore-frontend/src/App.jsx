@@ -36,7 +36,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "website", "change-password", "logout", "contact-messages", "expenses", "lesson-notes", "lesson-syllabus", "partner-management",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
     "teacher-dashboard", "teacher-students", "teacher-timetable", "forgot-password", "reset-password",
-    "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank", "reports"
+    "student-dashboard", "student-cbt", "student-results", "student-subjects", "student-id-cards", "cbt-management", "cbt-results", "cbt-question-bank", "reports"
 ]);
 
 function useAppPathname() {
