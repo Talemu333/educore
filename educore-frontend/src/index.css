@@ -1154,3 +1154,106 @@ textarea:focus {
         visibility: visible !important;
     }
 }
+
+
+/* Fine-tune the individual student report: reduce wasted vertical space and
+   keep each summary card only as tall as its content. */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 6mm;
+    }
+
+    .student-academic-report .school-report-header {
+        margin-bottom: 3mm !important;
+        padding-bottom: 2mm !important;
+    }
+
+    .student-academic-report .school-report-header img {
+        width: 16mm !important;
+        height: 16mm !important;
+        max-width: 16mm !important;
+        max-height: 16mm !important;
+    }
+
+    .student-academic-report .school-report-header h1 {
+        font-size: 15pt !important;
+    }
+
+    .student-academic-report .school-report-header .mt-3 {
+        margin-top: 1mm !important;
+    }
+
+    .student-academic-report .school-report-header .mt-3 span {
+        padding: 0.5mm 3mm !important;
+        font-size: 7pt !important;
+    }
+
+    .student-academic-report .school-report-header + div,
+    .student-academic-report .school-report-header + div + div {
+        padding: 2mm 3mm !important;
+    }
+
+    .student-academic-report .school-report-header + div p,
+    .student-academic-report .school-report-header + div + div p {
+        line-height: 1.15 !important;
+    }
+
+    .student-academic-report h3 {
+        margin-bottom: 1.5mm !important;
+        font-size: 9pt !important;
+    }
+
+    .student-academic-report .student-report-performance-summary {
+        padding: 2mm 3mm !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+    }
+
+    .student-academic-report .student-report-performance-summary > div.grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 2mm !important;
+        align-items: stretch !important;
+    }
+
+    .student-academic-report .student-report-performance-summary > div.grid > div {
+        align-self: start !important;
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 2mm !important;
+        border-radius: 1.5mm !important;
+        line-height: 1.15 !important;
+    }
+
+    .student-academic-report .student-report-performance-summary > div.grid > div p:first-child {
+        margin: 0 !important;
+        font-size: 7pt !important;
+        line-height: 1.15 !important;
+    }
+
+    .student-academic-report .student-report-performance-summary > div.grid > div p:last-child {
+        margin: 1mm 0 0 !important;
+        font-size: 12pt !important;
+        line-height: 1.1 !important;
+    }
+
+    .student-academic-report .student-report-performance-summary > div:last-child {
+        margin-top: 2mm !important;
+    }
+
+    .student-academic-report .student-report-performance-summary table,
+    .student-academic-report .student-report-performance-summary footer {
+        margin-top: 2mm !important;
+    }
+
+    .student-academic-report table th,
+    .student-academic-report table td {
+        padding: 1.3mm 1mm !important;
+        line-height: 1.1 !important;
+    }
+
+    .student-academic-report .overflow-x-auto {
+        margin: 0 !important;
+    }
+}
