@@ -122,13 +122,15 @@ const hydrateAdministratorType = async (user) => {
 
 const findUser = async (login) => {
     const result = await database.query(`
-        SELECT users.id, users.username, users.email, users.password, users.profile_image_url,
+        SELECT users.id, users.username, users.email, users.password, COALESCE(users.profile_image_url, students.profile_image_url, teachers.profile_image_url, parents.profile_image_url) AS profile_image_url,
                students.id AS student_id, users.must_change_password, users.last_login, users.admin_type,
                users.school_id, users.is_active, roles.role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
         LEFT JOIN students ON students.id = users.student_id
             AND students.school_id = users.school_id
+        LEFT JOIN teachers ON teachers.user_id = users.id AND teachers.school_id = users.school_id
+        LEFT JOIN parents ON parents.user_id = users.id AND parents.school_id = users.school_id
         WHERE users.username = $1 OR users.email = $1;
     `, [login]);
 
@@ -144,6 +146,8 @@ const findUserById = async (id) => {
         JOIN roles ON users.role_id = roles.id
         LEFT JOIN students ON students.id = users.student_id
             AND students.school_id = users.school_id
+        LEFT JOIN teachers ON teachers.user_id = users.id AND teachers.school_id = users.school_id
+        LEFT JOIN parents ON parents.user_id = users.id AND parents.school_id = users.school_id
         WHERE users.id = $1;
     `, [id]);
 
@@ -158,6 +162,8 @@ const findUserByIdInSchool = async (id, schoolId) => {
         JOIN roles ON users.role_id = roles.id
         LEFT JOIN students ON students.id = users.student_id
             AND students.school_id = users.school_id
+        LEFT JOIN teachers ON teachers.user_id = users.id AND teachers.school_id = users.school_id
+        LEFT JOIN parents ON parents.user_id = users.id AND parents.school_id = users.school_id
         WHERE users.id = $1 AND users.school_id = $2;
     `, [id, schoolId]);
 
