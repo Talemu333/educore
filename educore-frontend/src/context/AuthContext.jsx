@@ -219,6 +219,8 @@ export function AuthProvider({
 
                 user,
 
+                setUser,
+
                 loading,
 
                 loginUser,
