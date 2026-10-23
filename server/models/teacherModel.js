@@ -61,7 +61,7 @@ const getTeachers = async (schoolId, options = {}) => {
     const offsetIndex = values.length + 2;
 
     const result = await pool.query(`
-        SELECT t.id, t.department_id, t.qualification_id, t.staff_number,
+        SELECT t.id, t.department_id, t.qualification_id, t.staff_number, t.profile_image_url,
                CONCAT(t.surname, ' ', t.first_name, ' ', COALESCE(t.middle_name,'')) AS full_name,
                d.department_name, q.qualification_name, t.phone_number, t.email, t.status
         FROM teachers t
