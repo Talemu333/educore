@@ -15,6 +15,11 @@ export const getCurrentUser = async () => {
     return response.data;
 };
 
+export const updateProfileImage = async (profile_image_url) => {
+    const response = await api.patch("/auth/profile-image", { profile_image_url });
+    return response.data;
+};
+
 export const changePassword = async (data) => {
     const response = await api.post("/auth/change-password", data);
     return response.data;
