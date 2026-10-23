@@ -190,6 +190,17 @@ const updatePassword = async (userId, hashedPassword) => {
     return result.rows[0];
 };
 
+const updateProfileImageUrl = async (userId, profileImageUrl) => {
+    const result = await database.query(`
+        UPDATE users
+        SET profile_image_url = $1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING id, profile_image_url;
+    `, [profileImageUrl, userId]);
+    return result.rows[0];
+};
+
 const resetPasswordByAdmin = async (userId, schoolId, hashedPassword) => {
     const result = await database.query(`
         UPDATE users
@@ -260,6 +271,7 @@ module.exports = {
     findUserByIdInSchool,
     updateLastLogin,
     updatePassword,
+    updateProfileImageUrl,
     resetPasswordByAdmin,
     findUserByEmail,
     savePasswordResetToken,
