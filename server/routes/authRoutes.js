@@ -44,6 +44,14 @@ router.get(
     authController.getCurrentUser
 );
 
+router.patch(
+    "/profile-image",
+    keepSuperAdminOnPlatformDatabase,
+    schoolDatabaseMiddleware,
+    authenticate,
+    authController.updateProfileImage
+);
+
 router.post(
     "/change-password",
     keepSuperAdminOnPlatformDatabase,
