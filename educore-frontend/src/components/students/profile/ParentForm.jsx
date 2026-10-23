@@ -64,6 +64,8 @@ function ParentForm({studentId, parent = null, onSuccess}) {
 
             residential_address: "",
 
+            profile_image_url: "",
+
             username: "",
 
             is_primary_contact: false
@@ -101,6 +103,8 @@ function ParentForm({studentId, parent = null, onSuccess}) {
             residential_address:
 
                 parent?.residential_address || "",
+
+            profile_image_url: parent?.profile_image_url || "",
 
             username: parent?.username || "",
 
@@ -181,6 +185,13 @@ function ParentForm({studentId, parent = null, onSuccess}) {
                 <h3 className="col-span-full text-lg font-semibold">
                     Parent Information
                 </h3>
+
+                <div className="col-span-full">
+                    <label className="text-sm font-medium" htmlFor="parent_profile_image_url">Profile picture URL (Cloudinary)</label>
+                    <Input id="parent_profile_image_url" type="url" placeholder="https://res.cloudinary.com/..." {...register("profile_image_url")} />
+                    <p className="mt-1 text-xs text-slate-500">Paste the secure image link. EduProw stores the link only.</p>
+                    {errors.profile_image_url && <p className="mt-1 text-sm text-red-500">{errors.profile_image_url.message}</p>}
+                </div>
 
                 <div>
                     <label className="text-sm font-medium">
