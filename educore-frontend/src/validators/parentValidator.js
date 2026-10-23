@@ -52,6 +52,6 @@ export const parentSchema = z.object({
     .string()
     .min(4, "Username is required."),
 
-    is_primary_contact: z.boolean().default(false)
+    profile_image_url: z.string().trim().url("Enter a valid image URL.").or(z.literal("")).optional(),\n\n    is_primary_contact: z.boolean().default(false)
 
 });
