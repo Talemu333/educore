@@ -22,12 +22,13 @@ const createStudent = async (client, student, schoolId) => {
             residential_address,
             class_id,
             arm_id,
-            admission_date
+            admission_date,
+            profile_image_url
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
         RETURNING *;
     `;
-    const values = [schoolId, student.admission_number, student.admission_sequence, student.surname, student.first_name, student.middle_name, student.gender, student.date_of_birth, student.state_id, student.nationality_id, student.religion, student.blood_group, student.genotype, student.residential_address, student.class_id, student.arm_id, student.admission_date];
+    const values = [schoolId, student.admission_number, student.admission_sequence, student.surname, student.first_name, student.middle_name, student.gender, student.date_of_birth, student.state_id, student.nationality_id, student.religion, student.blood_group, student.genotype, student.residential_address, student.class_id, student.arm_id, student.admission_date, student.profile_image_url || null];
     const result = await client.query(query, values);
     return result.rows[0];
 };
@@ -74,7 +75,7 @@ const getStudentByUserId = async (userId, schoolId, client = pool) => {
 };
 
 const updateStudent = async (client, id, student, schoolId) => {
-    const result = await client.query(`UPDATE students SET surname=$1, first_name=$2, middle_name=$3, gender=$4, date_of_birth=$5, state_id=$6, nationality_id=$7, religion=$8, blood_group=$9, genotype=$10, residential_address=$11, class_id=$12, arm_id=$13, updated_at=CURRENT_TIMESTAMP WHERE id=$14 AND school_id=$15 RETURNING *;`, [student.surname, student.first_name, student.middle_name, student.gender, student.date_of_birth, student.state_id, student.nationality_id, student.religion, student.blood_group, student.genotype, student.residential_address, student.class_id, student.arm_id, id, schoolId]);
+    const result = await client.query(`UPDATE students SET surname=$1, first_name=$2, middle_name=$3, gender=$4, date_of_birth=$5, state_id=$6, nationality_id=$7, religion=$8, blood_group=$9, genotype=$10, residential_address=$11, class_id=$12, arm_id=$13, profile_image_url=$14, updated_at=CURRENT_TIMESTAMP WHERE id=$15 AND school_id=$16 RETURNING *;`, [student.surname, student.first_name, student.middle_name, student.gender, student.date_of_birth, student.state_id, student.nationality_id, student.religion, student.blood_group, student.genotype, student.residential_address, student.class_id, student.arm_id, student.profile_image_url || null, id, schoolId]);
     return result.rows[0];
 };
 
