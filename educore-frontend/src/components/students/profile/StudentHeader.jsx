@@ -58,7 +58,7 @@ function StudentHeader({ student }) {
                     >
 
                         <AvatarImage
-                            src={student.photo_url}
+                            src={student.profile_image_url || student.photo_url}
                             alt={student.first_name}
                         />
 
