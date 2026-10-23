@@ -16,12 +16,13 @@ const createParent = async (client, parentData) => {
             email,
             occupation,
             residential_address,
+            profile_image_url,
             school_id
 
         )
 
         SELECT
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
             u.school_id
         FROM users u
         WHERE u.id = $2
@@ -51,7 +52,9 @@ const createParent = async (client, parentData) => {
 
         parentData.occupation,
 
-        parentData.residential_address
+        parentData.residential_address,
+
+        parentData.profile_image_url || null
 
     ];
 
@@ -171,8 +174,9 @@ const updateParent = async (client, id, parentData) => {
             email = $7,
             occupation = $8,
             residential_address = $9,
+            profile_image_url = $10,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $10
+        WHERE id = $11
         RETURNING *;
     `;
 
@@ -195,6 +199,8 @@ const updateParent = async (client, id, parentData) => {
         parentData.occupation,
 
         parentData.residential_address,
+
+        parentData.profile_image_url || null,
 
         id
 
