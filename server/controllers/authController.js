@@ -62,6 +62,25 @@ const changePassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
+const updateProfileImage = async (req, res, next) => {
+    try {
+        const rawUrl = req.body?.profile_image_url;
+        const profileImageUrl = typeof rawUrl === "string" ? rawUrl.trim() : "";
+        if (profileImageUrl) {
+            let parsedUrl;
+            try { parsedUrl = new URL(profileImageUrl); } catch {
+                return res.status(400).json({ success: false, message: "Enter a valid HTTPS image URL." });
+            }
+            if (parsedUrl.protocol !== "https:") {
+                return res.status(400).json({ success: false, message: "Enter a secure HTTPS image URL." });
+            }
+        }
+        const updated = await authModel.updateProfileImageUrl(req.user.id, profileImageUrl || null);
+        if (!updated) return res.status(404).json({ success: false, message: "User account not found." });
+        return res.json({ success: true, message: "Profile picture link updated.", profile_image_url: updated.profile_image_url || null });
+    } catch (error) { next(error); }
+};
+
 const resetPasswordByAdmin = async (req, res, next) => {
     try {
         const roleName = String(req.user?.role_name || "").trim().toLowerCase();
@@ -150,4 +169,4 @@ const resetPassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-module.exports = { login, logout, getCurrentUser, changePassword, resetPasswordByAdmin, requestPasswordReset, resetPassword };
+module.exports = { login, logout, getCurrentUser, changePassword, updateProfileImage, resetPasswordByAdmin, requestPasswordReset, resetPassword };
