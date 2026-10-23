@@ -55,7 +55,8 @@ const createTeacher = async (teacherData, schoolId) => {
             next_of_kin_name: teacherData.next_of_kin_name,
             next_of_kin_phone: teacherData.next_of_kin_phone,
             emergency_contact_name: teacherData.emergency_contact_name,
-            emergency_contact_phone: teacherData.emergency_contact_phone
+            emergency_contact_phone: teacherData.emergency_contact_phone,
+            profile_image_url: teacherData.profile_image_url || null
         }, schoolId);
 
         return { teacher, temporaryPassword };
