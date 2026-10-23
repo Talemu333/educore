@@ -1050,9 +1050,9 @@ function ParentFinancialOverview() {
 
             <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
-                <CardHeader>
+                <CardHeader className="px-5 pb-2 pt-5 sm:px-6">
 
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-800">
 
                         <CalendarDays
                             className="h-5 w-5"
@@ -1721,9 +1721,9 @@ function ParentFinancialOverview() {
 
             <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
-                <CardHeader>
+                <CardHeader className="px-5 pb-2 pt-5 sm:px-6">
 
-                    <CardTitle>
+                    <CardTitle className="text-base font-semibold tracking-tight text-slate-800">
 
                         Parent Financial Records
 
@@ -1743,56 +1743,56 @@ function ParentFinancialOverview() {
 
                                 <tr className="border-b border-slate-100 bg-slate-50/70 text-left text-xs uppercase tracking-wide text-slate-500">
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Parent
 
                                     </th>
 
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Children
 
                                     </th>
 
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Expected
 
                                     </th>
 
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Previous Balance
 
                                     </th>
 
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Paid
 
                                     </th>
 
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Outstanding
 
                                     </th>
 
 
-                                    <th className="p-3">
+                                    <th className="px-4 py-3 align-top">
 
                                         Status
 
                                     </th>
 
 
-                                    <th className="p-3 text-right">
+                                    <th className="px-4 py-3 text-right align-top">
 
                                         Action
 
@@ -1829,7 +1829,7 @@ function ParentFinancialOverview() {
 
                                                 {/* PARENT */}
 
-                                                <td className="p-3">
+                                                <td className="px-4 py-3 align-top">
 
                                                     <div className="font-medium">
 
@@ -1876,7 +1876,7 @@ function ParentFinancialOverview() {
 
                                                 {/* CHILDREN */}
 
-                                                <td className="p-3">
+                                                <td className="px-4 py-3 align-top">
 
                                                     <Badge variant="outline">
 
@@ -1892,7 +1892,7 @@ function ParentFinancialOverview() {
 
                                                 {/* EXPECTED */}
 
-                                                <td className="p-3">
+                                                <td className="px-4 py-3 align-top">
 
                                                     {
                                                         formatCurrency(
@@ -1906,7 +1906,7 @@ function ParentFinancialOverview() {
 
                                                 {/* PREVIOUS BALANCE */}
 
-                                                <td className="p-3">
+                                                <td className="px-4 py-3 align-top">
 
                                                     {
                                                         formatCurrency(
@@ -1920,7 +1920,7 @@ function ParentFinancialOverview() {
 
                                                 {/* PAID */}
 
-                                                <td className="p-3">
+                                                <td className="px-4 py-3 align-top">
 
                                                     {
                                                         formatCurrency(
@@ -1934,7 +1934,7 @@ function ParentFinancialOverview() {
 
                                                 {/* OUTSTANDING */}
 
-                                                <td className="p-3 font-semibold">
+                                                <td className="px-4 py-3 align-top font-semibold text-slate-800">
 
                                                     {
                                                         formatCurrency(
@@ -1948,7 +1948,7 @@ function ParentFinancialOverview() {
 
                                                 {/* STATUS */}
 
-                                                <td className="p-3">
+                                                <td className="px-4 py-3 align-top">
 
 
                                                     {status ===
@@ -1996,7 +1996,7 @@ function ParentFinancialOverview() {
 
                                                 {/* ACTION */}
 
-                                                <td className="p-3 text-right">
+                                                <td className="px-4 py-3 text-right align-top">
 
                                                     <Button
                                                         size="sm"
