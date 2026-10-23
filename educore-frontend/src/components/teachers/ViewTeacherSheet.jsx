@@ -66,6 +66,7 @@ function ViewTeacherSheet({ teacherId, open, onOpenChange }) {
                             </section>
 
                             <DetailSection title="Personal Information">
+                                {teacher.profile_image_url && <div className="mb-4 flex items-center gap-4"><img src={teacher.profile_image_url} alt={`${teacher.first_name} ${teacher.surname}`} referrerPolicy="no-referrer" className="h-20 w-20 rounded-full object-cover ring-1 ring-slate-200" /><span className="text-sm text-slate-500">Profile picture</span></div>}
                                 <DetailRow label="Staff Number" value={teacher.staff_number} />
                                 <DetailRow label="Surname" value={teacher.surname} />
                                 <DetailRow label="First Name" value={teacher.first_name} />
