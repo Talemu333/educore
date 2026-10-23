@@ -110,7 +110,10 @@ function StudentForm({ isEditMode, studentId }) {
                     student.blood_group,
 
                 genotype:
-                    student.genotype
+                    student.genotype,
+
+                profile_image_url:
+                    student.profile_image_url || ""
 
             });
 
