@@ -44,6 +44,8 @@ export const studentSchema = z.object({
 
     genotype: z
         .string()
-        .optional()
+        .optional(),
+
+    profile_image_url: z.string().trim().url("Enter a valid image URL.").or(z.literal("")).optional()
 
 });
