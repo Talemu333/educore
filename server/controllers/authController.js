@@ -29,6 +29,7 @@ const login = (req, res, next) => {
             try { await authModel.updateLastLogin(user.id); } catch (error) { console.error("Failed to update last login", error); }
             return res.json({ success: true, message: "Login successful.", user: {
                 id: user.id, username: user.username, email: user.email,
+                profile_image_url: user.profile_image_url || null,
                 role_name: user.role_name, must_change_password: user.must_change_password,
                 school_id: user.school_id, student_id: user.student_id || null,
                 admin_type: user.admin_type
