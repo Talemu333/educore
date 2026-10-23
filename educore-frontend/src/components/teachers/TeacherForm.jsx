@@ -45,7 +45,8 @@ function TeacherForm({ teacher, onSuccess }) {
             next_of_kin_phone: "",
             emergency_contact_name: "",
             emergency_contact_phone: "",
-            username: "",\n            profile_image_url: ""
+            username: "",
+            profile_image_url: ""
         }
     });
 
