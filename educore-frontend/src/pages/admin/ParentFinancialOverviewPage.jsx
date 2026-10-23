@@ -846,7 +846,7 @@ function ParentFinancialOverview() {
 
             <div className="p-6">
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardContent className="py-10 text-center">
 
@@ -933,7 +933,7 @@ function ParentFinancialOverview() {
 
             <div className="p-6">
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardContent className="py-10 text-center">
 
@@ -990,7 +990,7 @@ function ParentFinancialOverview() {
 
     return (
 
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-4 sm:p-6">
 
 
             {/* =========================================================
@@ -1048,7 +1048,7 @@ function ParentFinancialOverview() {
                 SESSION / TERM SELECTOR
             ========================================================= */}
 
-            <Card>
+            <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                 <CardHeader>
 
@@ -1258,7 +1258,7 @@ function ParentFinancialOverview() {
 
                 {/* TOTAL PARENTS */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
 
@@ -1299,7 +1299,7 @@ function ParentFinancialOverview() {
 
                 {/* EXPECTED */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
 
@@ -1342,7 +1342,7 @@ function ParentFinancialOverview() {
 
                 {/* PAID */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
 
@@ -1385,7 +1385,7 @@ function ParentFinancialOverview() {
 
                 {/* OUTSTANDING */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
 
@@ -1437,7 +1437,7 @@ function ParentFinancialOverview() {
 
                 {/* OWING */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardContent className="pt-6">
 
@@ -1479,7 +1479,7 @@ function ParentFinancialOverview() {
 
                 {/* PARTLY PAID */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardContent className="pt-6">
 
@@ -1521,7 +1521,7 @@ function ParentFinancialOverview() {
 
                 {/* PAID */}
 
-                <Card>
+                <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                     <CardContent className="pt-6">
 
@@ -1567,7 +1567,7 @@ function ParentFinancialOverview() {
                 SEARCH / FILTER
             ========================================================= */}
 
-            <Card>
+            <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                 <CardContent className="pt-6">
 
@@ -1719,7 +1719,7 @@ function ParentFinancialOverview() {
                 PARENT TABLE
             ========================================================= */}
 
-            <Card>
+            <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
 
                 <CardHeader>
 
@@ -1741,7 +1741,7 @@ function ParentFinancialOverview() {
 
                             <thead>
 
-                                <tr className="border-b text-left">
+                                <tr className="border-b border-slate-100 bg-slate-50/70 text-left text-xs uppercase tracking-wide text-slate-500">
 
                                     <th className="p-3">
 
@@ -1822,7 +1822,7 @@ function ParentFinancialOverview() {
                                                     parent.parent_id
                                                 }
 
-                                                className="border-b transition-colors hover:bg-muted/50"
+                                                className="border-b border-slate-100 transition-colors hover:bg-slate-50/80"
 
                                             >
 
