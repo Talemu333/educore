@@ -46,6 +46,8 @@ export const teacherSchema = z.object({
 
     emergency_contact_name: z.string().min(1, "Emergency contact name is required"),
 
-    emergency_contact_phone: z.string().min(1, "Emergency contact phone is required")
+    emergency_contact_phone: z.string().min(1, "Emergency contact phone is required"),
+
+    profile_image_url: z.string().trim().url("Enter a valid image URL.").or(z.literal("")).optional()
 
 });
