@@ -104,7 +104,7 @@ function StudentParentsTab({ studentId }) {
                             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="flex min-w-0 gap-3 sm:gap-4">
                                     <Avatar className="h-12 w-12 shrink-0">
-                                        <AvatarFallback>{parent.first_name?.charAt(0)}{parent.surname?.charAt(0)}</AvatarFallback>
+                                        <AvatarImage src={parent.profile_image_url || undefined} alt={`${parent.first_name} ${parent.surname}`} /><AvatarFallback>{parent.first_name?.charAt(0)}{parent.surname?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="min-w-0 space-y-1">
                                         <div className="flex flex-wrap items-center gap-2">
