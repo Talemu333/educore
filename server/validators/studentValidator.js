@@ -35,7 +35,9 @@ const createStudentSchema = Joi.object({
 
     residential_address: Joi.string().required(),
 
-    admission_date: Joi.date().required()
+    admission_date: Joi.date().required(),
+
+    profile_image_url: Joi.string().uri({ scheme: ["https"] }).allow("").optional()
 
 });
 
@@ -67,7 +69,9 @@ const updateStudentSchema = Joi.object({
 
     class_id: Joi.number().integer().required(),
 
-    arm_id: Joi.number().integer().required()
+    arm_id: Joi.number().integer().required(),
+
+    profile_image_url: Joi.string().uri({ scheme: ["https"] }).allow("").optional()
 
 });
 
