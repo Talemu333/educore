@@ -94,6 +94,8 @@ function StudentForm({ isEditMode, studentId }) {
                 admission_date:
                     student.admission_date?.split("T")[0],
 
+                session_id: student.session_id ? String(student.session_id) : "",
+
                 class_id:
                     String(student.class_id),
 
