@@ -84,7 +84,7 @@ const getSchools = async () => {
                 SELECT
                     (SELECT COUNT(*)::INTEGER FROM students WHERE TRUE ${scopeClause}) AS student_count,
                     (SELECT COUNT(*)::INTEGER FROM students WHERE LOWER(TRIM(COALESCE(status, ''))) = 'active' ${scopeClause}) AS active_student_count,
-                    (SELECT COUNT(*)::INTEGER FROM students WHERE LOWER(TRIM(COALESCE(status, ''))) <> 'active' OR status IS NULL) AS inactive_student_count,
+                    (SELECT COUNT(*)::INTEGER FROM students WHERE (LOWER(TRIM(COALESCE(status, ''))) <> 'active' OR status IS NULL) ${scopeClause}) AS inactive_student_count,
                     (SELECT COUNT(*)::INTEGER FROM teachers WHERE TRUE ${scopeClause}) AS teacher_count,
                     (SELECT COUNT(*)::INTEGER FROM teachers WHERE status IS TRUE ${scopeClause}) AS active_teacher_count,
                     (SELECT COUNT(*)::INTEGER FROM teachers WHERE status IS NOT TRUE ${scopeClause}) AS inactive_teacher_count,
