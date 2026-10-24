@@ -250,7 +250,11 @@ function SuperAdminSchoolManagement() {
                                     <th className="p-3 text-left">ID</th>
                                     <th className="p-3 text-left">School</th>
                                     <th className="p-3 text-left">Prefix</th>
-                                    <th className="p-3 text-left">Users</th>
+                                    <th className="p-3 text-left">Total Users</th>
+                                    <th className="p-3 text-left">Students</th>
+                                    <th className="p-3 text-left">Admins</th>
+                                    <th className="p-3 text-left">Parents</th>
+                                    <th className="p-3 text-left">Teachers</th>
                                     <th className="p-3 text-left">Status</th>
                                     <th className="p-3 text-left">Action</th>
                                 </tr>
@@ -261,7 +265,11 @@ function SuperAdminSchoolManagement() {
                                         <td className="p-3">{school.school_id}</td>
                                         <td className="p-3 font-medium">{school.school_name}</td>
                                         <td className="p-3">{school.admission_prefix}</td>
-                                        <td className="p-3">{school.user_count}</td>
+                                        <td className="p-3">{school.user_count ?? "—"}</td>
+                                        <td className="p-3">{school.student_count ?? "—"}</td>
+                                        <td className="p-3">{school.admin_count ?? "—"}</td>
+                                        <td className="p-3">{school.parent_count ?? "—"}</td>
+                                        <td className="p-3">{school.teacher_count ?? "—"}</td>
                                         <td className="p-3">{school.is_active ? "Active" : "Inactive"}</td>
                                         <td className="p-3">
                                             <div className="flex flex-wrap gap-2">
