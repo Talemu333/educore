@@ -51,7 +51,7 @@ function PersonalInformation({
                 />
 
                 <DateField
-                    label="Date of Birth"
+                    label="Date of Birth *"
                     name="date_of_birth"
                     register={register}
                     error={errors.date_of_birth}
