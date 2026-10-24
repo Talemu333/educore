@@ -243,8 +243,9 @@ function SuperAdminSchoolManagement() {
                 ) : schools.length === 0 ? (
                     <p className="p-4 text-sm text-muted-foreground">No schools found.</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                    <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-b-lg" role="region" aria-label="Registered schools and registration counts" tabIndex={0}>
+                        <p className="sticky left-0 w-fit px-3 py-2 text-xs text-muted-foreground md:hidden">Swipe horizontally to view all registration and limit columns →</p>
+                        <table className="w-max min-w-[1900px] text-sm">
                             <thead className="border-b bg-muted/50">
                                 <tr>
                                     <th className="p-3 text-left">ID</th>
