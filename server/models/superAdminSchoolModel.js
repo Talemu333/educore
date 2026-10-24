@@ -62,8 +62,8 @@ const getSchools = async () => {
         }
     }
 
-    // Count accounts from each school's own database. If a school is still on
-    // the shared central database, scope counts by school_id to avoid mixing tenants.
+    // Count registered records from each school's own database, not just login accounts.
+    // Deactivated records remain in total counts; active/inactive columns are reported separately.
     for (const school of result.rows) {
         try {
             const registryResult = await pool.query(
@@ -77,34 +77,39 @@ const getSchools = async () => {
                 registry.database_name &&
                 registry.database_name !== process.env.DB_NAME
             );
-            const scopeClause = isDedicatedDatabase ? "" : "WHERE u.school_id = $1";
+            const scopeClause = isDedicatedDatabase ? "" : "AND school_id = $1";
             const values = isDedicatedDatabase ? [] : [school.school_id];
+
             const countsResult = await schoolPool.query(`
                 SELECT
-                    COUNT(DISTINCT u.id)::INTEGER AS user_count,
-                    COUNT(DISTINCT u.id) FILTER (
-                        WHERE LOWER(TRIM(r.role_name)) = 'student'
-                    )::INTEGER AS student_count,
-                    COUNT(DISTINCT u.id) FILTER (
-                        WHERE LOWER(TRIM(r.role_name)) IN ('admin', 'administrator')
-                    )::INTEGER AS admin_count,
-                    COUNT(DISTINCT u.id) FILTER (
-                        WHERE LOWER(TRIM(r.role_name)) = 'parent'
-                    )::INTEGER AS parent_count,
-                    COUNT(DISTINCT u.id) FILTER (
-                        WHERE LOWER(TRIM(r.role_name)) = 'teacher'
-                    )::INTEGER AS teacher_count
-                FROM users u
-                JOIN roles r ON r.id = u.role_id
-                ${scopeClause};
+                    (SELECT COUNT(*)::INTEGER FROM students WHERE TRUE ${scopeClause}) AS student_count,
+                    (SELECT COUNT(*)::INTEGER FROM students WHERE LOWER(TRIM(COALESCE(status, ''))) = 'active' ${scopeClause}) AS active_student_count,
+                    (SELECT COUNT(*)::INTEGER FROM students WHERE LOWER(TRIM(COALESCE(status, ''))) <> 'active' OR status IS NULL) AS inactive_student_count,
+                    (SELECT COUNT(*)::INTEGER FROM teachers WHERE TRUE ${scopeClause}) AS teacher_count,
+                    (SELECT COUNT(*)::INTEGER FROM teachers WHERE status IS TRUE ${scopeClause}) AS active_teacher_count,
+                    (SELECT COUNT(*)::INTEGER FROM teachers WHERE status IS NOT TRUE ${scopeClause}) AS inactive_teacher_count,
+                    (SELECT COUNT(*)::INTEGER FROM parents p LEFT JOIN users u ON u.id = p.user_id WHERE TRUE ${isDedicatedDatabase ? "" : "AND p.school_id = $1"}) AS parent_count,
+                    (SELECT COUNT(*)::INTEGER FROM parents p LEFT JOIN users u ON u.id = p.user_id WHERE u.is_active IS TRUE ${isDedicatedDatabase ? "" : "AND p.school_id = $1"}) AS active_parent_count,
+                    (SELECT COUNT(*)::INTEGER FROM parents p LEFT JOIN users u ON u.id = p.user_id WHERE u.is_active IS NOT TRUE ${isDedicatedDatabase ? "" : "AND p.school_id = $1"}) AS inactive_parent_count,
+                    (SELECT COUNT(*)::INTEGER FROM users u JOIN roles r ON r.id = u.role_id
+                        WHERE LOWER(TRIM(r.role_name)) IN ('admin', 'administrator') ${isDedicatedDatabase ? "" : "AND u.school_id = $1"}) AS admin_count,
+                    (SELECT COUNT(*)::INTEGER FROM users u JOIN roles r ON r.id = u.role_id
+                        WHERE LOWER(TRIM(r.role_name)) IN ('admin', 'administrator') AND u.is_active IS TRUE ${isDedicatedDatabase ? "" : "AND u.school_id = $1"}) AS active_admin_count,
+                    (SELECT COUNT(*)::INTEGER FROM users u JOIN roles r ON r.id = u.role_id
+                        WHERE LOWER(TRIM(r.role_name)) IN ('admin', 'administrator') AND u.is_active IS NOT TRUE ${isDedicatedDatabase ? "" : "AND u.school_id = $1"}) AS inactive_admin_count;
             `, values);
-            Object.assign(school, countsResult.rows[0] || {
-                user_count: 0, student_count: 0, admin_count: 0, parent_count: 0, teacher_count: 0
-            });
+
+            Object.assign(school, countsResult.rows[0] || {});
+            school.user_count = Number(school.student_count || 0) + Number(school.teacher_count || 0) +
+                Number(school.parent_count || 0) + Number(school.admin_count || 0);
         } catch (error) {
-            console.warn(`Unable to count user categories for school ${school.school_id}: ${error.message}`);
+            console.warn(`Unable to count registered records for school ${school.school_id}: ${error.message}`);
             Object.assign(school, {
-                user_count: null, student_count: null, admin_count: null, parent_count: null, teacher_count: null
+                user_count: null,
+                student_count: null, active_student_count: null, inactive_student_count: null,
+                teacher_count: null, active_teacher_count: null, inactive_teacher_count: null,
+                parent_count: null, active_parent_count: null, inactive_parent_count: null,
+                admin_count: null, active_admin_count: null, inactive_admin_count: null
             });
         }
     }
