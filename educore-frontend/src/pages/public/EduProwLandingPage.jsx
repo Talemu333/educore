@@ -195,8 +195,8 @@ export default function EduProwLandingPage() {
                                 <a href="#contact" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition duration-300 hover:-translate-y-1 hover:bg-blue-500 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
                                     Talk to EduProw <span aria-hidden="true">→</span>
                                 </a>
-                                <a href="#demo" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-7 py-3.5 text-center text-sm font-semibold text-white backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
-                                    <span aria-hidden="true">▶</span> Watch the demo
+                                <a href="#solutions" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-7 py-3.5 text-center text-sm font-semibold text-white backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                                    Explore solutions <span aria-hidden="true">↓</span>
                                 </a>
                             </div>
                             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-200">
@@ -269,28 +269,6 @@ export default function EduProwLandingPage() {
                             <button type="button" onClick={() => setCarouselPaused((paused) => !paused)} aria-label={carouselPaused ? "Resume carousel autoplay" : "Pause carousel autoplay"} className="hidden h-10 items-center justify-center rounded-full border border-white/30 bg-slate-950/30 px-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:inline-flex">
                                 {carouselPaused ? "Play" : "Pause"}
                             </button>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="demo" className="scroll-mt-24 bg-slate-50 px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
-                    <div className="mx-auto max-w-6xl">
-                        <div className="mx-auto max-w-3xl text-center">
-                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-600">See EduProw in action</p>
-                            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Take a quick tour of EduProw.</h2>
-                            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">Watch the demo below to see how EduProw brings school administration, academics, finance, CBT and communication together in one platform.</p>
-                        </div>
-                        <div className="mx-auto mt-10 overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-2xl">
-                            <div className="aspect-video w-full">
-                                <iframe
-                                    className="h-full w-full"
-                                    src="https://www.youtube.com/embed/x37yrC48p74"
-                                    title="EduProw School Management Platform Demo"
-                                    loading="lazy"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowFullScreen
-                                />
-                            </div>
                         </div>
                     </div>
                 </section>
