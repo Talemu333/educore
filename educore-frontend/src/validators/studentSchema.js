@@ -18,7 +18,7 @@ export const studentSchema = z.object({
         .string()
         .min(1, "Select gender."),
 
-    date_of_birth: z.string(),
+    date_of_birth: z.string().min(1, "Date of birth is required."),
 
     admission_date: z
         .string()
@@ -30,13 +30,13 @@ export const studentSchema = z.object({
 
     session_id: z.string().min(1, "Academic session is required"),
 
-    class_id: z.string(),
+    class_id: z.string().min(1, "Select a class."),
 
-    arm_id: z.string(),
+    arm_id: z.string().min(1, "Select an arm."),
 
-    state_id: z.string(),
+    state_id: z.string().min(1, "Select a state."),
 
-    nationality_id: z.string(),
+    nationality_id: z.string().min(1, "Select a nationality."),
 
     blood_group: z
         .string()
