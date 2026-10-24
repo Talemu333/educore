@@ -26,7 +26,7 @@ function AcademicInformation({
 
                 <DateField
 
-                    label="Admission Date"
+                    label="Admission Date *"
 
                     name="admission_date"
 
@@ -38,7 +38,7 @@ function AcademicInformation({
 
                 <SelectField
 
-                    label="Academic Session"
+                    label="Academic Session *"
 
                     name="session_id"
 
