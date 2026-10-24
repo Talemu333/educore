@@ -54,7 +54,7 @@ function AcademicInformation({
 
                 <SelectField
 
-                    label="Class"
+                    label="Class *"
 
                     name="class_id"
 
@@ -70,7 +70,7 @@ function AcademicInformation({
 
                 <SelectField
 
-                    label="Arm"
+                    label="Arm *"
 
                     name="arm_id"
 
