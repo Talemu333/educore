@@ -27,7 +27,7 @@ function StudentForm({ isEditMode, studentId }) {
         reset,
         formState: { errors }
     } = useForm({
-        resolver: zodResolver(studentSchema),
+        resolver: zodResolver(isEditMode ? studentSchema.omit({ session_id: true }) : studentSchema),
         defaultValues: {}
     });
 
@@ -246,6 +246,7 @@ function StudentForm({ isEditMode, studentId }) {
                     sessions={data.sessions}
                     classes={data.classes}
                     arms={filteredArms}
+                    isEditMode={isEditMode}
                 />
             </div>
 
