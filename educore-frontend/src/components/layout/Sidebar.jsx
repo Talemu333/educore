@@ -34,25 +34,25 @@ const makeAdminMenuGroups = (items) => {
     const administrationPaths = new Set(["/administrators", "/change-password"]);
 
     const groups = [
-        { title: "Academic Management", icon: GraduationCap, paths: academicPaths, children: [] },
-        { title: "Teaching & Assessment", icon: BookOpen, paths: teachingPaths, children: [] },
-        { title: "Finance", icon: Wallet, paths: financePaths, children: [] },
+        { title: "Students & Staff", icon: GraduationCap, paths: academicPaths, children: [] },
+        { title: "Teaching & Results", icon: BookOpen, paths: teachingPaths, children: [] },
+        { title: "Fees & Finance", icon: Wallet, paths: financePaths, children: [] },
         { title: "Communication", icon: MessageSquare, paths: communicationPaths, children: [] },
-        { title: "Website & Settings", icon: Globe, paths: websitePaths, children: [] },
-        { title: "Administration", icon: ShieldCheck, paths: administrationPaths, children: [] }
+        { title: "Website & School Settings", icon: Globe, paths: websitePaths, children: [] },
+        { title: "School Administration", icon: ShieldCheck, paths: administrationPaths, children: [] }
     ];
 
     const remaining = [];
 
     for (const item of items) {
         if (item.title === "Results" && item.children) {
-            const group = groups.find(entry => entry.title === "Teaching & Assessment");
+            const group = groups.find(entry => entry.title === "Teaching & Results");
             group.children.push(...item.children);
             continue;
         }
 
         if (item.title === "Settings" && item.children) {
-            const group = groups.find(entry => entry.title === "Website & Settings");
+            const group = groups.find(entry => entry.title === "Website & School Settings");
             group.children.push(...item.children);
             continue;
         }
