@@ -22,6 +22,7 @@ export default function PlatformBillingPage() {
     const [savingSubscription, setSavingSubscription] = useState(false);
     const [savingPayment, setSavingPayment] = useState(false);
     const [subscription, setSubscription] = useState(emptySubscription);
+    const [customRate, setCustomRate] = useState("");
     const [payment, setPayment] = useState(emptyPayment);
     const [notice, setNotice] = useState("");
     const [error, setError] = useState("");
@@ -39,7 +40,7 @@ export default function PlatformBillingPage() {
     useEffect(() => { load(); }, []);
 
     const count = Number(subscription.student_count || 0);
-    const rate = count > 0 ? rateForCount(count) : null;
+    const rate = count > 600 ? (customRate !== "" && Number.isFinite(Number(customRate)) && Number(customRate) >= 0 ? Number(customRate) : null) : count > 0 ? rateForCount(count) : null;
     const estimatedAmount = rate === null ? "" : count * rate;
     const selectedSubscription = data.subscriptions.find(item => String(item.id) === String(payment.subscription_id));
     const selectedBalance = selectedSubscription ? Number(selectedSubscription.balance) : 0;
@@ -70,6 +71,7 @@ export default function PlatformBillingPage() {
                 notes: subscription.notes.trim()
             });
             setSubscription(emptySubscription);
+            setCustomRate("");
             setNotice("School subscription recorded.");
             await load();
         } catch (err) { setError(err.response?.data?.message || "Unable to save the subscription."); }
@@ -126,13 +128,13 @@ export default function PlatformBillingPage() {
                             <input readOnly value={count > 0 ? planForCount(count) : ""} className={inputClass + " bg-muted"} placeholder="Calculated from student count" />
                         </Field>
                         <Field label="Rate per student / term">
-                            <input readOnly value={rate === null ? (count > 600 ? "Custom quotation" : "") : money(rate)} className={inputClass + " bg-muted"} />
+                            <input type={count > 600 ? "number" : "text"} min={count > 600 ? "0" : undefined} step={count > 600 ? "0.01" : undefined} readOnly={count <= 600} value={count > 600 ? customRate : (rate === null ? "" : money(rate))} onChange={count > 600 ? e => setCustomRate(e.target.value) : undefined} className={inputClass + (count > 600 ? "" : " bg-muted")} placeholder={count > 600 ? "Enter agreed custom rate" : ""} />
                         </Field>
                         <Field label="Subscription amount (₦)">
                             <input readOnly value={estimatedAmount === "" ? "" : estimatedAmount} className={inputClass + " bg-muted"} placeholder="Calculated automatically" />
                         </Field>
                     </div>
-                    {count > 600 && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">This school needs a custom rate. Agree the price first; then the custom plan can be recorded.</p>}
+                    {count > 600 && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Enter the agreed custom rate per student per term. The subscription total will be calculated automatically.</p>}
                     <Field label="Billing period / term">
                         <input required value={subscription.billing_period} onChange={e => setSubscription(v => ({ ...v, billing_period: e.target.value }))} className={inputClass} placeholder="e.g. 2026/2027 — First Term" />
                     </Field>
