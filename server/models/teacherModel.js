@@ -7,9 +7,10 @@ const createTeacher = async (client, teacherData, schoolId) => {
             date_of_birth, phone_number, email, address, marital_status,
             qualification_id, department_id, employment_date, state_id,
             nationality_id, next_of_kin_name, next_of_kin_phone,
-            emergency_contact_name, emergency_contact_phone, profile_image_url
+            emergency_contact_name, emergency_contact_phone, profile_image_url,
+            nin, degree_certificate_url, other_certificates_url, birth_certificate_url
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
         RETURNING *;
     `, [teacherData.id, schoolId, teacherData.user_id, teacherData.staff_number, teacherData.surname,
         teacherData.first_name, teacherData.middle_name, teacherData.gender,
@@ -17,7 +18,9 @@ const createTeacher = async (client, teacherData, schoolId) => {
         teacherData.address, teacherData.marital_status, teacherData.qualification_id,
         teacherData.department_id, teacherData.employment_date, teacherData.state_id,
         teacherData.nationality_id, teacherData.next_of_kin_name, teacherData.next_of_kin_phone,
-        teacherData.emergency_contact_name, teacherData.emergency_contact_phone, teacherData.profile_image_url || null]);
+        teacherData.emergency_contact_name, teacherData.emergency_contact_phone, teacherData.profile_image_url || null,
+        teacherData.nin || null, teacherData.degree_certificate_url || null,
+        teacherData.other_certificates_url || null, teacherData.birth_certificate_url || null]);
     return result.rows[0];
 };
 
@@ -109,8 +112,9 @@ const updateTeacher = async (client, id, teacherData, schoolId) => {
             employment_date = $12, state_id = $13, nationality_id = $14,
             next_of_kin_name = $15, next_of_kin_phone = $16,
             emergency_contact_name = $17, emergency_contact_phone = $18, profile_image_url = $19,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE t.id = $20 AND t.school_id = $21
+            nin = $20, degree_certificate_url = $21, other_certificates_url = $22,
+            birth_certificate_url = $23, updated_at = CURRENT_TIMESTAMP
+        WHERE t.id = $24 AND t.school_id = $25
         RETURNING t.*;
     `, [teacherData.surname, teacherData.first_name, teacherData.middle_name,
         teacherData.gender, teacherData.date_of_birth, teacherData.phone_number,
@@ -118,7 +122,9 @@ const updateTeacher = async (client, id, teacherData, schoolId) => {
         teacherData.qualification_id, teacherData.department_id, teacherData.employment_date,
         teacherData.state_id, teacherData.nationality_id, teacherData.next_of_kin_name,
         teacherData.next_of_kin_phone, teacherData.emergency_contact_name,
-        teacherData.emergency_contact_phone, teacherData.profile_image_url || null, id, schoolId]);
+        teacherData.emergency_contact_phone, teacherData.profile_image_url || null,
+        teacherData.nin || null, teacherData.degree_certificate_url || null,
+        teacherData.other_certificates_url || null, teacherData.birth_certificate_url || null, id, schoolId]);
     return result.rows[0];
 };
 
