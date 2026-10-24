@@ -25,7 +25,11 @@ const getSchools = async () => {
     const result = await pool.query(`
         SELECT ss.school_id, ss.school_name, ss.website_slug, ss.admission_prefix,
                ss.school_email, ss.school_phone, ss.school_address, ss.school_logo,
-               ss.school_level, ss.school_motto, ss.is_active, ss.created_at, ss.updated_at
+               ss.school_level, ss.school_motto, ss.is_active, ss.created_at, ss.updated_at,
+               (SELECT sub.student_count FROM platform_school_subscriptions sub
+                WHERE sub.school_id = ss.school_id
+                ORDER BY CASE WHEN sub.status = 'active' THEN 0 ELSE 1 END,
+                         sub.created_at DESC, sub.id DESC LIMIT 1) AS agreed_student_limit
         FROM school_settings ss
         ORDER BY ss.school_id;
     `);
