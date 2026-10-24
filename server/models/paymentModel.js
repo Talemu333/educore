@@ -87,8 +87,10 @@ const getReceiptByNumber = async (receiptNumber, schoolId) => {
         SELECT sp.reference_number, sp.payment_date, sp.amount_paid,
                sp.payment_method, sp.remarks, st.admission_number,
                st.first_name, st.surname, c.class_name, t.term_name,
-               s.session_name, u.username AS received_by
+               s.session_name, u.username AS received_by,
+               sch.school_name
         FROM student_payments sp
+        JOIN schools sch ON sch.id = sp.school_id
         JOIN students st ON sp.student_id = st.id AND st.school_id = $2
         JOIN classes c ON st.class_id = c.id AND c.school_id = $2
         JOIN terms t ON sp.term_id = t.id AND t.school_id = $2
