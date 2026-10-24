@@ -43,7 +43,7 @@ function AdditionalInformation({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <SelectField
-                    label="State"
+                    label="State *"
                     name="state_id"
                     register={register}
                     options={states}
@@ -52,7 +52,7 @@ function AdditionalInformation({
                 />
 
                 <SelectField
-                    label="Nationality"
+                    label="Nationality *"
                     name="nationality_id"
                     register={register}
                     options={nationalities}
