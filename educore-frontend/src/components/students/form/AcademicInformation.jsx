@@ -20,6 +20,7 @@ function AcademicInformation({
     return (
 
         <FormSection title="Academic Information">
+            <p className="text-sm text-slate-500">Choose the session and class for this student. Confirm these details before saving.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
