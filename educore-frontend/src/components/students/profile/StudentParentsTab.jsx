@@ -4,7 +4,7 @@ import { useUnlinkParent } from "@/hooks/useUnlinkParent";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { UserPlus, Users, KeyRound, Copy } from "lucide-react";
 import { useStudentParents } from "@/hooks/useStudentParents";
 import AddParentSheet from "./AddParentSheet";
