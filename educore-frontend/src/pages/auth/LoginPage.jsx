@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -7,6 +8,7 @@ import { useSchoolSettings } from "../../hooks/useSchoolSettings";
 
 function LoginPage() {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const { loginUser } = useAuth();
     const { data: schoolSettings, isLoading: isSchoolLoading } = useSchoolSettings();
@@ -115,14 +117,25 @@ function LoginPage() {
                                 <label htmlFor="password" className="mb-2 block text-sm font-semibold text-slate-700">
                                     Password
                                 </label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    {...register("password", { required: "Password is required" })}
-                                    className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 sm:text-base"
-                                    placeholder="Enter your password"
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        autoComplete="current-password"
+                                        {...register("password", { required: "Password is required" })}
+                                        className="block w-full rounded-xl border border-slate-300 bg-white py-3.5 pl-4 pr-20 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 sm:text-base"
+                                        placeholder="Enter your password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((visible) => !visible)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        aria-pressed={showPassword}
+                                        className="absolute inset-y-0 right-3 my-auto rounded-md px-2 text-sm font-semibold text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {showPassword ? "Hide" : "Show"}
+                                    </button>
+                                </div>
                                 {errors.password && <p className="mt-1.5 text-xs text-red-500 sm:text-sm">{errors.password.message}</p>}
                             </div>
 
