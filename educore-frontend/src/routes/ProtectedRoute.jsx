@@ -44,7 +44,8 @@ function ProtectedRoute({
         const allowedSuperAdminPaths = [
             "/settings",
             "/partner-management",
-            "/partner-management/settings"
+            "/partner-management/settings",
+            "/platform-billing"
         ];
 
         if (
