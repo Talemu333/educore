@@ -50,7 +50,8 @@ passport.use(
 passport.serializeUser((user, done) => {
     done(null, {
         id: user.id,
-        school_id: user.school_id || null
+        school_id: user.school_id || null,
+        role_name: user.role_name || null
     });
 });
 
@@ -68,26 +69,44 @@ passport.deserializeUser(async (serialized, done) => {
             return done(null, false);
         }
 
-        if (Number.isInteger(schoolId) && schoolId > 0) {
-            const schoolPool = await getSchoolDatabase(schoolId);
+        const serializedRole = String(typeof serialized === "object" ? serialized.role_name || "" : "")
+            .trim()
+            .toLowerCase();
 
+        // Super Admin accounts live in the central platform database. Some
+        // legacy Super Admin rows have a placeholder school_id, so never route
+        // their session deserialization into that school's tenant database.
+        if (serializedRole === "super admin") {
+            const platformUser = await authModel.findUserById(userId);
+            if (!platformUser || platformUser.is_active === false) {
+                return done(null, false);
+            }
+            return done(null, platformUser);
+        }
+
+        if (Number.isInteger(schoolId) && schoolId > 0) {
+            // Older sessions may not contain role_name. Check the central
+            // account first so an existing Super Admin session remains valid.
+            const platformUser = await authModel.findUserById(userId);
+            if (String(platformUser?.role_name || "").trim().toLowerCase() === "super admin") {
+                if (platformUser.is_active === false) return done(null, false);
+                return done(null, platformUser);
+            }
+
+            const schoolPool = await getSchoolDatabase(schoolId);
             return runWithSchoolDatabase(schoolPool, async () => {
                 const user = await authModel.findUserById(userId);
-
                 if (!user || user.is_active === false) {
                     return done(null, false);
                 }
-
                 return done(null, user);
             });
         }
 
         const user = await authModel.findUserById(userId);
-
         if (!user || user.is_active === false) {
             return done(null, false);
         }
-
         return done(null, user);
     } catch (error) {
         return done(error);
