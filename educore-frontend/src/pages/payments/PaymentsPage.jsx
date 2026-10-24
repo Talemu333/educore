@@ -609,7 +609,7 @@ function PaymentsPage() {
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white">
                                         <Receipt className="h-6 w-6" />
                                     </div>
-                                    <h3 className="mt-4 text-2xl font-bold tracking-tight">EDUCORE</h3>
+                                    <h3 className="mt-4 text-2xl font-bold tracking-tight">{receipt.school_name || "School"}</h3>
                                     <p className="mt-1 text-sm text-slate-500">School Payment Receipt</p>
                                 </div>
 
