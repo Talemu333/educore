@@ -11,7 +11,8 @@ import {
     Wallet,
     MessageSquare,
     Globe,
-    ShieldCheck
+    ShieldCheck,
+    LogOut
 } from "lucide-react";
 import sidebarMenu from "../../constants/sidebarMenu";
 import SidebarItem from "./SidebarItem";
@@ -115,7 +116,8 @@ function Sidebar({ isOpen, onClose }) {
             { title: "School Management", icon: Settings, path: "/settings" },
             { title: "School Subscriptions & Payments", icon: CreditCard, path: "/platform-billing" },
             { title: "Partner Programme", icon: Handshake, path: "/partner-management" },
-            { title: "Partner Settings", icon: SlidersHorizontal, path: "/partner-management/settings" }
+            { title: "Partner Settings", icon: SlidersHorizontal, path: "/partner-management/settings" },
+            { title: "Logout", icon: LogOut, path: "/logout" }
         ]
         : sidebarMenu
             .filter(canAccess)
