@@ -12,7 +12,9 @@ function SelectField({
 
     optionValue = "id",
 
-    error
+    error,
+
+    disabled = false
 
 }) {
 
@@ -30,7 +32,9 @@ function SelectField({
 
                 {...register(name)}
 
-                className="w-full rounded-md border p-2"
+                disabled={disabled}
+
+                className="w-full rounded-md border p-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-600"
 
             >
 
