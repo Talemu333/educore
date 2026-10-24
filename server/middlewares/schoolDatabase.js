@@ -61,6 +61,7 @@ const resolveSchoolDatabase = async (req, res, next) => {
         const key = getSchoolKey(req);
         const platformHosts = new Set([
             "eduprow.com",
+            "www.eduprow.com",
             "localhost",
             "127.0.0.1",
         ]);
