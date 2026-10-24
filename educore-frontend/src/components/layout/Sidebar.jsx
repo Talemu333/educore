@@ -5,6 +5,7 @@ import {
     Settings,
     Handshake,
     SlidersHorizontal,
+    CreditCard,
     GraduationCap,
     BookOpen,
     Wallet,
@@ -112,6 +113,7 @@ function Sidebar({ isOpen, onClose }) {
     const filteredMenu = role === "Super Admin"
         ? [
             { title: "School Management", icon: Settings, path: "/settings" },
+            { title: "School Subscriptions & Payments", icon: CreditCard, path: "/platform-billing" },
             { title: "Partner Programme", icon: Handshake, path: "/partner-management" },
             { title: "Partner Settings", icon: SlidersHorizontal, path: "/partner-management/settings" }
         ]
