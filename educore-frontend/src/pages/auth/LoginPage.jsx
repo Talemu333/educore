@@ -131,9 +131,20 @@ function LoginPage() {
                                         onClick={() => setShowPassword((visible) => !visible)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
                                         aria-pressed={showPassword}
-                                        className="absolute inset-y-0 right-3 my-auto rounded-md px-2 text-sm font-semibold text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        title={showPassword ? "Hide password" : "Show password"}
+                                        className="absolute inset-y-0 right-3 flex items-center justify-center rounded-md p-2 text-slate-500 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
-                                        {showPassword ? "Hide" : "Show"}
+                                        {showPassword ? (
+                                            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.9 5.2A10.8 10.8 0 0112 5c5.2 0 8.6 4.7 9.5 6-.4.6-1.4 2-3.1 3.5M6.2 6.2C3.9 7.6 2.7 9.6 2.5 10c.9 1.3 4.3 6 9.5 6 1 0 1.9-.2 2.7-.5" />
+                                            </svg>
+                                        ) : (
+                                            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                        )}
                                     </button>
                                 </div>
                                 {errors.password && <p className="mt-1.5 text-xs text-red-500 sm:text-sm">{errors.password.message}</p>}
