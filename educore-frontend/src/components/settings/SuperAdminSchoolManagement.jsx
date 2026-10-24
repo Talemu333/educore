@@ -252,6 +252,8 @@ function SuperAdminSchoolManagement() {
                                     <th className="p-3 text-left">Prefix</th>
                                     <th className="p-3 text-left">Registered Students</th>
                                     <th className="p-3 text-left">Students (Active / Inactive)</th>
+                                    <th className="p-3 text-left">Agreed Limit</th>
+                                    <th className="p-3 text-left">Limit Status</th>
                                     <th className="p-3 text-left">Registered Teachers</th>
                                     <th className="p-3 text-left">Teachers (Active / Inactive)</th>
                                     <th className="p-3 text-left">Registered Admins</th>
@@ -270,6 +272,8 @@ function SuperAdminSchoolManagement() {
                                         <td className="p-3">{school.admission_prefix}</td>
                                         <td className="p-3">{school.student_count ?? "—"}</td>
                                         <td className="p-3">{school.active_student_count ?? "—"} / {school.inactive_student_count ?? "—"}</td>
+                                        <td className="p-3">{school.agreed_student_limit ?? "Not set"}</td>
+                                        <td className="p-3">{school.agreed_student_limit == null || school.student_count == null ? "—" : Number(school.student_count) > Number(school.agreed_student_limit) ? `Exceeded by ${Number(school.student_count) - Number(school.agreed_student_limit)}` : `${Number(school.agreed_student_limit) - Number(school.student_count)} remaining`}</td>
                                         <td className="p-3">{school.teacher_count ?? "—"}</td>
                                         <td className="p-3">{school.active_teacher_count ?? "—"} / {school.inactive_teacher_count ?? "—"}</td>
                                         <td className="p-3">{school.admin_count ?? "—"}</td>
