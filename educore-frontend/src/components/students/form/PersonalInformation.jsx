@@ -12,18 +12,19 @@ function PersonalInformation({
     return (
 
         <FormSection title="Personal Information">
+            <p className="text-sm text-slate-500">Enter the student’s name and personal details. Fields marked <span className="font-semibold text-red-600">*</span> are required.</p>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
                 <TextField
-                    label="Surname"
+                    label="Surname *"
                     name="surname"
                     register={register}
                     error={errors.surname}
                 />
 
                 <TextField
-                    label="First Name"
+                    label="First Name *"
                     name="first_name"
                     register={register}
                     error={errors.first_name}
@@ -37,7 +38,7 @@ function PersonalInformation({
                 />
 
                 <SelectField
-                    label="Gender"
+                    label="Gender *"
                     name="gender"
                     register={register}
                     options={[
@@ -57,7 +58,7 @@ function PersonalInformation({
                 />
 
                 <TextAreaField
-                    label="Residential Address"
+                    label="Residential Address *"
                     name="residential_address"
                     register={register}
                     error={errors.residential_address}
