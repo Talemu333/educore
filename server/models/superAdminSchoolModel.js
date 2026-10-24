@@ -4,6 +4,7 @@ const path = require("node:path");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { migrateSchoolData } = require("../scripts/migrateSchoolData");
+const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 
 const execFileAsync = promisify(execFile);
 const provisionerPath = path.resolve(__dirname, "../scripts/provisionSchoolDatabase.js");
@@ -24,12 +25,8 @@ const getSchools = async () => {
     const result = await pool.query(`
         SELECT ss.school_id, ss.school_name, ss.website_slug, ss.admission_prefix,
                ss.school_email, ss.school_phone, ss.school_address, ss.school_logo,
-               ss.school_level, ss.school_motto, ss.is_active, ss.created_at, ss.updated_at,
-               COUNT(u.id)::INTEGER AS user_count
-        FROM school_settings ss LEFT JOIN users u ON u.school_id = ss.school_id
-        GROUP BY ss.school_id, ss.school_name, ss.website_slug, ss.admission_prefix,
-                 ss.school_email, ss.school_phone, ss.school_address, ss.school_logo,
-                 ss.school_level, ss.school_motto, ss.is_active, ss.created_at, ss.updated_at
+               ss.school_level, ss.school_motto, ss.is_active, ss.created_at, ss.updated_at
+        FROM school_settings ss
         ORDER BY ss.school_id;
     `);
 
@@ -62,6 +59,53 @@ const getSchools = async () => {
             }
         } catch (error) {
             console.warn(`School database recovery skipped for school ${school.school_id}: ${error.message}`);
+        }
+    }
+
+    // Count accounts from each school's own database. If a school is still on
+    // the shared central database, scope counts by school_id to avoid mixing tenants.
+    for (const school of result.rows) {
+        try {
+            const registryResult = await pool.query(
+                `SELECT database_name, is_active FROM school_database_registry WHERE school_id = $1 LIMIT 1`,
+                [school.school_id]
+            );
+            const registry = registryResult.rows[0];
+            const schoolPool = await getSchoolDatabase(school.school_id);
+            const isDedicatedDatabase = Boolean(
+                registry?.is_active &&
+                registry.database_name &&
+                registry.database_name !== process.env.DB_NAME
+            );
+            const scopeClause = isDedicatedDatabase ? "" : "WHERE u.school_id = $1";
+            const values = isDedicatedDatabase ? [] : [school.school_id];
+            const countsResult = await schoolPool.query(`
+                SELECT
+                    COUNT(DISTINCT u.id)::INTEGER AS user_count,
+                    COUNT(DISTINCT u.id) FILTER (
+                        WHERE LOWER(TRIM(r.role_name)) = 'student'
+                    )::INTEGER AS student_count,
+                    COUNT(DISTINCT u.id) FILTER (
+                        WHERE LOWER(TRIM(r.role_name)) IN ('admin', 'administrator')
+                    )::INTEGER AS admin_count,
+                    COUNT(DISTINCT u.id) FILTER (
+                        WHERE LOWER(TRIM(r.role_name)) = 'parent'
+                    )::INTEGER AS parent_count,
+                    COUNT(DISTINCT u.id) FILTER (
+                        WHERE LOWER(TRIM(r.role_name)) = 'teacher'
+                    )::INTEGER AS teacher_count
+                FROM users u
+                JOIN roles r ON r.id = u.role_id
+                ${scopeClause};
+            `, values);
+            Object.assign(school, countsResult.rows[0] || {
+                user_count: 0, student_count: 0, admin_count: 0, parent_count: 0, teacher_count: 0
+            });
+        } catch (error) {
+            console.warn(`Unable to count user categories for school ${school.school_id}: ${error.message}`);
+            Object.assign(school, {
+                user_count: null, student_count: null, admin_count: null, parent_count: null, teacher_count: null
+            });
         }
     }
 
