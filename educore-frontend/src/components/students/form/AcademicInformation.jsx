@@ -22,7 +22,7 @@ function AcademicInformation({
     return (
 
         <FormSection title="Academic Information">
-            <p className="text-sm text-slate-500">{isEditMode ? "Update the student’s admission date, class, and arm." : "Choose the session and class for this student. Confirm these details before saving."}</p>
+            <p className="text-sm text-slate-500">{isEditMode ? "Update the student’s admission date, class, and arm. The current academic session is shown for reference." : "Choose the session and class for this student. Confirm these details before saving."}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -38,16 +38,15 @@ function AcademicInformation({
 
                 />
 
-                {!isEditMode && (
-                    <SelectField
-                        label="Academic Session *"
-                        name="session_id"
-                        register={register}
-                        options={sessions}
-                        optionLabel="session_name"
-                        error={errors.session_id}
-                    />
-                )}
+                <SelectField
+                    label={isEditMode ? "Academic Session (current)" : "Academic Session *"}
+                    name="session_id"
+                    register={register}
+                    options={sessions}
+                    optionLabel="session_name"
+                    error={errors.session_id}
+                    disabled={isEditMode}
+                />
 
                 <SelectField
 
