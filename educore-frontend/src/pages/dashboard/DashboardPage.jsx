@@ -1,5 +1,6 @@
-import { LogOut, UserPlus, CalendarCheck, FileText, Wallet } from "lucide-react";
+import { LogOut, UserPlus, CalendarCheck, FileText, Wallet, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useExpenseSummary } from "@/hooks/useExpenses";
 import { useAuth } from "@/context/AuthContext";
@@ -27,6 +28,10 @@ function DashboardPage() {
     const { data: expenseSummary, isLoading: isExpenseSummaryLoading } = useExpenseSummary();
     const { logoutUser, user } = useAuth();
     const navigate = useNavigate();
+    const [showSetupGuide, setShowSetupGuide] = useState(() => {
+        try { return localStorage.getItem("eduprowSetupGuideDismissed") !== "true"; }
+        catch { return true; }
+    });
     const isSuperAdmin = user?.role_name === "Super Admin";
 
     const handleLogout = async () => {
@@ -101,6 +106,15 @@ function DashboardPage() {
         top_students = []
     } = data || {};
 
+    const setupSteps = [
+        { title: "Set up the academic period", description: "Check that the current session and term are correct.", done: Boolean(current_session && current_term), path: "/settings" },
+        { title: "Add your classes", description: "Create the classes your school uses.", done: Number(classes) > 0, path: "/settings" },
+        { title: "Add your teachers", description: "Register teaching staff who will use EduProw.", done: Number(teachers) > 0, path: "/teachers" },
+        { title: "Register your students", description: "Add students or import your existing student list.", done: Number(students) > 0, path: "/students" },
+        { title: "Review school fees", description: "Check the fee setup before recording payments.", done: Number(expected_fees) > 0, path: "/admin/fees" },
+    ];
+    const setupCompleted = setupSteps.filter(step => step.done).length;
+
     const overviewCards = [
         { title: "Total Students", value: students, icon: "👨‍🎓", description: "Registered students" },
         { title: "Active Students", value: active_students, icon: "🎓", description: "Currently enrolled" },
@@ -131,6 +145,43 @@ function DashboardPage() {
                     <p className="mt-1 break-words font-bold text-blue-900">{current_session || "No session"} • {current_term || "No term"}</p>
                 </div>
             </div>
+
+            {showSetupGuide && (
+                <section aria-labelledby="setup-guide-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Getting started</p>
+                            <h2 id="setup-guide-heading" className="mt-1 text-lg font-bold text-slate-900">Set up your school</h2>
+                            <p className="mt-1 text-sm text-slate-600">Use this guide to check the main areas of your school account. You can return to each step whenever you need to.</p>
+                        </div>
+                        <button type="button" onClick={() => {
+                            setShowSetupGuide(false);
+                            try { localStorage.setItem("eduprowSetupGuideDismissed", "true"); } catch {}
+                        }} className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label="Dismiss setup guide">
+                            <X size={16} /><span className="hidden sm:inline">Dismiss</span>
+                        </button>
+                    </div>
+                    <div className="mt-4 flex items-center gap-3">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Setup checklist progress" aria-valuemin={0} aria-valuemax={setupSteps.length} aria-valuenow={setupCompleted}>
+                            <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${(setupCompleted / setupSteps.length) * 100}%` }} />
+                        </div>
+                        <span className="whitespace-nowrap text-xs font-semibold text-slate-600">{setupCompleted} of {setupSteps.length} checked</span>
+                    </div>
+                    <div className="mt-3 divide-y divide-slate-100">
+                        {setupSteps.map(step => (
+                            <button key={step.title} type="button" onClick={() => navigate(step.path)} className="flex w-full items-center gap-3 py-3 text-left hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
+                                {step.done ? <CheckCircle2 size={20} className="shrink-0 text-emerald-600" aria-label="Detected as set up" /> : <Circle size={20} className="shrink-0 text-slate-300" aria-label="Needs checking" />}
+                                <span className="min-w-0 flex-1">
+                                    <span className="block text-sm font-semibold text-slate-800">{step.title}</span>
+                                    <span className="mt-0.5 block text-xs leading-5 text-slate-500">{step.description}</span>
+                                </span>
+                                <ChevronRight size={17} className="shrink-0 text-slate-400" />
+                            </button>
+                        ))}
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">Checklist indicators are based on available school overview data. Open each area to confirm its settings are complete.</p>
+                </section>
+            )}
 
             <section aria-labelledby="quick-actions-heading" className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:p-5">
                 <div className="mb-3">
