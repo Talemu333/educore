@@ -65,7 +65,7 @@ const countStudents = async (schoolId, classId = null, client = pool, includeIna
 };
 
 const getStudentById = async (id, schoolId, client = pool) => {
-    const result = await client.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id WHERE s.id = $1 AND s.school_id = $2;`, [id, schoolId]);
+    const result = await client.query(`SELECT s.*, c.class_name, a.arm_name, st.state_name, n.nationality_name, current_enrollment.session_id, current_enrollment.session_name FROM students s INNER JOIN classes c ON s.class_id = c.id AND c.school_id = s.school_id INNER JOIN arms a ON s.arm_id = a.id AND a.school_id = s.school_id LEFT JOIN states st ON s.state_id = st.id LEFT JOIN nationalities n ON s.nationality_id = n.id LEFT JOIN LATERAL (SELECT se.session_id, sess.session_name FROM student_enrollments se INNER JOIN academic_sessions sess ON sess.id = se.session_id AND sess.school_id = s.school_id WHERE se.student_id = s.id ORDER BY CASE WHEN se.enrollment_status = 'Active' THEN 0 ELSE 1 END, se.enrollment_date DESC, se.id DESC LIMIT 1) current_enrollment ON TRUE WHERE s.id = $1 AND s.school_id = $2;`, [id, schoolId]);
     return result.rows[0];
 };
 
