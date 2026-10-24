@@ -81,7 +81,15 @@ const createTeacherSchema = Joi.object({
 
     emergency_contact_phone: Joi.string()
         .allow("")
-        .optional()
+        .optional(),
+
+    nin: Joi.string().pattern(/^\\d{11}$/).allow("", null).optional(),
+
+    degree_certificate_url: Joi.string().uri({ scheme: ["https"] }).allow("", null).optional(),
+
+    other_certificates_url: Joi.string().uri({ scheme: ["https"] }).allow("", null).optional(),
+
+    birth_certificate_url: Joi.string().uri({ scheme: ["https"] }).allow("", null).optional()
 
 });
 
@@ -121,7 +129,15 @@ const updateTeacherSchema = Joi.object({
 
     emergency_contact_name: Joi.string().allow("", null),
 
-    emergency_contact_phone: Joi.string().allow("", null)
+    emergency_contact_phone: Joi.string().allow("", null),
+
+    nin: Joi.string().pattern(/^\\d{11}$/).allow("", null).optional(),
+
+    degree_certificate_url: Joi.string().uri({ scheme: ["https"] }).allow("", null).optional(),
+
+    other_certificates_url: Joi.string().uri({ scheme: ["https"] }).allow("", null).optional(),
+
+    birth_certificate_url: Joi.string().uri({ scheme: ["https"] }).allow("", null).optional()
 
 });
 
