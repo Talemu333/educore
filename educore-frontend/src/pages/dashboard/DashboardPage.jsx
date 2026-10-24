@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LogOut, UserPlus, CalendarCheck, FileText, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useExpenseSummary } from "@/hooks/useExpenses";
@@ -131,6 +131,36 @@ function DashboardPage() {
                     <p className="mt-1 break-words font-bold text-blue-900">{current_session || "No session"} • {current_term || "No term"}</p>
                 </div>
             </div>
+
+            <section aria-labelledby="quick-actions-heading" className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:p-5">
+                <div className="mb-3">
+                    <h2 id="quick-actions-heading" className="text-lg font-bold text-slate-900">What would you like to do today?</h2>
+                    <p className="mt-1 text-sm text-slate-600">Start with a common school task. You can still access every feature from the menu.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {[
+                        { label: "Register a student", description: "Add a new student to the school", path: "/students", Icon: UserPlus },
+                        { label: "Take attendance", description: "Record student attendance", path: "/attendance", Icon: CalendarCheck },
+                        { label: "Manage results", description: "Enter and manage academic results", path: "/results", Icon: FileText },
+                        { label: "Record a payment", description: "Record school fee payments", path: "/payments", Icon: Wallet },
+                    ].map(({ label, description, path, Icon }) => (
+                        <button
+                            key={label}
+                            type="button"
+                            onClick={() => navigate(path)}
+                            className="flex min-h-[88px] items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-blue-300 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                <Icon size={20} aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0">
+                                <span className="block font-semibold text-slate-900">{label}</span>
+                                <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </section>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 {overviewCards.map(card => (
