@@ -251,8 +251,9 @@ function SuperAdminSchoolManagement() {
             )}
 
             <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
-                <div className="border-b p-4">
-                    <h3 className="text-lg font-semibold text-slate-900">Registered Schools</h3>
+                <div className="border-b border-slate-300 bg-white p-4">
+                    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center"><div><h3 className="text-lg font-semibold text-slate-900">Registered Schools</h3><p className="mt-1 text-sm text-slate-500">Search, review school usage, and manage school access.</p></div><button type="button" onClick={loadSchools} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"><RotateCcw className="h-4 w-4" /> Refresh</button></div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-[minmax(240px,1fr)_200px]"><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={schoolSearch} onChange={(event) => setSchoolSearch(event.target.value)} placeholder="Search by school name, domain, prefix or ID..." className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"><option value="all">All statuses</option><option value="active">Active schools</option><option value="inactive">Inactive schools</option></select></div>
                 </div>
                 {loading ? (
                     <p className="p-4 text-sm text-muted-foreground">Loading schools...</p>
@@ -266,19 +267,19 @@ function SuperAdminSchoolManagement() {
                                 <tr>
                                     <th className="border border-slate-300 p-3 text-left">ID</th>
                                     <th className="border border-slate-300 p-3 text-left">School</th>
-                                    <th className="p-3 text-left">Prefix</th>
-                                    <th className="p-3 text-left">Registered Students</th>
-                                    <th className="p-3 text-left">Students (Active / Inactive)</th>
-                                    <th className="p-3 text-left">Agreed Limit</th>
-                                    <th className="p-3 text-left">Limit Status</th>
-                                    <th className="p-3 text-left">Registered Teachers</th>
-                                    <th className="p-3 text-left">Teachers (Active / Inactive)</th>
-                                    <th className="p-3 text-left">Registered Admins</th>
-                                    <th className="p-3 text-left">Admins (Active / Inactive)</th>
-                                    <th className="p-3 text-left">Registered Parents</th>
-                                    <th className="p-3 text-left">Parents (Active / Inactive)</th>
-                                    <th className="p-3 text-left">Status</th>
-                                    <th className="p-3 text-left">Action</th>
+                                    <th className="border border-slate-300 p-3 text-left">Prefix</th>
+                                    <th className="border border-slate-300 p-3 text-left">Registered Students</th>
+                                    <th className="border border-slate-300 p-3 text-left">Students (Active / Inactive)</th>
+                                    <th className="border border-slate-300 p-3 text-left">Agreed Limit</th>
+                                    <th className="border border-slate-300 p-3 text-left">Limit Status</th>
+                                    <th className="border border-slate-300 p-3 text-left">Registered Teachers</th>
+                                    <th className="border border-slate-300 p-3 text-left">Teachers (Active / Inactive)</th>
+                                    <th className="border border-slate-300 p-3 text-left">Registered Admins</th>
+                                    <th className="border border-slate-300 p-3 text-left">Admins (Active / Inactive)</th>
+                                    <th className="border border-slate-300 p-3 text-left">Registered Parents</th>
+                                    <th className="border border-slate-300 p-3 text-left">Parents (Active / Inactive)</th>
+                                    <th className="border border-slate-300 p-3 text-left">Status</th>
+                                    <th className="border border-slate-300 p-3 text-left">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -286,19 +287,19 @@ function SuperAdminSchoolManagement() {
                                     <tr key={school.school_id} className="transition-colors hover:bg-blue-50/60">
                                         <td className="border border-slate-300 p-3">{school.school_id}</td>
                                         <td className="border border-slate-300 p-3 font-medium">{school.school_name}</td>
-                                        <td className="p-3">{school.admission_prefix}</td>
-                                        <td className="p-3">{school.student_count ?? "—"}</td>
-                                        <td className="p-3">{school.active_student_count ?? "—"} / {school.inactive_student_count ?? "—"}</td>
-                                        <td className="p-3">{school.agreed_student_limit ?? "Not set"}</td>
-                                        <td className="p-3">{school.agreed_student_limit == null || school.student_count == null ? "—" : Number(school.student_count) > Number(school.agreed_student_limit) ? `Exceeded by ${Number(school.student_count) - Number(school.agreed_student_limit)}` : `${Number(school.agreed_student_limit) - Number(school.student_count)} remaining`}</td>
-                                        <td className="p-3">{school.teacher_count ?? "—"}</td>
-                                        <td className="p-3">{school.active_teacher_count ?? "—"} / {school.inactive_teacher_count ?? "—"}</td>
-                                        <td className="p-3">{school.admin_count ?? "—"}</td>
-                                        <td className="p-3">{school.active_admin_count ?? "—"} / {school.inactive_admin_count ?? "—"}</td>
-                                        <td className="p-3">{school.parent_count ?? "—"}</td>
-                                        <td className="p-3">{school.active_parent_count ?? "—"} / {school.inactive_parent_count ?? "—"}</td>
-                                        <td className="p-3">{school.is_active ? "Active" : "Inactive"}</td>
-                                        <td className="p-3">
+                                        <td className="border border-slate-300 p-3">{school.admission_prefix}</td>
+                                        <td className="border border-slate-300 p-3">{school.student_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.active_student_count ?? "—"} / {school.inactive_student_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.agreed_student_limit ?? "Not set"}</td>
+                                        <td className="border border-slate-300 p-3">{school.agreed_student_limit == null || school.student_count == null ? "—" : Number(school.student_count) > Number(school.agreed_student_limit) ? `Exceeded by ${Number(school.student_count) - Number(school.agreed_student_limit)}` : `${Number(school.agreed_student_limit) - Number(school.student_count)} remaining`}</td>
+                                        <td className="border border-slate-300 p-3">{school.teacher_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.active_teacher_count ?? "—"} / {school.inactive_teacher_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.admin_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.active_admin_count ?? "—"} / {school.inactive_admin_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.parent_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.active_parent_count ?? "—"} / {school.inactive_parent_count ?? "—"}</td>
+                                        <td className="border border-slate-300 p-3">{school.is_active ? "Active" : "Inactive"}</td>
+                                        <td className="border border-slate-300 p-3">
                                             <div className="flex flex-wrap gap-2">
                                                 <button type="button" onClick={() => navigate(`/settings?schoolId=${school.school_id}`)} className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
                                                     Manage
