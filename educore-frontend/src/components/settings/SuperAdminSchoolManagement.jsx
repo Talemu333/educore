@@ -35,6 +35,7 @@ function SuperAdminSchoolManagement() {
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showAddSchool, setShowAddSchool] = useState(false);
     const [adminSaving, setAdminSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -109,6 +110,7 @@ function SuperAdminSchoolManagement() {
                 }
             });
             setForm(initialForm);
+            setShowAddSchool(false);
             setSuccess("School and initial proprietor account created successfully.");
             await loadSchools();
         } catch (err) {
@@ -162,21 +164,33 @@ function SuperAdminSchoolManagement() {
 
     return (
         <section className="space-y-6 text-slate-800">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900">Super Admin Dashboard</h2>
                     <p className="text-sm text-muted-foreground">
                         Manage registered schools, monitor platform usage, and administer each school securely.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="group inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition-all duration-200 hover:border-red-600 hover:bg-red-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:ring-offset-2 active:scale-[0.98]"
-                >
-                    <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-                    Logout
-                </button>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowAddSchool((visible) => !visible)}
+                        aria-expanded={showAddSchool}
+                        aria-controls="eduprow-add-school"
+                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2"
+                    >
+                        <Plus className="h-4 w-4" />
+                        {showAddSchool ? "Close Form" : "Add School"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="group inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition-all duration-200 hover:border-red-600 hover:bg-red-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:ring-offset-2 active:scale-[0.98]"
+                    >
+                        <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                        Logout
+                    </button>
+                </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -189,6 +203,7 @@ function SuperAdminSchoolManagement() {
             {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
             {success && <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">{success}</div>}
 
+            {showAddSchool && (
             <form id="eduprow-add-school" onSubmit={handleSubmit} className="grid gap-4 rounded-xl border border-slate-300 bg-white p-5 shadow-sm md:grid-cols-2">
                 <h3 className="md:col-span-2 font-medium">Add New School</h3>
 
@@ -216,6 +231,7 @@ function SuperAdminSchoolManagement() {
                     {saving ? "Creating..." : "Create School"}
                 </button>
             </form>
+            )}
 
             {adminSchool && (
                 <form onSubmit={handleCreateAdministrator} className="grid gap-4 rounded-lg border bg-muted/20 p-4">
