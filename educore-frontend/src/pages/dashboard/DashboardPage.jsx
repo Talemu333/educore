@@ -1,4 +1,4 @@
-import { LogOut, UserPlus, CalendarCheck, FileText, Wallet, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
+import { LogOut, UserPlus, Wallet, Users, School, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDashboard } from "@/hooks/useDashboard";
@@ -191,8 +191,8 @@ function DashboardPage() {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                         { label: "Register a student", description: "Add a new student to the school", path: "/students", Icon: UserPlus },
-                        { label: "Take attendance", description: "Record student attendance", path: "/attendance", Icon: CalendarCheck },
-                        { label: "Manage results", description: "Enter and manage academic results", path: "/results", Icon: FileText },
+                        { label: "Manage teachers", description: "Register staff and update teacher information", path: "/teachers", Icon: Users },
+                        { label: "Manage classes", description: "View and organise your school classes", path: "/settings", Icon: School },
                         { label: "Record a payment", description: "Record school fee payments", path: "/payments", Icon: Wallet },
                     ].map(({ label, description, path, Icon }) => (
                         <button
