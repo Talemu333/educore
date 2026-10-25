@@ -262,58 +262,70 @@ function SuperAdminSchoolManagement() {
                 ) : (
                     <div className="max-w-full overflow-x-auto overscroll-x-contain" role="region" aria-label="Registered schools and registration counts" tabIndex={0}>
                         <p className="sticky left-0 w-fit px-3 py-2 text-xs text-muted-foreground md:hidden">Swipe horizontally to view all registration and limit columns →</p>
-                        <table className="w-max min-w-[1900px] border-collapse text-sm">
-                            <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="border border-slate-300 p-3 text-left">ID</th>
-                                    <th className="border border-slate-300 p-3 text-left">School</th>
-                                    <th className="border border-slate-300 p-3 text-left">Prefix</th>
-                                    <th className="border border-slate-300 p-3 text-left">Registered Students</th>
-                                    <th className="border border-slate-300 p-3 text-left">Students (Active / Inactive)</th>
-                                    <th className="border border-slate-300 p-3 text-left">Agreed Limit</th>
-                                    <th className="border border-slate-300 p-3 text-left">Limit Status</th>
-                                    <th className="border border-slate-300 p-3 text-left">Registered Teachers</th>
-                                    <th className="border border-slate-300 p-3 text-left">Teachers (Active / Inactive)</th>
-                                    <th className="border border-slate-300 p-3 text-left">Registered Admins</th>
-                                    <th className="border border-slate-300 p-3 text-left">Admins (Active / Inactive)</th>
-                                    <th className="border border-slate-300 p-3 text-left">Registered Parents</th>
-                                    <th className="border border-slate-300 p-3 text-left">Parents (Active / Inactive)</th>
-                                    <th className="border border-slate-300 p-3 text-left">Status</th>
-                                    <th className="border border-slate-300 p-3 text-left">Action</th>
+                        <table className="w-max min-w-[1900px] border-separate border-spacing-0 text-sm">
+                            <thead>
+                                <tr className="bg-slate-900 text-white">
+                                    <th rowSpan={2} className="border border-slate-600 px-4 py-3 text-left font-semibold">ID</th>
+                                    <th colSpan={2} className="border border-slate-600 px-4 py-3 text-center font-semibold">School Information</th>
+                                    <th colSpan={3} className="border border-slate-600 px-4 py-3 text-center font-semibold">Student Registration</th>
+                                    <th colSpan={2} className="border border-slate-600 px-4 py-3 text-center font-semibold">Teacher Accounts</th>
+                                    <th colSpan={2} className="border border-slate-600 px-4 py-3 text-center font-semibold">Administrator Accounts</th>
+                                    <th colSpan={2} className="border border-slate-600 px-4 py-3 text-center font-semibold">Parent Accounts</th>
+                                    <th rowSpan={2} className="border border-slate-600 px-4 py-3 text-center font-semibold">School Status</th>
+                                    <th rowSpan={2} className="border border-slate-600 px-4 py-3 text-center font-semibold">Actions</th>
+                                </tr>
+                                <tr className="bg-blue-50 text-slate-700">
+                                    <th className="border border-slate-300 px-4 py-3 text-left font-semibold">School</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-left font-semibold">Prefix</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Registered</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Active / Inactive</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-left font-semibold">Agreed Limit / Remaining</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Registered</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Active / Inactive</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Registered</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Active / Inactive</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Registered</th>
+                                    <th className="border border-slate-300 px-4 py-3 text-right font-semibold">Active / Inactive</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredSchools.map((school) => (
-                                    <tr key={school.school_id} className="transition-colors hover:bg-blue-50/60">
-                                        <td className="border border-slate-300 p-3">{school.school_id}</td>
-                                        <td className="border border-slate-300 p-3 font-medium">{school.school_name}</td>
-                                        <td className="border border-slate-300 p-3">{school.admission_prefix}</td>
-                                        <td className="border border-slate-300 p-3">{school.student_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.active_student_count ?? "—"} / {school.inactive_student_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.agreed_student_limit ?? "Not set"}</td>
-                                        <td className="border border-slate-300 p-3">{school.agreed_student_limit == null || school.student_count == null ? "—" : Number(school.student_count) > Number(school.agreed_student_limit) ? `Exceeded by ${Number(school.student_count) - Number(school.agreed_student_limit)}` : `${Number(school.agreed_student_limit) - Number(school.student_count)} remaining`}</td>
-                                        <td className="border border-slate-300 p-3">{school.teacher_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.active_teacher_count ?? "—"} / {school.inactive_teacher_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.admin_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.active_admin_count ?? "—"} / {school.inactive_admin_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.parent_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.active_parent_count ?? "—"} / {school.inactive_parent_count ?? "—"}</td>
-                                        <td className="border border-slate-300 p-3">{school.is_active ? "Active" : "Inactive"}</td>
-                                        <td className="border border-slate-300 p-3">
-                                            <div className="flex flex-wrap gap-2">
-                                                <button type="button" onClick={() => navigate(`/settings?schoolId=${school.school_id}`)} className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
-                                                    Manage
-                                                </button>
-                                                <button type="button" onClick={() => openAdminForm(school)} className="rounded-md border px-3 py-1.5">
-                                                    Add Admin
-                                                </button>
-                                                <button type="button" onClick={() => toggleStatus(school)} className="rounded-md border px-3 py-1.5">
-                                                    {school.is_active ? "Deactivate" : "Activate"}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {filteredSchools.map((school, index) => {
+                                    const limit = school.agreed_student_limit;
+                                    const count = school.student_count;
+                                    const limitText = limit == null || count == null
+                                        ? "Not available"
+                                        : Number(count) > Number(limit)
+                                            ? `Exceeded by ${Number(count) - Number(limit)}`
+                                            : `${Number(limit) - Number(count)} remaining`;
+                                    const overLimit = limit != null && count != null && Number(count) > Number(limit);
+                                    return (
+                                        <tr key={school.school_id} className={`transition-colors hover:bg-blue-50/70 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/70"}`}>
+                                            <td className="border border-slate-200 px-4 py-3 font-medium text-slate-500">{school.school_id}</td>
+                                            <td className="max-w-[260px] border border-slate-200 px-4 py-3 font-semibold text-slate-900">{school.school_name}</td>
+                                            <td className="border border-slate-200 px-4 py-3"><span className="rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-xs text-slate-600">{school.admission_prefix || "—"}</span></td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right font-semibold tabular-nums">{school.student_count ?? "—"}</td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right tabular-nums"><span className="text-emerald-700">{school.active_student_count ?? "—"}</span><span className="px-1 text-slate-400">/</span><span className="text-rose-700">{school.inactive_student_count ?? "—"}</span></td>
+                                            <td className="border border-slate-200 px-4 py-3">
+                                                <div className="font-semibold tabular-nums">{limit ?? "Not set"}</div>
+                                                <div className={`mt-1 text-xs font-medium ${overLimit ? "text-rose-700" : "text-slate-500"}`}>{limitText}</div>
+                                            </td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right font-semibold tabular-nums">{school.teacher_count ?? "—"}</td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right tabular-nums"><span className="text-emerald-700">{school.active_teacher_count ?? "—"}</span><span className="px-1 text-slate-400">/</span><span className="text-rose-700">{school.inactive_teacher_count ?? "—"}</span></td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right font-semibold tabular-nums">{school.admin_count ?? "—"}</td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right tabular-nums"><span className="text-emerald-700">{school.active_admin_count ?? "—"}</span><span className="px-1 text-slate-400">/</span><span className="text-rose-700">{school.inactive_admin_count ?? "—"}</span></td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right font-semibold tabular-nums">{school.parent_count ?? "—"}</td>
+                                            <td className="border border-slate-200 px-4 py-3 text-right tabular-nums"><span className="text-emerald-700">{school.active_parent_count ?? "—"}</span><span className="px-1 text-slate-400">/</span><span className="text-rose-700">{school.inactive_parent_count ?? "—"}</span></td>
+                                            <td className="border border-slate-200 px-4 py-3 text-center"><span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${school.is_active ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-100 text-slate-600"}`}>{school.is_active ? "Active" : "Inactive"}</span></td>
+                                            <td className="border border-slate-200 px-4 py-3">
+                                                <div className="flex min-w-[250px] flex-wrap gap-2">
+                                                    <button type="button" onClick={() => navigate(`/settings?schoolId=${school.school_id}`)} className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700">Manage</button>
+                                                    <button type="button" onClick={() => openAdminForm(school)} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50">Add Admin</button>
+                                                    <button type="button" onClick={() => toggleStatus(school)} className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${school.is_active ? "border-rose-200 bg-white text-rose-700 hover:bg-rose-50" : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"}`}>{school.is_active ? "Deactivate" : "Activate"}</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
