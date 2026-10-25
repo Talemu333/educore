@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import {
 
     Select,
@@ -91,6 +93,34 @@ function AssignmentSelector({
 
             : isTeacherLoading;
 
+    const hasSingleTeacherAssignment =
+        !isAdmin && !isLoading && assignments.length === 1;
+
+    useEffect(() => {
+        if (!hasSingleTeacherAssignment) return;
+
+        const onlyAssignment = assignments[0];
+        if (Number(value?.id) !== Number(onlyAssignment.id)) {
+            onChange(onlyAssignment);
+        }
+    }, [hasSingleTeacherAssignment, assignments, value?.id, onChange]);
+
+    if (hasSingleTeacherAssignment) {
+        const assignment = assignments[0];
+        return (
+            <div className="w-full max-w-xl rounded-lg border bg-muted/30 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Your assigned result class
+                </p>
+                <p className="mt-1 font-semibold">
+                    {assignment.subject_name} • {assignment.class_name}{assignment.arm_name ? ` ${assignment.arm_name}` : ""}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {assignment.term_name} • {assignment.session_name}
+                </p>
+            </div>
+        );
+    }
     const selectedAssignmentLabel =
 
         value
