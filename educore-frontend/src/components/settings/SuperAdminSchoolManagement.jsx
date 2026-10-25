@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Building2, GraduationCap, Users, UserRound, Search, RotateCcw, Plus, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -41,6 +41,15 @@ function SuperAdminSchoolManagement() {
     const [form, setForm] = useState(initialForm);
     const [adminSchool, setAdminSchool] = useState(null);
     const [adminForm, setAdminForm] = useState(initialAdminForm);
+    const [schoolSearch, setSchoolSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const filteredSchools = useMemo(() => schools.filter((school) => {
+        const term = schoolSearch.trim().toLowerCase();
+        const matchesSearch = !term || [school.school_name, school.school_id, school.admission_prefix, school.domain].some((value) => String(value ?? "").toLowerCase().includes(term));
+        const matchesStatus = statusFilter === "all" || (statusFilter === "active" ? Boolean(school.is_active) : !school.is_active);
+        return matchesSearch && matchesStatus;
+    }), [schools, schoolSearch, statusFilter]);
+    const totals = useMemo(() => schools.reduce((acc, school) => ({ students: acc.students + Number(school.student_count || 0), teachers: acc.teachers + Number(school.teacher_count || 0), admins: acc.admins + Number(school.admin_count || 0), parents: acc.parents + Number(school.parent_count || 0) }), { students: 0, teachers: 0, admins: 0, parents: 0 }), [schools]);
 
     const isSuperAdmin = user?.role_name === "Super Admin";
 
@@ -152,12 +161,12 @@ function SuperAdminSchoolManagement() {
     };
 
     return (
-        <section className="space-y-6">
+        <section className="space-y-6 text-slate-800">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold">EduCore School Management</h2>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">Super Admin Dashboard</h2>
                     <p className="text-sm text-muted-foreground">
-                        Platform-level management. Each school has its own administrator accounts and school data.
+                        Manage registered schools, monitor platform usage, and administer each school securely.
                     </p>
                 </div>
                 <button
@@ -170,26 +179,33 @@ function SuperAdminSchoolManagement() {
                 </button>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-4"><div className="rounded-full bg-blue-600 p-3 text-white"><Building2 className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Total Schools</p><p className="mt-1 text-2xl font-bold text-slate-900">{schools.length}</p></div></div>
+                <div className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50/70 p-4"><div className="rounded-full bg-teal-600 p-3 text-white"><GraduationCap className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-teal-800">Total Students</p><p className="mt-1 text-2xl font-bold text-slate-900">{totals.students.toLocaleString()}</p></div></div>
+                <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50/70 p-4"><div className="rounded-full bg-violet-600 p-3 text-white"><Users className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-violet-800">Total Teachers</p><p className="mt-1 text-2xl font-bold text-slate-900">{totals.teachers.toLocaleString()}</p></div></div>
+                <div className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50/70 p-4"><div className="rounded-full bg-orange-500 p-3 text-white"><UserRound className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-orange-800">Total Admins</p><p className="mt-1 text-2xl font-bold text-slate-900">{totals.admins.toLocaleString()}</p></div></div>
+                <div className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50/70 p-4"><div className="rounded-full bg-rose-500 p-3 text-white"><Users className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-rose-800">Total Parents</p><p className="mt-1 text-2xl font-bold text-slate-900">{totals.parents.toLocaleString()}</p></div></div>
+            </div>
             {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
             {success && <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">{success}</div>}
 
-            <form onSubmit={handleSubmit} className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
+            <form id="eduprow-add-school" onSubmit={handleSubmit} className="grid gap-4 rounded-xl border border-slate-300 bg-white p-5 shadow-sm md:grid-cols-2">
                 <h3 className="md:col-span-2 font-medium">Add New School</h3>
 
-                <input className="rounded-md border p-2" name="school_name" value={form.school_name} onChange={handleChange} placeholder="School name *" required />
-                <input className="rounded-md border p-2" name="admission_prefix" value={form.admission_prefix} onChange={handleChange} placeholder="Admission prefix * (e.g. SCH)" required />
-                <input className="rounded-md border p-2" name="school_email" value={form.school_email} onChange={handleChange} placeholder="School email" type="email" />
-                <input className="rounded-md border p-2" name="school_phone" value={form.school_phone} onChange={handleChange} placeholder="School phone" />
-                <input className="rounded-md border p-2" name="school_motto" value={form.school_motto} onChange={handleChange} placeholder="School motto" />
-                <input className="rounded-md border p-2" name="school_level" value={form.school_level} onChange={handleChange} placeholder="School level (e.g. Primary & Secondary)" />
+                <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="school_name" value={form.school_name} onChange={handleChange} placeholder="School name *" required />
+                <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="admission_prefix" value={form.admission_prefix} onChange={handleChange} placeholder="Admission prefix * (e.g. SCH)" required />
+                <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="school_email" value={form.school_email} onChange={handleChange} placeholder="School email" type="email" />
+                <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="school_phone" value={form.school_phone} onChange={handleChange} placeholder="School phone" />
+                <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="school_motto" value={form.school_motto} onChange={handleChange} placeholder="School motto" />
+                <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="school_level" value={form.school_level} onChange={handleChange} placeholder="School level (e.g. Primary & Secondary)" />
                 <textarea className="rounded-md border p-2 md:col-span-2" name="school_address" value={form.school_address} onChange={handleChange} placeholder="School address" rows="2" />
 
                 <div className="md:col-span-2 border-t pt-4">
                     <h4 className="mb-3 font-medium">Initial School Administrator</h4>
                     <div className="grid gap-4 md:grid-cols-3">
-                        <input className="rounded-md border p-2" name="admin_username" value={form.admin_username} onChange={handleChange} placeholder="Username *" required />
-                        <input className="rounded-md border p-2" name="admin_email" value={form.admin_email} onChange={handleChange} placeholder="Email" type="email" />
-                        <input className="rounded-md border p-2" name="admin_password" value={form.admin_password} onChange={handleChange} placeholder="Temporary password *" type="password" minLength="6" required />
+                        <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="admin_username" value={form.admin_username} onChange={handleChange} placeholder="Username *" required />
+                        <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="admin_email" value={form.admin_email} onChange={handleChange} placeholder="Email" type="email" />
+                        <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="admin_password" value={form.admin_password} onChange={handleChange} placeholder="Temporary password *" type="password" minLength="6" required />
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
                         The account is created as a proprietor and must change its password on first login.
@@ -211,10 +227,10 @@ function SuperAdminSchoolManagement() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-4">
-                        <input className="rounded-md border p-2" name="username" value={adminForm.username} onChange={handleAdminChange} placeholder="Username *" required />
-                        <input className="rounded-md border p-2" name="email" value={adminForm.email} onChange={handleAdminChange} placeholder="Email" type="email" />
-                        <input className="rounded-md border p-2" name="password" value={adminForm.password} onChange={handleAdminChange} placeholder="Temporary password *" type="password" minLength="6" required />
-                        <select className="rounded-md border p-2" name="admin_type" value={adminForm.admin_type} onChange={handleAdminChange}>
+                        <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="username" value={adminForm.username} onChange={handleAdminChange} placeholder="Username *" required />
+                        <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="email" value={adminForm.email} onChange={handleAdminChange} placeholder="Email" type="email" />
+                        <input className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="password" value={adminForm.password} onChange={handleAdminChange} placeholder="Temporary password *" type="password" minLength="6" required />
+                        <select className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" name="admin_type" value={adminForm.admin_type} onChange={handleAdminChange}>
                             <option value="proprietor">Proprietor</option>
                             <option value="principal">Principal</option>
                             <option value="vice_principal">Vice Principal</option>
@@ -234,22 +250,22 @@ function SuperAdminSchoolManagement() {
                 </form>
             )}
 
-            <div className="rounded-lg border">
+            <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
                 <div className="border-b p-4">
-                    <h3 className="font-medium">Registered Schools</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">Registered Schools</h3>
                 </div>
                 {loading ? (
                     <p className="p-4 text-sm text-muted-foreground">Loading schools...</p>
                 ) : schools.length === 0 ? (
                     <p className="p-4 text-sm text-muted-foreground">No schools found.</p>
                 ) : (
-                    <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-b-lg" role="region" aria-label="Registered schools and registration counts" tabIndex={0}>
+                    <div className="max-w-full overflow-x-auto overscroll-x-contain" role="region" aria-label="Registered schools and registration counts" tabIndex={0}>
                         <p className="sticky left-0 w-fit px-3 py-2 text-xs text-muted-foreground md:hidden">Swipe horizontally to view all registration and limit columns →</p>
-                        <table className="w-max min-w-[1900px] text-sm">
-                            <thead className="border-b bg-muted/50">
+                        <table className="w-max min-w-[1900px] border-collapse text-sm">
+                            <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="p-3 text-left">ID</th>
-                                    <th className="p-3 text-left">School</th>
+                                    <th className="border border-slate-300 p-3 text-left">ID</th>
+                                    <th className="border border-slate-300 p-3 text-left">School</th>
                                     <th className="p-3 text-left">Prefix</th>
                                     <th className="p-3 text-left">Registered Students</th>
                                     <th className="p-3 text-left">Students (Active / Inactive)</th>
@@ -266,10 +282,10 @@ function SuperAdminSchoolManagement() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {schools.map((school) => (
-                                    <tr key={school.school_id} className="border-b last:border-0">
-                                        <td className="p-3">{school.school_id}</td>
-                                        <td className="p-3 font-medium">{school.school_name}</td>
+                                {filteredSchools.map((school) => (
+                                    <tr key={school.school_id} className="transition-colors hover:bg-blue-50/60">
+                                        <td className="border border-slate-300 p-3">{school.school_id}</td>
+                                        <td className="border border-slate-300 p-3 font-medium">{school.school_name}</td>
                                         <td className="p-3">{school.admission_prefix}</td>
                                         <td className="p-3">{school.student_count ?? "—"}</td>
                                         <td className="p-3">{school.active_student_count ?? "—"} / {school.inactive_student_count ?? "—"}</td>
