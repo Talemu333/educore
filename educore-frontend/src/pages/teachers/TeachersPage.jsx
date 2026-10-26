@@ -8,6 +8,7 @@ import TeacherTable from "@/components/teachers/TeacherTable";
 import AddTeacherSheet from "@/components/teachers/AddTeacherSheet";
 import ViewTeacherSheet from "@/components/teachers/ViewTeacherSheet";
 import TeacherAssignmentSheet from "@/components/teachers/TeacherAssignmentSheet";
+import ClassTeacherAssignments from "@/components/teachers/ClassTeacherAssignments";
 
 import {
     Select,
@@ -146,6 +147,8 @@ function TeachersPage() {
                     if (!value) setViewTeacherId(null);
                 }}
             />
+
+            <ClassTeacherAssignments />
 
             <TeacherAssignmentSheet
                 teacherId={assignmentTeacherId}
