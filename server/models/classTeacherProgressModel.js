@@ -53,8 +53,8 @@ const createDraftReport = async (data, userId, schoolId) => {
             report_type, period_start, period_end, class_teacher_comment, strengths,
             areas_for_improvement, created_by
         )
-        SELECT $1, cta.id, se.student_id, cta.session_id, $7,
-               $8, $9::date, $10::date, $11, $12, $13, $2
+        SELECT $1, cta.id, se.student_id, cta.session_id, $5,
+               $6, $7::date, $8::date, $9, $10, $11, $2
         FROM class_teacher_assignments cta
         JOIN teachers t ON t.id = cta.teacher_id AND t.school_id = cta.school_id
         JOIN users u ON u.id = t.user_id AND u.id = $2 AND u.school_id = cta.school_id
@@ -73,8 +73,8 @@ const createDraftReport = async (data, userId, schoolId) => {
         WHERE student_progress_reports.status IN ('draft', 'returned')
         RETURNING *
     `, [
-        schoolId, userId, data.assignment_id, data.student_id, null, null,
-        data.term_id, data.report_type, data.period_start, data.period_end,
+        schoolId, userId, data.assignment_id, data.student_id, data.term_id,
+        data.report_type, data.period_start, data.period_end,
         data.class_teacher_comment || null, data.strengths || null,
         data.areas_for_improvement || null
     ]);
