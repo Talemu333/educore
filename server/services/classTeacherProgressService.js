@@ -55,4 +55,45 @@ const createDraftReport = async (payload, user) => {
     return report;
 };
 
-module.exports = { listMyClasses, listClassStudents, createDraftReport };
+const getSchoolId = (user) => {
+    const schoolId = Number(user?.school_id);
+    if (!Number.isInteger(schoolId) || schoolId < 1) throw new ApiError(403, "School context is required.");
+    return schoolId;
+};
+
+const submitDraftReport = async (reportId, user) => {
+    const id = Number(reportId);
+    if (!Number.isInteger(id) || id < 1) throw new ApiError(400, "Invalid progress report.");
+    const report = await model.submitDraftReport(id, user.id, getSchoolId(user));
+    if (!report) throw new ApiError(409, "This report is not editable by you or is no longer available for submission.");
+    return report;
+};
+
+const listReportsForReview = async (user) => model.listReportsForReview(getSchoolId(user));
+
+const reviewReport = async (reportId, payload, user) => {
+    const id = Number(reportId);
+    if (!Number.isInteger(id) || id < 1) throw new ApiError(400, "Invalid progress report.");
+    const action = String(payload?.action || "");
+    if (!["approve", "return"].includes(action)) throw new ApiError(400, "Choose approve or return.");
+    const note = payload?.note;
+    if (note != null && (typeof note !== "string" || note.length > 2000)) {
+        throw new ApiError(400, "Review note must be text no longer than 2,000 characters.");
+    }
+    const report = await model.reviewReport(id, getSchoolId(user), user.id, action, note);
+    if (!report) throw new ApiError(409, "Only submitted reports can be reviewed.");
+    return report;
+};
+
+const publishReport = async (reportId, user) => {
+    const id = Number(reportId);
+    if (!Number.isInteger(id) || id < 1) throw new ApiError(400, "Invalid progress report.");
+    const report = await model.publishReport(id, getSchoolId(user), user.id);
+    if (!report) throw new ApiError(409, "Only approved reports can be published.");
+    return report;
+};
+
+module.exports = {
+    listMyClasses, listClassStudents, createDraftReport, submitDraftReport,
+    listReportsForReview, reviewReport, publishReport
+};
