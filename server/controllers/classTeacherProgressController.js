@@ -36,7 +36,12 @@ const publishReport = asyncHandler(async (req, res) => {
     res.json({ success: true, message: "Progress report published for parents.", data });
 });
 
+const listPublishedParentReports = asyncHandler(async (req, res) => {
+    const data = await service.listPublishedParentReports(req.query.studentId, req.user);
+    res.json({ success: true, data });
+});
+
 module.exports = {
     listMyClasses, listClassStudents, createDraftReport, submitDraftReport,
-    listReportsForReview, reviewReport, publishReport
+    listReportsForReview, reviewReport, publishReport, listPublishedParentReports
 };
