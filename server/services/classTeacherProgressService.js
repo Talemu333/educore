@@ -93,7 +93,19 @@ const publishReport = async (reportId, user) => {
     return report;
 };
 
+const listPublishedParentReports = async (studentId, user) => {
+    const schoolId = getSchoolId(user);
+    let selectedStudentId = null;
+    if (studentId !== undefined && studentId !== null && studentId !== "") {
+        selectedStudentId = Number(studentId);
+        if (!Number.isInteger(selectedStudentId) || selectedStudentId < 1) {
+            throw new ApiError(400, "Invalid student selection.");
+        }
+    }
+    return model.listPublishedParentReports(user.id, schoolId, selectedStudentId);
+};
+
 module.exports = {
     listMyClasses, listClassStudents, createDraftReport, submitDraftReport,
-    listReportsForReview, reviewReport, publishReport
+    listReportsForReview, reviewReport, publishReport, listPublishedParentReports
 };
