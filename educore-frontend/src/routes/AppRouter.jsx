@@ -149,6 +149,8 @@ import EventDetails
 
 import ParentDashboardPage
     from "../pages/parents/ParentDashboardPage";
+import ParentProgressReportsPage
+    from "../pages/parents/ParentProgressReportsPage";
 
 
 import ParentResultsPage
@@ -1239,6 +1241,15 @@ function AppRouter() {
                     {/* =====================================
                         PARENT RESULTS
                     ===================================== */}
+
+                    <Route
+                        path="/parent-progress-reports"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.PARENT]}>
+                                <ParentProgressReportsPage />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     <Route
                         path="/parent-results"
