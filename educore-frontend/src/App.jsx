@@ -35,7 +35,7 @@ const RESERVED_PUBLIC_PREFIXES = new Set([
     "timetable", "payments", "announcements", "settings", "administrators",
     "student-promotion", "promotion-history", "class-subjects", "admin", "login",
     "website", "change-password", "logout", "contact-messages", "expenses", "lesson-notes", "lesson-syllabus", "partner-management",
-    "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance",
+    "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance", "parent-progress-reports",
     "teacher-dashboard", "teacher-students", "teacher-timetable", "class-teacher-progress", "progress-report-review", "forgot-password", "reset-password",
     "student-dashboard", "student-cbt", "student-results", "student-subjects", "cbt-management", "cbt-results", "cbt-question-bank", "reports", "platform-billing"
 ]);
