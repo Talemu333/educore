@@ -23,7 +23,73 @@ function formatDate(date) {
     });
 }
 
+
+const CHART_COLORS = ["#2563eb", "#0d9488", "#f59e0b", "#8b5cf6", "#f43f5e", "#64748b"];
+
+function DonutChart({ items, total }) {
+    const validItems = items.map((item, index) => ({
+        label: String(item.gender || "Unspecified"),
+        value: Math.max(0, Number(item.total || 0)),
+        color: CHART_COLORS[index % CHART_COLORS.length],
+    })).filter(item => item.value > 0);
+    const chartTotal = validItems.reduce((sum, item) => sum + item.value, 0);
+    let offset = 0;
+    return (
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
+            <div className="relative h-44 w-44 shrink-0" role="img" aria-label={`Student gender distribution for ${total} students`}>
+                <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
+                    <circle cx="60" cy="60" r="43" fill="none" stroke="#e2e8f0" strokeWidth="16" />
+                    {validItems.map(item => {
+                        const fraction = chartTotal ? item.value / chartTotal : 0;
+                        const dash = fraction * 270.18;
+                        const currentOffset = offset;
+                        offset += dash;
+                        return <circle key={item.label} cx="60" cy="60" r="43" fill="none" stroke={item.color} strokeWidth="16" strokeDasharray={`${dash} ${270.18 - dash}`} strokeDashoffset={-currentOffset} />;
+                    })}
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-slate-900">{Number(total || 0).toLocaleString()}</span>
+                    <span className="text-xs text-slate-500">Students</span>
+                </div>
+            </div>
+            <div className="w-full min-w-0 space-y-3">
+                {validItems.length ? validItems.map(item => (
+                    <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="flex min-w-0 items-center gap-2 text-slate-600"><span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: item.color }} />{item.label}</span>
+                        <span className="shrink-0 font-semibold text-slate-800">{item.value.toLocaleString()} <span className="font-normal text-slate-500">({Math.round(item.value / chartTotal * 100)}%)</span></span>
+                    </div>
+                )) : <p className="text-sm text-slate-500">No gender distribution data available yet.</p>}
+            </div>
+        </div>
+    );
+}
+
+function BarChart({ items, labelKey, valueKey, valueFormatter = value => Number(value || 0).toLocaleString(), emptyMessage = "No data available yet." }) {
+    const rows = items.map(item => ({
+        label: String(item[labelKey] || "Unspecified"),
+        value: Math.max(0, Number(item[valueKey] || 0)),
+    }));
+    const maxValue = Math.max(1, ...rows.map(row => row.value));
+    if (!rows.length) return <p className="py-6 text-sm text-slate-500">{emptyMessage}</p>;
+    return (
+        <div className="space-y-4">
+            {rows.map((row, index) => (
+                <div key={row.label} className="min-w-0">
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                        <span className="min-w-0 truncate font-medium text-slate-700" title={row.label}>{row.label}</span>
+                        <span className="shrink-0 font-semibold tabular-nums text-slate-800">{valueFormatter(row.value)}</span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${row.label}: ${valueFormatter(row.value)}`}>
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(row.value > 0 ? 2 : 0, row.value / maxValue * 100)}%`, backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function DashboardPage() {
+
     const { data, isLoading, isError, error } = useDashboard();
     const { data: expenseSummary, isLoading: isExpenseSummaryLoading } = useExpenseSummary();
     const { logoutUser, user } = useAuth();
@@ -285,8 +351,30 @@ function DashboardPage() {
             </section>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><h2 className="text-lg font-bold text-slate-900">Student Gender Distribution</h2><div className="mt-4 space-y-4">{gender_distribution.map(item => { const total = Number(item.total || 0); const percentage = students === 0 ? 0 : Math.round((total / students) * 100); return <div key={item.gender}><div className="flex items-center justify-between gap-3 text-sm"><span className="font-medium text-slate-700">{item.gender}</span><span className="shrink-0 text-slate-500">{total} ({percentage}%)</span></div><div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${percentage}%` }} /></div></div>; })}</div></section>
-                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><h2 className="text-lg font-bold text-slate-900">Students Per Class</h2><div className="mt-4 space-y-2.5">{class_population.map(item => <div key={item.class_name} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5 sm:px-4"><span className="min-w-0 truncate font-medium text-slate-700">{item.class_name}</span><span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-sm font-bold text-slate-700 shadow-sm">{item.total_students}</span></div>)}</div></section>
+                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h2 className="text-lg font-bold text-slate-900">Student Gender Distribution</h2>
+                    <p className="mt-1 text-sm text-slate-500">Breakdown of registered students by gender.</p>
+                    <div className="mt-4"><DonutChart items={gender_distribution} total={students} /></div>
+                </section>
+                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h2 className="text-lg font-bold text-slate-900">Students Per Class</h2>
+                    <p className="mt-1 text-sm text-slate-500">Compare the number of students in each class.</p>
+                    <div className="mt-5"><BarChart items={class_population} labelKey="class_name" valueKey="total_students" emptyMessage="No class population data available yet." /></div>
+                </section>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h2 className="text-lg font-bold text-slate-900">Fee Collection Overview</h2>
+                    <p className="mt-1 text-sm text-slate-500">Compare expected fees, payments received and outstanding balances.</p>
+                    <div className="mt-5"><BarChart items={[{ label: "Expected fees", amount: expected_fees }, { label: "Payments received", amount: total_payments }, { label: "Outstanding fees", amount: outstanding_fees }]} labelKey="label" valueKey="amount" valueFormatter={formatCurrency} /></div>
+                </section>
+                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h2 className="text-lg font-bold text-slate-900">Today's Attendance Breakdown</h2>
+                    <p className="mt-1 text-sm text-slate-500">Compare attendance records by status for today.</p>
+                    <div className="mt-5"><BarChart items={[{ label: "Present", amount: attendance_present }, { label: "Absent", amount: attendance_absent }, { label: "Late", amount: attendance_late }]} labelKey="label" valueKey="amount" /></div>
+                    {attendance_total === 0 && <p className="mt-3 text-xs text-slate-400">No attendance has been recorded today.</p>}
+                </section>
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
