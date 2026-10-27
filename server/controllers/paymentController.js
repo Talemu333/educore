@@ -39,8 +39,18 @@ const verifyReceipt = asyncHandler(async (req, res) => {
 
 const getPaymentReport = asyncHandler(async (req, res) => {
     const schoolId = getSchoolId(req);
-    const report = await paymentService.getPaymentReport(req.query, schoolId);
-    const summary = await paymentService.getPaymentReportSummary(req.query, schoolId);
+    const filters = {
+        dateFrom: req.query.date_from || "",
+        dateTo: req.query.date_to || "",
+        sessionId: req.query.session_id || "",
+        termId: req.query.term_id || "",
+        paymentMethod: req.query.payment_method || "",
+        studentId: req.query.student_id || "",
+        classId: req.query.class_id || "",
+        search: req.query.search || ""
+    };
+    const report = await paymentService.getPaymentReport(filters, schoolId);
+    const summary = await paymentService.getPaymentReportSummary(filters, schoolId);
     res.json({ success: true, data: { report, summary } });
 });
 
