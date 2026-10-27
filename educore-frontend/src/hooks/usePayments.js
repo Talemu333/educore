@@ -201,7 +201,9 @@ export const usePaymentReport = ({
     sessionId = "",
     termId = "",
     paymentMethod = "",
-    studentId = ""
+    studentId = "",
+    classId = "",
+    search = ""
 }) => {
 
     return useQuery({
@@ -213,7 +215,9 @@ export const usePaymentReport = ({
             sessionId,
             termId,
             paymentMethod,
-            studentId
+            studentId,
+            classId,
+            search
         ],
 
         queryFn: () =>
@@ -223,7 +227,9 @@ export const usePaymentReport = ({
                 sessionId,
                 termId,
                 paymentMethod,
-                studentId
+                studentId,
+                classId,
+                search
             })
 
     });
