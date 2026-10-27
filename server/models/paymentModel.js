@@ -102,7 +102,7 @@ const getReceiptByNumber = async (receiptNumber, schoolId) => {
 };
 
 const buildReport = (filters = {}, schoolId) => {
-    const { sessionId, termId, classId, paymentMethod, dateFrom, dateTo, search } = filters;
+    const { sessionId, termId, classId, paymentMethod, dateFrom, dateTo, studentId, search } = filters;
     const conditions = ["st.school_id = $1", "sp.school_id = $1"];
     const values = [schoolId];
     let i = 2;
@@ -110,6 +110,7 @@ const buildReport = (filters = {}, schoolId) => {
     if (sessionId) add("sp.session_id = $X", sessionId);
     if (termId) add("sp.term_id = $X", termId);
     if (classId) add("st.class_id = $X", classId);
+    if (studentId) add("st.id = $X", studentId);
     if (paymentMethod) add("sp.payment_method = $X", paymentMethod);
     if (dateFrom) add("sp.payment_date >= $X", dateFrom);
     if (dateTo) add("sp.payment_date <= $X", dateTo);
