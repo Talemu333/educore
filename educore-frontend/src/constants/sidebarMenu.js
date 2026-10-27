@@ -48,6 +48,7 @@ const sidebarMenu = [
     { title: "Student Promotion", icon: GraduationCap, path: "/student-promotion", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Promotion History", icon: History, path: "/promotion-history", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Teachers", icon: Users, path: "/teachers", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "Progress Report Review", icon: FileText, path: "/progress-report-review", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "My Students", icon: GraduationCap, path: "/teacher-students", roles: [ROLES.TEACHER] },
     { title: "Student Progress Reports", icon: FileText, path: "/class-teacher-progress", roles: [ROLES.TEACHER] },
     { title: "My Payments", icon: CreditCard, path: "/parent/payments", roles: [ROLES.PARENT] },
