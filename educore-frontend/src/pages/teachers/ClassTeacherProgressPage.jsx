@@ -21,6 +21,8 @@ function ClassTeacherProgressPage() {
     const [loading, setLoading] = useState(true);
     const [studentsLoading, setStudentsLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [savedReportId, setSavedReportId] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
 
@@ -74,7 +76,7 @@ function ClassTeacherProgressPage() {
         setMessage("");
         setSaving(true);
         try {
-            await saveProgressReportDraft({
+            const response = await saveProgressReportDraft({
                 assignment_id: Number(assignmentId),
                 student_id: Number(studentId),
                 term_id: Number(termId),
@@ -85,11 +87,28 @@ function ClassTeacherProgressPage() {
                 strengths: strengths.trim(),
                 areas_for_improvement: improvements.trim()
             });
+            setSavedReportId(response?.data?.id || null);
             setMessage("Progress report draft saved. It has not been published to parents.");
         } catch (err) {
             setError(err.response?.data?.message || "Unable to save this progress report draft.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSubmitForReview = async () => {
+        if (!savedReportId) return;
+        setError("");
+        setMessage("");
+        setSubmitting(true);
+        try {
+            await api.post(`/class-teacher-progress/reports/${savedReportId}/submit`);
+            setSavedReportId(null);
+            setMessage("Report submitted for school leadership review. It is not visible to parents until published.");
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to submit this report for review.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -186,6 +205,9 @@ function ClassTeacherProgressPage() {
                         <button type="submit" disabled={saving || !assignmentId || !studentId || !termId || !periodStart || !periodEnd} className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
                             <Save className="h-4 w-4" /> {saving ? "Saving draft…" : "Save report draft"}
                         </button>
+                        {savedReportId && <button type="button" onClick={handleSubmitForReview} disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            {submitting ? "Submitting…" : "Submit for review"}
+                        </button>}
                     </div>
                 </form>
             )}
