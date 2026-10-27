@@ -495,6 +495,20 @@ function TeacherDashboardPage() {
                     </button>
 
 
+                    {/* STUDENT PROGRESS REPORTS */}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/class-teacher-progress")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+                        <div className="text-2xl">📝</div>
+                        <h3 className="mt-3 font-semibold text-gray-800">Student Progress Reports</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            Prepare weekly and termly progress updates for students in your class-teacher assignment.
+                        </p>
+                    </button>
+
+
                     {/* MY STUDENTS */}
 
                     <button
