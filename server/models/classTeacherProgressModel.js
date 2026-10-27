@@ -162,7 +162,36 @@ const publishReport = async (reportId, schoolId, reviewerId) => {
     return result.rows[0] || null;
 };
 
+
+const listPublishedParentReports = async (userId, schoolId, studentId = null) => {
+    const result = await pool.query(`
+        SELECT spr.id, spr.student_id, spr.report_type, spr.period_start, spr.period_end,
+               spr.class_teacher_comment, spr.strengths, spr.areas_for_improvement,
+               spr.attendance_summary, spr.academic_summary, spr.published_at,
+               CONCAT(st.surname, ' ', st.first_name,
+                 CASE WHEN COALESCE(st.middle_name, '') = '' THEN '' ELSE ' ' || st.middle_name END
+               ) AS student_name,
+               st.admission_number, c.class_name, a.arm_name, s.session_name, tr.term_name,
+               CONCAT(t.surname, ' ', t.first_name) AS class_teacher_name
+        FROM student_progress_reports spr
+        JOIN students st ON st.id = spr.student_id AND st.school_id = spr.school_id
+        JOIN parents p ON p.user_id = $1 AND p.school_id = spr.school_id
+        JOIN student_parents sp ON sp.parent_id = p.id AND sp.student_id = spr.student_id
+        JOIN class_teacher_assignments cta ON cta.id = spr.class_teacher_assignment_id AND cta.school_id = spr.school_id
+        JOIN teachers t ON t.id = cta.teacher_id AND t.school_id = cta.school_id
+        JOIN classes c ON c.id = cta.class_id AND c.school_id = spr.school_id
+        LEFT JOIN arms a ON a.id = cta.arm_id AND a.school_id = spr.school_id
+        JOIN academic_sessions s ON s.id = spr.session_id AND s.school_id = spr.school_id
+        JOIN terms tr ON tr.id = spr.term_id AND tr.school_id = spr.school_id
+        WHERE spr.school_id = $2 AND spr.status = 'published'
+          AND ($3::bigint IS NULL OR spr.student_id = $3)
+        ORDER BY spr.published_at DESC, spr.period_end DESC, st.surname, st.first_name
+    `, [userId, schoolId, studentId]);
+    return result.rows;
+};
+
 module.exports = {
     listMyClasses, listClassStudents, createDraftReport,
-    submitDraftReport, listReportsForReview, reviewReport, publishReport
+    submitDraftReport, listReportsForReview, reviewReport, publishReport,
+    listPublishedParentReports
 };
