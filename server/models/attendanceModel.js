@@ -54,4 +54,58 @@ const getAttendanceSummary = async ({studentId,sessionId,termId,schoolId}) => {
     return result.rows[0];
 };
 
-module.exports={upsertAttendance,getAttendanceByDate,getStudentAttendance,getAttendanceSummary};
+
+const getAttendanceAnalytics = async ({ sessionId, termId, dateFrom, dateTo, schoolId }) => {
+    const conditions = ["u.school_id = $1", "a.session_id = $2", "a.term_id = $3"];
+    const values = [schoolId, sessionId, termId];
+    let index = 4;
+    if (dateFrom) { conditions.push(`a.attendance_date >= ${index++}`); values.push(dateFrom); }
+    if (dateTo) { conditions.push(`a.attendance_date <= ${index++}`); values.push(dateTo); }
+    const where = conditions.join(" AND ");
+    const joins = `
+        FROM attendance a
+        JOIN students s ON s.id = a.student_id
+        JOIN users u ON u.id = s.user_id
+        JOIN classes c ON c.id = a.class_id AND c.school_id = u.school_id
+        WHERE ${where}
+    `;
+    const [totals, byClass, trend] = await Promise.all([
+        pool.query(`
+            SELECT COUNT(*)::int AS marked_records,
+                COUNT(DISTINCT a.student_id)::int AS students_marked,
+                COUNT(*) FILTER (WHERE a.status = 'PRESENT')::int AS present_count,
+                COUNT(*) FILTER (WHERE a.status = 'ABSENT')::int AS absent_count,
+                COUNT(*) FILTER (WHERE a.status = 'LATE')::int AS late_count,
+                COUNT(*) FILTER (WHERE a.status = 'EXCUSED')::int AS excused_count
+            ${joins};
+        `, values),
+        pool.query(`
+            SELECT c.id AS class_id, c.class_name,
+                COUNT(*)::int AS marked_records,
+                COUNT(*) FILTER (WHERE a.status = 'PRESENT')::int AS present_count,
+                COUNT(*) FILTER (WHERE a.status = 'ABSENT')::int AS absent_count,
+                COUNT(*) FILTER (WHERE a.status = 'LATE')::int AS late_count,
+                COUNT(*) FILTER (WHERE a.status = 'EXCUSED')::int AS excused_count,
+                ROUND(100.0 * COUNT(*) FILTER (WHERE a.status = 'PRESENT') / NULLIF(COUNT(*), 0), 2) AS present_percentage
+            ${joins}
+            GROUP BY c.id, c.class_name
+            ORDER BY c.class_name;
+        `, values),
+        pool.query(`
+            SELECT a.attendance_date::date AS attendance_date,
+                COUNT(*)::int AS marked_records,
+                COUNT(*) FILTER (WHERE a.status = 'PRESENT')::int AS present_count,
+                COUNT(*) FILTER (WHERE a.status = 'ABSENT')::int AS absent_count,
+                COUNT(*) FILTER (WHERE a.status = 'LATE')::int AS late_count
+            ${joins}
+            GROUP BY a.attendance_date::date
+            ORDER BY a.attendance_date::date;
+        `, values)
+    ]);
+    const summary = totals.rows[0];
+    const marked = Number(summary.marked_records || 0);
+    summary.present_percentage = marked ? Number((Number(summary.present_count || 0) / marked * 100).toFixed(2)) : 0;
+    return { summary, byClass: byClass.rows, trend: trend.rows };
+};
+
+module.exports={upsertAttendance,getAttendanceByDate,getStudentAttendance,getAttendanceSummary,getAttendanceAnalytics};
