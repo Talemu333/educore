@@ -50,8 +50,15 @@ const buildTeacherFilters = (schoolId, options = {}) => {
     }
 
     if (status === "true" || status === "false") {
-        values.push(status === "true");
-        conditions.push(`t.status = $${values.length}`);
+        // Support both boolean status values and legacy text values like "Active".
+        const activeStatusValues = ["true", "active", "1"];
+        if (status === "true") {
+            conditions.push(`LOWER(COALESCE(t.status::text, '')) = ANY(${values.length + 1}::text[])`);
+            values.push(activeStatusValues);
+        } else {
+            conditions.push(`LOWER(COALESCE(t.status::text, '')) <> ALL(${values.length + 1}::text[])`);
+            values.push(activeStatusValues);
+        }
     }
 
     return { conditions, values };
