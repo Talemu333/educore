@@ -38,4 +38,16 @@ const getAttendanceByAssignment = asyncHandler(async (req,res) => {
     res.json({success:true,data:attendance});
 });
 
-module.exports={saveAttendance,getAttendanceByDate,getStudentAttendance,getAttendanceSummary,getStudentsForAttendance,getTeacherAttendanceStudents,getAttendanceByAssignment};
+
+const getAttendanceAnalytics = asyncHandler(async (req, res) => {
+    const data = await attendanceService.getAttendanceAnalytics({
+        sessionId: req.query.session_id,
+        termId: req.query.term_id,
+        dateFrom: req.query.date_from || "",
+        dateTo: req.query.date_to || "",
+        schoolId: getSchoolId(req)
+    });
+    res.json({ success: true, data });
+});
+
+module.exports={saveAttendance,getAttendanceByDate,getStudentAttendance,getAttendanceSummary,getStudentsForAttendance,getTeacherAttendanceStudents,getAttendanceByAssignment,getAttendanceAnalytics};
