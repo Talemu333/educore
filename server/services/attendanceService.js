@@ -92,13 +92,13 @@ const getAttendanceByAssignment = async (assignmentId,attendanceDate,user,school
 const getAttendanceAnalytics = async ({ sessionId, termId, dateFrom, dateTo, schoolId }) => {
     if (!schoolId) throw new ApiError(403, "School context is required.");
     if (!sessionId || !termId) throw new ApiError(400, "Academic session and term are required.");
-    await validateContext({ session_id: sessionId, term_id: termId, class_id: (await classModel.getClassesBySchool?.(schoolId))?.[0]?.id }, schoolId)
-        .catch(async error => {
-            const session = await sessionModel.getSessionById(sessionId, schoolId);
-            const term = await termModel.getTermById(termId, schoolId);
-            if (!session || !term) throw error;
-            if (Number(term.session_id) !== Number(sessionId)) throw new ApiError(400, "Selected term does not belong to the selected academic session.");
-        });
+    const session = await sessionModel.getSessionById(sessionId, schoolId);
+    const term = await termModel.getTermById(termId, schoolId);
+    if (!session) throw new ApiError(404, "Academic session not found.");
+    if (!term) throw new ApiError(404, "Term not found.");
+    if (Number(term.session_id) !== Number(sessionId)) {
+        throw new ApiError(400, "Selected term does not belong to the selected academic session.");
+    }
     if (dateFrom && dateTo && dateFrom > dateTo) throw new ApiError(400, "Start date must not be later than end date.");
     return attendanceModel.getAttendanceAnalytics({ sessionId, termId, dateFrom, dateTo, schoolId });
 };
