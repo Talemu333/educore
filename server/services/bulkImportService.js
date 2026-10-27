@@ -121,6 +121,8 @@ const importStudents = async (client, rows, schoolId, result) => {
         try {
             const missing = required(row, ["surname", "first_name", "gender", "date_of_birth", "admission_date"]);
             if (missing.length) throw new Error(`Missing: ${missing.join(", ")}`);
+            if (!dateValue(row.date_of_birth)) throw new Error("Date of birth is not a valid date.");
+            if (!dateValue(row.admission_date)) throw new Error("Admission date is not a valid date.");
             const cls = await lookupClass(client, row, schoolId);
             if (!cls) throw new Error("Class not found.");
             const arm = await lookupArm(client, row, schoolId, cls.id);
@@ -313,7 +315,12 @@ const importFile = async ({ buffer, type, schoolId, userId }) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        if (type === "students") await importStudents(client, rows, schoolId, result);
+        // Serialize student imports per school so two simultaneous uploads cannot both
+        // pass the duplicate check and create separate admission numbers for the same student.
+        if (type === "students") {
+            await client.query("SELECT pg_advisory_xact_lock($1, $2)", [74021, Number(schoolId)]);
+            await importStudents(client, rows, schoolId, result);
+        }
         else if (type === "teachers") await importTeachers(client, rows, schoolId, result);
         else if (type === "parents") await importParents(client, rows, schoolId, result);
         else if (type === "payments") await importPayments(client, rows, schoolId, userId, result);
