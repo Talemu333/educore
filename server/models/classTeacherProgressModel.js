@@ -58,7 +58,7 @@ const createDraftReport = async (data, userId, schoolId) => {
         FROM class_teacher_assignments cta
         JOIN teachers t ON t.id = cta.teacher_id AND t.school_id = cta.school_id
         JOIN users u ON u.id = t.user_id AND u.id = $2 AND u.school_id = cta.school_id
-        JOIN terms tr ON tr.id = $7 AND tr.session_id = cta.session_id
+        JOIN terms tr ON tr.id = $5 AND tr.session_id = cta.session_id AND tr.school_id = cta.school_id
         JOIN student_enrollments se ON se.student_id = $4 AND se.session_id = cta.session_id
           AND se.class_id = cta.class_id
           AND (cta.arm_id IS NULL OR se.arm_id = cta.arm_id)
