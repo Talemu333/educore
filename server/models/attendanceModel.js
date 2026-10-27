@@ -59,8 +59,8 @@ const getAttendanceAnalytics = async ({ sessionId, termId, dateFrom, dateTo, sch
     const conditions = ["u.school_id = $1", "a.session_id = $2", "a.term_id = $3"];
     const values = [schoolId, sessionId, termId];
     let index = 4;
-    if (dateFrom) { conditions.push(`a.attendance_date >= ${index++}`); values.push(dateFrom); }
-    if (dateTo) { conditions.push(`a.attendance_date <= ${index++}`); values.push(dateTo); }
+    if (dateFrom) { conditions.push(`a.attendance_date >= $${index++}`); values.push(dateFrom); }
+    if (dateTo) { conditions.push(`a.attendance_date <= $${index++}`); values.push(dateTo); }
     const where = conditions.join(" AND ");
     const joins = `
         FROM attendance a
