@@ -174,6 +174,9 @@ import ParentPaymentsPage
 import TeacherStudentsPage
     from "../pages/teachers/TeacherStudentsPage";
 
+import ClassTeacherProgressPage
+    from "../pages/teachers/ClassTeacherProgressPage";
+
 
 import AdministratorsPage
     from "@/pages/admin/AdministratorsPage";
@@ -1185,6 +1188,15 @@ function AppRouter() {
                         }
                     />
 
+
+                    <Route
+                        path="/class-teacher-progress"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.TEACHER]}>
+                                <ClassTeacherProgressPage />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* =====================================
                         PARENT DASHBOARD
