@@ -5,6 +5,7 @@ const authorize = require("../middlewares/authorize");
 const authorizeAdminType = require("../middlewares/authorizeAdminType");
 const ROLES = require("../constants/roles");
 const controller = require("../controllers/classTeacherProgressController");
+const ROLE_NAMES = require("../config/roleNames");
 
 const academicAdmin = authorizeAdminType("proprietor", "principal", "vice_principal");
 
@@ -17,6 +18,7 @@ router.post("/reports/drafts", authorize(ROLES.TEACHER), controller.createDraftR
 router.post("/reports/:reportId/submit", authorize(ROLES.TEACHER), controller.submitDraftReport);
 
 // School leadership review workflow. Parents cannot access these endpoints.
+router.get("/parent/reports", authorize(ROLE_NAMES.PARENT), controller.listPublishedParentReports);
 router.get("/admin/review", authorize(ROLES.ADMIN), academicAdmin, controller.listReportsForReview);
 router.post("/admin/reports/:reportId/review", authorize(ROLES.ADMIN), academicAdmin, controller.reviewReport);
 router.post("/admin/reports/:reportId/publish", authorize(ROLES.ADMIN), academicAdmin, controller.publishReport);
