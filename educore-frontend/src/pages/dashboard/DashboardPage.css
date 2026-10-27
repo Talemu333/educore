@@ -161,3 +161,39 @@
   .premium-admin-dashboard .premium-kpi-card { padding: .95rem; }
   .premium-admin-dashboard .premium-kpi-grid { gap: .65rem; }
 }
+
+
+/* Shared shell polish: consistent with the dashboard without changing navigation logic. */
+header.sticky {
+  border-bottom-color: #e5eaf2;
+  box-shadow: 0 2px 12px rgba(23, 35, 61, .025);
+}
+.school-sidebar nav > p {
+  color: #8491a8;
+  letter-spacing: .16em;
+}
+.school-sidebar nav a,
+.school-sidebar nav button {
+  outline-offset: 2px;
+}
+.school-sidebar .school-sidebar-active {
+  color: #fff !important;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--school-primary, #4169b2) 82%, #18243a), color-mix(in srgb, var(--school-primary, #4169b2) 62%, #18243a));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 4px 12px rgba(0,0,0,.12);
+}
+.school-sidebar .school-sidebar-group-active {
+  color: #f4f7ff;
+  background: rgba(255,255,255,.065);
+}
+.school-sidebar .school-sidebar-child-active {
+  color: #fff;
+  background: rgba(255,255,255,.09);
+  box-shadow: inset 2px 0 0 var(--school-primary, #7ea2f4);
+}
+.school-sidebar nav a:focus-visible,
+.school-sidebar nav button:focus-visible {
+  outline: 2px solid #a8c3ff;
+}
+@media (max-width: 640px) {
+  header.sticky { height: 64px; }
+}
