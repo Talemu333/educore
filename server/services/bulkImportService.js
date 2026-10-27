@@ -125,6 +125,27 @@ const importStudents = async (client, rows, schoolId, result) => {
             if (!cls) throw new Error("Class not found.");
             const arm = await lookupArm(client, row, schoolId, cls.id);
             if (!arm) throw new Error("Arm not found for the selected class.");
+            // Idempotency guard: identify an existing student by stable personal details
+            // before generating a new admission number. Scope every check to this school.
+            // This also catches repeated rows within the same spreadsheet after the first insert.
+            const normalizedDob = dateValue(row.date_of_birth);
+            const duplicateStudent = await client.query(`
+                SELECT id, admission_number
+                FROM students
+                WHERE school_id = $1
+                  AND LOWER(REGEXP_REPLACE(TRIM(surname), '\\s+', ' ', 'g')) = LOWER(REGEXP_REPLACE(TRIM($2), '\\s+', ' ', 'g'))
+                  AND LOWER(REGEXP_REPLACE(TRIM(first_name), '\\s+', ' ', 'g')) = LOWER(REGEXP_REPLACE(TRIM($3), '\\s+', ' ', 'g'))
+                  AND LOWER(REGEXP_REPLACE(TRIM(COALESCE(middle_name, '')), '\\s+', ' ', 'g')) = LOWER(REGEXP_REPLACE(TRIM($4), '\\s+', ' ', 'g'))
+                  AND date_of_birth = $5::date
+                  AND LOWER(TRIM(gender)) = LOWER(TRIM($6))
+                LIMIT 1
+            `, [schoolId, clean(row.surname), clean(row.first_name), clean(row.middle_name), normalizedDob, clean(row.gender)]);
+            if (duplicateStudent.rowCount) {
+                result.skipped++;
+                result.messages.push(`Row ${i + 2}: ${clean(row.surname)} ${clean(row.first_name)} already exists as admission number ${duplicateStudent.rows[0].admission_number}; existing record retained.`);
+                continue;
+            }
+
             const admissionNumber = clean(row.admission_number) || `IMP/${new Date().getFullYear()}/${String(nextSequence).padStart(4, "0")}`;
             const duplicate = await client.query("SELECT id FROM students WHERE school_id = $1 AND admission_number = $2", [schoolId, admissionNumber]);
             if (duplicate.rowCount) { result.skipped++; result.messages.push(`Row ${i + 2}: ${admissionNumber} already exists.`); continue; }
