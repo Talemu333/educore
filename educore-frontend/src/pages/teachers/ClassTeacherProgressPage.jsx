@@ -87,7 +87,7 @@ function ClassTeacherProgressPage() {
                 strengths: strengths.trim(),
                 areas_for_improvement: improvements.trim()
             });
-            setSavedReportId(response?.data?.id || null);
+            setSavedReportId(response?.data?.id || response?.data?.data?.id || null);
             setMessage("Progress report draft saved. It has not been published to parents.");
         } catch (err) {
             setError(err.response?.data?.message || "Unable to save this progress report draft.");
