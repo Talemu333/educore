@@ -17,7 +17,7 @@ const listMyClasses = async (userId, schoolId) => {
           AND se.enrollment_status = 'Active'
         WHERE cta.school_id = $2 AND cta.is_active = TRUE
         GROUP BY cta.id, cta.teacher_id, cta.class_id, cta.arm_id, cta.session_id,
-                 c.class_name, a.arm_name, s.session_name, s.is_current
+                 c.class_name, a.arm_name, s.session_name, s.is_current, s.start_date
         ORDER BY s.is_current DESC, s.start_date DESC, c.class_name, a.arm_name
     `, [userId, schoolId]);
     return result.rows;
