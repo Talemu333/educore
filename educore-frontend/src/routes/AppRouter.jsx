@@ -176,6 +176,8 @@ import TeacherStudentsPage
 
 import ClassTeacherProgressPage
     from "../pages/teachers/ClassTeacherProgressPage";
+import ProgressReportReviewPage
+    from "../pages/admin/ProgressReportReviewPage";
 
 
 import AdministratorsPage
@@ -1194,6 +1196,18 @@ function AppRouter() {
                         element={
                             <ProtectedRoute allowedRoles={[ROLES.TEACHER]}>
                                 <ClassTeacherProgressPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/progress-report-review"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[ROLES.ADMIN]}
+                                allowedAdminTypes={["proprietor", "principal", "vice_principal"]}
+                            >
+                                <ProgressReportReviewPage />
                             </ProtectedRoute>
                         }
                     />
