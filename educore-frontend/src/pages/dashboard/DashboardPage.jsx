@@ -1,4 +1,4 @@
-import { LogOut, UserPlus, Wallet, Users, School, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
+import { LogOut, UserPlus, Wallet, Users, School, GraduationCap, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDashboard } from "@/hooks/useDashboard";
