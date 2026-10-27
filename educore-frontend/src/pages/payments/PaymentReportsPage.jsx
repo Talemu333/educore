@@ -268,6 +268,15 @@ function PaymentReportsPage() {
     const summary =
         reportData?.summary || {};
 
+    const paymentMethodBreakdown = [
+        { label: "Cash", amount: Number(summary.cash_amount || 0) },
+        { label: "Bank transfer", amount: Number(summary.transfer_amount || 0) },
+        { label: "Card / POS", amount: Number(summary.pos_amount || 0) },
+        { label: "Online", amount: Number(summary.online_amount || 0) }
+    ];
+    const totalCollected = Number(summary.total_amount || 0);
+    const maxMethodAmount = Math.max(0, ...paymentMethodBreakdown.map(item => item.amount));
+
 
     /*
     =====================================
@@ -1003,6 +1012,30 @@ function PaymentReportsPage() {
                 <>
 
 
+                    {/* PAYMENT METHOD ANALYTICS */}
+                    <section className="mb-6 rounded-xl border bg-background p-5 shadow-sm">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                            <div><h2 className="text-lg font-semibold">Collection by Payment Method</h2><p className="mt-1 text-sm text-muted-foreground">Based on the currently selected report filters.</p></div>
+                            <p className="text-sm text-muted-foreground">Total collected <span className="font-semibold text-foreground">₦{formatCurrency(totalCollected)}</span></p>
+                        </div>
+                        {totalCollected > 0 ? (
+                            <div className="mt-5 space-y-4">
+                                {paymentMethodBreakdown.map(item => {
+                                    const percentage = (item.amount / totalCollected) * 100;
+                                    const width = maxMethodAmount > 0 ? (item.amount / maxMethodAmount) * 100 : 0;
+                                    return (
+                                        <div key={item.label} className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_10rem]">
+                                            <span className="text-sm text-muted-foreground">{item.label}</span>
+                                            <div className="h-3 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${width}%` }} /></div>
+                                            <span className="col-span-2 text-right text-xs tabular-nums text-muted-foreground sm:col-span-1 sm:text-sm">₦{formatCurrency(item.amount)} · {percentage.toFixed(1)}%</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="mt-4 rounded-lg bg-muted/40 p-4 text-sm text-muted-foreground">No payments match the selected filters.</p>
+                        )}
+                    </section>
                     {/* =================================
                         SUMMARY CARDS
                     ================================= */}
