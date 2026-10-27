@@ -19,12 +19,20 @@ export default function AttendanceAnalyticsPage() {
     const { data: terms = [], isLoading: termsLoading } = useTerms();
     const filteredTerms = useMemo(() => terms.filter(term => !sessionId || Number(term.session_id) === Number(sessionId)), [terms, sessionId]);
 
-    useEffect(() => { setTermId(""); }, [sessionId]);
+    const handleSessionChange = (nextSessionId) => {
+        // Clear the old term in the same event as the session change so the
+        // report effect cannot request analytics for a term from another session.
+        setSessionId(nextSessionId);
+        setTermId("");
+        setData(null);
+        setError("");
+    };
 
     const loadReport = async () => {
-        if (!sessionId || !termId) {
+        const selectedTerm = terms.find(term => String(term.id) === String(termId));
+        if (!sessionId || !termId || !selectedTerm || Number(selectedTerm.session_id) !== Number(sessionId)) {
             setData(null);
-            setError("Select an academic session and term to view attendance analytics.");
+            setError("Select a valid academic session and a term belonging to that session.");
             return;
         }
         setLoading(true);
@@ -66,7 +74,7 @@ export default function AttendanceAnalyticsPage() {
                 <p className="mt-1 text-sm text-muted-foreground">Review recorded attendance by status, class and date.</p>
             </header>
             <section className="grid gap-4 rounded-xl border bg-background p-4 sm:grid-cols-2 lg:grid-cols-4 print:hidden">
-                <label className="space-y-1 text-sm">Academic session<select className="w-full rounded-md border bg-background p-2" value={sessionId} onChange={e => setSessionId(e.target.value)}><option value="">Select session</option>{sessions.map(s => <option key={s.id} value={s.id}>{s.session_name}</option>)}</select></label>
+                <label className="space-y-1 text-sm">Academic session<select className="w-full rounded-md border bg-background p-2" value={sessionId} onChange={e => handleSessionChange(e.target.value)}><option value="">Select session</option>{sessions.map(s => <option key={s.id} value={s.id}>{s.session_name}</option>)}</select></label>
                 <label className="space-y-1 text-sm">Term<select className="w-full rounded-md border bg-background p-2" value={termId} onChange={e => setTermId(e.target.value)}><option value="">Select term</option>{filteredTerms.map(t => <option key={t.id} value={t.id}>{t.term_name}</option>)}</select></label>
                 <label className="space-y-1 text-sm">From date<input className="w-full rounded-md border bg-background p-2" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></label>
                 <label className="space-y-1 text-sm">To date<input className="w-full rounded-md border bg-background p-2" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} /></label>
