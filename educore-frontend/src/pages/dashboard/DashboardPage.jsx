@@ -1,11 +1,10 @@
-import { LogOut, UserPlus, Wallet, Users, School, GraduationCap, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
+import { LogOut, UserPlus, Wallet, Users, School, CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useExpenseSummary } from "@/hooks/useExpenses";
 import { useAuth } from "@/context/AuthContext";
 import AnnouncementSummary from "@/components/announcements/AnnouncementSummary";
-import "./DashboardPage.css";
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("en-NG", {
@@ -183,15 +182,15 @@ function DashboardPage() {
     const setupCompleted = setupSteps.filter(step => step.done).length;
 
     const overviewCards = [
-        { title: "Total Students", value: students, Icon: Users, tone: "blue", description: "Registered students" },
-        { title: "Active Students", value: active_students, Icon: GraduationCap, tone: "teal", description: "Currently enrolled" },
-        { title: "Teachers", value: teachers, Icon: UserPlus, tone: "violet", description: "Teaching staff" },
-        { title: "Parents", value: parents, Icon: Users, tone: "amber", description: "Registered parents" },
-        { title: "Classes", value: classes, Icon: School, tone: "rose", description: "School classes" },
+        { title: "Total Students", value: students, icon: "👨‍🎓", description: "Registered students" },
+        { title: "Active Students", value: active_students, icon: "🎓", description: "Currently enrolled" },
+        { title: "Teachers", value: teachers, icon: "👨‍🏫", description: "Teaching staff" },
+        { title: "Parents", value: parents, icon: "👨‍👩‍👧", description: "Registered parents" },
+        { title: "Classes", value: classes, icon: "🏫", description: "School classes" },
     ];
 
     return (
-        <div className="premium-admin-dashboard w-full min-w-0 space-y-6">
+        <div className="w-full min-w-0 space-y-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
@@ -280,19 +279,16 @@ function DashboardPage() {
                 </div>
             </section>
 
-            <div className="premium-kpi-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                {overviewCards.map(card => {
-                    const Icon = card.Icon;
-                    return (
-                        <div key={card.title} className={"premium-kpi-card premium-kpi-" + card.tone + " min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"}>
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0"><p className="text-sm font-medium text-slate-500">{card.title}</p><p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{Number(card.value || 0).toLocaleString()}</p></div>
-                                <div className="premium-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"><Icon size={21} strokeWidth={1.8} aria-hidden="true" /></div>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-400">{card.description}</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                {overviewCards.map(card => (
+                    <div key={card.title} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0"><p className="text-sm font-medium text-slate-500">{card.title}</p><p className="mt-1.5 text-2xl font-bold text-slate-900 sm:text-3xl">{card.value}</p></div>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg">{card.icon}</div>
                         </div>
-                    );
-                })}
+                        <p className="mt-2.5 text-xs text-slate-400">{card.description}</p>
+                    </div>
+                ))}
             </div>
 
 <AnnouncementSummary />
