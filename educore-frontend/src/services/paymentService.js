@@ -123,7 +123,9 @@ export const getPaymentReport = async ({
     sessionId = "",
     termId = "",
     paymentMethod = "",
-    studentId = ""
+    studentId = "",
+    classId = "",
+    search = ""
 }) => {
 
     const response = await api.get(
@@ -135,7 +137,9 @@ export const getPaymentReport = async ({
                 session_id: sessionId,
                 term_id: termId,
                 payment_method: paymentMethod,
-                student_id: studentId
+                student_id: studentId,
+                class_id: classId,
+                search
             }
         }
     );
