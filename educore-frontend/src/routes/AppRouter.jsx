@@ -44,6 +44,8 @@ import PaymentsPage
 import PaymentReportsPage
     from "@/pages/payments/PaymentReportsPage";
 
+import AttendanceAnalyticsPage from "@/pages/reports/AttendanceAnalyticsPage";
+
 
 import SettingsPage
     from "../pages/settings/SettingsPage";
@@ -966,6 +968,17 @@ function AppRouter() {
                     />
 
 
+                    <Route
+                        path="/attendance/reports"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL]}
+                                allowedAdminTypes={["proprietor", "principal", "vice_principal"]}
+                            >
+                                <AttendanceAnalyticsPage />
+                            </ProtectedRoute>
+                        }
+                    />
                     {/* =====================================
                         FEE MANAGEMENT
 
