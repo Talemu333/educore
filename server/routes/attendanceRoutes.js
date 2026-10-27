@@ -40,6 +40,14 @@ router.post(
 );
 
 
+router.get(
+    "/reports/analytics",
+    authenticate,
+    authorize(ROLES.ADMIN, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL),
+    attendanceController.getAttendanceAnalytics
+);
+
+
 /*
 =========================================
 GET ATTENDANCE BY DATE
