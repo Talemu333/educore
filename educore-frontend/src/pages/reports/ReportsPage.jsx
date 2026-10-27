@@ -132,6 +132,18 @@ function ReportsPage() {
         (highest, student) => Math.max(highest, Number(student.number_of_subjects || 0)),
         0
     );
+    const scoredStudents = resultRows
+        .map(student => ({
+            name: String(student.student_name || "Student"),
+            average: Number(student.average_score),
+        }))
+        .filter(student => Number.isFinite(student.average) && student.average >= 0);
+    const classAverage = scoredStudents.length
+        ? scoredStudents.reduce((sum, student) => sum + student.average, 0) / scoredStudents.length
+        : null;
+    const chartStudents = [...scoredStudents]
+        .sort((a, b) => b.average - a.average)
+        .slice(0, 8);
 
     return (
         <div className="space-y-6">
@@ -202,6 +214,37 @@ function ReportsPage() {
                                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-3"><BookOpen className="h-5 w-5 text-slate-500" /><div><p className="text-xs text-slate-500">Subjects</p><p className="text-xl font-semibold text-slate-900">{resultLoading ? "—" : subjectCount}</p></div></div></div>
                                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2"><p className="text-xs text-slate-500">Selected result</p><p className="mt-1 font-semibold text-slate-900">{selectedClass?.class_name || resultSheet?.class?.class_name || "-"}{selectedArm ? ` — ${selectedArm.arm_name}` : ""}</p><p className="mt-0.5 text-sm text-slate-500">{resultSheet?.session?.session_name || ""} · {resultSheet?.term?.term_name || ""}</p></div>
                             </div>
+
+                            {!resultLoading && !resultError && resultRows.length > 0 && (
+                                <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                                        <div>
+                                            <h3 className="font-semibold text-slate-900">Academic Performance Snapshot</h3>
+                                            <p className="mt-1 text-sm text-slate-500">Based on the selected class, arm, session and term result records.</p>
+                                        </div>
+                                        <p className="text-sm text-slate-600">Class average: <span className="font-semibold text-slate-900">{classAverage === null ? "—" : classAverage.toFixed(2)}%</span></p>
+                                    </div>
+                                    {chartStudents.length > 0 ? (
+                                        <div className="mt-5 space-y-3" role="img" aria-label="Horizontal bar chart showing the eight highest student average scores">
+                                            {chartStudents.map((student, index) => {
+                                                const width = Math.max(0, Math.min(100, student.average));
+                                                return (
+                                                    <div key={student.name + index} className="grid grid-cols-[minmax(0,1fr)_minmax(5rem,2fr)_3.5rem] items-center gap-3">
+                                                        <span className="truncate text-xs font-medium text-slate-700" title={student.name}>{student.name}</span>
+                                                        <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                                                            <div className="h-full rounded-full bg-sky-600 transition-[width]" style={{ width: `${width}%` }} />
+                                                        </div>
+                                                        <span className="text-right text-xs font-semibold tabular-nums text-slate-700">{student.average.toFixed(1)}%</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="mt-4 text-sm text-slate-500">No valid average scores are available to chart for this selection.</p>
+                                    )}
+                                    <p className="mt-3 text-xs text-slate-400">Showing up to eight students with the highest recorded averages. This chart does not replace the full result table.</p>
+                                </section>
+                            )}
 
                             {resultLoading ? (
                                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">Loading result records...</div>
