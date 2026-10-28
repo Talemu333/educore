@@ -14,6 +14,10 @@ const ensureStatesTable = async () => {
                 )
             `);
             await pool.centralPool.query(`
+                CREATE UNIQUE INDEX IF NOT EXISTS states_state_name_lower_unique
+                ON states (LOWER(state_name))
+            `);
+            await pool.centralPool.query(`
                 INSERT INTO states (state_name)
                 VALUES ('Lagos'), ('Oyo'), ('Ogun'), ('Abuja')
                 ON CONFLICT (state_name) DO NOTHING
