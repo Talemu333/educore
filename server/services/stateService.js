@@ -1,11 +1,6 @@
 const stateModel = require("../models/stateModel");
 
-const getStates = async () => {
+const getStates = async () => stateModel.getStates();
+const createState = async (stateName) => stateModel.createState(stateName);
 
-    return await stateModel.getStates();
-
-};
-
-module.exports = {
-    getStates
-};
+module.exports = { getStates, createState };
