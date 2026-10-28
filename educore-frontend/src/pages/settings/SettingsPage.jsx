@@ -7,6 +7,7 @@ import AcademicStructureManagement from "@/components/settings/AcademicStructure
 import SuperAdminSchoolManagement from "@/components/settings/SuperAdminSchoolManagement";
 import SuperAdminManageSchoolPage from "./SuperAdminManageSchoolPage";
 import BulkDataImport from "./BulkDataImport";
+import StateManagement from "@/components/settings/StateManagement";
 
 function SchoolSettingsContent() {
     const { data: sessions = [] } = useSessions();
@@ -44,6 +45,7 @@ function SettingsPage() {
         return (
             <div className="w-full min-w-0 space-y-6 overflow-x-hidden">
                 <SuperAdminSchoolManagement />
+                <StateManagement />
             </div>
         );
     }
