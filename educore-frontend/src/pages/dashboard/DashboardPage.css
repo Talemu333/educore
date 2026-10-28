@@ -63,6 +63,9 @@
 }
 .premium-admin-dashboard .premium-kpi-grid { gap: .9rem; }
 .premium-admin-dashboard .premium-kpi-card {
+  align-self: start;
+  min-height: 0;
+  height: fit-content;
   position: relative;
   overflow: hidden;
   border: 1px solid var(--dash-line);
@@ -109,7 +112,9 @@
 .premium-admin-dashboard section[aria-labelledby="quick-actions-heading"] button {
   border-color: #e5eaf2;
   border-radius: .9rem;
-  min-height: 94px;
+  min-height: 0;
+  height: fit-content;
+  padding-block: .8rem;
   box-shadow: 0 2px 8px rgba(23, 35, 61, .025);
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
@@ -196,4 +201,21 @@ header.sticky {
 }
 @media (max-width: 640px) {
   header.sticky { height: 64px; }
+}
+
+
+/* Content-fit dashboard cards: prevent grid stretching and oversized action tiles. */
+.premium-admin-dashboard .premium-kpi-grid {
+  align-items: start;
+}
+.premium-admin-dashboard section[aria-labelledby="quick-actions-heading"] .grid {
+  align-items: start;
+}
+.premium-admin-dashboard section[aria-labelledby="quick-actions-heading"] button {
+  align-self: start;
+}
+.premium-admin-dashboard section.rounded-2xl,
+.premium-admin-dashboard section > div.rounded-2xl,
+.premium-admin-dashboard section > div.grid > div.rounded-2xl {
+  min-height: 0;
 }
