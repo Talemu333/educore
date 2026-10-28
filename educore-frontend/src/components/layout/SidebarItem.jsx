@@ -66,7 +66,7 @@ function SidebarItem({
                 disabled={isLoggingOut}
                 className={`
                     flex w-full items-center gap-3 rounded-xl px-3 py-2.5
-                    text-left text-sm font-medium text-slate-400
+                    font-sans text-sm font-medium leading-5 text-slate-400
                     transition-all duration-150
                     ${
                         isLoggingOut
@@ -105,7 +105,7 @@ function SidebarItem({
                     onClick={() => setIsOpen(!isOpen)}
                     className={`
                         flex w-full min-h-11 items-center justify-between gap-2 rounded-xl
-                        px-2.5 py-2 text-xs leading-4 font-semibold transition-all duration-150
+                        px-2.5 py-2 font-sans text-sm font-medium leading-5 transition-all duration-150
                         ${
                             isChildActive
                                 ? "school-sidebar-group-active"
@@ -114,8 +114,8 @@ function SidebarItem({
                     `}
                 >
                     <span className="flex min-w-0 flex-1 items-center gap-2">
-                        <Icon className="shrink-0" size={17} strokeWidth={1.9} />
-                        <span className="flex-none whitespace-nowrap text-left text-[12px] font-semibold leading-none tracking-tight">{title}</span>
+                        <Icon className="shrink-0" size={18} strokeWidth={1.9} />
+                        <span className="min-w-0 text-left font-sans text-sm font-medium leading-5">{title}</span>
                     </span>
 
                     {isOpen ? (
@@ -137,7 +137,7 @@ function SidebarItem({
                                     onClose?.();
                                 }}
                                 className={({ isActive }) => `
-                                    block rounded-lg px-3 py-2 text-sm font-medium transition-colors
+                                    block rounded-lg px-3 py-2 font-sans text-sm font-medium leading-5 transition-colors
                                     ${
                                         isActive
                                             ? "school-sidebar-child-active"
@@ -163,8 +163,8 @@ function SidebarItem({
                 onClose?.();
             }}
             className={({ isActive }) => `
-                flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
-                font-semibold transition-all duration-150
+                flex items-center gap-3 rounded-xl px-3 py-2.5
+                font-sans text-sm font-medium leading-5 transition-all duration-150
                 ${
                     isActive
                         ? "school-sidebar-active"
@@ -173,7 +173,7 @@ function SidebarItem({
             `}
         >
             <Icon size={18} strokeWidth={1.9} />
-            <span>{title}</span>
+            <span className="font-sans text-sm font-medium leading-5">{title}</span>
         </NavLink>
     );
 }
