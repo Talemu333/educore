@@ -1,21 +1,56 @@
 const pool = require("../config/database");
 
+let ensureStatesTablePromise;
+
+const ensureStatesTable = async () => {
+    if (!ensureStatesTablePromise) {
+        ensureStatesTablePromise = (async () => {
+            await pool.centralPool.query(`
+                CREATE TABLE IF NOT EXISTS states (
+                    id SERIAL PRIMARY KEY,
+                    state_name VARCHAR(100) NOT NULL UNIQUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            await pool.centralPool.query(`
+                INSERT INTO states (state_name)
+                VALUES ('Lagos'), ('Oyo'), ('Ogun'), ('Abuja')
+                ON CONFLICT (state_name) DO NOTHING
+            `);
+        })().catch((error) => {
+            ensureStatesTablePromise = null;
+            throw error;
+        });
+    }
+    return ensureStatesTablePromise;
+};
+
 const getStates = async () => {
-
-    const query = `
-        SELECT
-            id,
-            state_name
-        FROM states
-        ORDER BY state_name;
-    `;
-
-    const result = await pool.query(query);
-
+    await ensureStatesTable();
+    const result = await pool.centralPool.query(
+        "SELECT id, state_name FROM states ORDER BY state_name"
+    );
     return result.rows;
-
 };
 
-module.exports = {
-    getStates
+const createState = async (stateName) => {
+    await ensureStatesTable();
+    const normalizedName = stateName.trim().replace(/\\s+/g, " ");
+    const result = await pool.centralPool.query(
+        `INSERT INTO states (state_name)
+         VALUES ($1)
+         ON CONFLICT (LOWER(state_name)) DO NOTHING
+         RETURNING id, state_name`,
+        [normalizedName]
+    );
+    if (result.rows[0]) return { state: result.rows[0], created: true };
+
+    const existing = await pool.centralPool.query(
+        "SELECT id, state_name FROM states WHERE LOWER(state_name) = LOWER($1) LIMIT 1",
+        [normalizedName]
+    );
+    return { state: existing.rows[0], created: false };
 };
+
+module.exports = { getStates, createState };
