@@ -51,7 +51,6 @@ const getEnrollmentTrend = async (schoolId, limit = 6) => {
         FROM academic_sessions ac
         LEFT JOIN student_enrollments se
           ON se.session_id = ac.id
-         AND se.enrollment_status = 'Active'
         LEFT JOIN students s
           ON s.id = se.student_id
          AND s.school_id = $1
