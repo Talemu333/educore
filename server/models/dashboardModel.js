@@ -30,6 +30,56 @@ const getActiveStudentCount = async (schoolId) => {
     return Number(result.rows[0].total);
 };
 
+
+const getAdminStaffCount = async (schoolId) => {
+    const result = await pool.query(`
+        SELECT COUNT(*) AS total
+        FROM users u
+        JOIN roles r ON r.id = u.role_id
+        WHERE u.school_id = $1
+          AND LOWER(r.role_name) = 'admin'
+          AND COALESCE(u.is_active, TRUE) = TRUE
+    `, [schoolId]);
+    return Number(result.rows[0].total);
+};
+
+const getEnrollmentTrend = async (schoolId, limit = 6) => {
+    const result = await pool.query(`
+        SELECT ac.session_name AS label,
+               COUNT(s.id) AS total_students,
+               ac.start_date
+        FROM academic_sessions ac
+        LEFT JOIN student_enrollments se
+          ON se.session_id = ac.id
+         AND se.enrollment_status = 'Active'
+        LEFT JOIN students s
+          ON s.id = se.student_id
+         AND s.school_id = $1
+        WHERE ac.school_id = $1
+        GROUP BY ac.id, ac.session_name, ac.start_date
+        ORDER BY ac.start_date DESC NULLS LAST, ac.id DESC
+        LIMIT $2
+    `, [schoolId, limit]);
+    return result.rows.reverse();
+};
+
+const getLevelDistribution = async (schoolId) => {
+    const result = await pool.query(`
+        SELECT c.class_level AS level, COUNT(s.id) AS total
+        FROM classes c
+        LEFT JOIN student_enrollments se
+          ON se.class_id = c.id
+         AND se.enrollment_status = 'Active'
+        LEFT JOIN students s
+          ON s.id = se.student_id
+         AND s.school_id = $1
+        WHERE c.school_id = $1
+        GROUP BY c.class_level
+        ORDER BY c.class_level
+    `, [schoolId]);
+    return result.rows;
+};
+
 const getTeacherCount = async (schoolId) => {
     const result = await pool.query(`SELECT COUNT(*) AS total FROM teachers WHERE school_id = $1`, [schoolId]);
     return Number(result.rows[0].total);
@@ -210,7 +260,7 @@ const getRecentAnnouncements = async (schoolId, limit = 5) => {
 };
 
 module.exports = {
-    getStudentCount, getActiveStudentCount, getTeacherCount, getParentCount,
+    getStudentCount, getActiveStudentCount, getAdminStaffCount, getEnrollmentTrend, getLevelDistribution, getTeacherCount, getParentCount,
     getClassCount, getSchoolName, getCurrentSession, getCurrentTerm, getGenderDistribution,
     getClassPopulation, getRecentStudents, getTodayAttendance, getTopStudents,
     getExpectedFees, getTotalPayments, getStudentsWithPayments,
