@@ -37,7 +37,7 @@ function DashboardPage() {
     const {user}=useAuth(); const {settings}=useSchoolTheme(); const navigate=useNavigate();
     if(isLoading)return <div className="space-y-4"><div className="h-40 animate-pulse rounded-xl bg-blue-100"/><div className="grid grid-cols-2 gap-3 xl:grid-cols-5">{[1,2,3,4,5].map(x=><div key={x} className="h-28 rounded-xl bg-white"/>)}</div></div>;
     if(isError)return <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error?.response?.data?.message||error?.message||"Unable to load dashboard."}</div>;
-    const d=data||{}, name=settings?.school_name||d.school_name||"Your School", ;
+    const d=data||{}, name=settings?.school_name||d.school_name||"Your School";
     const today=new Date().toLocaleDateString("en-NG",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
     const activities=[...(d.recent_students||[]).slice(0,3).map(x=>({id:"s"+x.id,title:"New student registration",detail:[x.surname,x.first_name,x.middle_name].filter(Boolean).join(" "),date:x.created_at,Icon:UserPlus})),...(d.recent_payments||[]).slice(0,3).map(x=>({id:"p"+x.id,title:"Fee payment received",detail:(x.student_name||"Student")+" · "+cash(x.amount_paid),date:x.payment_date,Icon:Wallet})),...(d.recent_announcements||[]).slice(0,2).map(x=>({id:"a"+x.id,title:x.title||"School announcement",detail:x.message||"Announcement published",date:x.publish_date||x.created_at,Icon:Megaphone}))].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,5);
     const collection=d.expected_fees>0?Math.min(100,Math.round(d.total_payments/d.expected_fees*100)):0;
