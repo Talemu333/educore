@@ -101,19 +101,12 @@ function Sidebar({ isOpen, onClose }) {
                 <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-white">{schoolName}</span><ChevronDown size={15} className="shrink-0 text-blue-100"/>
             </button>
 
-            <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-4">
-                <div className="space-y-1.5">
+            <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-4">
+                <div className="flex min-h-full flex-col justify-evenly gap-1.5">
                     {menu.map((item, index) => <SidebarItem key={item.path || item.title + "-" + index} {...item} onClose={onClose}/>)}
                 </div>
             </nav>
 
-            <div className="shrink-0 px-4 pb-6 pt-3">
-                <div className="flex flex-col items-center border-t border-white/10 pt-5 text-center">
-                    <School size={37} strokeWidth={1.5} className="mb-3 text-blue-100"/>
-                    <p className="max-w-[205px] text-xs font-semibold leading-4 text-white">{schoolName}</p>
-                    <p className="mt-1 max-w-[205px] text-[10px] text-blue-100/70">{motto}</p>
-                </div>
-            </div>
         </aside>
     );
 }
