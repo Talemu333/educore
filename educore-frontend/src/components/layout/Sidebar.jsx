@@ -87,15 +87,10 @@ function Sidebar({ isOpen, onClose }) {
 
     return (
         <aside className={`school-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[254px] flex-col text-white shadow-2xl transition-transform duration-300 lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-            <div className="flex h-[91px] shrink-0 items-center border-b border-white/10 px-5">
-                <div className="flex items-center gap-2.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-950/40"><GraduationCap size={31} strokeWidth={2.3}/></div>
-                    <div><div className="text-[27px] font-extrabold leading-none tracking-tight"><span className="text-blue-400">Edu</span><span className="text-white">Prow</span></div><p className="mt-1 text-[9px] tracking-wide text-blue-100/80">Better Schools. Brighter Futures.</p></div>
-                </div>
-                <button type="button" onClick={onClose} aria-label="Close menu" className="ml-auto rounded-lg p-2 text-blue-100 hover:bg-white/10 lg:hidden"><X size={19}/></button>
+            <div className="flex h-12 shrink-0 items-center justify-end px-3 lg:hidden">
+                <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-lg p-2 text-blue-100 hover:bg-white/10"><X size={19}/></button>
             </div>
-
-            <button type="button" className="mx-4 mt-4 flex min-h-[55px] items-center gap-3 rounded-xl border border-blue-300/20 bg-blue-950/35 px-3 text-left hover:bg-blue-900/50">
+            <button type="button" className="mx-4 mt-3 flex min-h-[55px] items-center gap-3 rounded-xl border border-blue-300/20 bg-blue-950/35 px-3 text-left hover:bg-blue-900/50">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-white text-blue-900">{schoolLogo ? <img src={schoolLogo} alt="" className="h-full w-full object-contain p-0.5"/> : <School size={22}/>}</span>
                 <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-white">{schoolName}</span><ChevronDown size={15} className="shrink-0 text-blue-100"/>
             </button>
@@ -105,7 +100,9 @@ function Sidebar({ isOpen, onClose }) {
                     {menu.map((item, index) => <SidebarItem key={item.path || item.title + "-" + index} {...item} onClose={onClose}/>)}
                 </div>
             </nav>
-
+            <div className="shrink-0 border-t border-white/10 px-4 py-3 text-center">
+                <p className="text-[10px] font-medium tracking-wide text-blue-100/65">powered by <span className="font-semibold text-blue-200">EduProw</span></p>
+            </div>
         </aside>
     );
 }
