@@ -10,6 +10,7 @@ function TeacherDashboardPage() {
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [showAssignments, setShowAssignments] = useState(false);
 
     useEffect(() => {
 
@@ -196,9 +197,127 @@ function TeacherDashboardPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
 
-                {/* ASSIGNMENTS */}
+                {/* QUICK ACTIONS */}
 
-                <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+            <div>
+
+                <h2 className="mb-4 text-lg font-semibold text-gray-800">
+                    Quick Actions
+                </h2>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+
+                    {/* TAKE ATTENDANCE */}
+
+                    <button
+                        type="button"
+                        onClick={() => navigate("/attendance")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+
+                        <div className="text-2xl">
+                            📋
+                        </div>
+
+                        <h3 className="mt-3 font-semibold text-gray-800">
+                            Take Attendance
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                            Record attendance for your assigned classes.
+                        </p>
+
+                    </button>
+
+
+                    {/* ENTER RESULTS */}
+
+                    <button
+                        type="button"
+                        onClick={() => navigate("/results")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+
+                        <div className="text-2xl">
+                            📊
+                        </div>
+
+                        <h3 className="mt-3 font-semibold text-gray-800">
+                            Enter Results
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                            Enter and manage students' academic results.
+                        </p>
+
+                    </button>
+
+
+                    {/* MY TIMETABLE */}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/teacher-timetable")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+                        <div className="text-2xl">🗓️</div>
+                        <h3 className="mt-3 font-semibold text-gray-800">My Timetable</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            View your weekly lessons, classes, and teaching times.
+                        </p>
+                    </button>
+
+
+                    {/* STUDENT PROGRESS REPORTS */}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/class-teacher-progress")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+                        <div className="text-2xl">📝</div>
+                        <h3 className="mt-3 font-semibold text-gray-800">Student Progress Reports</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            Prepare weekly and termly progress updates for students in your class-teacher assignment.
+                        </p>
+                    </button>
+
+
+                    {/* MY STUDENTS */}
+
+                    <button
+                        type="button"
+                        onClick={() => navigate("/teacher-students")}
+                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
+                    >
+
+                        <div className="text-2xl">
+                            👨‍🎓
+                        </div>
+
+                        <h3 className="mt-3 font-semibold text-gray-800">
+                            My Students
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                            View students in your assigned classes.
+                        </p>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    );
+
+}
+
+export default TeacherDashboardPage;
+
+            {/* ASSIGNMENTS */}
+
+                <button type="button" onClick={() => setShowAssignments(value => !value)} aria-expanded={showAssignments} aria-controls="teacher-assignments-table" className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}>
 
                     <div className="flex items-center justify-between">
 
@@ -222,8 +341,8 @@ function TeacherDashboardPage() {
                         </div>
 
                     </div>
-
-                </div>
+                    <p className="mt-3 text-xs font-medium text-blue-600">{showAssignments ? "Click to hide assignments" : "Click to view your assigned classes and subjects"}</p>
+                </button>
 
 
                 {/* SUBJECTS */}
@@ -250,7 +369,7 @@ function TeacherDashboardPage() {
 
                     </div>
 
-                </div>
+                </div>}
 
 
                 {/* CLASSES */}
@@ -284,7 +403,7 @@ function TeacherDashboardPage() {
 
             {/* ASSIGNMENTS */}
 
-            <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+            {showAssignments && <div id="teacher-assignments-table" className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
 
                 <div className="border-b border-gray-100 px-6 py-5">
 
@@ -422,118 +541,6 @@ function TeacherDashboardPage() {
 
             </div>
 
-
-            {/* QUICK ACTIONS */}
-
-            {/* QUICK ACTIONS */}
-
-            <div>
-
-                <h2 className="mb-4 text-lg font-semibold text-gray-800">
-                    Quick Actions
-                </h2>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-
-                    {/* TAKE ATTENDANCE */}
-
-                    <button
-                        type="button"
-                        onClick={() => navigate("/attendance")}
-                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
-                    >
-
-                        <div className="text-2xl">
-                            📋
-                        </div>
-
-                        <h3 className="mt-3 font-semibold text-gray-800">
-                            Take Attendance
-                        </h3>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                            Record attendance for your assigned classes.
-                        </p>
-
-                    </button>
-
-
-                    {/* ENTER RESULTS */}
-
-                    <button
-                        type="button"
-                        onClick={() => navigate("/results")}
-                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
-                    >
-
-                        <div className="text-2xl">
-                            📊
-                        </div>
-
-                        <h3 className="mt-3 font-semibold text-gray-800">
-                            Enter Results
-                        </h3>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                            Enter and manage students' academic results.
-                        </p>
-
-                    </button>
-
-
-                    {/* MY TIMETABLE */}
-                    <button
-                        type="button"
-                        onClick={() => navigate("/teacher-timetable")}
-                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
-                    >
-                        <div className="text-2xl">🗓️</div>
-                        <h3 className="mt-3 font-semibold text-gray-800">My Timetable</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            View your weekly lessons, classes, and teaching times.
-                        </p>
-                    </button>
-
-
-                    {/* STUDENT PROGRESS REPORTS */}
-                    <button
-                        type="button"
-                        onClick={() => navigate("/class-teacher-progress")}
-                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
-                    >
-                        <div className="text-2xl">📝</div>
-                        <h3 className="mt-3 font-semibold text-gray-800">Student Progress Reports</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Prepare weekly and termly progress updates for students in your class-teacher assignment.
-                        </p>
-                    </button>
-
-
-                    {/* MY STUDENTS */}
-
-                    <button
-                        type="button"
-                        onClick={() => navigate("/teacher-students")}
-                        className="rounded-2xl bg-white p-5 text-left shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-md"
-                    >
-
-                        <div className="text-2xl">
-                            👨‍🎓
-                        </div>
-
-                        <h3 className="mt-3 font-semibold text-gray-800">
-                            My Students
-                        </h3>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                            View students in your assigned classes.
-                        </p>
-
-                    </button>
-
-                </div>
-
-            </div>
 
         </div>
 
