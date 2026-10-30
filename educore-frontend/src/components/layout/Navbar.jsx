@@ -23,7 +23,7 @@ function Navbar({ onMenuClick }) {
     const [imageFailed, setImageFailed] = useState(false);
     const handleLogout = async () => {
         await logoutUser();
-        navigate("/", { replace: true });
+        navigate("/login", { replace: true });
     };
     const title = pageTitles[location.pathname] || "EduProw";
     const schoolName = settings?.school_name || "Your School";
