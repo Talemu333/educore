@@ -75,7 +75,6 @@ function Sidebar({ isOpen, onClose }) {
 
     const schoolName = settings?.school_name || "Your School";
     const schoolLogo = settings?.school_logo?.trim() || "";
-    const motto = settings?.school_motto || "Better Schools. Brighter Futures.";
     const initials = schoolName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 
     useLayoutEffect(() => {
