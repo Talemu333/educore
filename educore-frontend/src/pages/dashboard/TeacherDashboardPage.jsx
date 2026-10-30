@@ -311,29 +311,19 @@ function TeacherDashboardPage() {
 
             {/* ASSIGNMENTS */}
 
-                <button type="button" onClick={() => setShowAssignments(value => !value)} aria-expanded={showAssignments} aria-controls="teacher-assignments-table" className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}
-
+                <button
+                    type="button"
+                    onClick={() => setShowAssignments(value => !value)}
+                    aria-expanded={showAssignments}
+                    aria-controls="teacher-assignments-table"
+                    className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}
+                >
                     <div className="flex items-center justify-between">
-
                         <div>
-
-                            <p className="text-sm text-gray-500">
-                                Assignments
-                            </p>
-
-                            <p className="mt-2 text-3xl font-bold text-gray-800">
-
-                                {dashboard?.totalAssignments ||
-                                    0}
-
-                            </p>
-
+                            <p className="text-sm text-gray-500">Assignments</p>
+                            <p className="mt-2 text-3xl font-bold text-gray-800">{dashboard?.totalAssignments || 0}</p>
                         </div>
-
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-xl">
-                            📚
-                        </div>
-
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-xl">📚</div>
                     </div>
                     <p className="mt-3 text-xs font-medium text-blue-600">{showAssignments ? "Click to hide assignments" : "Click to view your assigned classes and subjects"}</p>
                 </button>
