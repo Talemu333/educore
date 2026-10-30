@@ -1,26 +1,17 @@
 import { useState } from "react";
-import { Bell, Menu, UserCircle, ChevronDown } from "lucide-react";
+import { Bell, Menu, Search, ChevronDown } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
 const pageTitles = {
-    "/dashboard": "Dashboard",
-    "/teacher-dashboard": "Teacher Dashboard",
-    "/teacher-students": "My Students",
-    "/parent-dashboard": "Parent Dashboard",
-    "/students": "Students",
-    "/teachers": "Teachers",
-    "/parents": "Parents",
-    "/attendance": "Attendance",
-    "/results": "Results",
-    "/payments": "Payments",
-    "/payments/reports": "Payment Reports",
-    "/admin/fees": "Fee Management",
-    "/parent-overview": "Parent Financial Overview",
-    "/settings": "School Settings",
-    "/settings/grading-scales": "Grading Scales",
-    "/dashboard/website": "Website Management",
+    "/dashboard": "Dashboard", "/teacher-dashboard": "Teacher Dashboard",
+    "/teacher-students": "My Students", "/parent-dashboard": "Parent Dashboard",
+    "/students": "Students", "/teachers": "Teachers", "/parents": "Parents",
+    "/attendance": "Attendance", "/results": "Results", "/payments": "Payments",
+    "/payments/reports": "Payment Reports", "/admin/fees": "Fee Management",
+    "/parent-overview": "Parent Financial Overview", "/settings": "School Settings",
+    "/settings/grading-scales": "Grading Scales", "/dashboard/website": "Website Management",
     "/change-password": "Change Password"
 };
 
@@ -28,40 +19,31 @@ function Navbar({ onMenuClick }) {
     const location = useLocation();
     const { user } = useAuth();
     const { settings } = useSchoolTheme();
-    const title = pageTitles[location.pathname] || "EduProw";
-    const displayName = user?.full_name || user?.name || "User";
-    const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "U";
-    const roleLabel = user?.admin_type ? user.admin_type.replace(/_/g, " ") : user?.role_name || "Account";
-    const schoolName = settings?.school_name || "EduProw School";
-    const schoolLogo = settings?.school_logo?.trim() || "";
     const [imageFailed, setImageFailed] = useState(false);
+    const title = pageTitles[location.pathname] || "EduProw";
+    const schoolName = settings?.school_name || "Your School";
+    const displayName = user?.full_name || user?.name || "User";
+    const roleLabel = user?.admin_type?.replace(/_/g, " ") || user?.role_name || "Account";
+    const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 
     return (
-        <header className="sticky top-0 z-30 flex h-[72px] items-center border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-xl sm:px-5 md:px-6 lg:px-7">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-                <button type="button" onClick={onMenuClick} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden" aria-label="Open navigation menu"><Menu className="h-5 w-5" /></button>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-blue-100 bg-blue-50">
-                    {schoolLogo ? <img src={schoolLogo} alt={`${schoolName} logo`} className="h-full w-full object-contain p-1" /> : <span className="text-xs font-extrabold text-blue-800">{schoolName.trim().slice(0, 2).toUpperCase()}</span>}
-                </div>
-                <div className="min-w-0">
-                    <p className="max-w-[48vw] truncate text-sm font-bold text-slate-900 sm:max-w-[55vw] sm:text-base">{schoolName}</p>
-                    <p className="truncate text-[11px] font-medium text-slate-500">{title} <span className="hidden sm:inline">· EduProw School Management</span></p>
-                </div>
+        <header className="sticky top-0 z-30 flex h-[78px] items-center gap-3 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-6">
+            <button type="button" onClick={onMenuClick} aria-label="Open navigation menu" className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden"><Menu size={22}/></button>
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-blue-100 bg-white sm:flex">{settings?.school_logo ? <img src={settings.school_logo} alt="" className="h-full w-full object-contain"/> : <span className="font-bold text-blue-800">{schoolName.slice(0,2).toUpperCase()}</span>}</div>
+            <div className="min-w-0 max-w-[44%]">
+                <p className="truncate text-sm font-bold text-blue-950 sm:text-base">{schoolName}</p>
+                <p className="truncate text-[11px] text-slate-500">{settings?.school_motto || title}</p>
             </div>
-            <div className="ml-2 flex shrink-0 items-center gap-1.5 sm:gap-3">
-                <button type="button" className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900" aria-label="Notifications"><Bell className="h-5 w-5" /><span className="absolute right-2.5 top-2 h-1.5 w-1.5 rounded-full bg-[var(--school-primary)]" /></button>
-                <div className="hidden h-8 w-px bg-slate-200 sm:block" />
-                <div className="flex items-center gap-2 rounded-xl px-1 py-1">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--school-primary-light)] text-sm font-bold text-[var(--school-primary-dark)]">
-                        {user?.profile_image_url && !imageFailed ? <img src={user.profile_image_url} alt={`${displayName} profile`} className="h-full w-full object-cover" referrerPolicy="no-referrer" onError={() => setImageFailed(true)} /> : initials}
-                    </div>
-                    <div className="hidden min-w-0 md:block"><p className="max-w-40 truncate text-sm font-semibold text-slate-800">{displayName}</p><p className="max-w-40 truncate text-xs capitalize text-slate-500">{roleLabel}</p></div>
-                    <ChevronDown className="hidden h-4 w-4 text-slate-400 md:block" />
-                    <UserCircle className="sr-only" aria-hidden="true" />
-                </div>
+            <div className="ml-auto hidden w-full max-w-[250px] items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 md:flex">
+                <Search size={17} className="shrink-0 text-slate-400"/><input aria-label="Search" placeholder="Search anything..." className="w-full border-0 bg-transparent p-0 text-xs outline-none focus:ring-0"/>
+            </div>
+            <button type="button" aria-label="Notifications" className="relative ml-1 rounded-xl p-2.5 text-blue-950 hover:bg-blue-50"><Bell size={21}/><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"/></button>
+            <div className="ml-1 flex min-w-0 items-center gap-2.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-sm font-bold text-blue-900">{user?.profile_image_url && !imageFailed ? <img src={user.profile_image_url} alt="" className="h-full w-full object-cover" onError={() => setImageFailed(true)}/> : initials}</div>
+                <div className="hidden min-w-0 sm:block"><p className="max-w-36 truncate text-xs font-bold text-blue-950">{displayName}</p><p className="max-w-36 truncate text-[10px] capitalize text-slate-500">{roleLabel}</p></div>
+                <ChevronDown size={16} className="hidden shrink-0 text-blue-900 sm:block"/>
             </div>
         </header>
     );
 }
-
 export default Navbar;
