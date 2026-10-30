@@ -4,17 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
-const pageTitles = {
-    "/dashboard": "Dashboard", "/teacher-dashboard": "Teacher Dashboard",
-    "/teacher-students": "My Students", "/parent-dashboard": "Parent Dashboard",
-    "/students": "Students", "/teachers": "Teachers", "/parents": "Parents",
-    "/attendance": "Attendance", "/results": "Results", "/payments": "Payments",
-    "/payments/reports": "Payment Reports", "/admin/fees": "Fee Management",
-    "/parent-overview": "Parent Financial Overview", "/settings": "School Settings",
-    "/settings/grading-scales": "Grading Scales", "/dashboard/website": "Website Management",
-    "/change-password": "Change Password"
-};
-
 function Navbar({ onMenuClick }) {
     const location = useLocation();
     const { user, logoutUser } = useAuth();
@@ -25,7 +14,6 @@ function Navbar({ onMenuClick }) {
         await logoutUser();
         navigate("/login", { replace: true });
     };
-    const title = pageTitles[location.pathname] || "EduProw";
     const schoolName = settings?.school_name || "Your School";
     const displayName = user?.full_name || user?.name || "User";
     const roleLabel = user?.admin_type?.replace(/_/g, " ") || user?.role_name || "Account";
