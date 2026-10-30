@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Activity, ArrowDownRight, ArrowUpRight, BookOpen, CalendarDays, CheckCircle2, Clock3, GraduationCap, Users, ClipboardCheck, FileText, UserRound, AlertCircle } from "lucide-react";
+import { Activity, CalendarDays, Clock3, GraduationCap, ClipboardCheck, FileText, AlertCircle } from "lucide-react";
 import { getMyAssignments } from "@/api/teacherAssignmentApi";
 import { getAttendanceByAssignment } from "@/api/attendanceApi";
 import { getMyTimetable } from "@/api/timetableApi";
@@ -88,7 +88,6 @@ function TeacherDashboardPage() {
                 ]);
                 if (cancelled) return;
 
-                const today = new Date().toLocaleDateString("en-CA");
                 const weekday = new Date().toLocaleDateString("en-NG", { weekday: "long" });
                 const todaysLessons = (Array.isArray(timetable) ? timetable : [])
                     .filter(entry => entry.day_of_week === weekday)
