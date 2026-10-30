@@ -307,17 +307,11 @@ function TeacherDashboardPage() {
 
             </div>
 
-        </div>
 
-    );
-
-}
-
-export default TeacherDashboardPage;
 
             {/* ASSIGNMENTS */}
 
-                <button type="button" onClick={() => setShowAssignments(value => !value)} aria-expanded={showAssignments} aria-controls="teacher-assignments-table" className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}>
+                <button type="button" onClick={() => setShowAssignments(value => !value)} aria-expanded={showAssignments} aria-controls="teacher-assignments-table" className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}
 
                     <div className="flex items-center justify-between">
 
@@ -369,7 +363,7 @@ export default TeacherDashboardPage;
 
                     </div>
 
-                </div>}
+                </div>
 
 
                 {/* CLASSES */}
@@ -539,8 +533,7 @@ export default TeacherDashboardPage;
 
                 )}
 
-            </div>
-
+            </div>}
 
         </div>
 
