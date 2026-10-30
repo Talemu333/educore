@@ -1,7 +1,6 @@
 import { Activity, BarChart3, CalendarDays, ChevronRight, Clock3, CreditCard, FileText, Globe, GraduationCap, Mail, MapPin, Megaphone, Phone, School, Settings, UserPlus, Users, UsersRound, Wallet, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
-import { useExpenseSummary } from "@/hooks/useExpenses";
 import { useAuth } from "@/context/AuthContext";
 import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
@@ -23,7 +22,6 @@ function Donut({ items, total }) {
 }
 function DashboardPage() {
     const {data,isLoading,isError,error}=useDashboard();
-    const {data:expenses,isLoading:expensesLoading}=useExpenseSummary();
     const {user}=useAuth(); const {settings}=useSchoolTheme(); const navigate=useNavigate();
     if(isLoading)return <div className="space-y-4"><div className="h-40 animate-pulse rounded-xl bg-blue-100"/><div className="grid grid-cols-2 gap-3 xl:grid-cols-5">{[1,2,3,4,5].map(x=><div key={x} className="h-28 rounded-xl bg-white"/>)}</div></div>;
     if(isError)return <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error?.response?.data?.message||error?.message||"Unable to load dashboard."}</div>;
