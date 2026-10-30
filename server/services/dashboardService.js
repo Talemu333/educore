@@ -14,7 +14,7 @@ const getDashboard = async (schoolId) => {
     const [students, activeStudents, adminStaff, enrollmentTrend, levelDistribution, teachers, parents, classes,
         genderDistribution, classPopulation, recentStudents,
         todayAttendance, topStudents, expectedFees, totalPayments,
-        studentsWithPayments, recentPayments, recentAnnouncements] = await Promise.all([
+        studentsWithPayments, monthlyFeeCollections, recentPayments, recentAnnouncements] = await Promise.all([
         dashboardModel.getStudentCount(schoolId),
         dashboardModel.getActiveStudentCount(schoolId),
         dashboardModel.getAdminStaffCount(schoolId),
@@ -31,6 +31,7 @@ const getDashboard = async (schoolId) => {
         dashboardModel.getExpectedFees(schoolId, session?.id, term?.id),
         dashboardModel.getTotalPayments(schoolId, session?.id, term?.id),
         dashboardModel.getStudentsWithPayments(schoolId, session?.id, term?.id),
+        dashboardModel.getMonthlyFeeCollections(schoolId),
         dashboardModel.getRecentPayments(schoolId),
         dashboardModel.getRecentAnnouncements(schoolId)
     ]);
@@ -70,6 +71,7 @@ const getDashboard = async (schoolId) => {
         total_payments: Number(totalPayments),
         outstanding_fees: outstandingFees,
         students_with_payments: studentsWithPayments,
+        monthly_fee_collections: monthlyFeeCollections,
         gender_distribution: genderDistribution,
         class_population: classPopulation,
         recent_students: recentStudents,
