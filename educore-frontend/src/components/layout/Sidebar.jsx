@@ -46,8 +46,8 @@ function Sidebar({ isOpen, onClose }) {
     const academic = findItems(["/attendance", "/attendance/reports", "/timetable", "/student-promotion", "/promotion-history"]);
     const students = findItems(["/students"]);
     const teachers = findItems(["/teachers", "/progress-report-review"]);
-    const parents = findItems(["/administrators"]);
-    const classes = findItems(["/timetable"]);
+    const parents = findItems(["/parents"]);
+    const classes = findItems(["/class-subjects"]);
     const cbt = findItems(["/cbt-management", "/cbt-question-bank", "/cbt-question-bank/import", "/cbt-results", "/lesson-notes", "/lesson-syllabus"]);
     const resultItem = filtered.find(item => item.title === "Results" && item.children);
     const finance = findItems(["/payments", "/parent-overview", "/payments/reports", "/admin/fees", "/expenses"]);
@@ -62,8 +62,8 @@ function Sidebar({ isOpen, onClose }) {
             { title: "Academic", icon: BookOpen, children: academic },
             ...students,
             ...teachers,
-            ...parents.map(item => ({ ...item, title: "Parents", icon: UserRound })),
-            ...classes.map(item => ({ ...item, title: "Classes", icon: School })),
+            ...parents,
+            ...classes,
             { title: "CBT", icon: ClipboardList, children: cbt },
             resultItem && { ...resultItem, title: "Results" },
             { title: "Finance", icon: Wallet, children: finance },
