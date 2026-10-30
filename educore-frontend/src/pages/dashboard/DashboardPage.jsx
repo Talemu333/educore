@@ -1,8 +1,7 @@
 import {
-    Activity, ArrowDownRight, ArrowUpRight, Bell, BookOpen, CalendarDays,
-    CheckCircle2, ChevronRight, Circle, GraduationCap, Megaphone, Plus,
-    Receipt, School, UserPlus, Users, Wallet, X, LogOut, ClipboardCheck,
-    CreditCard, TrendingUp, UsersRound
+    Activity, BookOpen, CalendarDays, CheckCircle2, ChevronRight, Circle,
+    GraduationCap, Megaphone, Receipt, School, UserPlus, Users, Wallet, X,
+    LogOut, ClipboardCheck, CreditCard, UsersRound
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
