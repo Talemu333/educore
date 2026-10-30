@@ -12,8 +12,8 @@ const date = v => v && !Number.isNaN(new Date(v).getTime()) ? new Date(v).toLoca
 function Panel({ title, subtitle, icon: Icon, action, children }) {
     return <section className="min-w-0 rounded-xl border border-blue-100 bg-white p-4 shadow-[0_2px_8px_rgba(30,90,160,.04)] sm:p-5"><div className="mb-4 flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">{Icon && <Icon size={19}/>}</span><div><h2 className="text-[13px] font-bold text-blue-950">{title}</h2>{subtitle && <p className="mt-1 text-[10px] text-slate-500">{subtitle}</p>}</div></div>{action}</div>{children}</section>;
 }
-function Metric({ title, value, note, icon: Icon, color }) {
-    return <article className="rounded-xl border border-blue-100 bg-white p-3.5 shadow-[0_2px_8px_rgba(30,90,160,.04)]"><div className="flex items-center gap-3"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white" style={{background:color}}><Icon size={23}/></span><div className="min-w-0"><p className="truncate text-[11px] font-semibold text-blue-950">{title}</p><p className="mt-1 text-[25px] font-extrabold leading-none text-blue-950">{fmt(value)}</p><p className="mt-2 text-[10px] text-slate-500">{note}</p></div></div></article>;
+function Metric({ title, value, note, icon: Icon, color, foreground = "#FFFFFF" }) {
+    return <article className="rounded-xl border border-blue-100 bg-white p-3.5 shadow-[0_2px_8px_rgba(30,90,160,.04)]"><div className="flex items-center gap-3"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white" style={{background:color,color:foreground}}><Icon size={23}/></span><div className="min-w-0"><p className="truncate text-[11px] font-semibold text-blue-950">{title}</p><p className="mt-1 text-[25px] font-extrabold leading-none text-blue-950">{fmt(value)}</p><p className="mt-2 text-[10px] text-slate-500">{note}</p></div></div></article>;
 }
 function Donut({ items, total }) {
     const rows = items.map((x,i)=>({label:x.level || x.label || x.gender || "Unspecified",value:Number(x.total || x.total_students || 0),color:palette[i%palette.length]})).filter(x=>x.value>0);
@@ -28,7 +28,7 @@ function EnrolmentChart({items=[]}) {
     return <div className="space-y-4 py-1" role="img" aria-label="Horizontal bar chart showing the number of enrolled students in each academic session">
         {rows.map((row,index)=><div key={row.label+index} className="grid grid-cols-[minmax(76px,105px)_1fr_auto] items-center gap-2.5">
             <span className="truncate text-[10px] font-medium text-slate-600" title={row.label}>{row.label}</span>
-            <div className="h-5 overflow-hidden rounded-md bg-slate-100"><div className="h-full rounded-md bg-blue-500 transition-all" style={{width:(row.value/max*100)+"%"}}/></div>
+            <div className="h-5 overflow-hidden rounded-md bg-slate-100"><div className="dashboard-primary-fill h-full rounded-md transition-all" style={{width:(row.value/max*100)+"%"}}/></div>
             <b className="min-w-[32px] text-right text-[11px] tabular-nums text-blue-950">{fmt(row.value)}</b>
         </div>)}
         <p className="border-t border-slate-100 pt-2 text-[10px] text-slate-400">Each bar represents the total number of students enrolled in that academic session.</p>
@@ -37,7 +37,7 @@ function EnrolmentChart({items=[]}) {
 
 function DashboardPage() {
     const {data,isLoading,isError,error}=useDashboard();
-    const {user}=useAuth(); const {settings}=useSchoolTheme(); const navigate=useNavigate();
+    const {user}=useAuth(); const {settings,theme}=useSchoolTheme(); const navigate=useNavigate();
     if(isLoading)return <div className="space-y-4"><div className="h-40 animate-pulse rounded-xl bg-blue-100"/><div className="grid grid-cols-2 gap-3 xl:grid-cols-5">{[1,2,3,4,5].map(x=><div key={x} className="h-28 rounded-xl bg-white"/>)}</div></div>;
     if(isError)return <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error?.response?.data?.message||error?.message||"Unable to load dashboard."}</div>;
     const d=data||{}, name=settings?.school_name||d.school_name||"Your School";
@@ -48,7 +48,7 @@ function DashboardPage() {
     const collection=d.expected_fees>0?Math.min(100,Math.round(d.total_payments/d.expected_fees*100)):0;
     const quick=[["Add Student","/students",UserPlus,"blue"],["Add Teacher","/teachers",Users,"purple"],["Record Result","/results",FileText,"green"],["View Reports","/reports",BarChart3,"blue"],["Manage Classes","/settings",UsersRound,"orange"],["School Settings","/settings",Settings,"slate"]];
     const tones={blue:"border-blue-100 bg-blue-50 text-blue-600",purple:"border-violet-100 bg-violet-50 text-violet-600",green:"border-emerald-100 bg-emerald-50 text-emerald-600",orange:"border-orange-100 bg-orange-50 text-orange-600",slate:"border-slate-200 bg-slate-50 text-slate-600"};
-    return <div className="mx-auto w-full max-w-[1700px] space-y-4 pb-6">
+    return <div className="school-dashboard mx-auto w-full max-w-[1700px] space-y-4 pb-6" style={{"--dashboard-primary":theme.primary,"--dashboard-primary-dark":theme.primaryDark,"--dashboard-primary-soft":theme.primarySoft,"--dashboard-secondary":theme.secondary,"--dashboard-secondary-foreground":theme.secondaryForeground,"--dashboard-primary-foreground":theme.primaryForeground}}>
         <section className="relative isolate flex min-h-[168px] overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-r from-[#e7f3ff] via-[#eaf5ff] to-[#cfe6ff]">
             <div className="relative z-10 flex w-full flex-col justify-center p-5 sm:p-6 lg:w-[66%]"><p className="text-sm font-semibold text-blue-800">Welcome back, {greetingName},</p><h1 className="mt-1 text-xl font-extrabold leading-tight text-blue-950 sm:text-2xl">{name} 👋</h1><p className="mt-2 text-xs text-blue-800 sm:text-sm">Here's a quick overview of your school's activities and performance.</p><div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] text-blue-900"><span className="inline-flex items-center gap-2"><CalendarDays size={16}/>{today}</span><span className="rounded-lg border border-blue-200 bg-white/80 px-3 py-2">{d.current_session||"Academic session not set"}</span><span className="rounded-lg border border-blue-200 bg-white/80 px-3 py-2">{d.current_term||"Term not set"}</span></div></div>
             <div className="absolute inset-y-0 right-0 hidden w-[38%] items-center justify-center rounded-l-[90px] border-l-[12px] border-white/60 bg-gradient-to-br from-blue-300/40 to-blue-700/10 p-5 lg:flex">
@@ -61,7 +61,7 @@ function DashboardPage() {
             </div>
         </section>
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <Metric title="Total Students" value={d.students} note="Registered learners" icon={UsersRound} color="#1478f8"/><Metric title="Total Teachers" value={d.teachers} note="Teaching staff" icon={Users} color="#8750ed"/><Metric title="Admin Staff" value={d.admin_staff} note="School administrators" icon={GraduationCap} color="#10a878"/><Metric title="Total Parents" value={d.parents} note="Registered parents" icon={UsersRound} color="#ff9f24"/><Metric title="Active Classes" value={d.classes} note="School classes" icon={School} color="#12b7c7"/>
+            <Metric title="Total Students" value={d.students} note="Registered learners" icon={UsersRound} color={theme.primary} foreground={theme.primaryForeground}/><Metric title="Total Teachers" value={d.teachers} note="Teaching staff" icon={Users} color={theme.secondary} foreground={theme.secondaryForeground}/><Metric title="Admin Staff" value={d.admin_staff} note="School administrators" icon={GraduationCap} color={theme.primary} foreground={theme.primaryForeground}/><Metric title="Total Parents" value={d.parents} note="Registered parents" icon={UsersRound} color={theme.secondary} foreground={theme.secondaryForeground}/><Metric title="Active Classes" value={d.classes} note="School classes" icon={School} color={theme.primary} foreground={theme.primaryForeground}/>
         </section>
         <section className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[1.35fr_1.05fr_.9fr]">
             <Panel title="Student Enrolment by Academic Session" subtitle="Number of students enrolled in each session" icon={CalendarDays}><EnrolmentChart items={d.enrollment_trend||[]}/></Panel>
