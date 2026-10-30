@@ -1297,3 +1297,59 @@ textarea:focus {
         margin: 0 !important;
     }
 }
+
+
+/* Tenant-aware dashboard palette. All school dashboards read these values
+   from the active school's saved primary and secondary colours. */
+.school-dashboard .dashboard-primary-fill {
+    background-color: var(--dashboard-primary) !important;
+}
+.school-dashboard .bg-blue-500,
+.school-dashboard .bg-blue-600,
+.school-dashboard .bg-blue-700 {
+    background-color: var(--dashboard-primary) !important;
+}
+.school-dashboard .text-blue-500,
+.school-dashboard .text-blue-600,
+.school-dashboard .text-blue-700,
+.school-dashboard .text-blue-800,
+.school-dashboard .text-blue-900,
+.school-dashboard .text-blue-950 {
+    color: var(--dashboard-primary-dark) !important;
+}
+.school-dashboard .border-blue-100,
+.school-dashboard .border-blue-200,
+.school-dashboard .border-blue-300 {
+    border-color: color-mix(in srgb, var(--dashboard-primary) 24%, white) !important;
+}
+.school-dashboard .bg-blue-50 {
+    background-color: var(--dashboard-primary-soft) !important;
+}
+.school-dashboard .bg-gradient-to-r {
+    background-image: linear-gradient(90deg,
+        color-mix(in srgb, var(--dashboard-primary) 12%, white),
+        color-mix(in srgb, var(--dashboard-secondary) 24%, white),
+        color-mix(in srgb, var(--dashboard-primary) 5%, white)) !important;
+}
+.school-dashboard .bg-gradient-to-br {
+    background-image: linear-gradient(135deg,
+        color-mix(in srgb, var(--dashboard-primary) 18%, white),
+        color-mix(in srgb, var(--dashboard-secondary) 22%, white)) !important;
+}
+.school-dashboard .bg-orange-50,
+.school-dashboard .bg-orange-100 {
+    background-color: color-mix(in srgb, var(--dashboard-secondary) 16%, white) !important;
+}
+.school-dashboard .text-orange-600,
+.school-dashboard .text-orange-700,
+.school-dashboard .text-orange-800 {
+    color: var(--dashboard-primary-dark) !important;
+}
+.school-dashboard .border-orange-100,
+.school-dashboard .border-orange-200 {
+    border-color: color-mix(in srgb, var(--dashboard-secondary) 42%, white) !important;
+}
+.school-dashboard .school-dashboard-brand-button {
+    background: var(--dashboard-primary);
+    color: var(--dashboard-primary-foreground);
+}
