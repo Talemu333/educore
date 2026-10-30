@@ -11,12 +11,15 @@ const getDashboard = async (schoolId) => {
     ]);
     const term = await dashboardModel.getCurrentTerm(schoolId, session?.id || null);
 
-    const [students, activeStudents, teachers, parents, classes,
+    const [students, activeStudents, adminStaff, enrollmentTrend, levelDistribution, teachers, parents, classes,
         genderDistribution, classPopulation, recentStudents,
         todayAttendance, topStudents, expectedFees, totalPayments,
         studentsWithPayments, recentPayments, recentAnnouncements] = await Promise.all([
         dashboardModel.getStudentCount(schoolId),
         dashboardModel.getActiveStudentCount(schoolId),
+        dashboardModel.getAdminStaffCount(schoolId),
+        dashboardModel.getEnrollmentTrend(schoolId),
+        dashboardModel.getLevelDistribution(schoolId),
         dashboardModel.getTeacherCount(schoolId),
         dashboardModel.getParentCount(schoolId),
         dashboardModel.getClassCount(schoolId),
@@ -48,6 +51,9 @@ const getDashboard = async (schoolId) => {
         school_name: schoolName,
         students,
         active_students: activeStudents,
+        admin_staff: adminStaff,
+        enrollment_trend: enrollmentTrend,
+        level_distribution: levelDistribution,
         teachers,
         parents,
         classes,
