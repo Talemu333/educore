@@ -91,8 +91,8 @@ function Sidebar({ isOpen, onClose }) {
                 <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-lg p-2 text-blue-100 hover:bg-white/10"><X size={19}/></button>
             </div>
             <button type="button" className="mx-4 mt-3 flex min-h-[55px] items-center gap-3 rounded-xl border border-blue-300/20 bg-blue-950/35 px-3 text-left hover:bg-blue-900/50">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-white text-blue-900">{schoolLogo ? <img src={schoolLogo} alt="" className="h-full w-full object-contain p-0.5"/> : <School size={22}/>}</span>
-                <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-white">{schoolName}</span><ChevronDown size={15} className="shrink-0 text-blue-100"/>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 border-white/35 bg-white text-blue-900 shadow-sm">{schoolLogo ? <img src={schoolLogo} alt="" className="h-full w-full object-contain p-0.5"/> : <School size={22}/>}</span>
+                <span className="min-w-0 flex-1 text-[11px] font-extrabold leading-4 text-white">{schoolName}</span><ChevronDown size={15} className="shrink-0 text-blue-100"/>
             </button>
 
             <nav onScroll={rememberScroll} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-4">
