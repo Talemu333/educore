@@ -2,19 +2,16 @@ import { useState } from "react";
 import { Bell, Menu, Search, ChevronDown, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
 function Navbar({ onMenuClick }) {
     const location = useLocation();
     const { user, logoutUser } = useAuth();
     const navigate = useNavigate();
-    const { settings } = useSchoolTheme();
     const [imageFailed, setImageFailed] = useState(false);
     const handleLogout = async () => {
         await logoutUser();
         navigate("/login", { replace: true });
     };
-    const schoolName = settings?.school_name || "Your School";
     const displayName = user?.full_name || user?.name || "User";
     const roleLabel = user?.admin_type?.replace(/_/g, " ") || user?.role_name || "Account";
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
@@ -22,8 +19,9 @@ function Navbar({ onMenuClick }) {
     return (
         <header className="sticky top-0 z-30 flex h-[78px] items-center gap-3 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-6">
             <button type="button" onClick={onMenuClick} aria-label="Open navigation menu" className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden"><Menu size={22}/></button>
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden bg-transparent sm:h-14 sm:w-14">
-                {settings?.school_logo ? <img src={settings.school_logo} alt={schoolName + " logo"} className="h-full w-full object-contain"/> : <span className="font-bold text-blue-800">{schoolName.slice(0,2).toUpperCase()}</span>}
+            <div className="min-w-0">
+                <p className="text-sm font-bold text-blue-950">School Dashboard</p>
+                <p className="text-[10px] text-slate-500">Management overview</p>
             </div>
             <div className="ml-auto hidden w-full max-w-[250px] items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 md:flex">
                 <Search size={17} className="shrink-0 text-slate-400"/><input aria-label="Search" placeholder="Search anything..." className="w-full border-0 bg-transparent p-0 text-xs outline-none focus:ring-0"/>
