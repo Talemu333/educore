@@ -236,6 +236,22 @@ const getStudentsWithPayments = async (schoolId, sessionId, termId) => {
     return Number(result.rows[0].total);
 };
 
+
+const getMonthlyFeeCollections = async (schoolId) => {
+    const result = await pool.query(`
+        SELECT TO_CHAR(DATE_TRUNC('month', sp.payment_date), 'Mon') AS label,
+               COALESCE(SUM(sp.amount_paid), 0) AS total
+        FROM student_payments sp
+        JOIN students s ON s.id = sp.student_id
+        WHERE s.school_id = $1
+          AND sp.payment_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+          AND sp.payment_date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+        GROUP BY DATE_TRUNC('month', sp.payment_date)
+        ORDER BY DATE_TRUNC('month', sp.payment_date)
+    `, [schoolId]);
+    return result.rows;
+};
+
 const getRecentPayments = async (schoolId, limit = 5) => {
     const result = await pool.query(`
         SELECT sp.id, sp.payment_date, sp.amount_paid, sp.payment_method,
@@ -263,5 +279,5 @@ module.exports = {
     getClassCount, getSchoolName, getCurrentSession, getCurrentTerm, getGenderDistribution,
     getClassPopulation, getRecentStudents, getTodayAttendance, getTopStudents,
     getExpectedFees, getTotalPayments, getStudentsWithPayments,
-    getRecentPayments, getRecentAnnouncements
+    getMonthlyFeeCollections, getRecentPayments, getRecentAnnouncements
 };
