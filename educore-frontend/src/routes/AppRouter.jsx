@@ -220,6 +220,12 @@ function AppRouter() {
                     }
                 />
 
+                {/* Explicit login route for logout and expired sessions on school domains */}
+                <Route
+                    path="/login"
+                    element={<LoginPage />}
+                />
+
 
                 {/* =========================================
                     PUBLIC WEBSITE
