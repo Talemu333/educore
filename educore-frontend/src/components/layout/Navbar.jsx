@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Bell, Menu, Search, ChevronDown } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { Bell, Menu, Search, ChevronDown, LogOut } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
@@ -17,9 +17,14 @@ const pageTitles = {
 
 function Navbar({ onMenuClick }) {
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, logoutUser } = useAuth();
+    const navigate = useNavigate();
     const { settings } = useSchoolTheme();
     const [imageFailed, setImageFailed] = useState(false);
+    const handleLogout = async () => {
+        await logoutUser();
+        navigate("/", { replace: true });
+    };
     const title = pageTitles[location.pathname] || "EduProw";
     const schoolName = settings?.school_name || "Your School";
     const displayName = user?.full_name || user?.name || "User";
@@ -43,6 +48,10 @@ function Navbar({ onMenuClick }) {
                 <div className="hidden min-w-0 sm:block"><p className="max-w-36 truncate text-xs font-bold text-blue-950">{displayName}</p><p className="max-w-36 truncate text-[10px] capitalize text-slate-500">{roleLabel}</p></div>
                 <ChevronDown size={16} className="hidden shrink-0 text-blue-900 sm:block"/>
             </div>
+            <button type="button" onClick={handleLogout} aria-label="Log out" title="Log out" className="ml-1 inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition-colors hover:border-red-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200">
+                <LogOut size={16}/>
+                <span className="hidden sm:inline">Log out</span>
+            </button>
         </header>
     );
 }
