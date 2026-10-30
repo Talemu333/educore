@@ -197,7 +197,85 @@ function TeacherDashboardPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
 
-                {/* QUICK ACTIONS */}
+                {/* ASSIGNMENTS */}
+
+                <button
+                    type="button"
+                    onClick={() => setShowAssignments(value => !value)}
+                    aria-expanded={showAssignments}
+                    aria-controls="teacher-assignments-table"
+                    className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}
+                >
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500">Assignments</p>
+                            <p className="mt-2 text-3xl font-bold text-gray-800">{dashboard?.totalAssignments || 0}</p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-xl">📚</div>
+                    </div>
+                    <p className="mt-3 text-xs font-medium text-blue-600">{showAssignments ? "Click to hide assignments" : "Click to view your assigned classes and subjects"}</p>
+                </button>
+
+
+                {/* SUBJECTS */}
+
+                <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+
+                    <div className="flex items-center justify-between">
+
+                        <div>
+
+                            <p className="text-sm text-gray-500">
+                                Subjects
+                            </p>
+
+                            <p className="mt-2 text-3xl font-bold text-gray-800">
+                                {subjects}
+                            </p>
+
+                        </div>
+
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-xl">
+                            📝
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {/* CLASSES */}
+
+                <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+
+                    <div className="flex items-center justify-between">
+
+                        <div>
+
+                            <p className="text-sm text-gray-500">
+                                Classes
+                            </p>
+
+                            <p className="mt-2 text-3xl font-bold text-gray-800">
+                                {classes}
+                            </p>
+
+                        </div>
+
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-xl">
+                            🏫
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {/* QUICK ACTIONS */}
+
+            {/* QUICK ACTIONS */}
 
             <div>
 
@@ -307,82 +385,6 @@ function TeacherDashboardPage() {
 
             </div>
 
-
-
-            {/* ASSIGNMENTS */}
-
-                <button
-                    type="button"
-                    onClick={() => setShowAssignments(value => !value)}
-                    aria-expanded={showAssignments}
-                    aria-controls="teacher-assignments-table"
-                    className={`w-full rounded-2xl p-5 text-left shadow-sm ring-1 transition ${showAssignments ? "bg-blue-50 ring-blue-200" : "bg-white ring-gray-100 hover:bg-gray-50"}`}
-                >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500">Assignments</p>
-                            <p className="mt-2 text-3xl font-bold text-gray-800">{dashboard?.totalAssignments || 0}</p>
-                        </div>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-xl">📚</div>
-                    </div>
-                    <p className="mt-3 text-xs font-medium text-blue-600">{showAssignments ? "Click to hide assignments" : "Click to view your assigned classes and subjects"}</p>
-                </button>
-
-
-                {/* SUBJECTS */}
-
-                <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-
-                    <div className="flex items-center justify-between">
-
-                        <div>
-
-                            <p className="text-sm text-gray-500">
-                                Subjects
-                            </p>
-
-                            <p className="mt-2 text-3xl font-bold text-gray-800">
-                                {subjects}
-                            </p>
-
-                        </div>
-
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-xl">
-                            📝
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                {/* CLASSES */}
-
-                <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-
-                    <div className="flex items-center justify-between">
-
-                        <div>
-
-                            <p className="text-sm text-gray-500">
-                                Classes
-                            </p>
-
-                            <p className="mt-2 text-3xl font-bold text-gray-800">
-                                {classes}
-                            </p>
-
-                        </div>
-
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-xl">
-                            🏫
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
 
 
             {/* ASSIGNMENTS */}
