@@ -341,6 +341,18 @@ function Home() {
                             </p>
                         </div>
                     </div>
+                    {/* Organic wave between the dark introduction panel and photo carousel. */}
+                    <svg
+                        aria-hidden="true"
+                        viewBox="0 0 100 800"
+                        preserveAspectRatio="none"
+                        className="pointer-events-none absolute inset-y-0 left-1/2 z-30 hidden h-full w-14 -translate-x-1/2 lg:block"
+                    >
+                        <path
+                            fill="#020617"
+                            d="M0 0 H58 C28 95 82 180 48 270 C15 365 83 450 47 545 C12 640 78 720 52 800 H0 Z"
+                        />
+                    </svg>
                 </div>
             </section>
 
