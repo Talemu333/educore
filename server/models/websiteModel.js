@@ -69,4 +69,53 @@ const createGallery=async(data,schoolId)=>{const r=await pool.query(`INSERT INTO
 const updateGallery=async(id,data,schoolId)=>{const r=await pool.query(`UPDATE gallery SET title=$2,description=$3,image_url=$4,category=$5,display_order=$6,is_published=$7,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$8 RETURNING *`,[id,data.title,data.description||null,data.image_url,data.category||null,data.display_order??0,data.is_published!==false,schoolId]);return r.rows[0];};
 const deleteGallery=async(id,schoolId)=>{const r=await pool.query(`DELETE FROM gallery WHERE id=$1 AND school_id=$2 RETURNING *`,[id,schoolId]);return r.rows[0];};
 
-module.exports={getSchoolByDomain,getPublishedPages,getPageBySlug,getPageSections,getCompletePage,getAllPages,updatePage,getSectionsByPageId,createSection,updateSection,deleteSection,getPublishedNews,getNewsBySlug,getAllNews,createNews,updateNews,deleteNews,getPublishedEvents,getEventBySlug,getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getPublishedGallery,getAllGallery,getGalleryById,createGallery,updateGallery,deleteGallery};
+
+const HOMEPAGE_CONTENT_TABLES = {
+    testimonials: { table: "testimonials", fields: ["author_name","author_role","testimonial_text","image_url","rating","display_order","is_published"], required: ["author_name","testimonial_text"] },
+    facilities: { table: "school_facilities", fields: ["facility_name","description","image_url","display_order","is_published"], required: ["facility_name"] },
+    coreValues: { table: "school_core_values", fields: ["value_title","description","icon","display_order","is_published"], required: ["value_title"] }
+};
+const getHomepageContentConfig = (type) => {
+    const config = HOMEPAGE_CONTENT_TABLES[type];
+    if (!config) throw new Error("Unsupported homepage content type.");
+    return config;
+};
+const getPublishedHomepageContent = async (type, schoolId) => {
+    const config = getHomepageContentConfig(type);
+    const r = await pool.query(`SELECT * FROM ${config.table} WHERE school_id=$1 AND is_published=TRUE ORDER BY display_order,id`, [schoolId]);
+    return r.rows;
+};
+const getAllHomepageContent = async (type, schoolId) => {
+    const config = getHomepageContentConfig(type);
+    const r = await pool.query(`SELECT * FROM ${config.table} WHERE school_id=$1 ORDER BY display_order,id`, [schoolId]);
+    return r.rows;
+};
+const createHomepageContent = async (type, data, schoolId) => {
+    const config = getHomepageContentConfig(type);
+    const fields = config.fields.filter(field => data[field] !== undefined);
+    const columns = ["school_id", ...fields];
+    const values = [schoolId, ...fields.map(field => data[field])];
+    const placeholders = values.map((_,i) => `${i+1}`).join(",");
+    const r = await pool.query(`INSERT INTO ${config.table} (${columns.join(",")}) VALUES (${placeholders}) RETURNING *`, values);
+    return r.rows[0];
+};
+const updateHomepageContent = async (type, id, data, schoolId) => {
+    const config = getHomepageContentConfig(type);
+    const fields = config.fields.filter(field => data[field] !== undefined);
+    if (!fields.length) {
+        const existing = await pool.query(`SELECT * FROM ${config.table} WHERE id=$1 AND school_id=$2 LIMIT 1`, [id,schoolId]);
+        return existing.rows[0];
+    }
+    const sets = fields.map((field,i) => `${field}=${i+1}`);
+    const values = fields.map(field => data[field]);
+    values.push(id,schoolId);
+    const r = await pool.query(`UPDATE ${config.table} SET ${sets.join(",")},updated_at=CURRENT_TIMESTAMP WHERE id=${values.length-1} AND school_id=${values.length} RETURNING *`, values);
+    return r.rows[0];
+};
+const deleteHomepageContent = async (type, id, schoolId) => {
+    const config = getHomepageContentConfig(type);
+    const r = await pool.query(`DELETE FROM ${config.table} WHERE id=$1 AND school_id=$2 RETURNING *`, [id,schoolId]);
+    return r.rows[0];
+};
+
+module.exports={getSchoolByDomain,getPublishedPages,getPageBySlug,getPageSections,getCompletePage,getAllPages,updatePage,getSectionsByPageId,createSection,updateSection,deleteSection,getPublishedNews,getNewsBySlug,getAllNews,createNews,updateNews,deleteNews,getPublishedEvents,getEventBySlug,getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getPublishedGallery,getAllGallery,getGalleryById,createGallery,updateGallery,deleteGallery,getPublishedHomepageContent,getAllHomepageContent,createHomepageContent,updateHomepageContent,deleteHomepageContent};
