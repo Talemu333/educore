@@ -49,4 +49,11 @@ const getGalleryById=asyncHandler(async(req,res)=>send(res,await websiteService.
 const createGallery=asyncHandler(async(req,res)=>send(res,await websiteService.createGallery(req.body,adminSchool(req)),"Gallery item created successfully.",201));
 const updateGallery=asyncHandler(async(req,res)=>send(res,await websiteService.updateGallery(req.params.id,req.body,adminSchool(req)),"Gallery item updated successfully."));
 const deleteGallery=asyncHandler(async(req,res)=>{await websiteService.deleteGallery(req.params.id,adminSchool(req));res.json({success:true,message:"Gallery item deleted successfully."});});
-module.exports={getPublishedPages,getPage,getAllPages,updatePage,getPageSections,createSection,updateSection,deleteSection,getPublishedNews,getNewsBySlug,getAllNews,createNews,updateNews,deleteNews,getPublishedGallery,getAllGallery,getGalleryById,createGallery,updateGallery,deleteGallery,getPublishedEvents,getEventBySlug,getAllEvents,getEventById,createEvent,updateEvent,deleteEvent};
+
+const getPublishedHomepageContent=asyncHandler(async(req,res)=>send(res,await websiteService.getPublishedHomepageContent(req.params.type,await publicSchool(req))));
+const getAllHomepageContent=asyncHandler(async(req,res)=>send(res,await websiteService.getAllHomepageContent(req.params.type,adminSchool(req))));
+const createHomepageContent=asyncHandler(async(req,res)=>send(res,await websiteService.createHomepageContent(req.params.type,req.body,adminSchool(req)),"Homepage content created successfully.",201));
+const updateHomepageContent=asyncHandler(async(req,res)=>send(res,await websiteService.updateHomepageContent(req.params.type,req.params.id,req.body,adminSchool(req)),"Homepage content updated successfully."));
+const deleteHomepageContent=asyncHandler(async(req,res)=>{await websiteService.deleteHomepageContent(req.params.type,req.params.id,adminSchool(req));res.json({success:true,message:"Homepage content deleted successfully."});});
+
+module.exports={getPublishedPages,getPage,getAllPages,updatePage,getPageSections,createSection,updateSection,deleteSection,getPublishedNews,getNewsBySlug,getAllNews,createNews,updateNews,deleteNews,getPublishedGallery,getAllGallery,getGalleryById,createGallery,updateGallery,deleteGallery,getPublishedEvents,getEventBySlug,getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getPublishedHomepageContent,getAllHomepageContent,createHomepageContent,updateHomepageContent,deleteHomepageContent};
