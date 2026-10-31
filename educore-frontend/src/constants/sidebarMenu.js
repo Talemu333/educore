@@ -83,6 +83,7 @@ const sidebarMenu = [
     { title: "Fee Management", icon: Wallet, path: "/admin/fees", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
     { title: "Expenses", icon: Receipt, path: "/expenses", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, BURSAR] },
     { title: "Website", icon: Globe, path: "/dashboard/website", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
+    { title: "Homepage Content", icon: Globe, path: "/dashboard/website-content", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     { title: "Contact Messages", icon: Mail, path: "/contact-messages", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL] },
     {
         title: "Settings", icon: Settings, path: "/settings", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL],
