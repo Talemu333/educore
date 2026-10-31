@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, CalendarDays, Clock3, GraduationCap, ClipboardCheck, FileText, AlertCircle } from "lucide-react";
 import { getMyAssignments } from "@/api/teacherAssignmentApi";
@@ -18,6 +18,15 @@ function TeacherDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showAssignments, setShowAssignments] = useState(false);
+    const assignmentsSectionRef = useRef(null);
+
+    useEffect(() => {
+        if (!showAssignments) return undefined;
+        const frame = requestAnimationFrame(() => {
+            assignmentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [showAssignments]);
 
     useEffect(() => {
 
@@ -505,7 +514,7 @@ function TeacherDashboardPage() {
 
             {/* ASSIGNMENTS */}
 
-            {showAssignments && <div id="teacher-assignments-table" className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+            {showAssignments && <div ref={assignmentsSectionRef} id="teacher-assignments-table" className="scroll-mt-6 rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
 
                 <div className="border-b border-gray-100 px-6 py-5">
 
