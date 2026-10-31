@@ -41,4 +41,22 @@ const createGallery=async(data,schoolId)=>{if(!data.title?.trim())throw new ApiE
 const updateGallery=async(id,data,schoolId)=>{if(!data.title?.trim())throw new ApiError(400,"Gallery title is required.");if(!data.image_url?.trim())throw new ApiError(400,"Gallery image URL is required.");const g=await websiteModel.updateGallery(id,data,requireSchool(schoolId));if(!g)throw new ApiError(404,"Gallery item not found.");return g;};
 const deleteGallery=async(id,schoolId)=>{const g=await websiteModel.deleteGallery(id,requireSchool(schoolId));if(!g)throw new ApiError(404,"Gallery item not found.");return g;};
 
-module.exports={resolveDomain,getPublishedPages,getPage,getAllPages,updatePage,getSectionsByPageId,createSection,updateSection,deleteSection,getPublishedNews,getNewsBySlug,getAllNews,createNews,updateNews,deleteNews,getPublishedEvents,getEventBySlug,getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getPublishedGallery,getAllGallery,getGalleryById,createGallery,updateGallery,deleteGallery};
+
+const HOMEPAGE_CONTENT_REQUIRED = {
+    testimonials: ["author_name","testimonial_text"],
+    facilities: ["facility_name"],
+    coreValues: ["value_title"]
+};
+const validateHomepageContent = (type,data) => {
+    const required = HOMEPAGE_CONTENT_REQUIRED[type];
+    if (!required) throw new ApiError(400,"Unsupported homepage content type.");
+    for (const field of required) if (typeof data[field] !== "string" || !data[field].trim()) throw new ApiError(400,`${field.replaceAll("_"," ")} is required.`);
+    if (data.rating !== undefined && data.rating !== null && (!Number.isInteger(Number(data.rating)) || Number(data.rating)<1 || Number(data.rating)>5)) throw new ApiError(400,"Rating must be between 1 and 5.");
+};
+const getPublishedHomepageContent=async(type,schoolId)=>websiteModel.getPublishedHomepageContent(type,requireSchool(schoolId));
+const getAllHomepageContent=async(type,schoolId)=>websiteModel.getAllHomepageContent(type,requireSchool(schoolId));
+const createHomepageContent=async(type,data,schoolId)=>{validateHomepageContent(type,data);return websiteModel.createHomepageContent(type,data,requireSchool(schoolId));};
+const updateHomepageContent=async(type,id,data,schoolId)=>{validateHomepageContent(type,data);const row=await websiteModel.updateHomepageContent(type,id,data,requireSchool(schoolId));if(!row)throw new ApiError(404,"Homepage content item not found.");return row;};
+const deleteHomepageContent=async(type,id,schoolId)=>{const row=await websiteModel.deleteHomepageContent(type,id,requireSchool(schoolId));if(!row)throw new ApiError(404,"Homepage content item not found.");return row;};
+
+module.exports={resolveDomain,getPublishedPages,getPage,getAllPages,updatePage,getSectionsByPageId,createSection,updateSection,deleteSection,getPublishedNews,getNewsBySlug,getAllNews,createNews,updateNews,deleteNews,getPublishedEvents,getEventBySlug,getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getPublishedGallery,getAllGallery,getGalleryById,createGallery,updateGallery,deleteGallery,getPublishedHomepageContent,getAllHomepageContent,createHomepageContent,updateHomepageContent,deleteHomepageContent};
