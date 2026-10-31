@@ -95,21 +95,22 @@ const createHomepageContent = async (type, data, schoolId) => {
     const fields = config.fields.filter(field => data[field] !== undefined);
     const columns = ["school_id", ...fields];
     const values = [schoolId, ...fields.map(field => data[field])];
-    const placeholders = values.map((_,i) => `${i+1}`).join(",");
-    const r = await pool.query(`INSERT INTO ${config.table} (${columns.join(",")}) VALUES (${placeholders}) RETURNING *`, values);
+    const placeholders = values.map((_,i) => "$" + (i+1)).join(",");
+    const r = await pool.query("INSERT INTO " + config.table + " (" + columns.join(",") + ") VALUES (" + placeholders + ") RETURNING *", values);
     return r.rows[0];
 };
 const updateHomepageContent = async (type, id, data, schoolId) => {
     const config = getHomepageContentConfig(type);
     const fields = config.fields.filter(field => data[field] !== undefined);
     if (!fields.length) {
-        const existing = await pool.query(`SELECT * FROM ${config.table} WHERE id=$1 AND school_id=$2 LIMIT 1`, [id,schoolId]);
+        const existing = await pool.query("SELECT * FROM " + config.table + " WHERE id=$1 AND school_id=$2 LIMIT 1", [id,schoolId]);
         return existing.rows[0];
     }
-    const sets = fields.map((field,i) => `${field}=${i+1}`);
+    const sets = fields.map((field,i) => field + "=$" + (i+1));
     const values = fields.map(field => data[field]);
     values.push(id,schoolId);
-    const r = await pool.query(`UPDATE ${config.table} SET ${sets.join(",")},updated_at=CURRENT_TIMESTAMP WHERE id=${values.length-1} AND school_id=${values.length} RETURNING *`, values);
+    const sql = "UPDATE " + config.table + " SET " + sets.join(",") + ",updated_at=CURRENT_TIMESTAMP WHERE id=$" + (values.length-1) + " AND school_id=$" + values.length + " RETURNING *";
+    const r = await pool.query(sql, values);
     return r.rows[0];
 };
 const deleteHomepageContent = async (type, id, schoolId) => {
