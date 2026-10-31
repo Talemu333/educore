@@ -1051,6 +1051,14 @@ function AppRouter() {
                     ===================================== */}
 
                     <Route
+                        path="/dashboard/website-content"
+                        element={
+                            <ProtectedRoute allowedRoles={[ROLES.ADMIN]} allowedAdminTypes={["proprietor","principal"]}>
+                                <HomepageContentManagement />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
                         path="/dashboard/website"
                         element={
 
