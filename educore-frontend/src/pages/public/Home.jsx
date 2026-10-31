@@ -4,12 +4,7 @@ import { getPublishedGallery } from "@/api/galleryApi";
 import { usePublishedNews, usePublishedEvents, useWebsitePage } from "@/hooks/useWebsite";
 import { useSchoolSettings } from "@/hooks/useSchoolSettings";
 import Loading from "@/components/common/Loading";
-
-const defaultValues = [
-    ["Excellence", "In all we do", "🏆"], ["Integrity", "In our actions", "♥"],
-    ["Compassion", "In our relationships", "♟"], ["Innovation", "In our approach", "☼"],
-    ["Service", "To our community", "🌍"]
-];
+import api from "@/api/axios";
 
 function Home() {
     const { data: page, isLoading } = useWebsitePage("home");
@@ -18,6 +13,7 @@ function Home() {
     const { data: events = [] } = usePublishedEvents();
     const [gallery, setGallery] = useState([]);
     const [slide, setSlide] = useState(0);
+    const [homepageContent, setHomepageContent] = useState({ testimonials: [], facilities: [], coreValues: [] });
 
     const primary = settings?.primary_color || "#082b59";
     const gold = settings?.secondary_color || "#f6b91a";
@@ -32,19 +28,21 @@ function Home() {
     const values = sections.filter(s => s.section_key?.startsWith("core_value_"));
     const programCards = sections.filter(s => s.section_key?.startsWith("school_level_") || ["primary", "junior_secondary", "senior_secondary"].includes(s.section_key));
     const featureCards = sections.filter(s => s.section_key?.startsWith("why_choose_") || ["quality_education", "caring_environment", "critical_thinking", "character_development"].includes(s.section_key));
-    const testimonials = sections.filter(s => s.section_key?.startsWith("testimonial_"));
 
     useEffect(() => {
         let active = true;
         getPublishedGallery().then(rows => { if (active) setGallery(Array.isArray(rows) ? rows : []); }).catch(() => {});
+        Promise.all(["testimonials", "facilities", "coreValues"].map(type =>
+            api.get("/website/homepage-content/" + type).then(response => [type, response.data?.data || []]).catch(() => [type, []])
+        )).then(entries => { if (active) setHomepageContent(Object.fromEntries(entries)); });
         return () => { active = false; };
     }, []);
 
     const images = useMemo(() => gallery.filter(x => x.image_url), [gallery]);
     const heroSlides = useMemo(() => {
-        const fromGallery = images.slice(0, 5);
-        return fromGallery.length ? fromGallery : (hero.image_url ? [{ id: "hero", image_url: hero.image_url, title: schoolName }] : []);
-    }, [images, hero.image_url, schoolName]);
+        if (hero.image_url) return [{ id: "hero", image_url: hero.image_url, title: hero.section_title || schoolName }];
+        return images.filter(x => ["hero", "banner"].includes(String(x.category || "").toLowerCase())).slice(0, 5);
+    }, [images, hero.image_url, hero.section_title, schoolName]);
 
     useEffect(() => { setSlide(0); }, [heroSlides.length]);
     useEffect(() => {
@@ -55,20 +53,12 @@ function Home() {
 
     if (isLoading) return <Loading message="Loading website..." />;
 
-    const programDefaults = [
-        ["Nursery & Primary", "Building strong educational foundations.", "📚"],
-        ["Secondary Education", "Preparing students for future success.", "🎓"],
-        ["Science & Technology", "Encouraging innovation and discovery.", "⚗"],
-        ["Sports & Extracurricular", "Developing talents beyond the classroom.", "⚽"]
-    ];
-    const featureDefaults = [
-        "Highly Qualified and Experienced Teachers", "Modern and Well-Equipped Facilities",
-        "Safe and Secure Environment", "Excellent Academic Standards", "Strong Character Development"
-    ];
-    const valuesToShow = values.length ? values.slice(0, 5).map(v => [v.section_title, v.section_content, v.section_icon || "✦"]) : defaultValues;
-    const programsToShow = programCards.length ? programCards.slice(0, 4) : programDefaults.map(([section_title, section_content, icon]) => ({ section_title, section_content, icon }));
-    const featuresToShow = featureCards.length ? featureCards.slice(0, 5).map(x => x.section_title || x.section_content) : featureDefaults;
-    const facilitiesImages = images.slice(5, 11);
+    const legacyValues = sections.filter(s => s.section_key?.startsWith("core_value_") || ["quality_education","caring_environment","critical_thinking","character_development"].includes(s.section_key));
+    const valuesToShow = (homepageContent.coreValues.length ? homepageContent.coreValues.map(v => [v.value_title, v.description, v.icon || "✦"]) : legacyValues.map(v => [v.section_title, v.section_content, "✦"])).slice(0,5);
+    const programsToShow = programCards.slice(0,4);
+    const featuresToShow = featureCards.slice(0,5).map(x => x.section_title || x.section_content);
+    const facilitiesToShow = homepageContent.facilities.slice(0,6);
+    const testimonialsToShow = homepageContent.testimonials.slice(0,3);
     const newsItems = news.slice(0, 3).map(x => ({ ...x, kind: "news" }));
     const eventItems = events.slice(0, 3).map(x => ({ ...x, kind: "event", published_at: x.event_date }));
     const updates = [...newsItems, ...eventItems].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0,3);
@@ -164,7 +154,7 @@ function Home() {
             <section className="gh-wrap gh-about">
                 <div className="gh-about-copy"><div className="gh-kicker">{about.section_subtitle || "About Our School"}</div><h2 className="gh-title" style={{marginTop:6}}>{about.section_title || "A Tradition of Excellence in Education"}</h2><p>{about.section_content || "We are committed to academic excellence, moral values, and holistic development. Our goal is to nurture confident, compassionate and outstanding individuals who will make a positive impact in society."}</p><Link className="gh-btn" to={about.button_url || "/about"} style={{background:primary,color:"#fff"}}>{about.button_text || "Learn More About Us"} →</Link></div>
                 {about.image_url ? <img className="gh-about-photo" src={about.image_url} alt={about.section_title || schoolName}/> : <div className="gh-about-photo" style={{background:`linear-gradient(135deg,${primary},#8aa6c7)`}}/>}
-                <aside className="gh-values"><h3>Our Core Values</h3>{valuesToShow.map(([title,desc,icon],i)=><div className="gh-value" key={title+i}><span className="gh-value-icon">{icon}</span><div><strong>{title}</strong><small>{desc}</small></div></div>)}</aside>
+                {valuesToShow.length > 0 && <aside className="gh-values"><h3>Our Core Values</h3>{valuesToShow.map(([title,desc,icon],i)=><div className="gh-value" key={title+i}><span className="gh-value-icon">{icon}</span><div><strong>{title}</strong><small>{desc}</small></div></div>)}</aside>}
             </section>
 
             <section className="gh-programs"><div className="gh-wrap"><div className="gh-section-heading"><div className="gh-heading-line"><h2 className="gh-title">{programs.section_title || "Our Academic Programs"}</h2></div><p>{programs.section_content || "From early years to higher education, we provide a complete learning journey."}</p></div>
