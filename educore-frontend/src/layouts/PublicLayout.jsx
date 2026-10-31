@@ -180,7 +180,7 @@ function PublicLayout() {
                                     end={item.path === "/"}
                                     className={({ isActive }) => `relative rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                                         isActive
-                                            ? "text-slate-900"
+                                            ? (isHomePage ? "bg-[#082b59] text-white" : "text-slate-900")
                                             : "text-slate-600 hover:text-slate-900"
                                     }`}
                                 >
@@ -210,7 +210,7 @@ function PublicLayout() {
                         <Link
                             to={publicPath("/admissions")}
                             className={isHomePage ? "rounded-full px-5 py-2.5 text-xs font-extrabold text-[#09234a] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" : "rounded-lg px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"}
-                            style={{ backgroundColor: primaryColor }}
+                            style={{ backgroundColor: isHomePage ? "#f6b91a" : primaryColor }}
                         >
                             Apply Now
                         </Link>
