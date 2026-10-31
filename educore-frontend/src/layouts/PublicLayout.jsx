@@ -119,7 +119,7 @@ function PublicLayout() {
     return (
         <div className="public-site school-creative-site min-h-screen bg-white text-slate-900" style={{ "--school-primary": primaryColor, "--school-secondary": secondaryColor }}>
             {isHomePage && (
-                <div className="bg-[#06264f] text-white">
+                <div className={isHomePage ? "gh-topbar bg-[#06264f] text-white" : "bg-[#06264f] text-white"}>
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 py-2 text-[11px] font-semibold sm:justify-start sm:px-6 lg:px-8">
                         {schoolPhone && <a href={`tel:${schoolPhone.replace(/[^+\\d]/g, "")}`} className="inline-flex items-center gap-2">☎ <span>{schoolPhone}</span></a>}
                         {schoolEmail && <a href={`mailto:${schoolEmail}`} className="inline-flex items-center gap-2">✉ <span>{schoolEmail}</span></a>}
@@ -127,8 +127,17 @@ function PublicLayout() {
                     </div>
                 </div>
             )}
-            <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-                <div className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
+
+            <style>{`
+                .gh-header-inner{min-height:64px!important}
+                .gh-header nav a{font-family:Georgia,'Times New Roman',serif}
+                .gh-header nav a[aria-current="page"]{background:#082b59;color:#fff}
+                .gh-header nav a span{display:none}
+                .gh-topbar a{color:#fff;text-decoration:none}
+                @media(max-width:1023px){.gh-header nav{display:none!important}.gh-header-inner{min-height:64px!important}}
+            `}</style>
+            <header className={isHomePage ? "gh-header sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm" : "sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur"}>
+                <div className="gh-header-inner mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
                     <Link
                         to={publicPath("/")}
                         onClick={closeMobileMenu}
@@ -138,11 +147,11 @@ function PublicLayout() {
                             <img
                                 src={settings.school_logo}
                                 alt={`${schoolName} logo`}
-                                className="h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-contain p-1 shadow-sm"
+                                className={isHomePage ? "h-14 w-14 shrink-0 object-contain" : "h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-contain p-1 shadow-sm"}
                             />
                         ) : (
                             <div
-                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white shadow-sm"
+                                className={isHomePage ? "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-extrabold text-white" : "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white shadow-sm"}
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 {schoolInitial}
@@ -150,7 +159,7 @@ function PublicLayout() {
                         )}
 
                         <div className="min-w-0 flex-1">
-                            <p className="break-words text-sm font-extrabold leading-tight tracking-tight text-slate-900 sm:text-base lg:text-lg">
+                            <p className={isHomePage ? "break-words text-lg font-black leading-tight tracking-tight text-[#09234a] sm:text-xl" : "break-words text-sm font-extrabold leading-tight tracking-tight text-slate-900 sm:text-base lg:text-lg"}>
                                 {schoolName}
                             </p>
                             {settings.school_motto && (
@@ -161,7 +170,7 @@ function PublicLayout() {
                         </div>
                     </Link>
 
-                    <nav className="hidden items-center gap-1 xl:flex">
+                    <nav className={isHomePage ? "hidden items-center gap-1 lg:flex" : "hidden items-center gap-1 xl:flex"}>
                         {NAVIGATION.map((item) => {
                             const path = publicPath(item.path);
                             return (
@@ -169,7 +178,7 @@ function PublicLayout() {
                                     key={item.path}
                                     to={path}
                                     end={item.path === "/"}
-                                    className={({ isActive }) => `relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                                    className={({ isActive }) => `relative rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                                         isActive
                                             ? "text-slate-900"
                                             : "text-slate-600 hover:text-slate-900"
@@ -192,7 +201,7 @@ function PublicLayout() {
 
                         <Link
                             to={publicPath("/login")}
-                            className="ml-3 rounded-lg border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-sm"
+                            className="ml-2 rounded-lg border px-3 py-2 text-xs font-bold transition hover:-translate-y-0.5 hover:shadow-sm"
                             style={{ borderColor: primaryColor, color: primaryColor }}
                         >
                             Sign In
@@ -200,7 +209,7 @@ function PublicLayout() {
 
                         <Link
                             to={publicPath("/admissions")}
-                            className="rounded-lg px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            className={isHomePage ? "rounded-full px-5 py-2.5 text-xs font-extrabold text-[#09234a] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" : "rounded-lg px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"}
                             style={{ backgroundColor: primaryColor }}
                         >
                             Apply Now
@@ -212,7 +221,7 @@ function PublicLayout() {
                         aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
                         aria-expanded={mobileMenuOpen}
                         onClick={() => setMobileMenuOpen((previous) => !previous)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 xl:hidden"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 lg:hidden xl:hidden"
                     >
                         {mobileMenuOpen ? (
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-5 w-5">
