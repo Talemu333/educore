@@ -43,3 +43,8 @@ export const getEventById = async (id) => (await api.get(`/website/events/${id}`
 export const createEvent = async (data) => (await api.post("/website/admin/events", data)).data.data;
 export const updateEvent = async (id, data) => (await api.put(`/website/events/${id}`, data)).data.data;
 export const deleteEvent = async (id) => (await api.delete(`/website/events/${id}`)).data;
+
+export const getHomepageContent = async (type) => (await api.get(`/website/admin/homepage-content/${type}`)).data.data;
+export const createHomepageContent = async (type, data) => (await api.post(`/website/admin/homepage-content/${type}`, data)).data.data;
+export const updateHomepageContent = async (type, id, data) => (await api.put(`/website/admin/homepage-content/${type}/${id}`, data)).data.data;
+export const deleteHomepageContent = async (type, id) => (await api.delete(`/website/admin/homepage-content/${type}/${id}`)).data;
