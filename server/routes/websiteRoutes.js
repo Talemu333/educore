@@ -392,4 +392,14 @@ router.delete(
 );
 
 
+
+/* =========================================
+   HOMEPAGE CONTENT MODULES
+========================================= */
+router.get("/homepage-content/:type", websiteController.getPublishedHomepageContent);
+router.get("/admin/homepage-content/:type", authenticate, authorize(ROLES.ADMIN), websiteController.getAllHomepageContent);
+router.post("/admin/homepage-content/:type", authenticate, authorize(ROLES.ADMIN), websiteController.createHomepageContent);
+router.put("/admin/homepage-content/:type/:id", authenticate, authorize(ROLES.ADMIN), websiteController.updateHomepageContent);
+router.delete("/admin/homepage-content/:type/:id", authenticate, authorize(ROLES.ADMIN), websiteController.deleteHomepageContent);
+
 module.exports = router;
