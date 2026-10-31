@@ -1,4 +1,4 @@
-CREATE TABLE testimonials (
+CREATE TABLE IF NOT EXISTS testimonials (
     id SERIAL PRIMARY KEY,
     school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
     author_name VARCHAR(150) NOT NULL,
@@ -11,9 +11,9 @@ CREATE TABLE testimonials (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_testimonials_school_published_order ON testimonials (school_id, is_published, display_order, id);
+CREATE INDEX IF NOT EXISTS idx_testimonials_school_published_order ON testimonials (school_id, is_published, display_order, id);
 
-CREATE TABLE school_facilities (
+CREATE TABLE IF NOT EXISTS school_facilities (
     id SERIAL PRIMARY KEY,
     school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
     facility_name VARCHAR(180) NOT NULL,
@@ -24,9 +24,9 @@ CREATE TABLE school_facilities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_school_facilities_school_published_order ON school_facilities (school_id, is_published, display_order, id);
+CREATE INDEX IF NOT EXISTS idx_school_facilities_school_published_order ON school_facilities (school_id, is_published, display_order, id);
 
-CREATE TABLE school_core_values (
+CREATE TABLE IF NOT EXISTS school_core_values (
     id SERIAL PRIMARY KEY,
     school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE RESTRICT,
     value_title VARCHAR(150) NOT NULL,
@@ -37,4 +37,4 @@ CREATE TABLE school_core_values (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_school_core_values_school_published_order ON school_core_values (school_id, is_published, display_order, id);
+CREATE INDEX IF NOT EXISTS idx_school_core_values_school_published_order ON school_core_values (school_id, is_published, display_order, id);
