@@ -66,7 +66,7 @@ function SidebarItem({
                 disabled={isLoggingOut}
                 className={`
                     flex w-full items-center gap-3 rounded-xl px-3 py-2.5
-                    font-sans text-sm font-medium leading-5 text-slate-400
+                    font-sans text-sm font-medium leading-5 text-white/85
                     transition-all duration-150
                     ${
                         isLoggingOut
@@ -109,7 +109,7 @@ function SidebarItem({
                         ${
                             isChildActive
                                 ? "school-sidebar-group-active"
-                                : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
+                                : "text-white/85 hover:bg-white/10 hover:text-white"
                         }
                     `}
                 >
@@ -126,7 +126,7 @@ function SidebarItem({
                 </button>
 
                 {isOpen && (
-                    <div className="ml-4 mt-1 space-y-0.5 border-l border-slate-800 pl-3">
+                    <div className="ml-4 mt-1 space-y-0.5 border-l border-white/20 pl-3">
                         {children.map(child => (
                             <NavLink
                                 key={child.path}
@@ -141,7 +141,7 @@ function SidebarItem({
                                     ${
                                         isActive
                                             ? "school-sidebar-child-active"
-                                            : "text-slate-500 hover:bg-slate-900 hover:text-slate-200"
+                                            : "text-white/75 hover:bg-white/10 hover:text-white"
                                     }
                                 `}
                             >
