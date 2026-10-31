@@ -13,7 +13,7 @@ import { useSchoolTheme } from "@/context/SchoolThemeContext";
 
 function Sidebar({ isOpen, onClose }) {
     const { user } = useAuth();
-    const { settings } = useSchoolTheme();
+    const { settings, theme } = useSchoolTheme();
     const location = useLocation();
     const role = String(user?.role_name || "").trim().toLowerCase();
     const adminType = String(user?.admin_type || "").trim().toLowerCase();
@@ -86,7 +86,7 @@ function Sidebar({ isOpen, onClose }) {
     const rememberScroll = event => sessionStorage.setItem("schoolSidebarScrollTop", String(event.currentTarget.scrollTop));
 
     return (
-        <aside className={`school-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[254px] flex-col text-white shadow-2xl transition-transform duration-300 lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside style={{ backgroundColor: theme.primaryDark }} className={`school-sidebar fixed inset-y-0 left-0 z-50 flex h-screen w-[254px] flex-col text-white shadow-2xl transition-transform duration-300 lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
             <div className="flex h-12 shrink-0 items-center justify-end px-3 lg:hidden">
                 <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-lg p-2 text-blue-100 hover:bg-white/10"><X size={19}/></button>
             </div>
