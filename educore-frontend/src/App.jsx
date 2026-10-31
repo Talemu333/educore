@@ -72,8 +72,6 @@ function App() {
         const mode = pathname === "/partners/register" ? "register" : pathname === "/partners/login" ? "login" : pathname === "/partners/dashboard" ? "dashboard" : "home";
         return <BrowserRouter><EduProwPartnerPage mode={mode} /></BrowserRouter>;
     }
-    if (isEduProwSubdomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
-
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
     if (pathname === "/change-password") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher", "Parent", "Student"]}><DashboardLayout><ChangePasswordPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
@@ -94,13 +92,11 @@ function App() {
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
 
-    if (isCustomSchoolDomain && pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
     if (isCustomSchoolDomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
 
     if (isEduProwSubdomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
     if (isEduProwSubdomain) return <SchoolWebsiteRouter isSubdomain schoolSlug={schoolSlugFromSubdomain} />;
     if (pathname === "/eduprow") return <EduProwLandingPage />;
-    if (pathname === "/login") return <BrowserRouter><LoginPage /></BrowserRouter>;
     if (firstSegment === "website") return <LegacyWebsiteRedirect />;
     if (pathname === "/forgot-password") return <BrowserRouter><ForgotPasswordPage /></BrowserRouter>;
     if (pathname === "/reset-password") return <BrowserRouter><ResetPasswordPage /></BrowserRouter>;
