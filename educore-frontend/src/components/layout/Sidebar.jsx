@@ -52,7 +52,7 @@ function Sidebar({ isOpen, onClose }) {
     const resultItem = filtered.find(item => item.title === "Results" && item.children);
     const finance = findItems(["/payments", "/parent-overview", "/payments/reports", "/admin/fees", "/expenses"]);
     const reports = findItems(["/attendance/reports", "/payments/reports", "/reports", "/results/class-sheet", "/results/detailed-class-sheet"]);
-    const website = findItems(["/dashboard/website", "/contact-messages"]);
+    const website = findItems(["/dashboard/website", "/dashboard/website-content", "/contact-messages"]);
     const settingsItem = filtered.find(item => item.title === "Settings" && item.children);
     const standalone = isSuperAdmin ? filtered : [];
 
