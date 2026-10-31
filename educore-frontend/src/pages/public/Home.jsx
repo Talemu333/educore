@@ -1,224 +1,576 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import { getPublishedGallery } from "@/api/galleryApi";
-import { usePublishedNews, usePublishedEvents, useWebsitePage } from "@/hooks/useWebsite";
+import { useWebsitePage } from "@/hooks/useWebsite";
 import { useSchoolSettings } from "@/hooks/useSchoolSettings";
+
 import Loading from "@/components/common/Loading";
-import api from "@/api/axios";
 
 function Home() {
-    const { data: page, isLoading } = useWebsitePage("home");
-    const { data: settings } = useSchoolSettings();
-    const { data: news = [] } = usePublishedNews();
-    const { data: events = [] } = usePublishedEvents();
-    const [gallery, setGallery] = useState([]);
-    const [slide, setSlide] = useState(0);
-    const [homepageContent, setHomepageContent] = useState({ testimonials: [], facilities: [], coreValues: [] });
+    const {
+        data: page,
+        isLoading,
+        isError
+    } = useWebsitePage("home");
 
-    const primary = settings?.primary_color || "#082b59";
-    const gold = settings?.secondary_color || "#f6b91a";
+    const { data: settings } = useSchoolSettings();
+
+    const [gallery, setGallery] = useState([]);
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    const primaryColor = settings?.primary_color || "#1D4ED8";
+    const secondaryColor = settings?.secondary_color || "#D9B351";
     const schoolName = settings?.school_name || "Our School";
-    const sections = useMemo(() => (page?.sections || []).filter(s => s.is_active !== false), [page]);
-    const get = key => sections.find(s => s.section_key === key) || {};
-    const hero = get("hero");
-    const about = get("welcome");
-    const programs = get("school_levels");
-    const why = get("why_choose");
-    const promise = get("promise");
-    const facilities = get("facilities");
-    const values = sections.filter(s => s.section_key?.startsWith("core_value_"));
-    const programCards = sections.filter(s => s.section_key?.startsWith("school_level_") || ["primary", "junior_secondary", "senior_secondary"].includes(s.section_key));
-    const featureCards = sections.filter(s => s.section_key?.startsWith("why_choose_") || ["quality_education", "caring_environment", "critical_thinking", "character_development"].includes(s.section_key));
 
     useEffect(() => {
-        let active = true;
-        getPublishedGallery().then(rows => { if (active) setGallery(Array.isArray(rows) ? rows : []); }).catch(() => {});
-        Promise.all(["testimonials", "facilities", "coreValues"].map(type =>
-            api.get("/website/homepage-content/" + type).then(response => [type, response.data?.data || []]).catch(() => [type, []])
-        )).then(entries => { if (active) setHomepageContent(Object.fromEntries(entries)); });
-        return () => { active = false; };
+        let mounted = true;
+
+        getPublishedGallery()
+            .then((items) => {
+                if (mounted) {
+                    setGallery(Array.isArray(items) ? items.slice(0, 4) : []);
+                }
+            })
+            .catch(() => {
+                if (mounted) setGallery([]);
+            });
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
-    const images = useMemo(() => gallery.filter(x => x.image_url), [gallery]);
-    const heroSlides = useMemo(() => {
-        const gallerySlides = images.slice(0, 4);
-        if (gallerySlides.length) return gallerySlides;
-        return hero.image_url ? [{ id: "hero", image_url: hero.image_url, title: hero.section_title || schoolName }] : [];
-    }, [images, hero.image_url, hero.section_title, schoolName]);
+    const sections = (page?.sections || []).filter(
+        section => section.is_active !== false
+    );
 
-    useEffect(() => { setSlide(0); }, [heroSlides.length]);
+    const getSection = key =>
+        sections.find(section => section.section_key === key);
+
+    const hero = getSection("hero") || {};
+    const welcome = getSection("welcome") || {};
+    const schoolLevels = getSection("school_levels") || {};
+    const whyChoose = getSection("why_choose") || {};
+    const schoolLife = getSection("school_life") || {};
+    const admissionsCta = getSection("admissions_cta") || {};
+    const promise = getSection("promise") || {};
+
+    const carouselSlides = gallery.length
+        ? gallery
+        : hero.image_url
+            ? [{
+                id: "hero-fallback",
+                image_url: hero.image_url,
+                title: hero.section_title || schoolName
+            }]
+            : [];
+
     useEffect(() => {
-        if (heroSlides.length < 2) return undefined;
-        const id = window.setInterval(() => setSlide(v => (v + 1) % heroSlides.length), 5000);
-        return () => window.clearInterval(id);
-    }, [heroSlides.length]);
+        setCurrentSlide(0);
+    }, [carouselSlides.length]);
 
-    if (isLoading) return <Loading message="Loading website..." />;
+    useEffect(() => {
+        if (carouselSlides.length < 2) return undefined;
 
-    const legacyValues = sections.filter(s => s.section_key?.startsWith("core_value_") || ["quality_education","caring_environment","critical_thinking","character_development"].includes(s.section_key));
-    const valuesToShow = (homepageContent.coreValues.length ? homepageContent.coreValues.map(v => [v.value_title, v.description, v.icon || "✦"]) : legacyValues.map(v => [v.section_title, v.section_content, "✦"])).slice(0,5);
-    const programsToShow = programCards.slice(0,4);
-    const featuresToShow = featureCards.slice(0,5).map(x => x.section_title || x.section_content);
-    const facilitiesToShow = homepageContent.facilities.slice(0,6);
-    const testimonialsToShow = homepageContent.testimonials.slice(0,3);
-    const newsItems = news.slice(0, 3).map(x => ({ ...x, kind: "news" }));
-    const today = new Date(); today.setHours(0,0,0,0);
-    const eventItems = events.filter(x => x.event_date && new Date(x.event_date) >= today).slice(0, 3).map(x => ({ ...x, kind: "event", published_at: x.event_date }));
-    const updates = [...newsItems, ...eventItems].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0,3);
-    const dateLabel = value => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+        const timer = window.setInterval(() => {
+            setCurrentSlide(previous =>
+                (previous + 1) % carouselSlides.length
+            );
+        }, 5000);
+
+        return () => window.clearInterval(timer);
+    }, [carouselSlides.length]);
+
+    const goToSlide = index => {
+        setCurrentSlide(
+            (index + carouselSlides.length) % carouselSlides.length
+        );
+    };
+
+    const legacyLevelKeys = [
+        "primary",
+        "junior_secondary",
+        "senior_secondary"
+    ];
+
+    const schoolLevelSections = sections.filter(section =>
+        section.section_key?.startsWith("school_level_") ||
+        legacyLevelKeys.includes(section.section_key)
+    );
+
+    const legacyFeatureKeys = [
+        "quality_education",
+        "caring_environment",
+        "critical_thinking",
+        "character_development"
+    ];
+
+    const featureSections = sections.filter(section =>
+        section.section_key?.startsWith("why_choose_") ||
+        legacyFeatureKeys.includes(section.section_key)
+    );
+
+    const fallbackLevels = [
+        {
+            id: "fallback-level-1",
+            section_title: "Academic Level",
+            section_content:
+                "Use this section to introduce one of your school's academic levels or programmes."
+        },
+        {
+            id: "fallback-level-2",
+            section_title: "Learning Programme",
+            section_content:
+                "Describe the learners, programme structure, or educational stage offered by your school."
+        },
+        {
+            id: "fallback-level-3",
+            section_title: "Special Programme",
+            section_content:
+                "Use this space to highlight another academic programme, learning pathway, or school offering."
+        }
+    ];
+
+    const fallbackFeatures = [
+        {
+            id: "fallback-feature-1",
+            section_icon: "✓",
+            section_title: "Quality Education",
+            section_content:
+                "Describe what quality education means at your school and how you deliver it."
+        },
+        {
+            id: "fallback-feature-2",
+            section_icon: "♥",
+            section_title: "Supportive Learning",
+            section_content:
+                "Describe the learning environment, support systems, and care provided to learners."
+        },
+        {
+            id: "fallback-feature-3",
+            section_icon: "◆",
+            section_title: "Student Development",
+            section_content:
+                "Explain how your school supports academic, personal, social, or practical development."
+        },
+        {
+            id: "fallback-feature-4",
+            section_icon: "★",
+            section_title: "School Values",
+            section_content:
+                "Use this space to describe the values and qualities your school seeks to develop."
+        }
+    ];
+
+    const displayLevels = schoolLevelSections.length
+        ? schoolLevelSections
+        : fallbackLevels;
+    const displayFeatures = featureSections.length
+        ? featureSections
+        : fallbackFeatures;
+
+    const hasPageError = isError || !page;
+
+    if (isLoading) {
+        return <Loading message="Loading website..." />;
+    }
+
+    const activeSlide = carouselSlides[currentSlide];
 
     return (
-        <div className="gh-home" style={{ "--gh-primary": primary, "--gh-gold": gold }}>
-            <style>{`
-                .gh-home{color:#09234a;font-family:Georgia,'Times New Roman',serif;background:#fff}
-                .gh-home *{box-sizing:border-box}
-                .gh-wrap{width:min(100% - 48px,1200px);margin-inline:auto}
-                .gh-kicker{font-size:14px;font-weight:700;color:var(--gh-gold)}
-                .gh-title{font-size:clamp(23px,2.5vw,32px);line-height:1.06;font-weight:800;color:var(--gh-primary);letter-spacing:-.5px}
-                .gh-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:30px;padding:10px 19px;font-size:12px;font-weight:800;text-decoration:none;transition:.2s}
-                .gh-btn:hover{transform:translateY(-2px);filter:brightness(1.04)}
-                .gh-hero{display:grid;grid-template-columns:1fr 1fr;min-height:650px;position:relative;overflow:hidden;background:#020b1b;color:#fff}
-                .gh-hero-copy-panel{display:flex;align-items:center;background:#020b1b;padding:54px clamp(24px,5vw,76px)}
-                .gh-hero-copy{width:100%;max-width:560px;margin-inline:auto}
-                .gh-hero-brand{display:flex;align-items:center;gap:13px;margin-bottom:34px}
-                .gh-hero-brand img,.gh-hero-brand-mark{width:54px;height:54px;flex:0 0 54px;object-fit:contain;border-radius:12px;background:#fff;padding:5px}
-                .gh-hero-carousel{position:relative;min-height:650px;overflow:hidden;background:#0f172a}
-                .gh-hero-promise{position:absolute;z-index:2;left:24px;right:24px;bottom:24px;padding:17px 19px;border-radius:15px;background:rgba(255,255,255,.95);color:#10213b;box-shadow:0 15px 35px #0004;backdrop-filter:blur(8px)}
-                .gh-hero-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%}
-                .gh-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,26,58,.98) 0%,rgba(3,26,58,.9) 35%,rgba(3,26,58,.28) 68%,rgba(3,26,58,.06) 100%)}
-                .gh-hero-inner{position:relative;z-index:1;height:100%;display:flex;align-items:center}
-                .gh-hero-copy{max-width:540px;padding:25px 0}
-                .gh-hero h1{font-size:clamp(30px,4vw,48px);line-height:.98;font-weight:900;letter-spacing:-1px;margin:8px 0 12px;color:#fff}
-                .gh-hero p{font-size:14px;line-height:1.55;max-width:430px;color:#fff}
-                .gh-hero-controls{position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:9px;z-index:3}
-                .gh-hero-dots{position:absolute;z-index:3;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:8px;padding:8px 12px;border-radius:30px;background:#0006}
-                .gh-hero-dot{height:9px;width:9px;border:0;border-radius:20px;background:#ffffff88;padding:0}
-                .gh-hero-dot.active{width:27px;background:#fff}
-                .gh-arrow{height:34px;width:34px;border:1px solid var(--gh-gold);border-radius:50%;background:#09234a;color:white;font-size:22px;line-height:1}
-                .gh-about{display:grid;grid-template-columns:1fr 1.35fr .62fr;gap:18px;align-items:stretch;padding-block:14px}
-                .gh-about-copy{padding:5px 0 2px}
-                .gh-about-copy p{font-family:Arial,sans-serif;font-size:12px;line-height:1.5;color:#10294d;margin:9px 0}
-                .gh-about-photo{width:100%;height:100%;min-height:215px;object-fit:cover;clip-path:polygon(8% 0,100% 0,100% 100%,0 100%)}
-                .gh-values{border-radius:8px;background:#f0f2f7;padding:14px 15px}
-                .gh-values h3{font-size:16px;font-weight:800;border-bottom:2px solid var(--gh-gold);padding-bottom:6px;margin:0 0 10px}
-                .gh-value{display:flex;align-items:center;gap:10px;margin:9px 0;font-family:Arial,sans-serif}
-                .gh-value-icon{font-size:20px;color:var(--gh-gold);width:25px;text-align:center}
-                .gh-value strong{display:block;font-family:Georgia,serif;font-size:11px}
-                .gh-value small{display:block;font-size:10px;color:#334155}
-                .gh-programs{padding:12px 0 15px;background:#fafbfc}
-                .gh-section-heading{text-align:center;margin-bottom:12px}
-                .gh-heading-line{display:flex;align-items:center;justify-content:center;gap:18px}
-                .gh-heading-line:before,.gh-heading-line:after{content:"";height:2px;width:clamp(35px,11vw,115px);background:var(--gh-gold)}
-                .gh-section-heading p{font-family:Arial,sans-serif;font-size:11px;margin:6px 0;color:#10294d}
-                .gh-program-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-                .gh-program{overflow:hidden;border:1px solid #dbe1e9;border-radius:7px;background:#fff;box-shadow:0 2px 5px #0b244015;text-align:center}
-                .gh-program img,.gh-program-blank{display:block;width:100%;height:86px;object-fit:cover}
-                .gh-program-blank{display:grid;place-items:center;background:#e8eef7;font-size:30px}
-                .gh-program-body{position:relative;padding:20px 10px 9px}
-                .gh-program-icon{position:absolute;top:-23px;left:50%;transform:translateX(-50%);height:43px;width:43px;border:4px solid white;border-radius:50%;display:grid;place-items:center;background:var(--gh-gold);font-size:20px}
-                .gh-program h3{font-size:14px;font-weight:800;margin:0 0 4px}
-                .gh-program p{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;margin:0 auto 6px;max-width:180px}
-                .gh-program a{font-size:10px;font-weight:800;color:var(--gh-primary);text-decoration:none}
-                .gh-feature-facility{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-block:0 12px}
-                .gh-why{min-height:190px;position:relative;overflow:hidden;border-radius:7px;background:var(--gh-primary);color:#fff;padding:14px 18px}
-                .gh-why-photo{position:absolute;right:0;top:0;width:48%;height:100%;object-fit:cover;mask-image:linear-gradient(90deg,transparent,#000 35%)}
-                .gh-why-content{position:relative;z-index:1;max-width:65%}
-                .gh-why h2{font-size:24px;line-height:1;font-weight:900;color:var(--gh-gold);margin:0 0 10px}
-                .gh-why li{font-family:Arial,sans-serif;font-size:11px;line-height:1.65;list-style:none}
-                .gh-facility{background:#f1f3f7;border-radius:8px;padding:10px 12px}
-                .gh-facility-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
-                .gh-facility-item{background:#fff;border-radius:5px;overflow:hidden;box-shadow:0 1px 4px #0b244020;text-align:center;font-family:Arial,sans-serif;font-size:9px;font-weight:700}
-                .gh-facility-item img{width:100%;height:43px;object-fit:cover;display:block}
-                .gh-facility-item span{display:block;padding:4px 2px}
-                .gh-updates{background:#f2f4f8;padding:13px 0}
-                .gh-update-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-                .gh-update{overflow:hidden;background:#fff;border-radius:7px;box-shadow:0 2px 6px #0b24401c}
-                .gh-update img{width:100%;height:48px;object-fit:cover;display:block}
-                .gh-update-body{padding:7px 9px}
-                .gh-update-date{font-family:Arial,sans-serif;font-size:10px;font-weight:800;color:#9a6b00}
-                .gh-update h3{font-size:11px;line-height:1.2;margin:3px 0 5px;font-weight:800}
-                .gh-update a{font-family:Arial,sans-serif;font-size:9px;font-weight:700;color:var(--gh-primary);text-decoration:none}
-                .gh-testimonials{background:var(--gh-primary);color:white;padding:14px 0}
-                .gh-testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-                .gh-testimonial{display:flex;gap:9px;align-items:center;background:#fff;color:#101f37;border-radius:7px;padding:9px;min-height:78px}
-                .gh-testimonial img{height:55px;width:55px;border-radius:6px;object-fit:cover}
-                .gh-testimonial p{font-family:Arial,sans-serif;font-size:9px;line-height:1.35;margin:0}
-                .gh-testimonial strong{display:block;font-family:Georgia,serif;font-size:10px;margin-top:6px}
-                @media(max-width:800px){.gh-wrap{width:min(100% - 30px,680px)}.gh-about{grid-template-columns:1fr 1fr}.gh-values{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:2px}.gh-values h3{grid-column:1/-1}.gh-program-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gh-feature-facility{grid-template-columns:1fr}.gh-why{min-height:220px}.gh-update-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-                @media(max-width:700px){.gh-updates .gh-wrap,.gh-testimonials .gh-wrap{grid-template-columns:1fr!important}.gh-testimonial-grid{grid-template-columns:1fr 1fr}}\n                @media(max-width:800px){.gh-hero{grid-template-columns:1fr;min-height:0}.gh-hero-copy-panel{padding:42px 26px}.gh-hero-carousel{min-height:430px}}
-                @media(max-width:520px){.gh-wrap{width:calc(100% - 26px)}.gh-hero-copy-panel{padding:36px 22px}.gh-hero-brand{margin-bottom:25px}.gh-hero-carousel{min-height:340px}.gh-hero-copy{max-width:92%}.gh-hero h1{font-size:35px}.gh-hero-controls{right:12px}.gh-hero-promise{left:12px;right:12px;bottom:12px;padding:12px 14px}.gh-about{grid-template-columns:1fr;padding-block:12px}.gh-about-photo{height:205px;min-height:0;clip-path:none;border-radius:6px}.gh-values{grid-template-columns:1fr 1fr}.gh-program-grid{gap:9px}.gh-program img,.gh-program-blank{height:90px}.gh-why-content{max-width:80%}.gh-why-photo{width:55%;opacity:.75}.gh-update-grid{grid-template-columns:1fr}.gh-testimonial-grid{grid-template-columns:1fr}}
-            `}</style>
+        <div className="w-full max-w-full overflow-x-hidden bg-white">
+            {hasPageError && (
+                <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 text-center text-xs text-slate-500 sm:text-sm">
+                    Website content is using editable fallback text. Update the Home page in Website Management to replace it with your school content.
+                </div>
+            )}
 
-            <section className="gh-hero">
-                <div className="gh-hero-copy-panel">
-                    <div className="gh-hero-copy">
-                        <div className="gh-hero-brand">
-                            {settings?.school_logo ? (
-                                <img src={settings.school_logo} alt={`${schoolName} logo`} />
-                            ) : (
-                                <div className="gh-hero-brand-mark" style={{color:primary,fontWeight:900,display:"grid",placeItems:"center"}}>{schoolName.slice(0,2).toUpperCase()}</div>
-                            )}
-                            <div>
-                                <strong style={{display:"block",fontSize:17,lineHeight:1.2}}>{schoolName}</strong>
-                                {settings?.school_level && <small style={{color:"#cbd5e1"}}>{settings.school_level}</small>}
+            <section className="relative overflow-hidden">
+                <div className="grid lg:min-h-[650px] lg:grid-cols-2">
+                    <div className="flex items-center bg-slate-950 px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20">
+                        <div className="mx-auto w-full max-w-xl">
+                            <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8">
+                                {settings?.school_logo ? (
+                                    <img
+                                        src={settings.school_logo}
+                                        alt={`${schoolName} logo`}
+                                        className="h-12 w-12 shrink-0 rounded-xl bg-white object-contain p-1 shadow-lg sm:h-14 sm:w-14"
+                                    />
+                                ) : (
+                                    <div
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-extrabold shadow-lg sm:h-14 sm:w-14 sm:text-xl"
+                                        style={{ color: primaryColor }}
+                                    >
+                                        {schoolName.slice(0, 2).toUpperCase()}
+                                    </div>
+                                )}
+
+                                <div className="min-w-0">
+                                    <p className="break-words text-sm font-bold leading-tight sm:text-lg">
+                                        {schoolName}
+                                    </p>
+                                    {settings?.school_level && (
+                                        <p className="truncate text-xs text-slate-400">
+                                            {settings.school_level}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <p
+                                className="mb-4 text-xs font-bold uppercase tracking-[0.18em] sm:mb-5 sm:text-sm sm:tracking-[0.25em]"
+                                style={{ color: secondaryColor }}
+                            >
+                                {hero.section_subtitle || "Welcome to Our School"}
+                            </p>
+
+                            <h1 className="break-words text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+                                {hero.section_title || "Excellence in Education"}
+                            </h1>
+
+                            <p className="mt-5 max-w-lg text-sm leading-7 text-slate-300 sm:mt-6 sm:text-lg sm:leading-8">
+                                {hero.section_content ||
+                                    "Tell visitors about your school, its educational approach, and what makes your school a place where learners can grow and thrive."}
+                            </p>
+
+                            <div className="mt-7 sm:mt-8">
+                                {hero.button_text && hero.button_url ? (
+                                    <Link
+                                        to={hero.button_url}
+                                        className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
+                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                                    >
+                                        {hero.button_text}
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        to="/about"
+                                        className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
+                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                                    >
+                                        Explore Our School
+                                    </Link>
+                                )}
                             </div>
                         </div>
-                        <div className="gh-kicker" style={{textTransform:"uppercase",letterSpacing:".16em"}}>{hero.section_subtitle || "Welcome to Our School"}</div>
-                        <h1>{hero.section_title || "Excellence in Education"}</h1>
-                        <p>{hero.section_content || "Tell visitors about your school, its educational approach, and what makes your school a place where learners can grow and thrive."}</p>
-                        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:25}}>
-                            <Link className="gh-btn" to={hero.button_text && hero.button_url ? hero.button_url : "/about"} style={{background:gold,color:primary}}>{hero.button_text || "Explore Our School"} →</Link>
-                            <Link className="gh-btn" to="/admissions" style={{border:"1px solid #ffffff99",color:"#fff"}}>Discover Admissions</Link>
+                    </div>
+
+                    <div className="relative min-h-[420px] overflow-hidden bg-slate-900 sm:min-h-[500px] lg:min-h-full">
+                        {activeSlide?.image_url ? (
+                            <div className="absolute inset-0">
+                                {carouselSlides.map((slide, index) => (
+                                    <img
+                                        key={slide.id || slide.image_url || index}
+                                        src={slide.image_url}
+                                        alt={slide.title || `${schoolName} school`}
+                                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+                                            index === currentSlide
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div
+                                className="absolute inset-0"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <div className="flex h-full items-center justify-center p-8 text-center text-white/80">
+                                    <p className="max-w-sm text-sm leading-6 sm:text-base">
+                                        Add up to four published images in Website Management → Gallery to create the Home page carousel.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-slate-950/25" />
+
+                        {carouselSlides.length > 1 && (
+                            <>
+                                <button
+                                    type="button"
+                                    aria-label="Previous slide"
+                                    onClick={() => goToSlide(currentSlide - 1)}
+                                    className="absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
+                                >
+                                    ‹
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Next slide"
+                                    onClick={() => goToSlide(currentSlide + 1)}
+                                    className="absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
+                                >
+                                    ›
+                                </button>
+
+                                <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
+                                    {carouselSlides.map((slide, index) => (
+                                        <button
+                                            key={slide.id || index}
+                                            type="button"
+                                            aria-label={`Go to slide ${index + 1}`}
+                                            aria-current={index === currentSlide}
+                                            onClick={() => goToSlide(index)}
+                                            className={`h-2.5 rounded-full transition-all ${
+                                                index === currentSlide
+                                                    ? "w-7 bg-white"
+                                                    : "w-2.5 bg-white/55 hover:bg-white/80"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        <div className="absolute bottom-5 left-4 right-4 z-10 rounded-2xl bg-white/95 p-4 shadow-2xl backdrop-blur sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
+                            <p
+                                className="text-xs font-bold uppercase tracking-wider"
+                                style={{ color: secondaryColor }}
+                            >
+                                {promise.section_subtitle || "Our Commitment"}
+                            </p>
+                            <p className="mt-2 text-base font-bold leading-6 text-slate-900 sm:text-lg">
+                                {promise.section_title || "Shape this section around your school's promise"}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                                {promise.section_content ||
+                                    "Use this space to describe the commitment your school makes to learners, parents, and the wider community."}
+                            </p>
                         </div>
                     </div>
                 </div>
-                <div className="gh-hero-carousel">
-                    {heroSlides.length > 0 ? heroSlides.map((item,i) => (
-                        <img key={item.id || item.image_url || i} src={item.image_url} alt={item.title || `${schoolName} school`} className="gh-hero-photo" style={{opacity:i===slide?1:0,transition:"opacity .8s ease"}} />
-                    )) : (
-                        <div style={{position:"absolute",inset:0,display:"grid",placeItems:"center",padding:30,textAlign:"center",color:"#fff",background:primary}}>
-                            Add published photos in Website Management → Gallery to create your school photo carousel.
+            </section>
+
+            <section className="px-5 py-14 sm:px-8 sm:py-20 lg:px-16">
+                <div className="mx-auto max-w-7xl">
+                    <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
+                        {welcome.image_url && (
+                            <div className="relative">
+                                <img
+                                    src={welcome.image_url}
+                                    alt={welcome.section_title || `${schoolName} campus`}
+                                    className="h-72 w-full rounded-2xl object-cover shadow-xl sm:h-[450px] sm:rounded-3xl"
+                                />
+                            </div>
+                        )}
+
+                        <div className={!welcome.image_url ? "lg:col-span-2" : ""}>
+                            <p
+                                className="text-xs font-bold uppercase tracking-[0.18em] sm:text-sm sm:tracking-[0.2em]"
+                                style={{ color: secondaryColor }}
+                            >
+                                {welcome.section_subtitle || "Welcome"}
+                            </p>
+                            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:mt-4 sm:text-4xl">
+                                {welcome.section_title || "Tell visitors about your school"}
+                            </h2>
+                            <p className="mt-5 text-sm leading-7 text-slate-600 sm:mt-6 sm:text-base sm:leading-8">
+                                {welcome.section_content ||
+                                    "Use this section to introduce your school, explain your educational philosophy, and share the information you want parents and visitors to know first."}
+                            </p>
+
+                            <Link
+                                to={welcome.button_text && welcome.button_url ? welcome.button_url : "/about"}
+                                className="mt-6 inline-flex items-center text-sm font-bold sm:mt-7"
+                                style={{ color: primaryColor }}
+                            >
+                                {welcome.button_text || "Learn More About Our School"}
+                                <span className="ml-2">→</span>
+                            </Link>
                         </div>
-                    )}
-                    <div className="gh-hero-shade" style={{background:"linear-gradient(0deg,rgba(2,11,27,.42),transparent 45%)"}} />
-                    {(promise.section_title || promise.section_content) && (
-                        <div className="gh-hero-promise">
-                            <div className="gh-kicker" style={{color:primary}}>{promise.section_subtitle || "Our Commitment"}</div>
-                            <strong style={{display:"block",fontSize:17,marginTop:5}}>{promise.section_title}</strong>
-                            {promise.section_content && <p style={{fontFamily:"Arial,sans-serif",fontSize:12,lineHeight:1.5,margin:"6px 0 0",color:"#475569"}}>{promise.section_content}</p>}
-                        </div>
-                    )}
-                    {heroSlides.length > 1 && <>
-                        <div className="gh-hero-controls">
-                            <button className="gh-arrow" aria-label="Previous slide" onClick={()=>setSlide(v=>(v+heroSlides.length-1)%heroSlides.length)}>‹</button>
-                            <button className="gh-arrow" aria-label="Next slide" onClick={()=>setSlide(v=>(v+1)%heroSlides.length)}>›</button>
-                        </div>
-                        <div className="gh-hero-dots">
-                            {heroSlides.map((item,i)=><button key={item.id || item.image_url || i} className={`gh-hero-dot ${i===slide?"active":""}`} aria-label={`Go to slide ${i+1}`} aria-current={i===slide ? "true" : undefined} onClick={()=>setSlide(i)} />)}
-                        </div>
-                    </>}
+                    </div>
                 </div>
             </section>
 
-            <section className="gh-wrap gh-about">
-                <div className="gh-about-copy"><div className="gh-kicker">{about.section_subtitle || "About Our School"}</div><h2 className="gh-title" style={{marginTop:6}}>{about.section_title || "A Tradition of Excellence in Education"}</h2><p>{about.section_content || "We are committed to academic excellence, moral values, and holistic development. Our goal is to nurture confident, compassionate and outstanding individuals who will make a positive impact in society."}</p><Link className="gh-btn" to={about.button_url || "/about"} style={{background:primary,color:"#fff"}}>{about.button_text || "Learn More About Us"} →</Link></div>
-                {about.image_url ? <img className="gh-about-photo" src={about.image_url} alt={about.section_title || schoolName}/> : <div className="gh-about-photo" style={{background:`linear-gradient(135deg,${primary},#8aa6c7)`}}/>}
-                {valuesToShow.length > 0 && <aside className="gh-values"><h3>Our Core Values</h3>{valuesToShow.map(([title,desc,icon],i)=><div className="gh-value" key={title+i}><span className="gh-value-icon">{icon}</span><div><strong>{title}</strong><small>{desc}</small></div></div>)}</aside>}
+            <section className="bg-slate-50 px-5 py-14 sm:px-8 sm:py-20 lg:px-16">
+                <div className="mx-auto max-w-7xl">
+                    <div className="mx-auto max-w-2xl text-center">
+                        <p
+                            className="text-xs font-bold uppercase tracking-[0.18em] sm:text-sm sm:tracking-[0.2em]"
+                            style={{ color: primaryColor }}
+                        >
+                            {schoolLevels.section_subtitle || "Academic Programmes"}
+                        </p>
+                        <h2 className="mt-3 text-2xl font-extrabold text-slate-900 sm:text-4xl">
+                            {schoolLevels.section_title || "Explore Our Learning Levels"}
+                        </h2>
+                        <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
+                            {schoolLevels.section_content ||
+                                "Use these cards to introduce the academic levels or programmes offered by your school. Add, edit, or remove them from Website Management."}
+                        </p>
+                    </div>
+
+                    <div className="mt-8 grid grid-cols-1 gap-5 sm:mt-12 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+                        {displayLevels.map(level => (
+                            <article
+                                key={level.id || level.section_key}
+                                className="group min-w-0 overflow-hidden rounded-2xl bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                            >
+                                {level.image_url ? (
+                                    <img
+                                        src={level.image_url}
+                                        alt={level.section_title || "School programme"}
+                                        className="h-44 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-52 lg:h-48"
+                                    />
+                                ) : (
+                                    <div
+                                        className="flex h-28 items-center justify-center text-xs font-semibold sm:h-32"
+                                        style={{
+                                            backgroundColor: `${primaryColor}12`,
+                                            color: primaryColor
+                                        }}
+                                    >
+                                        Optional image
+                                    </div>
+                                )}
+                                <div className="min-w-0 p-5 sm:p-6">
+                                    {level.section_subtitle && (
+                                        <p
+                                            className="text-xs font-bold uppercase tracking-wider"
+                                            style={{ color: primaryColor }}
+                                        >
+                                            {level.section_subtitle}
+                                        </p>
+                                    )}
+                                    <h3 className="mt-2 break-words text-lg font-bold leading-snug text-slate-900 sm:text-xl">
+                                        {level.section_title || "Academic Programme"}
+                                    </h3>
+                                    <p className="mt-3 break-words text-sm leading-6 text-slate-600">
+                                        {level.section_content || "Describe this academic level or programme here."}
+                                    </p>
+                                    {level.button_text && level.button_url && (
+                                        <Link
+                                            to={level.button_url}
+                                            className="mt-5 inline-flex text-sm font-semibold"
+                                            style={{ color: secondaryColor }}
+                                        >
+                                            {level.button_text} →
+                                        </Link>
+                                    )}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </div>
             </section>
 
-            <section className="gh-programs"><div className="gh-wrap"><div className="gh-section-heading"><div className="gh-heading-line"><h2 className="gh-title">{programs.section_title || "Our Academic Programs"}</h2></div><p>{programs.section_content || "From early years to higher education, we provide a complete learning journey."}</p></div>
-                <div className="gh-program-grid">{programsToShow.map((item,i)=><article className="gh-program" key={item.id || item.section_key || item.section_title || i}>{item.image_url ? <img src={item.image_url} alt={item.section_title}/> : <div className="gh-program-blank">{item.icon || ["📚","🎓","🔬","⚽"][i]}</div>}<div className="gh-program-body"><span className="gh-program-icon">{["👥","🎓","⚗","⚽"][i]}</span><h3>{item.section_title}</h3><p>{item.section_content}</p><Link to={item.button_url || "/academics"}>{item.button_text || "Learn More"} →</Link></div></article>)}</div>
-            </div></section>
+            <section className="px-5 py-14 sm:px-8 sm:py-20 lg:px-16">
+                <div className="mx-auto max-w-7xl">
+                    <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
+                        <div>
+                            <p
+                                className="text-xs font-bold uppercase tracking-[0.18em] sm:text-sm sm:tracking-[0.2em]"
+                                style={{ color: secondaryColor }}
+                            >
+                                {whyChoose.section_subtitle || "Why Choose Us"}
+                            </p>
+                            <h2 className="mt-3 text-2xl font-extrabold text-slate-900 sm:text-4xl">
+                                {whyChoose.section_title || "What makes your school special?"}
+                            </h2>
+                            <p className="mt-5 text-sm leading-7 text-slate-600 sm:text-base">
+                                {whyChoose.section_content ||
+                                    "Use this section to explain the qualities, approach, facilities, values, or experiences that make your school different."}
+                            </p>
+                        </div>
 
-            <section className="gh-wrap gh-feature-facility">
-                <div className="gh-why"><h2>{why.section_title || "Why Choose Us?"}</h2>{why.image_url && <img className="gh-why-photo" src={why.image_url} alt="Students at school"/>}<div className="gh-why-content"><ul style={{padding:0,margin:0}}>{featuresToShow.map((label,i)=><li key={i}><span style={{color:gold,fontWeight:900,marginRight:7}}>●</span>{label}</li>)}</ul><Link className="gh-btn" to={why.button_url || "/about"} style={{background:gold,color:"#09234a",marginTop:12}}>{why.button_text || "Discover More"} →</Link></div></div>
-                {facilitiesToShow.length > 0 && <div className="gh-facility"><h2 className="gh-title" style={{fontSize:22}}>{facilities.section_title || "Our Facilities"}</h2><p style={{fontFamily:"Arial,sans-serif",fontSize:11,margin:"4px 0"}}>{facilities.section_content || "Explore the facilities available at our school."}</p><div className="gh-facility-grid">{facilitiesToShow.map(item=><div className="gh-facility-item" key={item.id}>{item.image_url && <img src={item.image_url} alt={item.facility_name}/>}<span>{item.facility_name}</span></div>)}</div></div>}
+                        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+                            {displayFeatures.map(feature => (
+                                <div
+                                    key={feature.id || feature.section_key}
+                                    className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6"
+                                >
+                                    <div
+                                        className="flex h-11 w-11 items-center justify-center rounded-xl text-xl sm:h-12 sm:w-12 sm:text-2xl"
+                                        style={{
+                                            backgroundColor: `${primaryColor}15`,
+                                            color: primaryColor
+                                        }}
+                                    >
+                                        {feature.section_icon || "•"}
+                                    </div>
+                                    <h3 className="mt-4 font-bold text-slate-900 sm:mt-5">
+                                        {feature.section_title || "School Feature"}
+                                    </h3>
+                                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                                        {feature.section_content || "Describe this feature of your school here."}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            {updates.length>0 && <section className="gh-updates"><div className="gh-wrap" style={{display:"grid",gridTemplateColumns:"minmax(150px,.75fr) 2.25fr",gap:15,alignItems:"center"}}><div><h2 className="gh-title">Latest News & Events</h2><p style={{fontFamily:"Arial,sans-serif",fontSize:11,lineHeight:1.5,margin:"7px 0"}}>Stay updated with our latest news, events and school activities.</p><Link className="gh-btn" to="/news" style={{background:primary,color:"#fff"}}>View All News →</Link></div><div className="gh-update-grid">{updates.map((item,i)=><article className="gh-update" key={item.kind+item.id}>{item.image_url && <img src={item.image_url} alt={item.title}/>}<div className="gh-update-body"><div className="gh-update-date">{dateLabel(item.published_at)}</div><h3>{item.title}</h3><Link to={item.kind==="event" ? `/events/${item.slug}` : `/news/${item.slug}`}>Read More →</Link></div></article>)}</div></div></section>}
+            {(schoolLife.image_url || schoolLife.section_title || schoolLife.section_content) && (
+                <section className="px-5 pb-14 sm:px-8 sm:pb-20 lg:px-16">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="relative overflow-hidden rounded-2xl bg-slate-900 sm:rounded-3xl">
+                            {schoolLife.image_url ? (
+                                <img
+                                    src={schoolLife.image_url}
+                                    alt={schoolLife.section_title || "School life"}
+                                    className="h-[360px] w-full object-cover sm:h-[450px]"
+                                />
+                            ) : (
+                                <div
+                                    className="h-[300px] w-full sm:h-[380px]"
+                                    style={{ backgroundColor: primaryColor }}
+                                />
+                            )}
+                            <div className="absolute inset-0 bg-slate-950/55" />
+                            <div className="absolute inset-0 flex items-center justify-center px-5 text-center sm:px-6">
+                                <div className="w-full max-w-2xl text-white">
+                                    <p
+                                        className="text-xs font-bold uppercase tracking-[0.18em] sm:text-sm sm:tracking-[0.2em]"
+                                        style={{ color: primaryColor }}
+                                    >
+                                        {schoolLife.section_subtitle || "School Life"}
+                                    </p>
+                                    <h2 className="mt-3 text-2xl font-extrabold sm:mt-4 sm:text-5xl">
+                                        {schoolLife.section_title || "Showcase life at your school"}
+                                    </h2>
+                                    <p className="mt-4 text-sm leading-7 text-white/80 sm:mt-5 sm:text-base">
+                                        {schoolLife.section_content ||
+                                            "Use this section to share the activities, experiences, facilities, and community life that visitors should know about."}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
 
-            {testimonialsToShow.length>0 && <section className="gh-testimonials"><div className="gh-wrap" style={{display:"grid",gridTemplateColumns:"minmax(170px,.75fr) 2.25fr",gap:14,alignItems:"center"}}><div><h2 style={{fontSize:22,lineHeight:1.05,fontWeight:800}}>What Our Community Says</h2><p style={{fontFamily:"Arial,sans-serif",fontSize:11,marginTop:6,color:"#dbeafe"}}>Experiences shared by our school community.</p></div><div className="gh-testimonial-grid">{testimonialsToShow.map(item=><article className="gh-testimonial" key={item.id}>{item.image_url && <img src={item.image_url} alt={item.author_name}/>}<div><p>“{item.testimonial_text}”</p><strong>{item.author_name}</strong>{item.author_role && <small>{item.author_role}</small>}</div></article>)}</div></div></section>}
+            <section
+                className="px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-16"
+                style={{ backgroundColor: primaryColor }}
+            >
+                <div className="mx-auto max-w-4xl text-center">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 sm:text-sm sm:tracking-[0.2em]">
+                        {admissionsCta.section_subtitle || "Admissions"}
+                    </p>
+                    <h2 className="mt-3 text-2xl font-extrabold sm:mt-4 sm:text-5xl">
+                        {admissionsCta.section_title || "Tell families how to begin"}
+                    </h2>
+                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:mt-5 sm:text-base">
+                        {admissionsCta.section_content ||
+                            "Use this call-to-action to guide prospective families to your admission information, application process, or enquiry channel."}
+                    </p>
+                    <div className="mt-7 sm:mt-8">
+                        <Link
+                            to={admissionsCta.button_text && admissionsCta.button_url ? admissionsCta.button_url : "/admissions"}
+                            className="inline-flex w-full rounded-lg px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
+                            style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                        >
+                            {admissionsCta.button_text || "View Admissions"}
+                        </Link>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }
+
 export default Home;
