@@ -18,10 +18,40 @@ function Home() {
 
     const [gallery, setGallery] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
     const primaryColor = settings?.primary_color || "#1D4ED8";
     const secondaryColor = settings?.secondary_color || "#D9B351";
     const schoolName = settings?.school_name || "Our School";
+
+    useEffect(() => {
+        const pageRoot = document.querySelector(".public-site");
+        if (!pageRoot || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+        const revealTargets = pageRoot.querySelectorAll(
+            "main > section, main section .grid > *"
+        );
+
+        if (!("IntersectionObserver" in window)) return undefined;
+
+        revealTargets.forEach((element) => {
+            element.setAttribute("data-scroll-reveal", "pending");
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.setAttribute("data-scroll-reveal", "visible");
+                observer.unobserve(entry.target);
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: "0px 0px -40px 0px"
+        });
+
+        revealTargets.forEach((element) => observer.observe(element));
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         let mounted = true;
@@ -71,7 +101,7 @@ function Home() {
     }, [carouselSlides.length]);
 
     useEffect(() => {
-        if (carouselSlides.length < 2) return undefined;
+        if (carouselSlides.length < 2 || isCarouselPaused) return undefined;
 
         const timer = window.setInterval(() => {
             setCurrentSlide(previous =>
@@ -80,7 +110,7 @@ function Home() {
         }, 5000);
 
         return () => window.clearInterval(timer);
-    }, [carouselSlides.length]);
+    }, [carouselSlides.length, isCarouselPaused]);
 
     const goToSlide = index => {
         setCurrentSlide(
@@ -179,7 +209,7 @@ function Home() {
     const activeSlide = carouselSlides[currentSlide];
 
     return (
-        <div className="w-full max-w-full overflow-x-hidden bg-white">
+        <div className="public-site w-full max-w-full overflow-x-hidden bg-white">
             {hasPageError && (
                 <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 text-center text-xs text-slate-500 sm:text-sm">
                     Website content is using editable fallback text. Update the Home page in Website Management to replace it with your school content.
@@ -188,7 +218,7 @@ function Home() {
 
             <section className="relative overflow-hidden">
                 <div className="grid lg:min-h-[650px] lg:grid-cols-2">
-                    <div className="flex items-center bg-slate-950 px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-12 lg:py-20 xl:px-20">
+                    <div className="flex items-center bg-slate-950 px-5 py-12 text-white sm:px-8 sm:py-16 lg:px-12 lg:py-16 xl:px-20">
                         <div className="mx-auto w-full max-w-xl">
                             <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8">
                                 {settings?.school_logo ? (
@@ -207,13 +237,9 @@ function Home() {
                                 )}
 
                                 <div className="min-w-0">
-                                    <p className="break-words text-sm font-bold leading-tight sm:text-lg">
-                                        {schoolName}
-                                    </p>
+                                    <p className="break-words text-sm font-bold leading-tight sm:text-lg">{schoolName}</p>
                                     {settings?.school_level && (
-                                        <p className="truncate text-xs text-slate-400">
-                                            {settings.school_level}
-                                        </p>
+                                        <p className="truncate text-xs text-slate-400">{settings.school_level}</p>
                                     )}
                                 </div>
                             </div>
@@ -234,29 +260,46 @@ function Home() {
                                     "Tell visitors about your school, its educational approach, and what makes your school a place where learners can grow and thrive."}
                             </p>
 
-                            <div className="mt-7 sm:mt-8">
-                                {hero.button_text && hero.button_url ? (
-                                    <Link
-                                        to={hero.button_url}
-                                        className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                                    >
-                                        {hero.button_text}
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to="/about"
-                                        className="inline-flex w-full rounded-lg px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-                                        style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                                    >
-                                        Explore Our School
-                                    </Link>
-                                )}
+                            <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
+                                <Link
+                                    to={hero.button_text && hero.button_url ? hero.button_url : "/about"}
+                                    className="inline-flex w-full items-center justify-center rounded-lg px-6 py-3.5 text-center text-sm font-bold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
+                                    style={{ backgroundColor: secondaryColor, color: "var(--school-secondary-foreground, #0f172a)" }}
+                                >
+                                    {hero.button_text || "Explore Our School"}
+                                </Link>
+                                <Link
+                                    to="/admissions"
+                                    className="inline-flex w-full items-center justify-center rounded-lg border border-white/25 px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-white/10 sm:w-auto"
+                                >
+                                    Discover Admissions
+                                </Link>
                             </div>
                         </div>
                     </div>
 
-                    <div className="relative min-h-[420px] overflow-hidden bg-slate-900 sm:min-h-[500px] lg:min-h-full">
+                    <div
+                        className="relative min-h-[360px] overflow-hidden bg-slate-900 sm:min-h-[460px] lg:min-h-full"
+                        onMouseEnter={() => setIsCarouselPaused(true)}
+                        onMouseLeave={() => setIsCarouselPaused(false)}
+                        onFocusCapture={() => setIsCarouselPaused(true)}
+                        onBlurCapture={(event) => {
+                            if (!event.currentTarget.contains(event.relatedTarget)) {
+                                setIsCarouselPaused(false);
+                            }
+                        }}
+                    >
+                        <svg
+                            aria-hidden="true"
+                            viewBox="0 0 100 650"
+                            preserveAspectRatio="none"
+                            className="pointer-events-none absolute -left-px top-0 z-10 hidden h-full w-20 lg:block xl:w-28"
+                        >
+                            <path
+                                d="M0 0 H88 C48 70 28 126 60 181 C88 229 35 273 28 326 C18 385 83 421 54 478 C31 523 42 586 0 650 Z"
+                                fill="#020617"
+                            />
+                        </svg>
                         {activeSlide?.image_url ? (
                             <div className="absolute inset-0">
                                 {carouselSlides.map((slide, index) => (
@@ -264,18 +307,15 @@ function Home() {
                                         key={slide.id || slide.image_url || index}
                                         src={slide.image_url}
                                         alt={slide.title || `${schoolName} school`}
-                                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
-                                            index === currentSlide
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                        }`}
+                                        aria-hidden={index !== currentSlide}
+                                        className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ease-out motion-reduce:transition-none ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
                                     />
                                 ))}
                             </div>
                         ) : (
                             <div
                                 className="absolute inset-0"
-                                style={{ backgroundColor: primaryColor }}
+                                style={{ background: `linear-gradient(135deg, ${primaryColor}, #0f172a 82%)` }}
                             >
                                 <div className="flex h-full items-center justify-center p-8 text-center text-white/80">
                                     <p className="max-w-sm text-sm leading-6 sm:text-base">
@@ -285,74 +325,73 @@ function Home() {
                             </div>
                         )}
 
-                        <div className="absolute inset-0 bg-slate-950/25" />
+                        <div className="absolute inset-0 bg-slate-950/10" />
+
+                        {(promise.section_title || promise.section_content) && (
+                            <div className="absolute bottom-5 left-4 right-4 z-10 rounded-2xl border border-white/20 bg-slate-950/65 p-4 text-white shadow-2xl backdrop-blur-md sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
+                                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: secondaryColor }}>
+                                    {promise.section_subtitle || "Our Commitment"}
+                                </p>
+                                <p className="mt-2 text-base font-bold leading-6 sm:text-lg">
+                                    {promise.section_title || "Committed to every learner"}
+                                </p>
+                                {promise.section_content && (
+                                    <p className="mt-2 text-sm leading-6 text-white/75">{promise.section_content}</p>
+                                )}
+                            </div>
+                        )}
 
                         {carouselSlides.length > 1 && (
                             <>
                                 <button
                                     type="button"
                                     aria-label="Previous slide"
-                                    onClick={() => goToSlide(currentSlide - 1)}
-                                    className="absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
+                                    onClick={() => {
+                                        goToSlide(currentSlide - 1);
+                                        setIsCarouselPaused(true);
+                                    }}
+                                    className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80 sm:left-4 sm:h-11 sm:w-11"
                                 >
                                     ‹
                                 </button>
                                 <button
                                     type="button"
                                     aria-label="Next slide"
-                                    onClick={() => goToSlide(currentSlide + 1)}
-                                    className="absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80"
+                                    onClick={() => {
+                                        goToSlide(currentSlide + 1);
+                                        setIsCarouselPaused(true);
+                                    }}
+                                    className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white shadow-lg backdrop-blur-sm transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/80 sm:right-4 sm:h-11 sm:w-11"
                                 >
                                     ›
                                 </button>
 
-                                <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
+                                <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm sm:bottom-5">
                                     {carouselSlides.map((slide, index) => (
                                         <button
-                                            key={slide.id || index}
+                                            key={slide.id || slide.image_url || index}
                                             type="button"
                                             aria-label={`Go to slide ${index + 1}`}
-                                            aria-current={index === currentSlide}
-                                            onClick={() => goToSlide(index)}
-                                            className={`h-2.5 rounded-full transition-all ${
-                                                index === currentSlide
-                                                    ? "w-7 bg-white"
-                                                    : "w-2.5 bg-white/55 hover:bg-white/80"
-                                            }`}
+                                            aria-current={index === currentSlide ? "true" : undefined}
+                                            onClick={() => {
+                                                goToSlide(index);
+                                                setIsCarouselPaused(true);
+                                            }}
+                                            className={`h-2.5 rounded-full transition-all ${index === currentSlide ? "w-7 bg-white" : "w-2.5 bg-white/55 hover:bg-white/80"}`}
                                         />
                                     ))}
+                                    <button
+                                        type="button"
+                                        aria-label={isCarouselPaused ? "Resume automatic slides" : "Pause automatic slides"}
+                                        onClick={() => setIsCarouselPaused(paused => !paused)}
+                                        className="ml-1 rounded-full border border-white/25 bg-black/25 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-black/50"
+                                    >
+                                        {isCarouselPaused ? "Play" : "Pause"}
+                                    </button>
                                 </div>
                             </>
                         )}
-
-                        <div className="absolute bottom-5 left-4 right-4 z-10 rounded-2xl bg-white/95 p-4 shadow-2xl backdrop-blur sm:bottom-8 sm:left-auto sm:right-8 sm:w-80 sm:p-5">
-                            <p
-                                className="text-xs font-bold uppercase tracking-wider"
-                                style={{ color: secondaryColor }}
-                            >
-                                {promise.section_subtitle || "Our Commitment"}
-                            </p>
-                            <p className="mt-2 text-base font-bold leading-6 text-slate-900 sm:text-lg">
-                                {promise.section_title || "Shape this section around your school's promise"}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">
-                                {promise.section_content ||
-                                    "Use this space to describe the commitment your school makes to learners, parents, and the wider community."}
-                            </p>
-                        </div>
                     </div>
-                    {/* Organic wave between the dark introduction panel and photo carousel. */}
-                    <svg
-                        aria-hidden="true"
-                        viewBox="0 0 140 800"
-                        preserveAspectRatio="none"
-                        className="pointer-events-none absolute inset-y-0 left-1/2 z-30 hidden h-full w-28 -translate-x-1/2 lg:block"
-                    >
-                        <path
-                            fill="#020617"
-                            d="M0 0 H72 C132 55 8 115 72 180 C136 245 8 310 72 375 C136 440 8 505 72 570 C136 635 8 700 72 755 C92 780 82 792 68 800 H0 Z"
-                        />
-                    </svg>
                 </div>
             </section>
 
@@ -555,32 +594,7 @@ function Home() {
                 </section>
             )}
 
-            <section
-                className="px-5 py-14 text-white sm:px-8 sm:py-20 lg:px-16"
-                style={{ backgroundColor: primaryColor }}
-            >
-                <div className="mx-auto max-w-4xl text-center">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 sm:text-sm sm:tracking-[0.2em]">
-                        {admissionsCta.section_subtitle || "Admissions"}
-                    </p>
-                    <h2 className="mt-3 text-2xl font-extrabold sm:mt-4 sm:text-5xl">
-                        {admissionsCta.section_title || "Tell families how to begin"}
-                    </h2>
-                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:mt-5 sm:text-base">
-                        {admissionsCta.section_content ||
-                            "Use this call-to-action to guide prospective families to your admission information, application process, or enquiry channel."}
-                    </p>
-                    <div className="mt-7 sm:mt-8">
-                        <Link
-                            to={admissionsCta.button_text && admissionsCta.button_url ? admissionsCta.button_url : "/admissions"}
-                            className="inline-flex w-full rounded-lg px-7 py-3.5 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
-                            style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                        >
-                            {admissionsCta.button_text || "View Admissions"}
-                        </Link>
-                    </div>
-                </div>
-            </section>
+
         </div>
     );
 }
