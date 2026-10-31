@@ -24,6 +24,7 @@ function Home() {
     const about = get("welcome");
     const programs = get("school_levels");
     const why = get("why_choose");
+    const promise = get("promise");
     const facilities = get("facilities");
     const values = sections.filter(s => s.section_key?.startsWith("core_value_"));
     const programCards = sections.filter(s => s.section_key?.startsWith("school_level_") || ["primary", "junior_secondary", "senior_secondary"].includes(s.section_key));
@@ -40,8 +41,9 @@ function Home() {
 
     const images = useMemo(() => gallery.filter(x => x.image_url), [gallery]);
     const heroSlides = useMemo(() => {
-        if (hero.image_url) return [{ id: "hero", image_url: hero.image_url, title: hero.section_title || schoolName }];
-        return images.filter(x => ["hero", "banner"].includes(String(x.category || "").toLowerCase())).slice(0, 5);
+        const gallerySlides = images.slice(0, 4);
+        if (gallerySlides.length) return gallerySlides;
+        return hero.image_url ? [{ id: "hero", image_url: hero.image_url, title: hero.section_title || schoolName }] : [];
     }, [images, hero.image_url, hero.section_title, schoolName]);
 
     useEffect(() => { setSlide(0); }, [heroSlides.length]);
@@ -75,14 +77,23 @@ function Home() {
                 .gh-title{font-size:clamp(23px,2.5vw,32px);line-height:1.06;font-weight:800;color:var(--gh-primary);letter-spacing:-.5px}
                 .gh-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:30px;padding:10px 19px;font-size:12px;font-weight:800;text-decoration:none;transition:.2s}
                 .gh-btn:hover{transform:translateY(-2px);filter:brightness(1.04)}
-                .gh-hero{height:clamp(270px,29vw,360px);position:relative;overflow:hidden;background:var(--gh-primary);color:#fff}
+                .gh-hero{display:grid;grid-template-columns:1fr 1fr;min-height:650px;position:relative;overflow:hidden;background:#020b1b;color:#fff}
+                .gh-hero-copy-panel{display:flex;align-items:center;background:#020b1b;padding:54px clamp(24px,5vw,76px)}
+                .gh-hero-copy{width:100%;max-width:560px;margin-inline:auto}
+                .gh-hero-brand{display:flex;align-items:center;gap:13px;margin-bottom:34px}
+                .gh-hero-brand img,.gh-hero-brand-mark{width:54px;height:54px;flex:0 0 54px;object-fit:contain;border-radius:12px;background:#fff;padding:5px}
+                .gh-hero-carousel{position:relative;min-height:650px;overflow:hidden;background:#0f172a}
+                .gh-hero-promise{position:absolute;z-index:2;left:24px;right:24px;bottom:24px;padding:17px 19px;border-radius:15px;background:rgba(255,255,255,.95);color:#10213b;box-shadow:0 15px 35px #0004;backdrop-filter:blur(8px)}
                 .gh-hero-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%}
                 .gh-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,26,58,.98) 0%,rgba(3,26,58,.9) 35%,rgba(3,26,58,.28) 68%,rgba(3,26,58,.06) 100%)}
                 .gh-hero-inner{position:relative;z-index:1;height:100%;display:flex;align-items:center}
                 .gh-hero-copy{max-width:540px;padding:25px 0}
                 .gh-hero h1{font-size:clamp(30px,4vw,48px);line-height:.98;font-weight:900;letter-spacing:-1px;margin:8px 0 12px;color:#fff}
                 .gh-hero p{font-size:14px;line-height:1.55;max-width:430px;color:#fff}
-                .gh-hero-controls{position:absolute;right:28px;bottom:16px;display:flex;gap:9px;z-index:2}
+                .gh-hero-controls{position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:9px;z-index:3}
+                .gh-hero-dots{position:absolute;z-index:3;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:8px;padding:8px 12px;border-radius:30px;background:#0006}
+                .gh-hero-dot{height:9px;width:9px;border:0;border-radius:20px;background:#ffffff88;padding:0}
+                .gh-hero-dot.active{width:27px;background:#fff}
                 .gh-arrow{height:34px;width:34px;border:1px solid var(--gh-gold);border-radius:50%;background:#09234a;color:white;font-size:22px;line-height:1}
                 .gh-about{display:grid;grid-template-columns:1fr 1.35fr .62fr;gap:18px;align-items:stretch;padding-block:14px}
                 .gh-about-copy{padding:5px 0 2px}
@@ -134,22 +145,59 @@ function Home() {
                 .gh-testimonial p{font-family:Arial,sans-serif;font-size:9px;line-height:1.35;margin:0}
                 .gh-testimonial strong{display:block;font-family:Georgia,serif;font-size:10px;margin-top:6px}
                 @media(max-width:800px){.gh-wrap{width:min(100% - 30px,680px)}.gh-about{grid-template-columns:1fr 1fr}.gh-values{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:2px}.gh-values h3{grid-column:1/-1}.gh-program-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gh-feature-facility{grid-template-columns:1fr}.gh-why{min-height:220px}.gh-update-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-                @media(max-width:700px){.gh-updates .gh-wrap,.gh-testimonials .gh-wrap{grid-template-columns:1fr!important}.gh-testimonial-grid{grid-template-columns:1fr 1fr}}\n                @media(max-width:520px){.gh-wrap{width:calc(100% - 26px)}.gh-hero{height:380px}.gh-hero-shade{background:linear-gradient(90deg,rgba(3,26,58,.95),rgba(3,26,58,.55))}.gh-hero-copy{max-width:92%}.gh-hero h1{font-size:35px}.gh-hero-controls{right:13px;bottom:12px}.gh-about{grid-template-columns:1fr;padding-block:12px}.gh-about-photo{height:205px;min-height:0;clip-path:none;border-radius:6px}.gh-values{grid-template-columns:1fr 1fr}.gh-program-grid{gap:9px}.gh-program img,.gh-program-blank{height:90px}.gh-why-content{max-width:80%}.gh-why-photo{width:55%;opacity:.75}.gh-update-grid{grid-template-columns:1fr}.gh-testimonial-grid{grid-template-columns:1fr}}
+                @media(max-width:700px){.gh-updates .gh-wrap,.gh-testimonials .gh-wrap{grid-template-columns:1fr!important}.gh-testimonial-grid{grid-template-columns:1fr 1fr}}\n                @media(max-width:800px){.gh-hero{grid-template-columns:1fr;min-height:0}.gh-hero-copy-panel{padding:42px 26px}.gh-hero-carousel{min-height:430px}}
+                @media(max-width:520px){.gh-wrap{width:calc(100% - 26px)}.gh-hero-copy-panel{padding:36px 22px}.gh-hero-brand{margin-bottom:25px}.gh-hero-carousel{min-height:340px}.gh-hero-copy{max-width:92%}.gh-hero h1{font-size:35px}.gh-hero-controls{right:12px}.gh-hero-promise{left:12px;right:12px;bottom:12px;padding:12px 14px}.gh-about{grid-template-columns:1fr;padding-block:12px}.gh-about-photo{height:205px;min-height:0;clip-path:none;border-radius:6px}.gh-values{grid-template-columns:1fr 1fr}.gh-program-grid{gap:9px}.gh-program img,.gh-program-blank{height:90px}.gh-why-content{max-width:80%}.gh-why-photo{width:55%;opacity:.75}.gh-update-grid{grid-template-columns:1fr}.gh-testimonial-grid{grid-template-columns:1fr}}
             `}</style>
 
             <section className="gh-hero">
-                {heroSlides.length > 0 && heroSlides.map((item, i) => <img key={item.id || item.image_url} src={item.image_url} alt={item.title || schoolName} className="gh-hero-photo" style={{opacity:i===slide?1:0,transition:"opacity .8s ease"}} />)}
-                <div className="gh-hero-shade" />
-                <div className="gh-wrap gh-hero-inner"><div className="gh-hero-copy">
-                    <div className="gh-kicker">{hero.section_subtitle || `Welcome to ${schoolName}`}</div>
-                    <h1>{hero.section_title || <>Building Bright Minds.<br/><span style={{color:gold}}>Shaping a Better Future.</span></>}</h1>
-                    <p>{hero.section_content || "We provide world-class education, inspire excellence, and develop tomorrow's leaders."}</p>
-                    <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:15}}>
-                        <Link className="gh-btn" to={hero.button_url || "/about"} style={{background:gold,color:"#09234a"}}>{hero.button_text || "Explore Our School"} →</Link>
-                        <Link className="gh-btn" to="/admissions" style={{border:"1px solid white",color:"white"}}>Apply for Admission</Link>
+                <div className="gh-hero-copy-panel">
+                    <div className="gh-hero-copy">
+                        <div className="gh-hero-brand">
+                            {settings?.school_logo ? (
+                                <img src={settings.school_logo} alt={`${schoolName} logo`} />
+                            ) : (
+                                <div className="gh-hero-brand-mark" style={{color:primary,fontWeight:900,display:"grid",placeItems:"center"}}>{schoolName.slice(0,2).toUpperCase()}</div>
+                            )}
+                            <div>
+                                <strong style={{display:"block",fontSize:17,lineHeight:1.2}}>{schoolName}</strong>
+                                {settings?.school_level && <small style={{color:"#cbd5e1"}}>{settings.school_level}</small>}
+                            </div>
+                        </div>
+                        <div className="gh-kicker" style={{textTransform:"uppercase",letterSpacing:".16em"}}>{hero.section_subtitle || "Welcome to Our School"}</div>
+                        <h1>{hero.section_title || "Excellence in Education"}</h1>
+                        <p>{hero.section_content || "Tell visitors about your school, its educational approach, and what makes your school a place where learners can grow and thrive."}</p>
+                        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:25}}>
+                            <Link className="gh-btn" to={hero.button_text && hero.button_url ? hero.button_url : "/about"} style={{background:gold,color:primary}}>{hero.button_text || "Explore Our School"} →</Link>
+                            <Link className="gh-btn" to="/admissions" style={{border:"1px solid #ffffff99",color:"#fff"}}>Discover Admissions</Link>
+                        </div>
                     </div>
-                </div></div>
-                {heroSlides.length>1 && <div className="gh-hero-controls"><button className="gh-arrow" aria-label="Previous slide" onClick={()=>setSlide(v=>(v+heroSlides.length-1)%heroSlides.length)}>‹</button><button className="gh-arrow" aria-label="Next slide" onClick={()=>setSlide(v=>(v+1)%heroSlides.length)}>›</button></div>}
+                </div>
+                <div className="gh-hero-carousel">
+                    {heroSlides.length > 0 ? heroSlides.map((item,i) => (
+                        <img key={item.id || item.image_url || i} src={item.image_url} alt={item.title || `${schoolName} school`} className="gh-hero-photo" style={{opacity:i===slide?1:0,transition:"opacity .8s ease"}} />
+                    )) : (
+                        <div style={{position:"absolute",inset:0,display:"grid",placeItems:"center",padding:30,textAlign:"center",color:"#fff",background:primary}}>
+                            Add published photos in Website Management → Gallery to create your school photo carousel.
+                        </div>
+                    )}
+                    <div className="gh-hero-shade" style={{background:"linear-gradient(0deg,rgba(2,11,27,.42),transparent 45%)"}} />
+                    {(promise.section_title || promise.section_content) && (
+                        <div className="gh-hero-promise">
+                            <div className="gh-kicker" style={{color:primary}}>{promise.section_subtitle || "Our Commitment"}</div>
+                            <strong style={{display:"block",fontSize:17,marginTop:5}}>{promise.section_title}</strong>
+                            {promise.section_content && <p style={{fontFamily:"Arial,sans-serif",fontSize:12,lineHeight:1.5,margin:"6px 0 0",color:"#475569"}}>{promise.section_content}</p>}
+                        </div>
+                    )}
+                    {heroSlides.length > 1 && <>
+                        <div className="gh-hero-controls">
+                            <button className="gh-arrow" aria-label="Previous slide" onClick={()=>setSlide(v=>(v+heroSlides.length-1)%heroSlides.length)}>‹</button>
+                            <button className="gh-arrow" aria-label="Next slide" onClick={()=>setSlide(v=>(v+1)%heroSlides.length)}>›</button>
+                        </div>
+                        <div className="gh-hero-dots">
+                            {heroSlides.map((item,i)=><button key={item.id || item.image_url || i} className={`gh-hero-dot ${i===slide?"active":""}`} aria-label={`Go to slide ${i+1}`} aria-current={i===slide ? "true" : undefined} onClick={()=>setSlide(i)} />)}
+                        </div>
+                    </>}
+                </div>
             </section>
 
             <section className="gh-wrap gh-about">
