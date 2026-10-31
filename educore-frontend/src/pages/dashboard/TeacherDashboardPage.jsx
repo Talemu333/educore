@@ -144,6 +144,13 @@ function TeacherDashboardPage() {
     }, [assignments]);
 
 
+    const todayLabel = new Date().toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long" });
+    const maxAttendance = Math.max(1, ...attendanceTrend.map(day => day.marked));
+    const todayAttendance = attendanceTrend[attendanceTrend.length - 1];
+    const attendanceRate = todayAttendance?.marked
+        ? Math.round((todayAttendance.present / todayAttendance.marked) * 100)
+        : null;
+
     if (loading) {
 
         return (
