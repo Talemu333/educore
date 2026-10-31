@@ -35,7 +35,7 @@ export default function HomepageContentManagement() {
     });
     const chooseType = next => {setType(next);setEditing(null);setForm(emptyForm(next));};
     const edit = item => {setEditing(item.id);setForm(Object.fromEntries([...MODULES[type].fields.map(([key])=>[key,item[key] ?? (key==="display_order"?0:"")]),["is_published",item.is_published===true]]));};
-    const submit = event => {event.preventDefault();const payload={...form};MODULES[type].fields.forEach(([key,,kind])=>{if(kind==="number" && payload[key] !== "")payload[key]=Number(payload[key]);});save.mutate(payload);};
+    const submit = event => {event.preventDefault();const payload={...form};MODULES[type].fields.forEach(([key,,kind])=>{if(kind==="number")payload[key]=payload[key] === "" ? (key==="display_order" ? 0 : null) : Number(payload[key]);});save.mutate(payload);};
     const config=MODULES[type];
     return <div className="space-y-6">
         <div><p className="text-sm font-semibold uppercase tracking-wide text-blue-700">School website</p><h1 className="mt-1 text-2xl font-bold text-slate-900">Homepage Content</h1><p className="mt-1 text-sm text-slate-600">Manage the testimonials, facilities and core values displayed on your school's homepage.</p></div>
