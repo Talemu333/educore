@@ -60,7 +60,8 @@ function Home() {
     const facilitiesToShow = homepageContent.facilities.slice(0,6);
     const testimonialsToShow = homepageContent.testimonials.slice(0,3);
     const newsItems = news.slice(0, 3).map(x => ({ ...x, kind: "news" }));
-    const eventItems = events.slice(0, 3).map(x => ({ ...x, kind: "event", published_at: x.event_date }));
+    const today = new Date(); today.setHours(0,0,0,0);
+    const eventItems = events.filter(x => x.event_date && new Date(x.event_date) >= today).slice(0, 3).map(x => ({ ...x, kind: "event", published_at: x.event_date }));
     const updates = [...newsItems, ...eventItems].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0,3);
     const dateLabel = value => value ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
 
