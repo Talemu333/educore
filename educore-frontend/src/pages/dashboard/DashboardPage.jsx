@@ -1,4 +1,4 @@
-import { Activity, BarChart3, CalendarDays, ChevronRight, Clock3, CreditCard, FileText, Globe, GraduationCap, Mail, MapPin, Megaphone, Phone, School, Settings, UserPlus, Users, UsersRound, Wallet, BookOpen } from "lucide-react";
+import { Activity, BarChart3, CalendarCheck, CalendarDays, ChevronRight, Clock3, CreditCard, FileText, Globe, GraduationCap, Mail, MapPin, Megaphone, Phone, School, Settings, UserPlus, Users, UsersRound, Wallet, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useAuth } from "@/context/AuthContext";
@@ -34,6 +34,43 @@ function ClassPopulation({items=[]}) {
             </div>
         ))}
     </div>;
+}
+
+function DailyAttendance({data={}, onView}) {
+    const total = Number(data.attendance_total || 0);
+    const present = Number(data.attendance_present || 0);
+    const absent = Number(data.attendance_absent || 0);
+    const late = Number(data.attendance_late || 0);
+    const rate = total > 0 ? Math.round(present / total * 100) : 0;
+    const items = [
+        { label: "Present", value: present, tone: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+        { label: "Absent", value: absent, tone: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
+        { label: "Late", value: late, tone: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
+        { label: "Marked", value: total, tone: "bg-blue-50 text-blue-700", dot: "bg-blue-500" }
+    ];
+    return <Panel title="Daily Attendance" subtitle="Student attendance recorded for today" icon={CalendarCheck} action={<button onClick={onView} className="text-[10px] font-semibold text-blue-600">View attendance</button>}>
+        {total > 0 ? <>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {items.map(item => <div key={item.label} className={`rounded-lg px-3 py-3 ${item.tone}`}>
+                    <div className="flex items-center gap-1.5 text-[10px] font-semibold"><span className={`h-2 w-2 rounded-full ${item.dot}`}/>{item.label}</div>
+                    <p className="mt-1.5 text-2xl font-extrabold tabular-nums">{fmt(item.value)}</p>
+                </div>)}
+            </div>
+            <div className="mt-4">
+                <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px]">
+                    <span className="font-semibold text-slate-600">Present among attendance records</span>
+                    <b className="text-blue-950">{rate}%</b>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: rate + "%" }}/>
+                </div>
+                <p className="mt-1.5 text-[10px] text-slate-400">{fmt(total)} attendance records have been submitted today.</p>
+            </div>
+        </> : <div className="flex min-h-[104px] flex-col items-center justify-center gap-1 text-center">
+            <p className="text-sm font-semibold text-slate-600">No attendance recorded today</p>
+            <p className="text-[10px] text-slate-400">Daily attendance figures will appear here after teachers mark attendance.</p>
+        </div>}
+    </Panel>;
 }
 
 function EnrolmentChart({items=[]}) {
@@ -77,6 +114,9 @@ function DashboardPage() {
         </section>
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <Metric title="Total Students" value={d.students} note="Registered learners" icon={UsersRound} color={theme.primary} foreground={theme.primaryForeground}/><Metric title="Total Teachers" value={d.teachers} note="Teaching staff" icon={Users} color={theme.secondary} foreground={theme.secondaryForeground}/><Metric title="Admin Staff" value={d.admin_staff} note="School administrators" icon={GraduationCap} color={theme.primary} foreground={theme.primaryForeground}/><Metric title="Total Parents" value={d.parents} note="Registered parents" icon={UsersRound} color={theme.secondary} foreground={theme.secondaryForeground}/><Metric title="Active Classes" value={d.classes} note="School classes" icon={School} color={theme.primary} foreground={theme.primaryForeground}/>
+        </section>
+        <section className="grid min-w-0 grid-cols-1 gap-3">
+            <DailyAttendance data={d} onView={()=>navigate("/attendance")}/>
         </section>
         <section className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[1.35fr_1.05fr_.9fr]">
             <Panel title="Student Enrolment by Academic Session" subtitle="Number of students enrolled in each session" icon={CalendarDays}><EnrolmentChart items={d.enrollment_trend||[]}/></Panel>
