@@ -225,6 +225,11 @@ function AppRouter() {
                     path="/login"
                     element={<LoginPage />}
                 />
+                {/* Legacy school websites retain the school slug in the portal URL. */}
+                <Route
+                    path="/:schoolSlug/login"
+                    element={<LoginPage />}
+                />
 
 
                 {/* =========================================
