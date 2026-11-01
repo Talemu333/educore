@@ -18,7 +18,21 @@ const publicSchoolParams = () => {
         return { schoolDomain: hostname };
     }
 
-    if (!firstSegment || firstSegment === "website") return {};
+    if (!firstSegment || firstSegment === "website") {
+        const storedSlug = localStorage.getItem("educore_public_school_slug");
+        return storedSlug ? { schoolSlug: storedSlug } : {};
+    }
+    const reservedPortalPaths = new Set([
+        "login", "dashboard", "forgot-password", "reset-password", "change-password",
+        "student-dashboard", "teacher-dashboard", "parent-dashboard", "student-cbt",
+        "student-results", "student-subjects", "parent-results", "parent-attendance",
+        "parent-progress-reports", "teacher-students", "teacher-timetable",
+        "class-teacher-progress", "progress-report-review", "reports", "settings"
+    ]);
+    if (reservedPortalPaths.has(firstSegment)) {
+        const storedSlug = localStorage.getItem("educore_public_school_slug");
+        return storedSlug ? { schoolSlug: storedSlug } : {};
+    }
     return { schoolSlug: firstSegment };
 };
 
