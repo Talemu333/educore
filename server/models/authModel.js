@@ -190,6 +190,68 @@ const updatePassword = async (userId, hashedPassword) => {
     return result.rows[0];
 };
 
+
+const updateUsername = async (userId, schoolId, username) => {
+    const normalizedUsername = String(username || "").trim();
+
+    // Usernames must be unique in both the tenant database and platform
+    // registry because school authentication is mirrored across both.
+    const tenantConflict = await database.query(
+        `SELECT id FROM users
+         WHERE LOWER(username) = LOWER($1) AND id <> $2
+         LIMIT 1`,
+        [normalizedUsername, userId]
+    );
+    if (tenantConflict.rows.length) {
+        const error = new Error("That username is already in use. Please choose another.");
+        error.code = "USERNAME_CONFLICT";
+        throw error;
+    }
+
+    const centralConflict = await pool.query(
+        `SELECT id FROM users
+         WHERE LOWER(username) = LOWER($1)
+           AND NOT (id = $2 AND school_id = $3)
+         LIMIT 1`,
+        [normalizedUsername, userId, schoolId]
+    );
+    if (centralConflict.rows.length) {
+        const error = new Error("That username is already in use. Please choose another.");
+        error.code = "USERNAME_CONFLICT";
+        throw error;
+    }
+
+    const tenantUpdate = await database.query(
+        `UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2 AND school_id = $3
+         RETURNING id, username, email, school_id`,
+        [normalizedUsername, userId, schoolId]
+    );
+    if (!tenantUpdate.rows[0]) return null;
+
+    try {
+        const centralUpdate = await pool.query(
+            `UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND school_id = $3
+             RETURNING id`,
+            [normalizedUsername, userId, schoolId]
+        );
+        if (!centralUpdate.rows[0]) {
+            throw new Error("The platform account could not be synchronised.");
+        }
+    } catch (error) {
+        // Restore the tenant value if the registry update fails.
+        await database.query(
+            `UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND school_id = $3`,
+            [String(c.content ? "" : ""), userId, schoolId]
+        ).catch(() => {});
+        throw error;
+    }
+
+    return tenantUpdate.rows[0];
+};
+
 const updateProfileImageUrl = async (userId, profileImageUrl) => {
     const result = await database.query(`
         UPDATE users
@@ -271,6 +333,7 @@ module.exports = {
     findUserByIdInSchool,
     updateLastLogin,
     updatePassword,
+    updateUsername,
     updateProfileImageUrl,
     resetPasswordByAdmin,
     findUserByEmail,
