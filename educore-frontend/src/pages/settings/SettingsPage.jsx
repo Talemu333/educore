@@ -8,12 +8,14 @@ import SuperAdminSchoolManagement from "@/components/settings/SuperAdminSchoolMa
 import SuperAdminManageSchoolPage from "./SuperAdminManageSchoolPage";
 import BulkDataImport from "./BulkDataImport";
 import StateManagement from "@/components/settings/StateManagement";
+import ProprietorAccountSettings from "@/components/settings/ProprietorAccountSettings";
 
 function SchoolSettingsContent() {
     const { data: sessions = [] } = useSessions();
 
     return (
         <>
+            <ProprietorAccountSettings />
             <BulkDataImport />
 
             <LegacySettingsPage />
