@@ -56,7 +56,9 @@ function useAppPathname() {
 
 function App() {
     const pathname = useAppPathname();
-    const firstSegment = pathname.split("/").filter(Boolean)[0] || "";
+    const pathSegments = pathname.split("/").filter(Boolean);
+    const firstSegment = pathSegments[0] || "";
+    const secondSegment = pathSegments[1] || "";
     const hostname = window.location.hostname.toLowerCase();
     const isEduProwDomain = ["eduprow.com", "www.eduprow.com"].includes(hostname);
     const isEduProwSubdomain = hostname.endsWith(".eduprow.com") && !isEduProwDomain;
@@ -91,6 +93,11 @@ function App() {
     if (pathname === "/lesson-syllabus") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin", "Teacher"]} allowedAdminTypes={["proprietor", "principal", "vice_principal"]}><DashboardLayout><LessonSyllabusPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/contact-messages") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal"]}><DashboardLayout><ContactMessagesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
     if (pathname === "/expenses") return <BrowserRouter><ProtectedRoute allowedRoles={["Admin"]} allowedAdminTypes={["proprietor", "principal", "bursar"]}><DashboardLayout><ExpensesPage /></DashboardLayout></ProtectedRoute></BrowserRouter>;
+
+    // Legacy path-based school websites use /:schoolSlug/login. Route this portal URL
+    // through the application router instead of the public website catch-all.
+    const isLegacySchoolLoginPath = isPlatformHost && !RESERVED_PUBLIC_PREFIXES.has(firstSegment) && secondSegment === "login";
+    if (isLegacySchoolLoginPath) return <AppRouter />;
 
     if (isCustomSchoolDomain && pathname !== "/" && RESERVED_PUBLIC_PREFIXES.has(firstSegment)) return <AppRouter />;
 
