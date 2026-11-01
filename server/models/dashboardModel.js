@@ -152,7 +152,7 @@ const getGenderDistribution = async (schoolId) => {
 
 const getClassPopulation = async (schoolId) => {
     const result = await pool.query(`
-        SELECT c.class_name, COUNT(se.student_id) AS total_students
+        SELECT c.class_name, COUNT(DISTINCT se.student_id) AS total_students
         FROM classes c
         LEFT JOIN student_enrollments se
           ON se.class_id = c.id AND se.enrollment_status = 'Active'
