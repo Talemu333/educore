@@ -27,6 +27,9 @@ const createClass = async (req, res) => {
         const newClass = await classService.createClass(req.body, getSchoolId(req), getDatabase(req));
         return successResponse(res, "Class created successfully.", newClass, 201);
     } catch (err) {
+        if (err.code === "23505" || err.constraint === "classes_school_normalized_name_unique") {
+            return errorResponse(res, "A class with this name already exists. Please use a different class name.", 409);
+        }
         console.error(err);
         return errorResponse(res, err.message || "Failed to create class.", err.statusCode || 500);
     }
