@@ -14,7 +14,19 @@ const getPublicSchoolIdentifier = () => {
 
     if (isEduProwDomain) return "";
     if (isEduProwSubdomain || isCustomSchoolDomain) return hostname;
-    if (!firstSegment || firstSegment === "website") return "";
+    if (!firstSegment || firstSegment === "website") {
+        return localStorage.getItem("educore_public_school_slug") || "";
+    }
+    const reservedPortalPaths = new Set([
+        "login", "dashboard", "forgot-password", "reset-password", "change-password",
+        "student-dashboard", "teacher-dashboard", "parent-dashboard", "student-cbt",
+        "student-results", "student-subjects", "parent-results", "parent-attendance",
+        "parent-progress-reports", "teacher-students", "teacher-timetable",
+        "class-teacher-progress", "progress-report-review", "reports", "settings"
+    ]);
+    if (reservedPortalPaths.has(firstSegment)) {
+        return localStorage.getItem("educore_public_school_slug") || "";
+    }
     return firstSegment;
 };
 
