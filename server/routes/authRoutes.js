@@ -52,6 +52,14 @@ router.patch(
     authController.updateProfileImage
 );
 
+router.patch(
+    "/username",
+    keepSuperAdminOnPlatformDatabase,
+    schoolDatabaseMiddleware,
+    authenticate,
+    authController.updateUsername
+);
+
 router.post(
     "/change-password",
     keepSuperAdminOnPlatformDatabase,
