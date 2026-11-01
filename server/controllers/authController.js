@@ -62,6 +62,46 @@ const changePassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
+
+const updateUsername = async (req, res, next) => {
+    try {
+        const roleName = String(req.user?.role_name || "").trim().toLowerCase();
+        const adminType = String(req.user?.admin_type || "").trim().toLowerCase();
+        if (!["admin", "administrator"].includes(roleName) || adminType !== "proprietor") {
+            return res.status(403).json({ success: false, message: "Only the proprietor can change this account username." });
+        }
+
+        const username = String(req.body?.username || "").trim();
+        if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) {
+            return res.status(400).json({
+                success: false,
+                message: "Username must be 3–30 characters and contain only letters, numbers, dots, underscores or hyphens."
+            });
+        }
+
+        const schoolId = Number(req.user.school_id);
+        if (!Number.isInteger(schoolId) || schoolId < 1) {
+            return res.status(400).json({ success: false, message: "School account context is required." });
+        }
+
+        const updated = await authModel.updateUsername(req.user.id, schoolId, username);
+        if (!updated) return res.status(404).json({ success: false, message: "Proprietor account not found." });
+
+        // Keep the active Passport session in step with the new login name.
+        if (req.user) req.user.username = updated.username;
+        return res.json({
+            success: true,
+            message: "Username updated successfully. Use your new username the next time you log in.",
+            username: updated.username
+        });
+    } catch (error) {
+        if (error.code === "USERNAME_CONFLICT" || error.code === "23505") {
+            return res.status(409).json({ success: false, message: "That username is already in use. Please choose another." });
+        }
+        return next(error);
+    }
+};
+
 const updateProfileImage = async (req, res, next) => {
     try {
         const rawUrl = req.body?.profile_image_url;
@@ -169,4 +209,4 @@ const resetPassword = async (req, res, next) => {
     } catch (error) { next(error); }
 };
 
-module.exports = { login, logout, getCurrentUser, changePassword, updateProfileImage, resetPasswordByAdmin, requestPasswordReset, resetPassword };
+module.exports = { login, logout, getCurrentUser, changePassword, updateUsername, updateProfileImage, resetPasswordByAdmin, requestPasswordReset, resetPassword };
