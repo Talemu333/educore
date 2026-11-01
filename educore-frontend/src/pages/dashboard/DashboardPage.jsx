@@ -21,6 +21,21 @@ function Donut({ items, total }) {
     return <div className="flex flex-col items-center gap-5 sm:flex-row"><div className="relative h-40 w-40 shrink-0"><svg viewBox="0 0 120 120" className="h-full w-full -rotate-90"><circle cx="60" cy="60" r="43" fill="none" stroke="#edf2fa" strokeWidth="17"/>{rows.map(x=>{const len=x.value/(sum||1)*270.18,off=offset;offset+=len;return <circle key={x.label} cx="60" cy="60" r="43" fill="none" stroke={x.color} strokeWidth="17" strokeDasharray={len+" 270.18"} strokeDashoffset={-off}/>})}</svg><div className="absolute inset-0 flex flex-col items-center justify-center"><b className="text-2xl text-blue-950">{fmt(total)}</b><span className="text-[10px] text-slate-500">Total Students</span></div></div><div className="w-full space-y-3">{rows.length?rows.map(x=><div key={x.label} className="flex justify-between gap-2 text-[11px]"><span className="flex items-center gap-2 text-slate-600"><i className="h-2.5 w-2.5 rounded-full" style={{background:x.color}}/>{x.label}</span><b className="text-slate-700">{fmt(x.value)} ({Math.round(x.value/(sum||1)*100)}%)</b></div>):<p className="text-xs text-slate-400">Student distribution will appear when records are available.</p>}</div></div>;
 }
 
+function ClassPopulation({items=[]}) {
+    const rows = [...items].sort((a,b) => String(a.class_name || "").localeCompare(String(b.class_name || "")));
+    if (!rows.length) {
+        return <div className="flex min-h-[120px] items-center justify-center text-center text-xs text-slate-400">Class population will appear here when classes are available.</div>;
+    }
+    return <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((item,index) => (
+            <div key={item.class_id || item.class_name || index} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50/70 px-3.5 py-3">
+                <span className="min-w-0 truncate text-xs font-medium text-slate-700" title={item.class_name}>{item.class_name || "Unnamed class"}</span>
+                <span className="shrink-0 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-extrabold tabular-nums text-blue-800">{fmt(item.total_students)}</span>
+            </div>
+        ))}
+    </div>;
+}
+
 function EnrolmentChart({items=[]}) {
     const rows=items.map(x=>({label:x.label||"Session",value:Math.max(0,Number(x.total_students||0))}));
     if(!rows.length)return <div className="flex min-h-[190px] items-center justify-center text-center text-xs text-slate-400">Enrolment figures will appear here when academic-session records are available.</div>;
@@ -67,6 +82,11 @@ function DashboardPage() {
             <Panel title="Student Enrolment by Academic Session" subtitle="Number of students enrolled in each session" icon={CalendarDays}><EnrolmentChart items={d.enrollment_trend||[]}/></Panel>
             <Panel title="Student Distribution by Level" subtitle="Breakdown of students across school levels" icon={Clock3}><Donut items={d.level_distribution||[]} total={d.active_students||d.students}/></Panel>
             <Panel title="Recent Activities" subtitle="Latest updates across your school" icon={Clock3} action={<button onClick={()=>navigate("/announcements")} className="text-[10px] font-semibold text-blue-600">View all</button>}><div className="space-y-3.5">{activities.length?activities.map(x=><div key={x.id} className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sky-600"><x.Icon size={17}/></span><div className="min-w-0"><p className="text-[11px] font-bold text-blue-950">{x.title}</p><p className="mt-0.5 line-clamp-1 text-[10px] text-slate-500">{x.detail}</p><p className="mt-0.5 text-[10px] text-slate-400">{date(x.date)}</p></div></div>):<p className="py-8 text-center text-xs text-slate-400">Recent school activity will appear here.</p>}</div></Panel>
+        </section>
+        <section className="grid min-w-0 grid-cols-1 gap-3">
+            <Panel title="Students Per Class" subtitle="Current active student enrolment in each class" icon={School}>
+                <ClassPopulation items={d.class_population || []}/>
+            </Panel>
         </section>
         <section className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[1.35fr_1.05fr_.9fr]">
             <Panel title="Fee & Financial Overview" subtitle={"Fee collection · "+(d.current_session||"Current session")} icon={Wallet}><div className="grid grid-cols-1 gap-3 sm:grid-cols-3"><div className="rounded-lg bg-blue-50 p-3"><p className="text-[10px] text-blue-700">Expected Fees</p><b className="mt-1 block text-lg text-blue-950">{cash(d.expected_fees)}</b></div><div className="rounded-lg bg-emerald-50 p-3"><p className="text-[10px] text-emerald-700">Fees Paid</p><b className="mt-1 block text-lg text-emerald-800">{cash(d.total_payments)}</b></div><div className="rounded-lg bg-orange-50 p-3"><p className="text-[10px] text-orange-700">Outstanding Fees</p><b className="mt-1 block text-lg text-orange-800">{cash(d.outstanding_fees)}</b></div></div><div className="mt-4"><p className="mb-2 text-[10px] font-semibold text-slate-600">Monthly fees collected</p><div className="flex h-28 items-end gap-3 border-b border-slate-100 px-1">{(d.monthly_fee_collections||[]).map((item,i)=>{const rows=d.monthly_fee_collections||[];const max=Math.max(1,...rows.map(row=>Number(row.total||0)));const height=Math.max(3,Number(item.total||0)/max*100);return <div key={item.label+i} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1"><span className="text-[9px] font-semibold text-blue-800">{Number(item.total||0)>0?cash(item.total):""}</span><div className="w-full max-w-9 rounded-t bg-blue-500" style={{height:height+"%"}}/><span className="text-[9px] text-slate-500">{item.label}</span></div>})}</div>{!(d.monthly_fee_collections||[]).length&&<p className="mt-2 text-[10px] text-slate-400">Monthly fee activity will appear as payments are recorded.</p>}</div><div className="mt-4"><div className="mb-1.5 flex justify-between text-[10px] text-slate-500"><span>Fee collection progress</span><b className="text-blue-900">{collection}%</b></div><div className="h-3 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{width:collection+"%"}}/></div></div></Panel>
