@@ -12,7 +12,7 @@ function Navbar({ onMenuClick }) {
         await logoutUser();
         navigate("/login", { replace: true });
     };
-    const displayName = user?.full_name || user?.name || "User";
+    const displayName = user?.full_name || user?.name || user?.username || "User";
     const roleLabel = user?.admin_type?.replace(/_/g, " ") || user?.role_name || "Account";
     const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
 
