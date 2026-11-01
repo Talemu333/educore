@@ -178,13 +178,15 @@ function PublicLayout() {
                             );
                         })}
 
-                        <Link
-                            to={publicPath("/login")}
+                        <a
+                            href={publicPath("/login")}
                             className="ml-3 rounded-lg border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-sm"
                             style={{ borderColor: primaryColor, color: primaryColor }}
+                        
+                            onClick={closeMobileMenu}
                         >
                             Sign In
-                        </Link>
+                        </a>
 
                         <Link
                             to={publicPath("/admissions")}
@@ -237,14 +239,15 @@ function PublicLayout() {
                                 })}
                             </div>
 
-                            <Link
-                                to={publicPath("/login")}
-                                onClick={closeMobileMenu}
-                                className="mt-3 block rounded-lg border px-4 py-3 text-center text-sm font-bold transition"
+                            <a
+                            href={publicPath("/login")}
+                            className="mt-3 block rounded-lg border px-4 py-3 text-center text-sm font-bold transition"
                                 style={{ borderColor: primaryColor, color: primaryColor }}
-                            >
+                            
+                            onClick={closeMobileMenu}
+                        >
                                 Sign In
-                            </Link>
+                            </a>
 
                             <Link
                                 to={publicPath("/admissions")}
@@ -317,7 +320,11 @@ function PublicLayout() {
                                 <Link to={publicPath("/admissions")} className="text-sm text-slate-400 transition-colors hover:text-white">Admission information</Link>
                                 <Link to={publicPath("/gallery")} className="text-sm text-slate-400 transition-colors hover:text-white">School gallery</Link>
                                 <Link to={publicPath("/contact")} className="text-sm text-slate-400 transition-colors hover:text-white">Contact us</Link>
-                                <Link to={publicPath("/login")} className="inline-flex items-center gap-2 pt-1 text-sm font-bold transition-colors hover:opacity-80" style={{ color: secondaryColor }}>Student & Staff Portal <span aria-hidden="true">↗</span></Link>
+                                <a
+                            href={publicPath("/login")}
+                            className="inline-flex items-center gap-2 pt-1 text-sm font-bold transition-colors hover:opacity-80" style={{ color: secondaryColor }}
+                            onClick={closeMobileMenu}
+                        >Student & Staff Portal <span aria-hidden="true">↗</span></a>
                             </div>
                         </div>
 
