@@ -196,6 +196,13 @@ const updateUsername = async (userId, schoolId, username) => {
 
     // Usernames must be unique in both the tenant database and platform
     // registry because school authentication is mirrored across both.
+    const existing = await database.query(
+        `SELECT username FROM users WHERE id = $1 AND school_id = $2 LIMIT 1`,
+        [userId, schoolId]
+    );
+    if (!existing.rows[0]) return null;
+    const previousUsername = existing.rows[0].username;
+
     const tenantConflict = await database.query(
         `SELECT id FROM users
          WHERE LOWER(username) = LOWER($1) AND id <> $2
@@ -244,7 +251,7 @@ const updateUsername = async (userId, schoolId, username) => {
         await database.query(
             `UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP
              WHERE id = $2 AND school_id = $3`,
-            [String(c.content ? "" : ""), userId, schoolId]
+            [previousUsername, userId, schoolId]
         ).catch(() => {});
         throw error;
     }
