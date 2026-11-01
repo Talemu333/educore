@@ -128,6 +128,9 @@ import Admissions
 import WebsiteManagement
     from "@/pages/dashboard/WebsiteManagement";
 
+import HomepageContentManagement
+    from "@/pages/dashboard/HomepageContentManagement";
+
 
 import Gallery
     from "@/pages/public/Gallery";
