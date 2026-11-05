@@ -5,10 +5,19 @@ const authorize = require("../middlewares/authorize");
 const ROLES = require("../config/roles");
 const controller = require("../controllers/cbtController");
 const reportController = require("../controllers/cbtReportController");
+const { ensureSharedDatabaseResultApprovalMigration } = require("../config/schoolDatabaseManager");
 
 const staffRoles = [ROLES.ADMIN, ROLES.TEACHER, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL];
 
 router.use(authenticate);
+router.use(async (req, res, next) => {
+    try {
+        await ensureSharedDatabaseResultApprovalMigration();
+        return next();
+    } catch (error) {
+        return next(error);
+    }
+});
 
 // Student routes
 router.get("/exams/available", authorize(ROLES.STUDENT), controller.getAvailableStudentExams);
