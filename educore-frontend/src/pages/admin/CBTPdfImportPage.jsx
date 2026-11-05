@@ -222,7 +222,7 @@ function CBTPdfImportPage() {
                                     {targetExamId && <label className="mt-3 block text-sm font-medium">Subject section
                                         <select className="mt-1 w-full rounded-lg border p-2" value={q.subject_id} onChange={(e) => updateQuestion(index, "subject_id", e.target.value)}>
                                             <option value="">Select subject for this question</option>
-                                            {(targetExam?.exam_subjects || []).map((section) => <option key={section.subject_id} value={section.subject_id}>{section.section_title || section.subject_name}</option>)}
+                                            {(targetExam?.exam_subjects || []).filter((section) => !Array.isArray(targetExam?.manageable_subject_ids) || targetExam.manageable_subject_ids.map(Number).includes(Number(section.subject_id))).map((section) => <option key={section.subject_id} value={section.subject_id}>{section.section_title || section.subject_name}</option>)}
                                         </select>
                                     </label>}
                                     <textarea className="w-full rounded-lg border p-3" rows="3" value={q.question_text} onChange={(e) => updateQuestion(index, "question_text", e.target.value)} placeholder="Question text" />
