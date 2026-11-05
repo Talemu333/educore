@@ -34,9 +34,9 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
     const conditions = ["a.school_id = $1"];
     let i = 2;
     if (filters.examId) { conditions.push(`a.exam_id = $${i++}`); values.push(filters.examId); }
-    if (filters.studentId) { conditions.push(`a.student_id = ${i++}`); values.push(filters.studentId); }
-    if (filters.classId) { conditions.push(`e.class_id = ${i++}`); values.push(filters.classId); }
-    if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=${i++})`); values.push(filters.subjectId); }
+    if (filters.studentId) { conditions.push(`a.student_id = $${i++}`); values.push(filters.studentId); }
+    if (filters.classId) { conditions.push(`e.class_id = $${i++}`); values.push(filters.classId); }
+    if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=$${i++})`); values.push(filters.subjectId); }
 
     const result = await pool.query(`
         SELECT a.id, a.exam_id, a.student_id, a.attempt_number, a.status,
