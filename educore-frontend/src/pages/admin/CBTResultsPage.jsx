@@ -86,7 +86,7 @@ function CBTResultsPage() {
         if (!classFilter || !subjectFilter) return [];
         return attempts.filter((item) => {
             const matchesClass = String(item.class_id ?? "") === String(classFilter);
-            const matchesSubject = Array.isArray(item.subject_results) && item.subject_results.some((section) => String(section.subject_id) === String(subjectFilter));
+            const matchesSubject = (Array.isArray(item.subject_results) && item.subject_results.some((section) => String(section.subject_id) === String(subjectFilter))) || String(item.subject_id ?? "") === String(subjectFilter);
             const matchesExam = !examFilter || String(item.exam_id) === String(examFilter);
             if (!matchesClass || !matchesSubject || !matchesExam) return false;
             if (!term) return true;
