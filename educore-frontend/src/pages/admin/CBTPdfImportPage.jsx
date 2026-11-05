@@ -41,6 +41,7 @@ function CBTPdfImportPage() {
     const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [importing, setImporting] = useState(false);
+    const draftExams = exams.filter((exam) => String(exam.status || "").trim().toLowerCase() === "draft");
 
     useEffect(() => {
         Promise.all([api.get("/subjects"), api.get("/classes"), api.get("/cbt/exams")])
@@ -181,9 +182,9 @@ function CBTPdfImportPage() {
                         <label className="text-sm font-medium md:col-span-2">Import destination
                             <select className="mt-1 w-full rounded-lg border p-3" value={targetExamId} onChange={(e) => chooseExam(e.target.value)}>
                                 <option value="">Question bank (existing workflow)</option>
-                                {exams.filter((exam) => exam.status === "draft").map((exam) => <option key={exam.id} value={exam.id}>{exam.title} — {exam.class_name}</option>)}
+                                {draftExams.length === 0 ? <option value="" disabled>No draft examinations available — create one in CBT Management first</option> : draftExams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title} — {exam.class_name}</option>)}
                             </select>
-                            <span className="mt-1 block text-xs text-slate-500">Choose a draft combined examination to import directly into its subject sections. Teachers only see examinations they created or have an assigned subject in.</span>
+                            <span className="mt-1 block text-xs text-slate-500">{draftExams.length === 0 ? "To import into a combined examination, first create and save it as a draft in CBT Management. It will appear here after it has been created." : "Choose a draft examination to import directly into its subject sections. Teachers only see examinations they created or have an assigned subject in."}</span>
                         </label>
                         {!targetExamId && <>
                             <label className="text-sm font-medium">Subject<select className="mt-1 w-full rounded-lg border p-3" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}><option value="">Select subject</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.subject_name}</option>)}</select></label>
