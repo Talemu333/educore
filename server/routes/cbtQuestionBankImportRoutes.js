@@ -6,7 +6,7 @@ const authorize = require("../middlewares/authorize");
 const ROLES = require("../config/roles");
 const controller = require("../controllers/cbtPdfImportController");
 
-const staffRoles = [ROLES.ADMIN, ROLES.TEACHER, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL];
+const staffRoles = [ROLES.ADMIN, ROLES.TEACHER, ROLES.PRINCIPAL, ROLES.VICE_PRINCIPAL, ROLES.PROPRIETOR];
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 },
