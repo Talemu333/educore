@@ -20,7 +20,84 @@ const getAvailableStudentExams = async (studentId, schoolId) => {
 const getExamById = async (examId, schoolId, createdById = null) => { const result=await pool.query(`SELECT e.*,s.subject_name,c.class_name,a.arm_name FROM cbt_exams e JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id WHERE e.id=$1 AND e.school_id=$2 AND ($3::integer IS NULL OR e.created_by=$3);`,[examId,schoolId,createdById]); return result.rows[0]; };
 const getQuestionTotalMarks = async (examId, schoolId, client=pool) => { const result=await client.query(`SELECT COALESCE(SUM(marks),0)::numeric AS total_marks,COUNT(*)::int AS question_count FROM cbt_questions WHERE exam_id=$1 AND school_id=$2`, [examId,schoolId]); return { totalMarks:Number(result.rows[0]?.total_marks||0), questionCount:Number(result.rows[0]?.question_count||0) }; };
 const syncExamTotalMarks = async (examId, schoolId, client=pool) => { const totals=await getQuestionTotalMarks(examId,schoolId,client); const result=await client.query(`UPDATE cbt_exams SET total_marks=$3,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 RETURNING *`,[examId,schoolId,totals.totalMarks]); return result.rows[0]; };
-const createExam = async (data, schoolId, userId) => { if(data.status==="published") throw new Error("Create the examination as a draft, add its questions, then publish it."); const result=await pool.query(`INSERT INTO cbt_exams (school_id,subject_id,class_id,arm_id,title,description,duration_minutes,total_marks,pass_mark,max_attempts,question_selection_count,randomize_questions,randomize_options,show_result_immediately,starts_at,ends_at,status,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,0,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,[schoolId,data.subject_id,data.class_id,data.arm_id||null,data.title,data.description||null,data.duration_minutes,data.pass_mark||0,data.max_attempts||1,Math.max(0,Number(data.question_selection_count)||0),Boolean(data.randomize_questions),Boolean(data.randomize_options),data.show_result_immediately===true,data.starts_at||null,data.ends_at||null,data.status||"draft",userId]); return result.rows[0]; };
+const normalizeExamSubjects = (data) => {
+    const supplied = Array.isArray(data.subject_sections) && data.subject_sections.length
+        ? data.subject_sections
+        : (Array.isArray(data.subject_ids) && data.subject_ids.length
+            ? data.subject_ids.map((subject_id) => ({ subject_id }))
+            : [{ subject_id: data.subject_id }]);
+    const seen = new Set();
+    return supplied.map((item, index) => ({
+        subject_id: Number(item.subject_id),
+        section_title: String(item.section_title || "").trim(),
+        section_order: Number(item.section_order || index + 1),
+    })).filter((item) => {
+        if (!Number.isInteger(item.subject_id) || item.subject_id < 1 || seen.has(item.subject_id)) return false;
+        seen.add(item.subject_id);
+        return true;
+    });
+};
+
+const saveExamSubjects = async (client, examId, schoolId, sections) => {
+    const subjectIds = sections.map((item) => item.subject_id);
+    const valid = await client.query(
+        "SELECT id, subject_name FROM subjects WHERE school_id=$1 AND id=ANY($2::int[])",
+        [schoolId, subjectIds]
+    );
+    if (valid.rows.length !== subjectIds.length) {
+        throw new Error("One or more selected subjects do not belong to this school.");
+    }
+    await client.query("DELETE FROM cbt_exam_subjects WHERE exam_id=$1 AND school_id=$2", [examId, schoolId]);
+    for (let index = 0; index < sections.length; index += 1) {
+        const section = sections[index];
+        const subject = valid.rows.find((item) => Number(item.id) === section.subject_id);
+        await client.query(
+            `INSERT INTO cbt_exam_subjects
+                (school_id,exam_id,subject_id,section_title,section_order)
+             VALUES ($1,$2,$3,$4,$5)`,
+            [schoolId, examId, section.subject_id, section.section_title || subject.subject_name, index + 1]
+        );
+    }
+};
+
+const createExam = async (data, schoolId, userId) => {
+    if (data.status === "published") throw new Error("Create the examination as a draft, add its questions, then publish it.");
+    const sections = normalizeExamSubjects(data);
+    if (!sections.length) throw new Error("Select at least one valid subject.");
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const subjectIds = sections.map((item) => item.subject_id);
+        const valid = await client.query(
+            "SELECT id FROM subjects WHERE school_id=$1 AND id=ANY($2::int[])",
+            [schoolId, subjectIds]
+        );
+        if (valid.rows.length !== subjectIds.length) throw new Error("One or more selected subjects do not belong to this school.");
+        const result = await client.query(`
+            INSERT INTO cbt_exams
+                (school_id,subject_id,class_id,arm_id,title,description,duration_minutes,total_marks,
+                 pass_mark,max_attempts,question_selection_count,randomize_questions,randomize_options,
+                 show_result_immediately,starts_at,ends_at,status,created_by)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,0,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+            RETURNING *
+        `, [
+            schoolId, subjectIds[0], data.class_id, data.arm_id || null, data.title,
+            data.description || null, data.duration_minutes, data.pass_mark || 0,
+            data.max_attempts || 1, Math.max(0, Number(data.question_selection_count) || 0),
+            Boolean(data.randomize_questions), Boolean(data.randomize_options),
+            data.show_result_immediately === true, data.starts_at || null,
+            data.ends_at || null, data.status || "draft", userId
+        ]);
+        await saveExamSubjects(client, result.rows[0].id, schoolId, sections);
+        await client.query("COMMIT");
+        return result.rows[0];
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
 const setExamResultVisibility = async (examId, visible, schoolId) => {
     const result = await pool.query(
         `UPDATE cbt_exams e
