@@ -243,7 +243,7 @@ function CBTPdfImportPage() {
 
                         <div className="mt-8 border-t pt-6">
                             <Button className="w-full" onClick={importQuestions} disabled={importing}>
-                                {importing ? "Importing Questions..." : `Import All ${preview.questions.length} Question(s) to Question Bank`}
+                                {importing ? "Importing Questions..." : `Import All ${preview.questions.length} Question(s) ${targetExamId ? "to Examination" : "to Question Bank"}`}
                             </Button>
                         </div>
                     </CardContent>
