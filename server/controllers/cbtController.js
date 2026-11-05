@@ -7,7 +7,7 @@ const userId = (req) => Number(req.user.id);
 const studentId = (req) => { const id=Number(req.user.student_id); if(!Number.isInteger(id)||id<1) throw new ApiError(403,"This student account is not linked to a student record."); return id; };
 const canPublishCbtResults = (req) => { const role = String(req.user?.role_name || "").trim().toLowerCase(); const adminType = String(req.user?.admin_type || "").trim().toLowerCase(); return ["proprietor", "principal"].includes(role) || (["admin", "administrator"].includes(role) && ["proprietor", "principal"].includes(adminType)); };
 const isFullCbtManager = (req) => ["admin", "administrator", "proprietor", "principal", "vice_principal"].includes(String(req.user?.role_name || "").trim().toLowerCase());
-const isFullCbtManager = (req) => ["admin", "administrator", "proprietor", "principal", "vice_principal"].includes(String(req.user?.role_name || "").trim().toLowerCase());
+
 const assertExamOwnerOrManager = async (req, examId) => {
     if (isFullCbtManager(req)) return;
     throw new ApiError(403, "Only an authorised administrator can change examination settings. Teachers can manage their assigned subject sections.");
