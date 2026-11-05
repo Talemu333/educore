@@ -15,6 +15,7 @@ const emptyOptions = () => [1, 2, 3, 4].map((order) => ({
 
 const normalizeQuestion = (q) => ({
     ...q,
+    subject_id: q.subject_id || "",
     question_text: q.question_text || "",
     image_url: q.image_url || "",
     marks: Number(q.marks || 1),
@@ -31,6 +32,9 @@ const normalizeQuestion = (q) => ({
 function CBTPdfImportPage() {
     const [subjects, setSubjects] = useState([]);
     const [classes, setClasses] = useState([]);
+    const [exams, setExams] = useState([]);
+    const [targetExamId, setTargetExamId] = useState("");
+    const [targetExam, setTargetExam] = useState(null);
     const [subjectId, setSubjectId] = useState("");
     const [classId, setClassId] = useState("");
     const [file, setFile] = useState(null);
@@ -39,13 +43,27 @@ function CBTPdfImportPage() {
     const [importing, setImporting] = useState(false);
 
     useEffect(() => {
-        Promise.all([api.get("/subjects"), api.get("/classes")])
-            .then(([s, c]) => {
+        Promise.all([api.get("/subjects"), api.get("/classes"), api.get("/cbt/exams")])
+            .then(([s, c, e]) => {
                 setSubjects(s.data?.data || []);
                 setClasses(c.data?.data || []);
+                setExams(e.data?.data || []);
             })
             .catch((error) => toast.error(error.response?.data?.message || "Unable to load subjects and classes."));
     }, []);
+
+    const chooseExam = async (id) => {
+        setTargetExamId(id);
+        setTargetExam(null);
+        if (!id) return;
+        try {
+            const response = await api.get(`/cbt/exams/${id}`);
+            setTargetExam(response.data?.data || null);
+        } catch (error) {
+            setTargetExamId("");
+            toast.error(error.response?.data?.message || "Unable to load the selected examination.");
+        }
+    };
 
     const chooseFile = (event) => {
         const selected = event.target.files?.[0];
@@ -117,22 +135,24 @@ function CBTPdfImportPage() {
     };
 
     const importQuestions = async () => {
-        if (!subjectId || !classId) return toast.error("Select the subject and class for these questions.");
+        if (!targetExamId && (!subjectId || !classId)) return toast.error("Select the subject and class for these questions.");
         const questions = (preview?.questions || []).filter((q) => q.question_text.trim());
         if (!questions.length) return toast.error("There are no questions ready to import.");
-        const invalidIndex = questions.findIndex((q) => q.options.length !== 4 || q.options.some((o) => !o.option_text.trim()) || q.options.filter((o) => o.is_correct).length !== 1 || Number(q.marks) <= 0);
+        const invalidIndex = questions.findIndex((q) => q.options.length !== 4 || q.options.some((o) => !o.option_text.trim()) || q.options.filter((o) => o.is_correct).length !== 1 || Number(q.marks) <= 0 || (targetExamId && !q.subject_id));
         if (invalidIndex >= 0) return toast.error(`Question ${invalidIndex + 1} still needs correction.`);
 
         setImporting(true);
         try {
-            const response = await api.post("/cbt-question-bank/import-pdf/import", {
-                subject_id: Number(subjectId),
-                class_id: Number(classId),
-                questions,
-            });
+            const response = targetExamId
+                ? await api.post(`/cbt-question-bank/import-pdf/exam/${targetExamId}/import`, { questions })
+                : await api.post("/cbt-question-bank/import-pdf/import", { subject_id: Number(subjectId), class_id: Number(classId), questions });
             toast.success(response.data?.message || "Questions imported successfully.");
             setFile(null);
             setPreview(null);
+            setTargetExam(null);
+            setTargetExamId("");
+            setSubjectId("");
+            setClassId("");
         } catch (error) {
             toast.error(error.response?.data?.message || "Unable to import questions.");
         } finally {
@@ -142,14 +162,14 @@ function CBTPdfImportPage() {
 
     return (
         <div className="w-full space-y-6">
-            <PageHeader title="Import CBT Questions from PDF" description="Upload a standard EduCore CBT PDF, review the questions, then import them into the question bank." />
+            <PageHeader title="Import CBT Questions from PDF" description="Upload one PDF, assign each question to its subject, review it, then import it into a combined examination or the question bank." />
 
             <Card>
                 <CardContent className="space-y-5 p-5 sm:p-7">
                     <div className="rounded-xl border border-dashed p-6 text-center">
                         <FileText className="mx-auto h-10 w-10 text-slate-400" />
                         <h2 className="mt-3 font-semibold">Upload CBT Question PDF</h2>
-                        <p className="mt-1 text-sm text-slate-500">Maximum 10 MB. Text-based PDFs only for this first version.</p>
+                        <p className="mt-1 text-sm text-slate-500">Maximum 10 MB. Text-based PDFs only; scanned PDFs are not supported yet.</p>
                         <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50">
                             <Upload className="h-4 w-4" /> Choose PDF
                             <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={chooseFile} />
@@ -158,8 +178,17 @@ function CBTPdfImportPage() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                        <label className="text-sm font-medium">Subject<select className="mt-1 w-full rounded-lg border p-3" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}><option value="">Select subject</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.subject_name}</option>)}</select></label>
-                        <label className="text-sm font-medium">Class<select className="mt-1 w-full rounded-lg border p-3" value={classId} onChange={(e) => setClassId(e.target.value)}><option value="">Select class</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}</select></label>
+                        <label className="text-sm font-medium md:col-span-2">Import destination
+                            <select className="mt-1 w-full rounded-lg border p-3" value={targetExamId} onChange={(e) => chooseExam(e.target.value)}>
+                                <option value="">Question bank (existing workflow)</option>
+                                {exams.filter((exam) => exam.status === "draft").map((exam) => <option key={exam.id} value={exam.id}>{exam.title} — {exam.class_name}</option>)}
+                            </select>
+                            <span className="mt-1 block text-xs text-slate-500">Choose a draft combined examination to import directly into its subject sections. Teachers only see examinations they created or have an assigned subject in.</span>
+                        </label>
+                        {!targetExamId && <>
+                            <label className="text-sm font-medium">Subject<select className="mt-1 w-full rounded-lg border p-3" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}><option value="">Select subject</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.subject_name}</option>)}</select></label>
+                            <label className="text-sm font-medium">Class<select className="mt-1 w-full rounded-lg border p-3" value={classId} onChange={(e) => setClassId(e.target.value)}><option value="">Select class</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}</select></label>
+                        </>}
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -190,6 +219,12 @@ function CBTPdfImportPage() {
                                         <Button variant="outline" onClick={() => removeQuestion(index)}><X className="h-4 w-4" /></Button>
                                     </div>
                                     {!q.valid && q.warning && <div className="mb-3 rounded-lg border p-3 text-sm">{q.warning}</div>}
+                                    {targetExamId && <label className="mt-3 block text-sm font-medium">Subject section
+                                        <select className="mt-1 w-full rounded-lg border p-2" value={q.subject_id} onChange={(e) => updateQuestion(index, "subject_id", e.target.value)}>
+                                            <option value="">Select subject for this question</option>
+                                            {(targetExam?.exam_subjects || []).map((section) => <option key={section.subject_id} value={section.subject_id}>{section.section_title || section.subject_name}</option>)}
+                                        </select>
+                                    </label>}
                                     <textarea className="w-full rounded-lg border p-3" rows="3" value={q.question_text} onChange={(e) => updateQuestion(index, "question_text", e.target.value)} placeholder="Question text" />
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {q.options.map((option, optionIndex) => (
