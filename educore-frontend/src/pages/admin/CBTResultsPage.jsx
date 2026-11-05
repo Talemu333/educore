@@ -63,22 +63,30 @@ function CBTResultsPage() {
         exams
             .filter((exam) => !classFilter || String(exam.class_id) === String(classFilter))
             .forEach((exam) => {
-                if (exam.subject_id && exam.subject_name) values.set(String(exam.subject_id), exam.subject_name);
+                const sections = Array.isArray(exam.exam_subjects) && exam.exam_subjects.length
+                    ? exam.exam_subjects
+                    : [{ subject_id: exam.subject_id, subject_name: exam.subject_name }];
+                sections.forEach((section) => {
+                    if (section.subject_id && section.subject_name) values.set(String(section.subject_id), section.subject_name);
+                });
             });
         return Array.from(values, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
     }, [exams, classFilter]);
 
-    const filteredExams = useMemo(() => exams.filter((exam) =>
-        (!classFilter || String(exam.class_id) === String(classFilter)) &&
-        (!subjectFilter || String(exam.subject_id) === String(subjectFilter))
-    ), [exams, classFilter, subjectFilter]);
+    const filteredExams = useMemo(() => exams.filter((exam) => {
+        const sections = Array.isArray(exam.exam_subjects) && exam.exam_subjects.length
+            ? exam.exam_subjects
+            : [{ subject_id: exam.subject_id }];
+        return (!classFilter || String(exam.class_id) === String(classFilter)) &&
+            (!subjectFilter || sections.some((section) => String(section.subject_id) === String(subjectFilter)));
+    }), [exams, classFilter, subjectFilter]);
 
     const filteredAttempts = useMemo(() => {
         const term = search.trim().toLowerCase();
         if (!classFilter || !subjectFilter) return [];
         return attempts.filter((item) => {
             const matchesClass = String(item.class_id ?? "") === String(classFilter);
-            const matchesSubject = String(item.subject_id ?? "") === String(subjectFilter);
+            const matchesSubject = Array.isArray(item.subject_results) && item.subject_results.some((section) => String(section.subject_id) === String(subjectFilter));
             const matchesExam = !examFilter || String(item.exam_id) === String(examFilter);
             if (!matchesClass || !matchesSubject || !matchesExam) return false;
             if (!term) return true;
@@ -120,7 +128,7 @@ function CBTResultsPage() {
         if (!sortedAttempts.length) return;
         const headers = ["Student", "Admission Number", "Examination", "Subject", "Attempt", "Score", "Total Marks", "Percentage", "Status"];
         const rows = sortedAttempts.map((item) => [
-            studentName(item), item.admission_number || "", item.title || "", item.subject_name || "",
+            studentName(item), item.admission_number || "", item.title || "", (item.subject_results || []).map((section) => section.section_title || section.subject_name).join(" / ") || item.subject_name || "",
             item.attempt_number ?? "", item.score ?? 0, item.total_marks ?? 0,
             Number(item.percentage ?? 0).toFixed(2) + "%", item.status || ""
         ]);
@@ -268,7 +276,7 @@ function CBTResultsPage() {
                                                     <div className="text-xs text-slate-500">{item.admission_number}</div>
                                                 </td>
                                                 <td className="px-4 py-3 font-medium">{item.title}</td>
-                                                <td className="px-4 py-3">{item.subject_name}</td>
+                                                <td className="px-4 py-3">{(item.subject_results || []).map((section) => section.section_title || section.subject_name).join(" / ") || item.subject_name}</td>
                                                 <td className="px-4 py-3">#{item.attempt_number}</td>
                                                 <td className="px-4 py-3">{item.score ?? 0} / {item.total_marks ?? 0}</td>
                                                 <td className="px-4 py-3 font-semibold">{Number(item.percentage ?? 0).toFixed(2)}%</td>
@@ -372,11 +380,12 @@ function CBTResultsPage() {
                                         <div className="rounded-xl bg-slate-50 p-4"><span className="text-xs text-slate-500">Correct</span><div className="text-xl font-bold">{selectedAttempt.correct_answers ?? 0}</div></div>
                                         <div className="rounded-xl bg-slate-50 p-4"><span className="text-xs text-slate-500">Wrong / Unanswered</span><div className="text-xl font-bold">{selectedAttempt.wrong_answers ?? 0} / {selectedAttempt.unanswered ?? 0}</div></div>
                                     </div>
+                                    {Array.isArray(selectedAttempt.subject_results) && selectedAttempt.subject_results.length > 1 && <div><h3 className="mb-3 font-semibold text-slate-900">Subject score breakdown</h3><div className="overflow-x-auto rounded-xl border"><table className="w-full text-sm"><thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="px-3 py-3">Subject</th><th className="px-3 py-3 text-right">Score</th><th className="px-3 py-3 text-right">Percentage</th></tr></thead><tbody>{selectedAttempt.subject_results.map((section) => <tr key={section.subject_id} className="border-t"><td className="px-3 py-3 font-medium">{section.section_title || section.subject_name}</td><td className="px-3 py-3 text-right">{Number(section.score || 0).toFixed(2)} / {Number(section.total_marks || 0).toFixed(2)}</td><td className="px-3 py-3 text-right">{Number(section.percentage || 0).toFixed(2)}%</td></tr>)}</tbody></table></div></div>}
                                     <div className="space-y-3">
                                         {(selectedAttempt.answers || []).map((answer, index) => (
                                             <div key={answer.id || index} className="rounded-xl border p-4">
                                                 <div className="flex items-start justify-between gap-3">
-                                                    <p className="font-medium text-slate-900">{index + 1}. {answer.question_text}</p>
+                                                    <div><p className="mb-1 text-xs font-semibold uppercase text-slate-500">{answer.section_title || answer.subject_name}</p><p className="font-medium text-slate-900">{index + 1}. {answer.question_text}</p></div>
                                                     <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${answer.is_correct ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                                                         {answer.is_correct ? "Correct" : "Wrong"}
                                                     </span>
