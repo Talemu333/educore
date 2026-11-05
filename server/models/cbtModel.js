@@ -287,4 +287,32 @@ const submitAttempt=async(attemptId,studentId,schoolId)=>{const client=await poo
 
 const getStudentAttempts=async(studentId,schoolId,options={})=>{const page=Math.max(1,Number.parseInt(options.page,10)||1);const limit=Math.min(50,Math.max(1,Number.parseInt(options.limit,10)||10));const attemptId=Number.parseInt(options.attemptId,10);if(Number.isInteger(attemptId)&&attemptId>0){const result=await pool.query(`SELECT a.*,e.title,e.total_marks,e.pass_mark,e.question_selection_count,s.subject_name FROM cbt_attempts a JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id WHERE a.id=$1 AND a.student_id=$2 AND a.school_id=$3 LIMIT 1;`,[attemptId,studentId,schoolId]);return{rows:result.rows,total:result.rows.length};}const countResult=await pool.query(`SELECT COUNT(*)::int AS total FROM cbt_attempts WHERE student_id=$1 AND school_id=$2`,[studentId,schoolId]);const total=Number(countResult.rows[0]?.total||0);const offset=(page-1)*limit;const result=await pool.query(`SELECT a.*,e.title,e.total_marks,e.pass_mark,e.question_selection_count,s.subject_name FROM cbt_attempts a JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id WHERE a.student_id=$1 AND a.school_id=$2 ORDER BY a.created_at DESC,a.id DESC LIMIT $3 OFFSET $4;`,[studentId,schoolId,limit,offset]);return{rows:result.rows,total};};
 const getAttemptForStudent=async(attemptId,studentId,schoolId)=>{const result=await pool.query(`SELECT a.* FROM cbt_attempts a WHERE a.id=$1 AND a.student_id=$2 AND a.school_id=$3`,[attemptId,studentId,schoolId]);return result.rows[0];};
-module.exports={getExams,getAvailableStudentExams,getExamById,getQuestions,getAttemptQuestions,getQuestionTotalMarks,createExam,setExamResultVisibility,updateExam,deleteExam,createQuestion,updateQuestion,deleteQuestion,startAttempt,saveAnswer,submitAttempt,getStudentAttempts,getAttemptForStudent};
+const getAttemptSubjectResults = async (attemptId, schoolId) => {
+    const result = await pool.query(`
+        SELECT q.subject_id, s.subject_name,
+               COALESCE(es.section_title, s.subject_name) AS section_title,
+               COALESCE(es.section_order, 1) AS section_order,
+               COALESCE(SUM(q.marks), 0)::numeric AS total_marks,
+               COALESCE(SUM(CASE WHEN a.is_correct THEN a.marks_awarded ELSE 0 END), 0)::numeric AS score,
+               COUNT(*)::int AS question_count,
+               COUNT(*) FILTER (WHERE a.is_correct = TRUE)::int AS correct_answers,
+               COUNT(*) FILTER (WHERE a.selected_option_id IS NOT NULL AND a.is_correct = FALSE)::int AS wrong_answers,
+               COUNT(*) FILTER (WHERE a.selected_option_id IS NULL)::int AS unanswered
+        FROM cbt_attempt_questions aq
+        JOIN cbt_questions q ON q.id=aq.question_id AND q.school_id=aq.school_id
+        JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
+        LEFT JOIN cbt_exam_subjects es
+          ON es.exam_id=q.exam_id AND es.school_id=q.school_id AND es.subject_id=q.subject_id
+        LEFT JOIN cbt_answers a ON a.attempt_id=aq.attempt_id AND a.question_id=aq.question_id
+        WHERE aq.attempt_id=$1 AND aq.school_id=$2
+        GROUP BY q.subject_id,s.subject_name,es.section_title,es.section_order
+        ORDER BY COALESCE(es.section_order,1),s.subject_name
+    `, [attemptId, schoolId]);
+    return result.rows.map((row) => {
+        const totalMarks = Number(row.total_marks || 0);
+        const score = Number(row.score || 0);
+        return { ...row, total_marks: totalMarks, score, percentage: totalMarks > 0 ? Number(((score / totalMarks) * 100).toFixed(2)) : 0 };
+    });
+};
+
+module.exports={getAttemptSubjectResults,getExams,getAvailableStudentExams,getExamById,getQuestions,getAttemptQuestions,getQuestionTotalMarks,createExam,setExamResultVisibility,updateExam,deleteExam,createQuestion,updateQuestion,deleteQuestion,startAttempt,saveAnswer,submitAttempt,getStudentAttempts,getAttemptForStudent};
