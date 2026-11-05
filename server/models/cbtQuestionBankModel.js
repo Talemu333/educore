@@ -106,7 +106,7 @@ const remove = async (id, schoolId, createdById = null) => {
     return result.rows[0];
 };
 
-const copyToExam = async (examId, bankIds, schoolId, createdById = null) => {
+const copyToExam = async (examId, bankIds, schoolId, createdById = null, assignedTeacherId = null) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -160,7 +160,7 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null) => {
               ))
             GROUP BY q.id
             ORDER BY array_position($1::int[],q.id)
-        `, [requested, schoolId, examId, exam.class_id, createdById, createdById]);
+        `, [requested, schoolId, examId, exam.class_id, createdById, assignedTeacherId]);
 
         if (selected.rows.length !== requested.length) {
             throw new Error("Some selected questions do not belong to this school's question bank, selected examination subjects, or examination class.");
