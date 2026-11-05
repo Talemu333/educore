@@ -91,10 +91,19 @@ function CBTQuestionBankPage() {
         if (!selectedIds.length) return [];
         const selected = questions.filter((q) => selectedIds.includes(q.id));
         if (!selected.length) return [];
-        const subjectId = selected[0].subject_id;
         const classId = selected[0].class_id;
-        if (selected.some((q) => String(q.subject_id) !== String(subjectId) || String(q.class_id) !== String(classId))) return [];
-        return exams.filter((exam) => String(exam.subject_id) === String(subjectId) && String(exam.class_id) === String(classId));
+        if (selected.some((q) => String(q.class_id) !== String(classId))) return [];
+        const selectedSubjectIds = new Set(selected.map((q) => String(q.subject_id)));
+        return exams.filter((exam) => {
+            if (String(exam.class_id) !== String(classId)) return false;
+            const examSubjectIds = new Set(
+                (Array.isArray(exam.exam_subjects) && exam.exam_subjects.length
+                    ? exam.exam_subjects.map((item) => item.subject_id)
+                    : [exam.subject_id]
+                ).map(String)
+            );
+            return [...selectedSubjectIds].every((subjectId) => examSubjectIds.has(subjectId));
+        });
     }, [selectedIds, questions, exams]);
 
     const editQuestion = (item) => {
@@ -317,7 +326,7 @@ function CBTQuestionBankPage() {
                         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-700">
                             <div>
                                 <h2 className="text-lg font-semibold">Add Questions to Examination</h2>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Only examinations with the same subject and class are shown.</p>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Only examinations containing all selected subjects and the same class are shown.</p>
                             </div>
                             <Button variant="outline" onClick={() => setShowCopy(false)} aria-label="Close modal"><X className="h-4 w-4" /></Button>
                         </div>
@@ -331,7 +340,7 @@ function CBTQuestionBankPage() {
                                     </select>
                                 </label>
                             ) : (
-                                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">No compatible examination was found. Create an examination for the same subject and class first.</p>
+                                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">No compatible examination was found. Create an examination containing the selected subjects for this class first.</p>
                             )}
                         </div>
                         <div className="flex justify-end gap-2 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
