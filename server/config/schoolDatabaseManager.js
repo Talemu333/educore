@@ -73,6 +73,8 @@ const ensureSharedDatabaseResultApprovalMigration = async () => {
             if (sql.trim()) await centralPool.query(sql);
             const announcementSql = await fs.readFile(path.join(MIGRATIONS_DIR, ANNOUNCEMENT_MIGRATION), "utf8");
             if (announcementSql.trim()) await centralPool.query(announcementSql);
+            const combinedCbtSql = await fs.readFile(path.join(MIGRATIONS_DIR, "20261105_add_combined_subject_cbt.sql"), "utf8");
+            if (combinedCbtSql.trim()) await centralPool.query(combinedCbtSql);
         })().catch((error) => {
             sharedResultApprovalMigrationPromise = undefined;
             throw new Error(`Shared database schema migration failed: ${error.message}`);
