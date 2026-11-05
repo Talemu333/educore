@@ -9,13 +9,13 @@ const getExams = async (schoolId, filters = {}, createdById = null) => {
     if (filters.status) { conditions.push(`e.status = $${i++}`); values.push(filters.status); }
     if (createdById !== null && createdById !== undefined) {
         const staffParam = i++;
-        conditions.push(`(e.created_by = ${staffParam} OR EXISTS (
+        conditions.push(`(e.created_by = $${staffParam} OR EXISTS (
             SELECT 1 FROM cbt_exam_subjects es
             JOIN teacher_assignments ta ON ta.subject_id=es.subject_id AND ta.class_id=e.class_id
               AND (ta.arm_id IS NULL OR e.arm_id IS NULL OR ta.arm_id=e.arm_id)
             JOIN teachers t ON t.id=ta.teacher_id
             JOIN users tu ON tu.id=t.user_id AND tu.school_id=e.school_id
-            WHERE es.exam_id=e.id AND es.school_id=e.school_id AND tu.id=${staffParam}
+            WHERE es.exam_id=e.id AND es.school_id=e.school_id AND tu.id=$${staffParam}
         ))`);
         values.push(createdById);
     }
