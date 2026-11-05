@@ -7,7 +7,18 @@ const getExams = async (schoolId, filters = {}, createdById = null) => {
     if (filters.classId) { conditions.push(`e.class_id = $${i++}`); values.push(filters.classId); }
     if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=${i++})`); values.push(filters.subjectId); }
     if (filters.status) { conditions.push(`e.status = $${i++}`); values.push(filters.status); }
-    if (createdById !== null && createdById !== undefined) { conditions.push(`e.created_by = $${i++}`); values.push(createdById); }
+    if (createdById !== null && createdById !== undefined) {
+        const staffParam = i++;
+        conditions.push(`(e.created_by = ${staffParam} OR EXISTS (
+            SELECT 1 FROM cbt_exam_subjects es
+            JOIN teacher_assignments ta ON ta.subject_id=es.subject_id AND ta.class_id=e.class_id
+              AND (ta.arm_id IS NULL OR e.arm_id IS NULL OR ta.arm_id=e.arm_id)
+            JOIN teachers t ON t.id=ta.teacher_id
+            JOIN users tu ON tu.id=t.user_id AND tu.school_id=e.school_id
+            WHERE es.exam_id=e.id AND es.school_id=e.school_id AND tu.id=${staffParam}
+        ))`);
+        values.push(createdById);
+    }
     const result = await pool.query(`SELECT e.*, s.subject_name, COALESCE((SELECT json_agg(json_build_object('subject_id',es.subject_id,'subject_name',ss.subject_name,'section_title',es.section_title,'section_order',es.section_order) ORDER BY es.section_order) FROM cbt_exam_subjects es JOIN subjects ss ON ss.id=es.subject_id AND ss.school_id=es.school_id WHERE es.exam_id=e.id AND es.school_id=e.school_id),'[]'::json) AS exam_subjects, c.class_name, a.arm_name, u.username AS creator_name FROM cbt_exams e JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id JOIN users u ON u.id=e.created_by AND u.school_id=e.school_id WHERE ${conditions.join(" AND ")} ORDER BY e.created_at DESC,e.id DESC;`, values);
     return result.rows;
 };
@@ -17,7 +28,14 @@ const getAvailableStudentExams = async (studentId, schoolId) => {
     return result.rows;
 };
 
-const getExamById = async (examId, schoolId, createdById = null) => { const result=await pool.query(`SELECT e.*,s.subject_name,COALESCE((SELECT json_agg(json_build_object('subject_id',es.subject_id,'subject_name',ss.subject_name,'section_title',es.section_title,'section_order',es.section_order) ORDER BY es.section_order) FROM cbt_exam_subjects es JOIN subjects ss ON ss.id=es.subject_id AND ss.school_id=es.school_id WHERE es.exam_id=e.id AND es.school_id=e.school_id),'[]'::json) AS exam_subjects,c.class_name,a.arm_name FROM cbt_exams e JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id WHERE e.id=$1 AND e.school_id=$2 AND ($3::integer IS NULL OR e.created_by=$3);`,[examId,schoolId,createdById]); return result.rows[0]; };
+const getExamById = async (examId, schoolId, createdById = null) => { const result=await pool.query(`SELECT e.*,s.subject_name,COALESCE((SELECT json_agg(json_build_object('subject_id',es.subject_id,'subject_name',ss.subject_name,'section_title',es.section_title,'section_order',es.section_order) ORDER BY es.section_order) FROM cbt_exam_subjects es JOIN subjects ss ON ss.id=es.subject_id AND ss.school_id=es.school_id WHERE es.exam_id=e.id AND es.school_id=e.school_id),'[]'::json) AS exam_subjects,c.class_name,a.arm_name FROM cbt_exams e JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id WHERE e.id=$1 AND e.school_id=$2 AND ($3::integer IS NULL OR e.created_by=$3 OR EXISTS (
+    SELECT 1 FROM cbt_exam_subjects es
+    JOIN teacher_assignments ta ON ta.subject_id=es.subject_id AND ta.class_id=e.class_id
+      AND (ta.arm_id IS NULL OR e.arm_id IS NULL OR ta.arm_id=e.arm_id)
+    JOIN teachers t ON t.id=ta.teacher_id
+    JOIN users tu ON tu.id=t.user_id AND tu.school_id=e.school_id
+    WHERE es.exam_id=e.id AND es.school_id=e.school_id AND tu.id=$3
+));`,[examId,schoolId,createdById]); return result.rows[0]; };
 const getQuestionTotalMarks = async (examId, schoolId, client=pool) => { const result=await client.query(`SELECT COALESCE(SUM(marks),0)::numeric AS total_marks,COUNT(*)::int AS question_count FROM cbt_questions WHERE exam_id=$1 AND school_id=$2`, [examId,schoolId]); return { totalMarks:Number(result.rows[0]?.total_marks||0), questionCount:Number(result.rows[0]?.question_count||0) }; };
 const syncExamTotalMarks = async (examId, schoolId, client=pool) => { const totals=await getQuestionTotalMarks(examId,schoolId,client); const result=await client.query(`UPDATE cbt_exams SET total_marks=$3,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 RETURNING *`,[examId,schoolId,totals.totalMarks]); return result.rows[0]; };
 const normalizeExamSubjects = (data) => {
@@ -322,4 +340,42 @@ const getAttemptSubjectResults = async (attemptId, schoolId) => {
     });
 };
 
-module.exports={getAttemptSubjectResults,getExams,getAvailableStudentExams,getExamById,getQuestions,getAttemptQuestions,getQuestionTotalMarks,createExam,setExamResultVisibility,updateExam,deleteExam,createQuestion,updateQuestion,deleteQuestion,startAttempt,saveAnswer,submitAttempt,getStudentAttempts,getAttemptForStudent};
+const bulkCreateExamQuestions = async (examId, schoolId, questions) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const examResult = await client.query("SELECT id,status FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE", [examId, schoolId]);
+        if (!examResult.rows[0]) throw new Error("Examination not found for this school.");
+        if (examResult.rows[0].status !== "draft") throw new Error("PDF questions can only be imported into a draft examination.");
+        const attempts = await client.query("SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND school_id=$2", [examId, schoolId]);
+        if (Number(attempts.rows[0]?.count || 0) > 0) throw new Error("Questions cannot be imported because students have already started this examination.");
+        const subjectIds = [...new Set(questions.map((q) => Number(q.subject_id)))];
+        const validSubjects = await client.query("SELECT subject_id FROM cbt_exam_subjects WHERE exam_id=$1 AND school_id=$2 AND subject_id=ANY($3::int[])", [examId, schoolId, subjectIds]);
+        if (validSubjects.rows.length !== subjectIds.length) throw new Error("Every imported question must belong to a subject section in this examination.");
+        const inserted = [];
+        for (const item of questions) {
+            const orderResult = await client.query("SELECT COALESCE(MAX(question_order),0)+1 AS next_order FROM cbt_questions WHERE exam_id=$1 AND school_id=$2 AND subject_id=$3", [examId, schoolId, Number(item.subject_id)]);
+            const result = await client.query(
+                `INSERT INTO cbt_questions(school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation)
+                 VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+                [schoolId, examId, Number(item.subject_id), item.question_text, item.image_url || null, item.marks || 1, Number(orderResult.rows[0].next_order), item.explanation || null]
+            );
+            const question = result.rows[0];
+            for (const option of item.options || []) {
+                await client.query("INSERT INTO cbt_question_options(question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)",
+                    [question.id, option.option_text, option.option_image_url || null, option.option_order, Boolean(option.is_correct)]);
+            }
+            inserted.push(question);
+        }
+        await syncExamTotalMarks(examId, schoolId, client);
+        await client.query("COMMIT");
+        return inserted;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+module.exports={bulkCreateExamQuestions,getAttemptSubjectResults,getExams,getAvailableStudentExams,getExamById,getQuestions,getAttemptQuestions,getQuestionTotalMarks,createExam,setExamResultVisibility,updateExam,deleteExam,createQuestion,updateQuestion,deleteQuestion,startAttempt,saveAnswer,submitAttempt,getStudentAttempts,getAttemptForStudent};
