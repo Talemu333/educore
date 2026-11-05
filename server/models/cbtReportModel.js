@@ -62,7 +62,8 @@ const getAttemptDetails = async (attemptId, schoolId) => {
         SELECT a.*, e.title, e.total_marks AS exam_total_marks,
                ${attemptMarksSql} AS total_marks,
                e.pass_mark, e.show_result_immediately,
-               s.subject_name, st.admission_number, st.surname, st.first_name, st.middle_name
+               s.subject_name, ${attemptSubjectResultsSql} AS subject_results,
+               st.admission_number, st.surname, st.first_name, st.middle_name
         FROM cbt_attempts a
         JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id
         JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id
@@ -73,11 +74,14 @@ const getAttemptDetails = async (attemptId, schoolId) => {
 
     const answers = await pool.query(`
         SELECT ans.id, ans.question_id, ans.selected_option_id, ans.is_correct,
-               ans.marks_awarded, q.question_text, q.marks,
+               ans.marks_awarded, q.question_text, q.marks, q.subject_id,
+               sub.subject_name, es.section_title,
                so.option_text AS selected_option_text,
                co.option_text AS correct_option_text
         FROM cbt_answers ans
         JOIN cbt_questions q ON q.id=ans.question_id AND q.school_id=$2
+        JOIN subjects sub ON sub.id=q.subject_id AND sub.school_id=q.school_id
+        LEFT JOIN cbt_exam_subjects es ON es.exam_id=q.exam_id AND es.school_id=q.school_id AND es.subject_id=q.subject_id
         LEFT JOIN cbt_question_options so ON so.id=ans.selected_option_id
         LEFT JOIN cbt_question_options co ON co.question_id=q.id AND co.is_correct=true
         WHERE ans.attempt_id=$1
