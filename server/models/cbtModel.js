@@ -115,7 +115,88 @@ const setExamResultVisibility = async (examId, visible, schoolId) => {
     return result.rows[0] || null;
 };
 
-const updateExam = async (examId,data,schoolId) => { const client=await pool.connect(); try{await client.query("BEGIN"); const existing=await client.query(`SELECT status FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE`,[examId,schoolId]); if(!existing.rows[0]){await client.query("ROLLBACK");return null;} const attemptCountResult=await client.query(`SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND school_id=$2`,[examId,schoolId]); const hasAttempts=Number(attemptCountResult.rows[0]?.count||0)>0; if(hasAttempts&&data.status!=="closed")throw new Error("This examination cannot be modified because students have already started an attempt. You may close it to stop further attempts."); const totals=await getQuestionTotalMarks(examId,schoolId,client); const selectionCount=Math.max(0,Number(data.question_selection_count)||0); if(hasAttempts&&data.status==="closed"){const closed=await client.query(`UPDATE cbt_exams SET status='closed',updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 RETURNING *`,[examId,schoolId]);await client.query("COMMIT");return closed.rows[0];} if(data.status==="published"&&totals.questionCount===0) throw new Error("Add at least one question before publishing this examination."); if(selectionCount>0&&selectionCount>totals.questionCount) throw new Error(`This examination requests ${selectionCount} questions, but only ${totals.questionCount} question(s) are available.`); const result=await client.query(`UPDATE cbt_exams SET subject_id=$3,class_id=$4,arm_id=$5,title=$6,description=$7,duration_minutes=$8,total_marks=$9,pass_mark=$10,max_attempts=$11,question_selection_count=$12,randomize_questions=$13,randomize_options=$14,show_result_immediately=$15,starts_at=$16,ends_at=$17,status=$18,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 RETURNING *`,[examId,schoolId,data.subject_id,data.class_id,data.arm_id||null,data.title,data.description||null,data.duration_minutes,totals.totalMarks,data.pass_mark||0,data.max_attempts||1,selectionCount,Boolean(data.randomize_questions),Boolean(data.randomize_options),data.show_result_immediately!==false,data.starts_at||null,data.ends_at||null,data.status||"draft"]); if(!result.rows[0]){await client.query("ROLLBACK");return null;} await client.query("COMMIT");return result.rows[0]; }catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();} };
+const updateExam = async (examId, data, schoolId) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const existing = await client.query(
+            "SELECT status FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE",
+            [examId, schoolId]
+        );
+        if (!existing.rows[0]) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        const attempts = await client.query(
+            "SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND school_id=$2",
+            [examId, schoolId]
+        );
+        const hasAttempts = Number(attempts.rows[0]?.count || 0) > 0;
+        if (hasAttempts && data.status !== "closed") {
+            throw new Error("This examination cannot be modified because students have already started an attempt. You may close it to stop further attempts.");
+        }
+        if (hasAttempts && data.status === "closed") {
+            const closed = await client.query(
+                "UPDATE cbt_exams SET status='closed',updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 RETURNING *",
+                [examId, schoolId]
+            );
+            await client.query("COMMIT");
+            return closed.rows[0];
+        }
+
+        const sections = normalizeExamSubjects(data);
+        if (!sections.length) throw new Error("Select at least one valid subject.");
+        const subjectIds = sections.map((item) => item.subject_id);
+        const validSubjects = await client.query(
+            "SELECT id FROM subjects WHERE school_id=$1 AND id=ANY($2::int[])",
+            [schoolId, subjectIds]
+        );
+        if (validSubjects.rows.length !== subjectIds.length) {
+            throw new Error("One or more selected subjects do not belong to this school.");
+        }
+
+        const totals = await getQuestionTotalMarks(examId, schoolId, client);
+        const selectionCount = Math.max(0, Number(data.question_selection_count) || 0);
+        if (data.status === "published" && totals.questionCount === 0) {
+            throw new Error("Add at least one question before publishing this examination.");
+        }
+        if (selectionCount > 0 && selectionCount > totals.questionCount) {
+            throw new Error(`This examination requests ${selectionCount} questions, but only ${totals.questionCount} question(s) are available.`);
+        }
+
+        const result = await client.query(`
+            UPDATE cbt_exams
+            SET subject_id=$3,class_id=$4,arm_id=$5,title=$6,description=$7,
+                duration_minutes=$8,total_marks=$9,pass_mark=$10,max_attempts=$11,
+                question_selection_count=$12,randomize_questions=$13,randomize_options=$14,
+                show_result_immediately=$15,starts_at=$16,ends_at=$17,status=$18,
+                updated_at=CURRENT_TIMESTAMP
+            WHERE id=$1 AND school_id=$2
+            RETURNING *
+        `, [
+            examId, schoolId, subjectIds[0], data.class_id, data.arm_id || null,
+            data.title, data.description || null, data.duration_minutes, totals.totalMarks,
+            data.pass_mark || 0, data.max_attempts || 1, selectionCount,
+            Boolean(data.randomize_questions), Boolean(data.randomize_options),
+            data.show_result_immediately !== false, data.starts_at || null,
+            data.ends_at || null, data.status || "draft"
+        ]);
+        if (!result.rows[0]) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        await saveExamSubjects(client, examId, schoolId, sections);
+        await client.query("COMMIT");
+        return result.rows[0];
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
 const deleteExam=async(examId,schoolId)=>{const client=await pool.connect();try{await client.query("BEGIN");const exam=await client.query(`SELECT id FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE`,[examId,schoolId]);if(!exam.rows[0]){await client.query("ROLLBACK");return null;}const attempts=await client.query(`SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND school_id=$2`,[examId,schoolId]);if(Number(attempts.rows[0]?.count||0)>0)throw new Error("This examination cannot be deleted because student attempt records already exist.");const deleted=await client.query(`DELETE FROM cbt_exams WHERE id=$1 AND school_id=$2 RETURNING id`,[examId,schoolId]);await client.query("COMMIT");return deleted.rows[0];}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}};
 const getQuestions=async(examId,schoolId,randomSeed=null)=>{const randomQuestions=randomSeed!==null; const questionOrder=randomQuestions?"md5(q.id::text || $3::text)":"q.question_order"; const optionOrder=randomQuestions?"md5(o.id::text || $3::text)":"o.option_order"; const values=randomQuestions?[examId,schoolId,String(randomSeed)]:[examId,schoolId]; const result=await pool.query(`SELECT q.id,q.subject_id,sub.subject_name,es.section_title,es.section_order,q.question_text,q.image_url,q.marks,q.question_order,q.explanation,COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY ${optionOrder}) FILTER(WHERE o.id IS NOT NULL),'[]') AS options FROM cbt_questions q JOIN cbt_exams e ON e.id=q.exam_id AND e.school_id=$2 JOIN subjects sub ON sub.id=q.subject_id AND sub.school_id=q.school_id LEFT JOIN cbt_exam_subjects es ON es.exam_id=q.exam_id AND es.subject_id=q.subject_id AND es.school_id=q.school_id LEFT JOIN cbt_question_options o ON o.question_id=q.id WHERE q.exam_id=$1 AND q.school_id=$2 GROUP BY q.id,sub.subject_name,es.section_title,es.section_order ORDER BY ${questionOrder}`,values);return result.rows;};
 const getAttemptQuestions=async(attemptId,schoolId,randomizeOptions=false,client=pool)=>{const optionOrder=randomizeOptions?"md5(o.id::text || $3::text)":"o.option_order"; const result=await client.query(`SELECT q.id,q.subject_id,sub.subject_name,es.section_title,es.section_order,q.question_text,q.image_url,q.marks,q.question_order,q.explanation,aq.question_order AS attempt_question_order,COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY ${optionOrder}) FILTER(WHERE o.id IS NOT NULL),'[]') AS options FROM cbt_attempt_questions aq JOIN cbt_questions q ON q.id=aq.question_id AND q.school_id=$2 JOIN subjects sub ON sub.id=q.subject_id AND sub.school_id=q.school_id LEFT JOIN cbt_exam_subjects es ON es.exam_id=q.exam_id AND es.subject_id=q.subject_id AND es.school_id=q.school_id LEFT JOIN cbt_question_options o ON o.question_id=q.id WHERE aq.attempt_id=$1 AND aq.school_id=$2 GROUP BY q.id,aq.question_order,sub.subject_name,es.section_title,es.section_order ORDER BY COALESCE(es.section_order,1),aq.question_order`,randomizeOptions?[attemptId,schoolId,String(attemptId)]:[attemptId,schoolId]); return result.rows;};
