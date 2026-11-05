@@ -1,6 +1,33 @@
 const pool = require("../config/database");
 
 const attemptMarksSql = `(SELECT COALESCE(SUM(q2.marks),0)::numeric FROM cbt_attempt_questions aq2 JOIN cbt_questions q2 ON q2.id=aq2.question_id AND q2.school_id=a.school_id WHERE aq2.attempt_id=a.id AND aq2.school_id=a.school_id)`;
+const attemptSubjectResultsSql = `(
+    SELECT COALESCE(json_agg(json_build_object(
+        'subject_id', subject_scores.subject_id,
+        'subject_name', subject_scores.subject_name,
+        'section_title', subject_scores.section_title,
+        'score', subject_scores.score,
+        'total_marks', subject_scores.total_marks,
+        'percentage', CASE WHEN subject_scores.total_marks > 0
+            THEN ROUND(subject_scores.score / subject_scores.total_marks * 100, 2)
+            ELSE 0 END
+    ) ORDER BY subject_scores.section_order), '[]'::json)
+    FROM (
+        SELECT q.subject_id, s.subject_name,
+               COALESCE(es.section_title, s.subject_name) AS section_title,
+               COALESCE(es.section_order, 1) AS section_order,
+               COALESCE(SUM(q.marks), 0)::numeric AS total_marks,
+               COALESCE(SUM(CASE WHEN ans.is_correct THEN ans.marks_awarded ELSE 0 END), 0)::numeric AS score
+        FROM cbt_attempt_questions aq
+        JOIN cbt_questions q ON q.id=aq.question_id AND q.school_id=aq.school_id
+        JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
+        LEFT JOIN cbt_exam_subjects es
+          ON es.exam_id=q.exam_id AND es.school_id=q.school_id AND es.subject_id=q.subject_id
+        LEFT JOIN cbt_answers ans ON ans.attempt_id=aq.attempt_id AND ans.question_id=aq.question_id
+        WHERE aq.attempt_id=a.id AND aq.school_id=a.school_id
+        GROUP BY q.subject_id,s.subject_name,es.section_title,es.section_order
+    ) subject_scores
+)`;
 
 const getAttemptsReport = async (schoolId, filters = {}) => {
     const values = [schoolId];
@@ -9,7 +36,7 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
     if (filters.examId) { conditions.push(`a.exam_id = $${i++}`); values.push(filters.examId); }
     if (filters.studentId) { conditions.push(`a.student_id = ${i++}`); values.push(filters.studentId); }
     if (filters.classId) { conditions.push(`e.class_id = ${i++}`); values.push(filters.classId); }
-    if (filters.subjectId) { conditions.push(`e.subject_id = ${i++}`); values.push(filters.subjectId); }
+    if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=${i++})`); values.push(filters.subjectId); }
 
     const result = await pool.query(`
         SELECT a.id, a.exam_id, a.student_id, a.attempt_number, a.status,
@@ -17,7 +44,7 @@ const getAttemptsReport = async (schoolId, filters = {}) => {
                a.percentage, a.correct_answers, a.wrong_answers, a.unanswered,
                e.title, e.total_marks AS exam_total_marks,
                ${attemptMarksSql} AS total_marks,
-               e.pass_mark, e.class_id, c.class_name, e.subject_id, s.subject_name,
+               e.pass_mark, e.class_id, c.class_name, e.subject_id, s.subject_name,\n               ${attemptSubjectResultsSql} AS subject_results,
                st.admission_number, st.surname, st.first_name, st.middle_name
         FROM cbt_attempts a
         JOIN cbt_exams e ON e.id=a.exam_id AND e.school_id=a.school_id
