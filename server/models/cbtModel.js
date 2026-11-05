@@ -5,7 +5,7 @@ const getExams = async (schoolId, filters = {}, createdById = null) => {
     const conditions = ["e.school_id = $1"];
     let i = 2;
     if (filters.classId) { conditions.push(`e.class_id = $${i++}`); values.push(filters.classId); }
-    if (filters.subjectId) { conditions.push(`e.subject_id = $${i++}`); values.push(filters.subjectId); }
+    if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=${i++})`); values.push(filters.subjectId); }
     if (filters.status) { conditions.push(`e.status = $${i++}`); values.push(filters.status); }
     if (createdById !== null && createdById !== undefined) { conditions.push(`e.created_by = $${i++}`); values.push(createdById); }
     const result = await pool.query(`SELECT e.*, s.subject_name, COALESCE((SELECT json_agg(json_build_object('subject_id',es.subject_id,'subject_name',ss.subject_name,'section_title',es.section_title,'section_order',es.section_order) ORDER BY es.section_order) FROM cbt_exam_subjects es JOIN subjects ss ON ss.id=es.subject_id AND ss.school_id=es.school_id WHERE es.exam_id=e.id AND es.school_id=e.school_id),'[]'::json) AS exam_subjects, c.class_name, a.arm_name, u.username AS creator_name FROM cbt_exams e JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id JOIN users u ON u.id=e.created_by AND u.school_id=e.school_id WHERE ${conditions.join(" AND ")} ORDER BY e.created_at DESC,e.id DESC;`, values);
@@ -154,6 +154,13 @@ const updateExam = async (examId, data, schoolId) => {
         );
         if (validSubjects.rows.length !== subjectIds.length) {
             throw new Error("One or more selected subjects do not belong to this school.");
+        }
+        const orphanedQuestions = await client.query(
+            "SELECT COUNT(*)::int AS count FROM cbt_questions WHERE exam_id=$1 AND school_id=$2 AND NOT (subject_id=ANY($3::int[]))",
+            [examId, schoolId, subjectIds]
+        );
+        if (Number(orphanedQuestions.rows[0]?.count || 0) > 0) {
+            throw new Error("This examination already contains questions in a subject you are removing. Remove those questions before removing the subject section.");
         }
 
         const totals = await getQuestionTotalMarks(examId, schoolId, client);
