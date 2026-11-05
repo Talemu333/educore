@@ -126,9 +126,10 @@ function CBTResultsPage() {
 
     const exportResults = () => {
         if (!sortedAttempts.length) return;
-        const headers = ["Student", "Admission Number", "Examination", "Subject", "Attempt", "Score", "Total Marks", "Percentage", "Status"];
+        const headers = ["Student", "Admission Number", "Examination", "Subjects", "Subject Scores", "Attempt", "Overall Score", "Total Marks", "Percentage", "Status"];
         const rows = sortedAttempts.map((item) => [
             studentName(item), item.admission_number || "", item.title || "", (item.subject_results || []).map((section) => section.section_title || section.subject_name).join(" / ") || item.subject_name || "",
+            (item.subject_results || []).map((section) => `${section.section_title || section.subject_name}: ${Number(section.score || 0).toFixed(2)}/${Number(section.total_marks || 0).toFixed(2)}`).join(" | "),
             item.attempt_number ?? "", item.score ?? 0, item.total_marks ?? 0,
             Number(item.percentage ?? 0).toFixed(2) + "%", item.status || ""
         ]);
@@ -276,7 +277,7 @@ function CBTResultsPage() {
                                                     <div className="text-xs text-slate-500">{item.admission_number}</div>
                                                 </td>
                                                 <td className="px-4 py-3 font-medium">{item.title}</td>
-                                                <td className="px-4 py-3">{(item.subject_results || []).map((section) => section.section_title || section.subject_name).join(" / ") || item.subject_name}</td>
+                                                <td className="px-4 py-3"><div>{(item.subject_results || []).map((section) => section.section_title || section.subject_name).join(" / ") || item.subject_name}</div>{(item.subject_results || []).length>1&&<div className="mt-1 space-y-0.5 text-xs text-slate-500">{item.subject_results.map(section=><div key={section.subject_id}>{section.section_title||section.subject_name}: {Number(section.score||0).toFixed(2)}/{Number(section.total_marks||0).toFixed(2)}</div>)}</div>}</td>
                                                 <td className="px-4 py-3">#{item.attempt_number}</td>
                                                 <td className="px-4 py-3">{item.score ?? 0} / {item.total_marks ?? 0}</td>
                                                 <td className="px-4 py-3 font-semibold">{Number(item.percentage ?? 0).toFixed(2)}%</td>
