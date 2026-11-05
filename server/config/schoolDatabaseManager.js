@@ -156,5 +156,6 @@ const closeSchoolDatabasePools = async () => {
 
 module.exports = {
     getSchoolDatabase,
+    ensureSharedDatabaseResultApprovalMigration,
     closeSchoolDatabasePools,
 };
