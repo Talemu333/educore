@@ -145,9 +145,22 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null) => {
               AND q.is_active=true
               AND q.class_id=$4
               AND ($5::integer IS NULL OR q.created_by=$5)
+              AND ($6::integer IS NULL OR EXISTS (
+                  SELECT 1
+                  FROM teacher_assignments ta
+                  JOIN teachers t ON t.id=ta.teacher_id
+                  JOIN users u ON u.id=t.user_id AND u.school_id=q.school_id
+                  WHERE ta.subject_id=q.subject_id AND ta.class_id=$4
+                    AND (ta.arm_id IS NULL OR EXISTS (
+                        SELECT 1 FROM cbt_exams target_exam
+                        WHERE target_exam.id=$3 AND target_exam.school_id=q.school_id
+                          AND (target_exam.arm_id IS NULL OR target_exam.arm_id=ta.arm_id)
+                    ))
+                    AND u.id=$6
+              ))
             GROUP BY q.id
             ORDER BY array_position($1::int[],q.id)
-        `, [requested, schoolId, examId, exam.class_id, createdById]);
+        `, [requested, schoolId, examId, exam.class_id, createdById, createdById]);
 
         if (selected.rows.length !== requested.length) {
             throw new Error("Some selected questions do not belong to this school's question bank, selected examination subjects, or examination class.");
