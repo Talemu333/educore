@@ -40,4 +40,4 @@ exports.update = async (req,res) => {
     } catch(e){return sendError(res,e);}
 };
 exports.remove = async (req,res) => { try { const data=await model.remove(Number(req.params.id),schoolId(req),ownerId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,message:"Question removed from the question bank."}); } catch(e){return sendError(res,e);} };
-exports.copyToExam = async (req,res) => { try { const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),ownerId(req)); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
+exports.copyToExam = async (req,res) => { try { const role=String(req.user?.role_name||"").trim().toLowerCase(); const assignedTeacherId=role==="teacher"?Number(req.user.id):null; const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),ownerId(req),assignedTeacherId); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
