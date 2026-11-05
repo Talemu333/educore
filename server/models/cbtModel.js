@@ -5,7 +5,7 @@ const getExams = async (schoolId, filters = {}, createdById = null) => {
     const conditions = ["e.school_id = $1"];
     let i = 2;
     if (filters.classId) { conditions.push(`e.class_id = $${i++}`); values.push(filters.classId); }
-    if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=${i++})`); values.push(filters.subjectId); }
+    if (filters.subjectId) { conditions.push(`EXISTS (SELECT 1 FROM cbt_exam_subjects es WHERE es.exam_id=e.id AND es.school_id=e.school_id AND es.subject_id=$${i++})`); values.push(filters.subjectId); }
     if (filters.status) { conditions.push(`e.status = $${i++}`); values.push(filters.status); }
     if (createdById !== null && createdById !== undefined) {
         const staffParam = i++;
