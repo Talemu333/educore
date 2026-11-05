@@ -110,24 +110,90 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        const exam = await client.query("SELECT id,subject_id,class_id FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE", [examId,schoolId]);
-        if (!exam.rows[0]) throw new Error("Examination not found.");
+        const examResult = await client.query(
+            "SELECT id, subject_id, class_id FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE",
+            [examId, schoolId]
+        );
+        const exam = examResult.rows[0];
+        if (!exam) throw new Error("Examination not found.");
+
+        const attempts = await client.query(
+            "SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND school_id=$2",
+            [examId, schoolId]
+        );
+        if (Number(attempts.rows[0]?.count || 0) > 0) {
+            throw new Error("Questions cannot be added because students have already started an attempt for this examination.");
+        }
+
         const requested = [...new Set((bankIds || []).map(Number).filter(Number.isInteger))];
         if (!requested.length) throw new Error("Select at least one question.");
-        const selected = await client.query(`SELECT q.*,COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options FROM cbt_question_bank q LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id WHERE q.id=ANY($1::int[]) AND q.school_id=$2 AND q.is_active=true AND q.subject_id=$3 AND q.class_id=$4 AND ($5::integer IS NULL OR q.created_by=$5) GROUP BY q.id ORDER BY array_position($1::int[],q.id)`, [requested,schoolId,exam.rows[0].subject_id,exam.rows[0].class_id,createdById]);
-        if (selected.rows.length !== requested.length) throw new Error("Some selected questions do not belong to this examination's school, subject, or class.");
-        const maxOrder = await client.query("SELECT COALESCE(MAX(question_order),0)::int AS max_order FROM cbt_questions WHERE exam_id=$1 AND school_id=$2", [examId,schoolId]);
-        let order = maxOrder.rows[0].max_order;
+
+        const selected = await client.query(`
+            SELECT q.*,
+                COALESCE(json_agg(json_build_object(
+                    'id',o.id,'option_text',o.option_text,
+                    'option_image_url',o.option_image_url,
+                    'option_order',o.option_order,'is_correct',o.is_correct
+                ) ORDER BY o.option_order) FILTER (WHERE o.id IS NOT NULL), '[]') AS options
+            FROM cbt_question_bank q
+            JOIN cbt_exam_subjects es
+              ON es.exam_id=$3 AND es.school_id=q.school_id
+             AND es.subject_id=q.subject_id
+            LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id
+            WHERE q.id=ANY($1::int[])
+              AND q.school_id=$2
+              AND q.is_active=true
+              AND q.class_id=$4
+              AND ($5::integer IS NULL OR q.created_by=$5)
+            GROUP BY q.id
+            ORDER BY array_position($1::int[],q.id)
+        `, [requested, schoolId, examId, exam.class_id, createdById]);
+
+        if (selected.rows.length !== requested.length) {
+            throw new Error("Some selected questions do not belong to this school's question bank, selected examination subjects, or examination class.");
+        }
+
+        const maxOrder = await client.query(
+            "SELECT COALESCE(MAX(question_order),0)::int AS max_order FROM cbt_questions WHERE exam_id=$1 AND school_id=$2",
+            [examId, schoolId]
+        );
+        let order = Number(maxOrder.rows[0].max_order || 0);
+
         for (const q of selected.rows) {
             order += 1;
-            const created = await client.query(`INSERT INTO cbt_questions(school_id,exam_id,question_text,image_url,marks,question_order,explanation) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`, [schoolId,examId,q.question_text,q.image_url,q.marks,order,q.explanation]);
-            for (const o of q.options) await client.query(`INSERT INTO cbt_question_options(question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`, [created.rows[0].id,o.option_text,o.option_image_url,o.option_order,o.is_correct]);
+            const created = await client.query(`
+                INSERT INTO cbt_questions
+                    (school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                RETURNING id
+            `, [schoolId, examId, q.subject_id, q.question_text, q.image_url, q.marks, order, q.explanation]);
+
+            for (const option of q.options) {
+                await client.query(`
+                    INSERT INTO cbt_question_options
+                        (question_id,option_text,option_image_url,option_order,is_correct)
+                    VALUES ($1,$2,$3,$4,$5)
+                `, [created.rows[0].id, option.option_text, option.option_image_url, option.option_order, option.is_correct]);
+            }
         }
-        const totals = await client.query("SELECT COALESCE(SUM(marks),0)::numeric AS total_marks FROM cbt_questions WHERE exam_id=$1 AND school_id=$2", [examId,schoolId]);
-        await client.query("UPDATE cbt_exams SET total_marks=$3,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2", [examId,schoolId,Number(totals.rows[0].total_marks||0)]);
+
+        const totals = await client.query(
+            "SELECT COALESCE(SUM(marks),0)::numeric AS total_marks FROM cbt_questions WHERE exam_id=$1 AND school_id=$2",
+            [examId, schoolId]
+        );
+        await client.query(
+            "UPDATE cbt_exams SET total_marks=$3,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2",
+            [examId, schoolId, Number(totals.rows[0].total_marks || 0)]
+        );
+
         await client.query("COMMIT");
-        return { copied: selected.rows.length, total_marks: Number(totals.rows[0].total_marks||0) };
-    } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
+        return { copied: selected.rows.length, total_marks: Number(totals.rows[0].total_marks || 0) };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 module.exports = { list, getById, create, bulkCreate, update, remove, copyToExam };
