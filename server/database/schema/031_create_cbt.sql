@@ -171,7 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_cbt_questions_school_exam ON cbt_questions(school
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cbt_exams_id_school ON cbt_exams(id, school_id);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_subjects_id_school ON subjects(id, school_id);
 
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='fk_cbt_exam_subjects_exam_school' AND conrelid='cbt_exam_subjects'::regclass) THEN
         ALTER TABLE cbt_exam_subjects ADD CONSTRAINT fk_cbt_exam_subjects_exam_school
@@ -189,7 +189,7 @@ BEGIN
         ALTER TABLE cbt_questions ADD CONSTRAINT fk_cbt_question_subject_school
             FOREIGN KEY (subject_id, school_id) REFERENCES subjects(id, school_id) ON DELETE RESTRICT;
     END IF;
-END $;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_cbt_exam_subjects_school_exam ON cbt_exam_subjects(school_id, exam_id, section_order);
 CREATE INDEX IF NOT EXISTS idx_cbt_exam_subjects_school_subject ON cbt_exam_subjects(school_id, subject_id);
