@@ -34,10 +34,25 @@ CREATE TABLE IF NOT EXISTS cbt_exams (
     CONSTRAINT cbt_exam_dates_check CHECK (ends_at IS NULL OR starts_at IS NULL OR ends_at > starts_at)
 );
 
+CREATE TABLE IF NOT EXISTS cbt_exam_subjects (
+    school_id INTEGER NOT NULL,
+    exam_id INTEGER NOT NULL,
+    subject_id INTEGER NOT NULL,
+    section_title VARCHAR(255) NOT NULL,
+    section_order INTEGER NOT NULL CHECK (section_order > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_cbt_exam_subjects PRIMARY KEY (exam_id, subject_id),
+    CONSTRAINT uq_cbt_exam_subject_section_order UNIQUE (exam_id, section_order),
+    CONSTRAINT fk_cbt_exam_subjects_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_cbt_exam_subjects_exam FOREIGN KEY (exam_id) REFERENCES cbt_exams(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cbt_exam_subjects_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE RESTRICT
+);
+
 CREATE TABLE IF NOT EXISTS cbt_questions (
     id SERIAL PRIMARY KEY,
     school_id INTEGER NOT NULL,
     exam_id INTEGER NOT NULL,
+    subject_id INTEGER NOT NULL,
     question_text TEXT NOT NULL,
     image_url TEXT,
     marks NUMERIC(10,2) NOT NULL DEFAULT 1 CHECK (marks > 0),
@@ -47,6 +62,7 @@ CREATE TABLE IF NOT EXISTS cbt_questions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cbt_question_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
     CONSTRAINT fk_cbt_question_exam FOREIGN KEY (exam_id) REFERENCES cbt_exams(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cbt_question_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE RESTRICT,
     CONSTRAINT uq_cbt_question_order UNIQUE (exam_id, question_order)
 );
 
@@ -152,6 +168,9 @@ CREATE INDEX IF NOT EXISTS idx_cbt_exams_school ON cbt_exams(school_id);
 CREATE INDEX IF NOT EXISTS idx_cbt_exams_school_class ON cbt_exams(school_id, class_id, arm_id);
 CREATE INDEX IF NOT EXISTS idx_cbt_exams_school_subject ON cbt_exams(school_id, subject_id);
 CREATE INDEX IF NOT EXISTS idx_cbt_questions_school_exam ON cbt_questions(school_id, exam_id);
+CREATE INDEX IF NOT EXISTS idx_cbt_exam_subjects_school_exam ON cbt_exam_subjects(school_id, exam_id, section_order);
+CREATE INDEX IF NOT EXISTS idx_cbt_exam_subjects_school_subject ON cbt_exam_subjects(school_id, subject_id);
+CREATE INDEX IF NOT EXISTS idx_cbt_questions_exam_subject ON cbt_questions(school_id, exam_id, subject_id, question_order);
 CREATE INDEX IF NOT EXISTS idx_cbt_options_question ON cbt_question_options(question_id);
 CREATE INDEX IF NOT EXISTS idx_cbt_attempts_school_student ON cbt_attempts(school_id, student_id);
 CREATE INDEX IF NOT EXISTS idx_cbt_attempts_exam ON cbt_attempts(exam_id);
