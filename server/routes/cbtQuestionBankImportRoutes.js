@@ -19,5 +19,6 @@ const upload = multer({
 router.use(authenticate);
 router.post("/preview", authorize(...staffRoles), upload.single("pdf"), controller.preview);
 router.post("/import", authorize(...staffRoles), controller.importQuestions);
+router.post("/exam/:examId/import", authorize(...staffRoles), controller.importToExam);
 
 module.exports = router;
