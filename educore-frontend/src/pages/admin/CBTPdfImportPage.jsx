@@ -22,7 +22,7 @@ const mapQuestionSubjects = (questions, exam) => (questions || []).map((question
     );
     const match = taggedSubject ? sections.find((section) =>
         [section.subject_name, section.section_title].some((name) => normalizeSubject(name) === taggedSubject)
-    ) : null;
+    ) : sections.length === 1 ? sections[0] : null;
     return { ...question, subject_id: match ? String(match.subject_id) : "", mapped_subject_name: match?.section_title || match?.subject_name || "", subject_mapping_error: !match };
 });
 
@@ -193,6 +193,7 @@ function CBTPdfImportPage() {
                         <FileText className="mx-auto h-10 w-10 text-slate-400" />
                         <h2 className="mt-3 font-semibold">Upload CBT Question PDF</h2>
                         <p className="mt-1 text-sm text-slate-500">Maximum 10 MB. Text-based PDFs only; scanned PDFs are not supported yet.</p>
+                        {targetExamId && <p className="mx-auto mt-2 max-w-2xl rounded-lg bg-slate-50 p-3 text-left text-xs text-slate-600">For combined examinations, include a subject line under every question, for example <strong>Subject: Physics</strong>, followed by the options and <strong>Answer: B</strong>. The subject name must match a subject in the selected examination. EduProw will assign it automatically.</p>}
                         <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50">
                             <Upload className="h-4 w-4" /> Choose PDF
                             <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={chooseFile} />
