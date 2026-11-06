@@ -14,10 +14,14 @@ const normalizeOptionText = (value) => clean(value)
 
 const parseQuestionBlock = (number, rawBlock) => {
     const block = clean(rawBlock);
-    const answerMatch = block.match(/(?:^|\n)\s*(?:Answer|Correct Answer)\s*:\s*\(?([A-Da-d])\)?\s*(?:\n|$)/i);
+    const subjectMatch = block.match(/(?:^|\\n)\\s*Subject\\s*:\\s*([^\\n]+)\\s*(?=\\n|$)/i);
+    const subject_name = subjectMatch ? subjectMatch[1].trim() : "";
+    const withoutSubject = subjectMatch ? block.replace(subjectMatch[0], "\\n").trim() : block;
+    const answerMatch = withoutSubject.match(/(?:^|\\n)\\s*(?:Answer|Correct Answer)\\s*:\\s*\\(?([A-Da-d])\\)?\\s*(?:\\n|$)/i);
     if (!answerMatch) {
         return {
             number: Number(number),
+            subject_name,
             question_text: "",
             options: [],
             correct_answer: null,
@@ -28,8 +32,8 @@ const parseQuestionBlock = (number, rawBlock) => {
     }
 
     const answer = answerMatch[1].toUpperCase();
-    const beforeAnswer = block.slice(0, answerMatch.index).trim();
-    const afterAnswer = block.slice(answerMatch.index + answerMatch[0].length).trim();
+    const beforeAnswer = withoutSubject.slice(0, answerMatch.index).trim();
+    const afterAnswer = withoutSubject.slice(answerMatch.index + answerMatch[0].length).trim();
 
     const optionMatches = [...beforeAnswer.matchAll(/(?:^|\n)\s*([A-Da-d])[.)]\s+([\s\S]*?)(?=\n\s*[A-Da-d][.)]\s+|$)/g)];
     const options = optionMatches.map((match) => ({
@@ -56,6 +60,7 @@ const parseQuestionBlock = (number, rawBlock) => {
 
     return {
         number: Number(number),
+        subject_name,
         question_text: finalQuestionText,
         image_url: "",
         marks: 1,
