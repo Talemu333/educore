@@ -13,9 +13,23 @@ const emptyOptions = () => [1, 2, 3, 4].map((order) => ({
     is_correct: order === 1,
 }));
 
+const normalizeSubject = (value) => String(value || "").trim().toLowerCase().replace(/\\s+/g, " ");
+
+const mapQuestionSubjects = (questions, exam) => (questions || []).map((question) => {
+    const taggedSubject = normalizeSubject(question.subject_name);
+    const sections = (exam?.exam_subjects || []).filter((section) =>
+        !Array.isArray(exam?.manageable_subject_ids) || exam.manageable_subject_ids.map(Number).includes(Number(section.subject_id))
+    );
+    const match = taggedSubject ? sections.find((section) =>
+        [section.subject_name, section.section_title].some((name) => normalizeSubject(name) === taggedSubject)
+    ) : null;
+    return { ...question, subject_id: match ? String(match.subject_id) : "", mapped_subject_name: match?.section_title || match?.subject_name || "", subject_mapping_error: !match };
+});
+
 const normalizeQuestion = (q) => ({
     ...q,
     subject_id: q.subject_id || "",
+    subject_name: q.subject_name || "",
     question_text: q.question_text || "",
     image_url: q.image_url || "",
     marks: Number(q.marks || 1),
@@ -59,7 +73,9 @@ function CBTPdfImportPage() {
         if (!id) return;
         try {
             const response = await api.get(`/cbt/exams/${id}`);
-            setTargetExam(response.data?.data || null);
+            const exam = response.data?.data || null;
+            setTargetExam(exam);
+            setPreview((current) => current ? { ...current, questions: mapQuestionSubjects(current.questions, exam) } : current);
         } catch (error) {
             setTargetExamId("");
             toast.error(error.response?.data?.message || "Unable to load the selected examination.");
@@ -92,7 +108,7 @@ function CBTPdfImportPage() {
             });
             setPreview({
                 ...response.data.data,
-                questions: (response.data.data.questions || []).map(normalizeQuestion),
+                questions: mapQuestionSubjects((response.data.data.questions || []).map(normalizeQuestion), targetExamId ? targetExam : null),
             });
             toast.success(`${response.data.data.valid_count} question(s) ready for review.`);
         } catch (error) {
@@ -163,7 +179,7 @@ function CBTPdfImportPage() {
 
     return (
         <div className="w-full space-y-6">
-            <PageHeader title="Import CBT Questions from PDF" description="Upload one PDF, assign each question to its subject, review it, then import it into a combined examination or the question bank." />
+            <PageHeader title="Import CBT Questions from PDF" description="Upload a PDF with a Subject: line under each question. EduProw will match each question to the selected examination section automatically." />
 
             <Card>
                 <CardContent className="space-y-5 p-5 sm:p-7">
@@ -220,12 +236,17 @@ function CBTPdfImportPage() {
                                         <Button variant="outline" onClick={() => removeQuestion(index)}><X className="h-4 w-4" /></Button>
                                     </div>
                                     {!q.valid && q.warning && <div className="mb-3 rounded-lg border p-3 text-sm">{q.warning}</div>}
-                                    {targetExamId && <label className="mt-3 block text-sm font-medium">Subject section
-                                        <select className="mt-1 w-full rounded-lg border p-2" value={q.subject_id} onChange={(e) => updateQuestion(index, "subject_id", e.target.value)}>
-                                            <option value="">Select subject for this question</option>
-                                            {(targetExam?.exam_subjects || []).filter((section) => !Array.isArray(targetExam?.manageable_subject_ids) || targetExam.manageable_subject_ids.map(Number).includes(Number(section.subject_id))).map((section) => <option key={section.subject_id} value={section.subject_id}>{section.section_title || section.subject_name}</option>)}
-                                        </select>
-                                    </label>}
+                                    {targetExamId && <div className="mt-3 rounded-lg border p-3 text-sm">
+                                        {q.subject_id ? <div className="flex flex-wrap items-center gap-2"><span className="text-slate-500">Detected subject:</span><span className="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">{q.mapped_subject_name}</span><span className="text-xs text-slate-500">(from Subject: {q.subject_name})</span></div> : <>
+                                            <div className="mb-2 flex items-center gap-2 font-medium text-amber-700"><AlertTriangle className="h-4 w-4" /> {q.subject_name ? `Subject “${q.subject_name}” was not found in this examination.` : "Subject tag is missing from this question."}</div>
+                                            <label className="block text-xs font-medium">Choose the correct section to resolve this question
+                                                <select className="mt-1 w-full rounded-lg border p-2 text-sm" value={q.subject_id} onChange={(e) => updateQuestion(index, "subject_id", e.target.value)}>
+                                                    <option value="">Select subject section</option>
+                                                    {(targetExam?.exam_subjects || []).filter((section) => !Array.isArray(targetExam?.manageable_subject_ids) || targetExam.manageable_subject_ids.map(Number).includes(Number(section.subject_id))).map((section) => <option key={section.subject_id} value={section.subject_id}>{section.section_title || section.subject_name}</option>)}
+                                                </select>
+                                            </label>
+                                        </>}
+                                    </div>}
                                     <textarea className="w-full rounded-lg border p-3" rows="3" value={q.question_text} onChange={(e) => updateQuestion(index, "question_text", e.target.value)} placeholder="Question text" />
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {q.options.map((option, optionIndex) => (
