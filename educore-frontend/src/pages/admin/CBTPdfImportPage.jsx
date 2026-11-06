@@ -228,7 +228,7 @@ function CBTPdfImportPage() {
                         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <h2 className="font-semibold">Review Imported Questions</h2>
-                                <p className="text-sm text-slate-500">{preview.questions.length} question(s) detected • {preview.questions.filter((q) => q.valid).length} initially valid • {preview.invalid_count} need review</p>
+                                <p className="text-sm text-slate-500">{preview.questions.length} question(s) detected • {preview.questions.filter((q) => q.valid && (!targetExamId || q.subject_id)).length} ready to import • {preview.questions.filter((q) => !q.valid || (targetExamId && !q.subject_id)).length} need review</p>
                             </div>
                             <Button onClick={importQuestions} disabled={importing}>{importing ? "Importing..." : `Import ${preview.questions.length} Question(s)`}</Button>
                         </div>
@@ -239,7 +239,7 @@ function CBTPdfImportPage() {
                             {preview.questions.map((q, index) => (
                                 <div key={`${q.number}-${index}`} className="rounded-xl border p-4">
                                     <div className="mb-3 flex items-start justify-between gap-3">
-                                        <div className="flex items-center gap-2 text-sm font-semibold"><span>Question {q.number}</span>{q.valid ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}</div>
+                                        <div className="flex items-center gap-2 text-sm font-semibold"><span>Question {q.number}</span>{q.valid && (!targetExamId || q.subject_id) ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}</div>
                                         <Button variant="outline" onClick={() => removeQuestion(index)}><X className="h-4 w-4" /></Button>
                                     </div>
                                     {!q.valid && q.warning && <div className="mb-3 rounded-lg border p-3 text-sm">{q.warning}</div>}
