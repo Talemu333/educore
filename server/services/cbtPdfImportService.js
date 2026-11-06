@@ -14,10 +14,10 @@ const normalizeOptionText = (value) => clean(value)
 
 const parseQuestionBlock = (number, rawBlock) => {
     const block = clean(rawBlock);
-    const subjectMatch = block.match(/(?:^|\\n)\\s*Subject\\s*:\\s*([^\\n]+)\\s*(?=\\n|$)/i);
+    const subjectMatch = block.match(/(?:^|\n)\s*Subject\s*:\s*([^\n]+)\s*(?=\n|$)/i);
     const subject_name = subjectMatch ? subjectMatch[1].trim() : "";
-    const withoutSubject = subjectMatch ? block.replace(subjectMatch[0], "\\n").trim() : block;
-    const answerMatch = withoutSubject.match(/(?:^|\\n)\\s*(?:Answer|Correct Answer)\\s*:\\s*\\(?([A-Da-d])\\)?\\s*(?:\\n|$)/i);
+    const withoutSubject = subjectMatch ? block.replace(subjectMatch[0], "\n").trim() : block;
+    const answerMatch = withoutSubject.match(/(?:^|\n)\s*(?:Answer|Correct Answer)\s*:\s*\(?([A-Da-d])\)?\s*(?:\n|$)/i);
     if (!answerMatch) {
         return {
             number: Number(number),
