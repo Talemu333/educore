@@ -13,7 +13,7 @@ const emptyOptions = () => [1, 2, 3, 4].map((order) => ({
     is_correct: order === 1,
 }));
 
-const normalizeSubject = (value) => String(value || "").trim().toLowerCase().replace(/\\s+/g, " ");
+const normalizeSubject = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 
 const mapQuestionSubjects = (questions, exam) => (questions || []).map((question) => {
     const taggedSubject = normalizeSubject(question.subject_name);
@@ -119,9 +119,15 @@ function CBTPdfImportPage() {
     };
 
     const updateQuestion = (index, field, value) => {
+        const section = field === "subject_id" ? (targetExam?.exam_subjects || []).find((item) => String(item.subject_id) === String(value)) : null;
         setPreview((current) => ({
             ...current,
-            questions: current.questions.map((q, i) => i === index ? { ...q, [field]: value, valid: field === "question_text" ? Boolean(String(value).trim()) : q.valid } : q),
+            questions: current.questions.map((q, i) => i === index ? {
+                ...q,
+                [field]: value,
+                ...(field === "subject_id" ? { mapped_subject_name: section?.section_title || section?.subject_name || "", subject_mapping_error: !section } : {}),
+                valid: field === "question_text" ? Boolean(String(value).trim()) : q.valid,
+            } : q),
         }));
     };
 
