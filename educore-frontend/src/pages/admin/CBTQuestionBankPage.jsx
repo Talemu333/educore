@@ -185,6 +185,23 @@ function CBTQuestionBankPage() {
         }
     };
 
+    const deleteSelected = async () => {
+        if (!selectedIds.length) return toast.error("Select at least one question.");
+        const confirmed = window.confirm(`Permanently remove ${selectedIds.length} selected question(s) from the question bank? This will not remove questions already copied into examinations.`);
+        if (!confirmed) return;
+        setSaving(true);
+        try {
+            const response = await api.delete("/cbt-question-bank/bulk", { data: { ids: selectedIds } });
+            toast.success(response.data?.message || "Selected questions removed.");
+            setSelectedIds([]);
+            await load();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Unable to delete selected questions.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const copySelected = async () => {
         if (!copyExamId) return toast.error("Select an examination.");
         if (!selectedIds.length) return toast.error("Select at least one question.");
@@ -295,7 +312,13 @@ function CBTQuestionBankPage() {
                     </div>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500">
                         <span>{filteredQuestions.length} question(s) shown • {selectedIds.length} selected</span>
-                        <Button variant="outline" onClick={selectVisible} disabled={!filteredQuestions.length}>Select All Shown</Button>
+                        <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" onClick={selectVisible} disabled={!filteredQuestions.length}>Select All Shown</Button>
+                            <Button variant="outline" onClick={() => setSelectedIds([])} disabled={!selectedIds.length}>Clear Selection</Button>
+                            <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50" onClick={deleteSelected} disabled={!selectedIds.length || saving}>
+                                <Trash2 className="mr-2 h-4 w-4" /> {saving ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+                            </Button>
+                        </div>
                     </div>
                     {loading ? <p className="py-8 text-center text-sm text-slate-500">Loading question bank...</p> : filteredQuestions.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">No questions found.</p> : (
                         <div className="space-y-3">
