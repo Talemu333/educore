@@ -40,4 +40,12 @@ exports.update = async (req,res) => {
     } catch(e){return sendError(res,e);}
 };
 exports.remove = async (req,res) => { try { const data=await model.remove(Number(req.params.id),schoolId(req),ownerId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,message:"Question removed from the question bank."}); } catch(e){return sendError(res,e);} };
+exports.bulkRemove = async (req,res) => {
+    try {
+        if (!Array.isArray(req.body?.ids) || !req.body.ids.length) return res.status(400).json({success:false,message:"Select at least one question to delete."});
+        if (req.body.ids.length > 500) return res.status(400).json({success:false,message:"You can delete at most 500 questions at a time."});
+        const data = await model.bulkRemove(req.body.ids,schoolId(req),ownerId(req));
+        return res.json({success:true,message:`${data.deleted} question(s) removed from the question bank.`,data});
+    } catch(e){return sendError(res,e);}
+};
 exports.copyToExam = async (req,res) => { try { const role=String(req.user?.role_name||"").trim().toLowerCase(); const assignedTeacherId=role==="teacher"?Number(req.user.id):null; const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),ownerId(req),assignedTeacherId); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
