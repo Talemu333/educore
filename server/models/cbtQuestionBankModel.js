@@ -106,6 +106,34 @@ const remove = async (id, schoolId, createdById = null) => {
     return result.rows[0];
 };
 
+const bulkRemove = async (ids, schoolId, createdById = null) => {
+    const requested = [...new Set((Array.isArray(ids) ? ids : []).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+    if (!requested.length) throw new Error("Select at least one valid question.");
+    if (requested.length > 500) throw new Error("You can delete at most 500 questions at a time.");
+
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const values = [requested, schoolId];
+        const ownerClause = createdById === null ? "" : " AND created_by=$3";
+        if (createdById !== null) values.push(createdById);
+        const result = await client.query(
+            `DELETE FROM cbt_question_bank WHERE id=ANY($1::int[]) AND school_id=$2${ownerClause} RETURNING id`,
+            values
+        );
+        if (result.rows.length !== requested.length) {
+            throw new Error("Some selected questions could not be deleted. They may not belong to your school or you may not have permission to delete them. No questions were deleted.");
+        }
+        await client.query("COMMIT");
+        return { deleted: result.rows.length };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 const copyToExam = async (examId, bankIds, schoolId, createdById = null, assignedTeacherId = null) => {
     const client = await pool.connect();
     try {
@@ -209,4 +237,4 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null, assigne
     }
 };
 
-module.exports = { list, getById, create, bulkCreate, update, remove, copyToExam };
+module.exports = { list, getById, create, bulkCreate, update, remove, bulkRemove, copyToExam };
