@@ -20,6 +20,7 @@ router.get("/", authorize(...staffRoles), controller.list);
 router.get("/:id", authorize(...staffRoles), controller.get);
 router.post("/", authorize(...staffRoles), controller.create);
 router.put("/:id", authorize(...staffRoles), controller.update);
+router.delete("/bulk", authorize(...staffRoles), controller.bulkRemove);
 router.delete("/:id", authorize(...staffRoles), controller.remove);
 router.post("/copy-to-exam/:examId", authorize(...staffRoles), controller.copyToExam);
 
