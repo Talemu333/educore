@@ -353,12 +353,18 @@ const bulkCreateExamQuestions = async (examId, schoolId, questions) => {
         const validSubjects = await client.query("SELECT subject_id FROM cbt_exam_subjects WHERE exam_id=$1 AND school_id=$2 AND subject_id=ANY($3::int[])", [examId, schoolId, subjectIds]);
         if (validSubjects.rows.length !== subjectIds.length) throw new Error("Every imported question must belong to a subject section in this examination.");
         const inserted = [];
+        // uq_cbt_question_order is unique across the entire examination (not per subject).
+        // Continue one exam-wide sequence so combined-subject imports cannot reuse an order.
+        const orderResult = await client.query(
+            "SELECT COALESCE(MAX(question_order),0)+1 AS next_order FROM cbt_questions WHERE exam_id=$1 AND school_id=$2",
+            [examId, schoolId]
+        );
+        let nextQuestionOrder = Number(orderResult.rows[0]?.next_order || 1);
         for (const item of questions) {
-            const orderResult = await client.query("SELECT COALESCE(MAX(question_order),0)+1 AS next_order FROM cbt_questions WHERE exam_id=$1 AND school_id=$2 AND subject_id=$3", [examId, schoolId, Number(item.subject_id)]);
             const result = await client.query(
                 `INSERT INTO cbt_questions(school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation)
                  VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-                [schoolId, examId, Number(item.subject_id), item.question_text, item.image_url || null, item.marks || 1, Number(orderResult.rows[0].next_order), item.explanation || null]
+                [schoolId, examId, Number(item.subject_id), item.question_text, item.image_url || null, item.marks || 1, nextQuestionOrder++, item.explanation || null]
             );
             const question = result.rows[0];
             for (const option of item.options || []) {
