@@ -27,6 +27,8 @@ function CBTQuestionBankPage() {
     const [subjects, setSubjects] = useState([]);
     const [classes, setClasses] = useState([]);
     const [exams, setExams] = useState([]);
+    const [questionGroups, setQuestionGroups] = useState([]);
+    const [targetGroupId, setTargetGroupId] = useState("");
     const [question, setQuestion] = useState(emptyQuestion);
     const [editingId, setEditingId] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -54,7 +56,7 @@ function CBTQuestionBankPage() {
             setQuestions(q.data?.data || []);
             setSubjects(s.data?.data || []);
             setClasses(c.data?.data || []);
-            setExams(e.data?.data || []);
+            setExams(e.data?.data || []);\n            setQuestionGroups(g.data?.data || []);
         } catch (error) {
             toast.error(error.response?.data?.message || "Unable to load question bank.");
         } finally {
@@ -247,6 +249,34 @@ function CBTQuestionBankPage() {
         }
     };
 
+    const addSelectedToGroup = async () => {
+        if (!targetGroupId) return toast.error("Choose a shared-material group.");
+        if (!selectedIds.length) return toast.error("Select at least one question.");
+        setSaving(true);
+        try {
+            const response = await api.post(`/cbt-question-bank/groups/${targetGroupId}/questions`, { question_ids: selectedIds });
+            toast.success(response.data?.message || "Questions added to the group.");
+            setSelectedIds([]);
+            setTargetGroupId("");
+            await load();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Unable to add questions to the group.");
+        } finally { setSaving(false); }
+    };
+
+    const removeFromGroup = async (item) => {
+        if (!item.question_group_id) return;
+        if (!window.confirm("Remove this question from its shared-material group? The question and any examination copies will be kept.")) return;
+        setSaving(true);
+        try {
+            const response = await api.delete(`/cbt-question-bank/groups/${item.question_group_id}/questions/${item.id}`);
+            toast.success(response.data?.message || "Question removed from the group.");
+            await load();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Unable to remove question from the group.");
+        } finally { setSaving(false); }
+    };
+
     const setOption = (index, field, value) => {
         setQuestion((current) => ({
             ...current,
@@ -271,10 +301,21 @@ function CBTQuestionBankPage() {
                 <Button variant="outline" disabled={!selectedIds.length} onClick={() => setShowCopy(true)}>
                     <Copy className="mr-2 h-4 w-4" /> Add {selectedIds.length || "Selected"} to Exam
                 </Button>
-                <Button variant="outline" disabled={!selectedIds.length} onClick={() => setShowGroupForm(true)}>
+                <Button variant="outline" disabled={!selectedIds.length} onClick={() => { setEditingGroupId(null); setShowGroupForm(true); }}>
                     <Layers className="mr-2 h-4 w-4" /> Group Selected Questions
                 </Button>
             </div>
+
+            {selectedIds.length > 0 && questionGroups.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-slate-50 p-3">
+                    <span className="text-sm font-medium">Add selected questions to an existing group:</span>
+                    <select className="min-w-56 rounded-lg border bg-white p-2 text-sm" value={targetGroupId} onChange={(e) => setTargetGroupId(e.target.value)}>
+                        <option value="">Select shared-material group</option>
+                        {questionGroups.map((group) => <option key={group.id} value={group.id}>{group.title} — {group.subject_name} / {group.class_name}</option>)}
+                    </select>
+                    <Button size="sm" disabled={saving || !targetGroupId} onClick={addSelectedToGroup}>Add Selected</Button>
+                </div>
+            )}
 
             {showForm && (
                 <Card>
@@ -360,7 +401,7 @@ function CBTQuestionBankPage() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase text-slate-500"><span>Question {index + 1}</span><span>•</span><span>{item.subject_name}</span><span>•</span><span>{item.class_name}</span><span>•</span><span>{item.marks} mark{Number(item.marks) === 1 ? "" : "s"}</span>{item.is_active === false && <span className="text-red-500">• inactive</span>}</div>
                                                 <p className="mt-1 font-medium">{item.question_text}</p>
-                                                {item.group_title && <div className="mt-2 flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"><Layers className="h-3.5 w-3.5" /> Shared group: {item.group_title}</span><Button type="button" size="sm" variant="outline" onClick={() => { setEditingGroupId(item.question_group_id); setGroupDraft({ title: item.group_title || "", material_type: item.group_material_type || "passage", instructions: item.group_instructions || "", material_text: item.group_material_text || "", image_url: item.group_image_url || "" }); setSelectedIds([]); setShowGroupForm(true); window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); }}>Edit Shared Material</Button></div>}
+                                                {item.group_title && <div className="mt-2 flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"><Layers className="h-3.5 w-3.5" /> Shared group: {item.group_title}</span><Button type="button" size="sm" variant="outline" onClick={() => { setEditingGroupId(item.question_group_id); setGroupDraft({ title: item.group_title || "", material_type: item.group_material_type || "passage", instructions: item.group_instructions || "", material_text: item.group_material_text || "", image_url: item.group_image_url || "" }); setSelectedIds([]); setShowGroupForm(true); window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); }}>Edit Shared Material</Button><Button type="button" size="sm" variant="outline" disabled={saving} onClick={() => removeFromGroup(item)}>Remove from Group</Button></div>}
                                                 {item.image_url && <img src={item.image_url} alt="Question" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-3 max-h-48 rounded-lg border object-contain" />}
                                                 <div className="mt-3 grid gap-2 sm:grid-cols-2">{(item.options || []).map((option, optionIndex) => <div key={option.id || optionIndex} className={`rounded-lg border p-2 text-sm ${option.is_correct ? "border-green-400 bg-green-50" : ""}`}><div>{String.fromCharCode(65 + optionIndex)}. {option.option_text}</div>{option.option_image_url && <img src={option.option_image_url} alt="Option" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-2 max-h-24 rounded object-contain" />}</div>)}</div>
                                             </div>
