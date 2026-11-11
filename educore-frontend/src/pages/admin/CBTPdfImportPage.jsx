@@ -187,7 +187,9 @@ function CBTPdfImportPage() {
         <div className="w-full space-y-6">
             <PageHeader title="Import CBT Questions from PDF" description="Upload a PDF with a Subject: line under each question. EduProw will match each question to the selected examination section automatically." />
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-                <strong>Questions that share a passage, diagram, table, graph or instruction:</strong> import the questions into the question bank, select the related questions there, and choose <strong>Group Selected Questions</strong> to attach the shared material once. If you import directly into an examination, the matching question-bank copies are also linked, so creating the group in the question bank will update those examination questions too.
+                <strong>Automatic shared-passage detection:</strong> place a labelled material block before the questions that use it. For example:
+                <pre className="my-2 overflow-x-auto rounded-lg bg-white p-3 text-xs text-slate-800">Passage: The Importance of Water{"\n"}Water is essential to life...{"\n"}End Shared Material{"\n"}1. Why is water important?{"\n"}A. ...</pre>
+                EduProw attaches the detected text to the imported questions as a shared-material group, whether you import into the question bank or directly into a draft examination. You can review the detected passage in the preview. PDF image extraction is not supported yet, so diagrams and pictures must still be added separately using an image URL in the question bank.
             </div>
 
             <Card>
