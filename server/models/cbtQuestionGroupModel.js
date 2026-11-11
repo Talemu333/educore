@@ -66,4 +66,19 @@ const createFromBank = async (data, schoolId, userId) => {
     finally { client.release(); }
 };
 
-module.exports = { list, createFromBank };
+
+const updateGroup = async (id, schoolId, data) => {
+    const result = await pool.query(
+        `UPDATE cbt_question_groups
+         SET title=$3, material_type=$4, instructions=$5, material_text=$6,
+             image_url=$7, updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 AND school_id=$2
+         RETURNING *`,
+        [id, schoolId, data.title, data.material_type, data.instructions || null,
+         data.material_text || null, data.image_url || null]
+    );
+    return result.rows[0] || null;
+};
+
+module.exports = { list, createFromBank, updateGroup };
+
