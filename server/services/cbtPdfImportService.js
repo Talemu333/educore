@@ -14,7 +14,7 @@ const normalizeOptionText = (value) => clean(value)
 
 
 const parseLeadingSharedMaterial = (prefix) => {
-    const marker = /(?:^|\n)\\s*(Shared Material|Comprehension Passage|Passage|Instruction|Diagram|Table|Graph)\\s*:\\s*([^\n]*)/i;
+    const marker = /(?:^|\n)\s*(Shared Material|Comprehension Passage|Passage|Instruction|Diagram|Table|Graph)\s*:\s*([^\n]*)/i;
     const match = marker.exec(prefix);
     if (!match) return null;
     const label = match[1].toLowerCase();
@@ -22,7 +22,7 @@ const parseLeadingSharedMaterial = (prefix) => {
     let materialType = label.includes("passage") ? "passage" : label;
     let title = header;
     if (label === "shared material") {
-        const typed = header.match(/^(passage|comprehension passage|instruction|diagram|image|table|graph)\\s*(?:[-–|:]\\s*)?(.*)$/i);
+        const typed = header.match(/^(passage|comprehension passage|instruction|diagram|image|table|graph)\s*(?:[-–|:]\s*)?(.*)$/i);
         if (typed) {
             const type = typed[1].toLowerCase();
             materialType = type.includes("passage") ? "passage" : type;
@@ -34,7 +34,7 @@ const parseLeadingSharedMaterial = (prefix) => {
     if (!["passage","instruction","diagram","table","graph","image","mixed"].includes(materialType)) materialType = "mixed";
     const bodyStart = match.index + match[0].length;
     let materialText = prefix.slice(bodyStart).trim();
-    materialText = materialText.replace(/(?:^|\n)\\s*End Shared Material\\s*(?:\n|$)/i, "\n").trim();
+    materialText = materialText.replace(/(?:^|\n)\s*End Shared Material\s*(?:\n|$)/i, "\n").trim();
     if (!materialText) return null;
     return {
         group_key: "pdf-shared-1",
