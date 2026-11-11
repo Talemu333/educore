@@ -68,13 +68,20 @@ const ensureSchoolDatabaseSchema = async (schoolId, databaseName, schoolPool) =>
 const ensureSharedDatabaseResultApprovalMigration = async () => {
     if (!sharedResultApprovalMigrationPromise) {
         sharedResultApprovalMigrationPromise = (async () => {
-            const migrationPath = path.join(MIGRATIONS_DIR, RESULT_APPROVAL_MIGRATION);
-            const sql = await fs.readFile(migrationPath, "utf8");
-            if (sql.trim()) await centralPool.query(sql);
-            const announcementSql = await fs.readFile(path.join(MIGRATIONS_DIR, ANNOUNCEMENT_MIGRATION), "utf8");
-            if (announcementSql.trim()) await centralPool.query(announcementSql);
-            const combinedCbtSql = await fs.readFile(path.join(MIGRATIONS_DIR, "20261105_add_combined_subject_cbt.sql"), "utf8");
-            if (combinedCbtSql.trim()) await centralPool.query(combinedCbtSql);
+            // The shared database does not pass through per-school reconciliation.
+            // Apply the idempotent shared-schema migrations required by current
+            // features here as well, in chronological order.
+            const sharedMigrations = [
+                RESULT_APPROVAL_MIGRATION,
+                ANNOUNCEMENT_MIGRATION,
+                "20261023_add_profile_image_urls.sql",
+                "20261026_create_class_teacher_assignments.sql",
+                "20261105_add_combined_subject_cbt.sql"
+            ];
+            for (const migration of sharedMigrations) {
+                const sql = await fs.readFile(path.join(MIGRATIONS_DIR, migration), "utf8");
+                if (sql.trim()) await centralPool.query(sql);
+            }
         })().catch((error) => {
             sharedResultApprovalMigrationPromise = undefined;
             throw new Error(`Shared database schema migration failed: ${error.message}`);
