@@ -186,6 +186,9 @@ function CBTPdfImportPage() {
     return (
         <div className="w-full space-y-6">
             <PageHeader title="Import CBT Questions from PDF" description="Upload a PDF with a Subject: line under each question. EduProw will match each question to the selected examination section automatically." />
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+                <strong>Questions that share a passage, diagram, table, graph or instruction:</strong> import the questions into the question bank, select the related questions there, and choose <strong>Group Selected Questions</strong> to attach the shared material once. If you import directly into an examination, the matching question-bank copies are also linked, so creating the group in the question bank will update those examination questions too.
+            </div>
 
             <Card>
                 <CardContent className="space-y-5 p-5 sm:p-7">
