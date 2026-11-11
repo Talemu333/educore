@@ -47,16 +47,18 @@ function CBTQuestionBankPage() {
     const load = async () => {
         setLoading(true);
         try {
-            const [q, s, c, e] = await Promise.all([
+            const [q, s, c, e, g] = await Promise.all([
                 api.get("/cbt-question-bank"),
                 api.get("/subjects"),
                 api.get("/classes"),
                 api.get("/cbt/exams"),
+                api.get("/cbt-question-bank/groups"),
             ]);
             setQuestions(q.data?.data || []);
             setSubjects(s.data?.data || []);
             setClasses(c.data?.data || []);
-            setExams(e.data?.data || []);\n            setQuestionGroups(g.data?.data || []);
+            setExams(e.data?.data || []);
+            setQuestionGroups(g.data?.data || []);
         } catch (error) {
             toast.error(error.response?.data?.message || "Unable to load question bank.");
         } finally {
