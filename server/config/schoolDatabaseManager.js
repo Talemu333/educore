@@ -76,7 +76,8 @@ const ensureSharedDatabaseResultApprovalMigration = async () => {
                 ANNOUNCEMENT_MIGRATION,
                 "20261023_add_profile_image_urls.sql",
                 "20261026_create_class_teacher_assignments.sql",
-                "20261105_add_combined_subject_cbt.sql"
+                "20261105_add_combined_subject_cbt.sql",
+                "20261111_add_cbt_question_groups.sql"
             ];
             for (const migration of sharedMigrations) {
                 const sql = await fs.readFile(path.join(MIGRATIONS_DIR, migration), "utf8");
