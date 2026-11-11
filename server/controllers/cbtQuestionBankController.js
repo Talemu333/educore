@@ -50,3 +50,47 @@ exports.bulkRemove = async (req,res) => {
     } catch(e){return sendError(res,e);}
 };
 exports.copyToExam = async (req,res) => { try { const role=String(req.user?.role_name||"").trim().toLowerCase(); const assignedTeacherId=role==="teacher"?Number(req.user.id):null; const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),assignedTeacherId); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
+
+
+exports.listGroups = async (req,res) => {
+    try {
+        const role=String(req.user?.role_name||"").trim().toLowerCase();
+        const assignedTeacherId=role==="teacher"?Number(req.user.id):null;
+        const data=await require("../models/cbtQuestionGroupModel").list(schoolId(req),{
+            subjectId:req.query.subjectId,classId:req.query.classId,assignedTeacherId
+        });
+        return res.json({success:true,data});
+    } catch(e){return sendError(res,e);}
+};
+
+exports.createGroup = async (req,res) => {
+    try {
+        const title=String(req.body?.title||"").trim();
+        const materialType=String(req.body?.material_type||"").trim().toLowerCase();
+        const allowedTypes=["passage","instruction","diagram","image","table","graph","mixed"];
+        if(!title)return res.status(400).json({success:false,message:"A group title is required."});
+        if(!allowedTypes.includes(materialType))return res.status(400).json({success:false,message:"Choose a valid shared-material type."});
+        if(!String(req.body?.material_text||"").trim()&&!String(req.body?.image_url||"").trim())return res.status(400).json({success:false,message:"Provide shared text or an image URL."});
+        const ids=[...new Set((Array.isArray(req.body?.question_ids)?req.body.question_ids:[]).map(Number).filter(id=>Number.isInteger(id)&&id>0))];
+        if(!ids.length)return res.status(400).json({success:false,message:"Select at least one question."});
+        const role=String(req.user?.role_name||"").trim().toLowerCase();
+        const fullManager=["admin","administrator","proprietor","principal","vice_principal"].includes(role);
+        if(!fullManager){
+            if(role!=="teacher")return res.status(403).json({success:false,message:"You are not authorised to create question groups."});
+            const db=require("../config/database");
+            const access=await db.query(`
+                SELECT COUNT(*)::int AS total
+                FROM cbt_question_bank q
+                JOIN teacher_assignments ta ON ta.subject_id=q.subject_id AND ta.class_id=q.class_id
+                JOIN teachers t ON t.id=ta.teacher_id
+                JOIN users u ON u.id=t.user_id AND u.school_id=q.school_id
+                WHERE q.school_id=$1 AND q.id=ANY($2::int[]) AND u.id=$3
+            `,[schoolId(req),ids,Number(req.user.id)]);
+            if(Number(access.rows[0]?.total||0)!==ids.length)return res.status(403).json({success:false,message:"You can only group questions in subjects and classes assigned to you."});
+        }
+        const data=await require("../models/cbtQuestionGroupModel").createFromBank({
+            ...req.body,title,material_type:materialType,question_ids:ids
+        },schoolId(req),Number(req.user.id));
+        return res.status(201).json({success:true,message:"Shared material group created and linked to the selected questions.",data});
+    } catch(e){return sendError(res,e);}
+};
