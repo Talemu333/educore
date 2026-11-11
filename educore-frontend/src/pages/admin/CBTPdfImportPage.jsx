@@ -257,6 +257,13 @@ function CBTPdfImportPage() {
                                             </label>
                                         </>}
                                     </div>}
+                                    {q.group_key && q.group_material_text && (
+                                        <details className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
+                                            <summary className="cursor-pointer font-medium text-blue-900">Detected shared material: {q.group_title} ({q.group_material_type})</summary>
+                                            <p className="mt-2 whitespace-pre-wrap text-slate-700">{q.group_material_text}</p>
+                                            <p className="mt-2 text-xs text-slate-500">This material will be attached to the detected question group when imported. PDF image extraction is not supported; add diagrams or pictures separately in the question bank.</p>
+                                        </details>
+                                    )}
                                     <textarea className="w-full rounded-lg border p-3" rows="3" value={q.question_text} onChange={(e) => updateQuestion(index, "question_text", e.target.value)} placeholder="Question text" />
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {q.options.map((option, optionIndex) => (
