@@ -156,7 +156,7 @@ const bulkRemove = async (ids, schoolId, createdById = null) => {
     }
 };
 
-const copyToExam = async (examId, bankIds, schoolId, createdById = null, assignedTeacherId = null) => {
+const copyToExam = async (examId, bankIds, schoolId, assignedTeacherId = null) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -194,7 +194,7 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null, assigne
               AND q.school_id=$2
               AND q.is_active=true
               AND q.class_id=$4
-              AND ($6::integer IS NULL OR EXISTS (
+              AND ($5::integer IS NULL OR EXISTS (
                   SELECT 1
                   FROM teacher_assignments ta
                   JOIN teachers t ON t.id=ta.teacher_id
@@ -205,11 +205,11 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null, assigne
                         WHERE target_exam.id=$3 AND target_exam.school_id=q.school_id
                           AND (target_exam.arm_id IS NULL OR target_exam.arm_id=ta.arm_id)
                     ))
-                    AND u.id=$6
+                    AND u.id=$5
               ))
             GROUP BY q.id
             ORDER BY array_position($1::int[],q.id)
-        `, [requested, schoolId, examId, exam.class_id, createdById, assignedTeacherId]);
+        `, [requested, schoolId, examId, exam.class_id, assignedTeacherId]);
 
         if (selected.rows.length !== requested.length) {
             throw new Error("Some selected questions do not belong to this school's question bank, selected examination subjects, or examination class.");
