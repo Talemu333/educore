@@ -20,6 +20,8 @@ router.get("/", authorize(...staffRoles), controller.list);
 router.get("/groups", authorize(...staffRoles), controller.listGroups);
 router.post("/groups", authorize(...staffRoles), controller.createGroup);
 router.put("/groups/:groupId", authorize(...staffRoles), controller.updateGroup);
+router.post("/groups/:groupId/questions", authorize(...staffRoles), controller.addQuestionsToGroup);
+router.delete("/groups/:groupId/questions/:questionId", authorize(...staffRoles), controller.removeQuestionFromGroup);
 router.get("/:id", authorize(...staffRoles), controller.get);
 router.post("/", authorize(...staffRoles), controller.create);
 router.put("/:id", authorize(...staffRoles), controller.update);
