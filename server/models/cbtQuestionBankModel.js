@@ -7,7 +7,19 @@ const list = async (schoolId, filters = {}) => {
     if (filters.subjectId) { where.push(`q.subject_id=$${n++}`); values.push(filters.subjectId); }
     if (filters.classId) { where.push(`q.class_id=$${n++}`); values.push(filters.classId); }
     if (filters.active !== undefined) { where.push(`q.is_active=$${n++}`); values.push(filters.active); }
-    if (filters.createdById !== undefined && filters.createdById !== null) { where.push(`q.created_by=$${n++}`); values.push(filters.createdById); }
+    if (filters.createdById !== undefined && filters.createdById !== null) { where.push(`q.created_by=${n++}`); values.push(filters.createdById); }
+    if (filters.assignedTeacherId !== undefined && filters.assignedTeacherId !== null) {
+        where.push(`EXISTS (
+            SELECT 1
+            FROM teacher_assignments ta
+            JOIN teachers t ON t.id=ta.teacher_id
+            JOIN users assigned_user ON assigned_user.id=t.user_id AND assigned_user.school_id=q.school_id
+            WHERE ta.subject_id=q.subject_id
+              AND ta.class_id=q.class_id
+              AND assigned_user.id=${n++}
+        )`);
+        values.push(filters.assignedTeacherId);
+    }
     const result = await pool.query(`
         SELECT q.*, s.subject_name, c.class_name, u.username AS creator_name,
           COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
@@ -23,7 +35,7 @@ const list = async (schoolId, filters = {}) => {
     return result.rows;
 };
 
-const getById = async (id, schoolId, createdById = null) => {
+const getById = async (id, schoolId, createdById = null, assignedTeacherId = null) => {
     const result = await pool.query(`
         SELECT q.*, s.subject_name, c.class_name,
           COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
@@ -31,9 +43,19 @@ const getById = async (id, schoolId, createdById = null) => {
         JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
         JOIN classes c ON c.id=q.class_id AND c.school_id=q.school_id
         LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id
-        WHERE q.id=$1 AND q.school_id=$2 AND ($3::integer IS NULL OR q.created_by=$3)
+        WHERE q.id=$1 AND q.school_id=$2
+          AND ($3::integer IS NULL OR q.created_by=$3)
+          AND ($4::integer IS NULL OR EXISTS (
+              SELECT 1
+              FROM teacher_assignments ta
+              JOIN teachers t ON t.id=ta.teacher_id
+              JOIN users assigned_user ON assigned_user.id=t.user_id AND assigned_user.school_id=q.school_id
+              WHERE ta.subject_id=q.subject_id
+                AND ta.class_id=q.class_id
+                AND assigned_user.id=$4
+          ))
         GROUP BY q.id,s.subject_name,c.class_name
-    `, [id, schoolId, createdById]);
+    `, [id, schoolId, createdById, assignedTeacherId]);
     return result.rows[0];
 };
 
@@ -172,7 +194,6 @@ const copyToExam = async (examId, bankIds, schoolId, createdById = null, assigne
               AND q.school_id=$2
               AND q.is_active=true
               AND q.class_id=$4
-              AND ($5::integer IS NULL OR q.created_by=$5)
               AND ($6::integer IS NULL OR EXISTS (
                   SELECT 1
                   FROM teacher_assignments ta
