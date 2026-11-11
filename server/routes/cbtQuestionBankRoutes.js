@@ -17,6 +17,8 @@ router.use(async (req, res, next) => {
     }
 });
 router.get("/", authorize(...staffRoles), controller.list);
+router.get("/groups", authorize(...staffRoles), controller.listGroups);
+router.post("/groups", authorize(...staffRoles), controller.createGroup);
 router.get("/:id", authorize(...staffRoles), controller.get);
 router.post("/", authorize(...staffRoles), controller.create);
 router.put("/:id", authorize(...staffRoles), controller.update);
