@@ -225,23 +225,23 @@ function CBTQuestionBankPage() {
 
     const createQuestionGroup = async (event) => {
         event.preventDefault();
-        if (!selectedIds.length) return toast.error("Select the questions that should share this material.");
+        if (!editingGroupId && !selectedIds.length) return toast.error("Select the questions that should share this material.");
         if (!groupDraft.title.trim()) return toast.error("Enter a title for this question group.");
         if (!groupDraft.material_text.trim() && !groupDraft.image_url.trim()) return toast.error("Enter the passage/instruction or provide an image URL.");
         setSaving(true);
         try {
-            const response = await api.post("/cbt-question-bank/groups", {
-                ...groupDraft,
-                title: groupDraft.title.trim(),
-                question_ids: selectedIds,
-            });
-            toast.success(response.data?.message || "Question group created.");
+            const payload = { ...groupDraft, title: groupDraft.title.trim() };
+            const response = editingGroupId
+                ? await api.put(`/cbt-question-bank/groups/${editingGroupId}`, payload)
+                : await api.post("/cbt-question-bank/groups", { ...payload, question_ids: selectedIds });
+            toast.success(response.data?.message || (editingGroupId ? "Shared material updated." : "Question group created."));
             setSelectedIds([]);
+            setEditingGroupId(null);
             setGroupDraft({ title: "", material_type: "passage", instructions: "", material_text: "", image_url: "" });
             setShowGroupForm(false);
             await load();
         } catch (error) {
-            toast.error(error.response?.data?.message || "Unable to create question group. Check that the selected questions belong to one subject and class.");
+            toast.error(error.response?.data?.message || "Unable to save shared material.");
         } finally {
             setSaving(false);
         }
