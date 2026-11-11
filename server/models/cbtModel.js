@@ -340,11 +340,12 @@ const getAttemptSubjectResults = async (attemptId, schoolId) => {
     });
 };
 
-const bulkCreateExamQuestions = async (examId, schoolId, questions) => {
+const bulkCreateExamQuestions = async (examId, schoolId, questions, userId) => {
     const client = await pool.connect();
     try {
+        if (!Number.isInteger(Number(userId)) || Number(userId) < 1) throw new Error("A valid importing user is required.");
         await client.query("BEGIN");
-        const examResult = await client.query("SELECT id,status FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE", [examId, schoolId]);
+        const examResult = await client.query("SELECT id,status,class_id FROM cbt_exams WHERE id=$1 AND school_id=$2 FOR UPDATE", [examId, schoolId]);
         if (!examResult.rows[0]) throw new Error("Examination not found for this school.");
         if (examResult.rows[0].status !== "draft") throw new Error("PDF questions can only be imported into a draft examination.");
         const attempts = await client.query("SELECT COUNT(*)::int AS count FROM cbt_attempts WHERE exam_id=$1 AND school_id=$2", [examId, schoolId]);
@@ -370,6 +371,26 @@ const bulkCreateExamQuestions = async (examId, schoolId, questions) => {
             for (const option of item.options || []) {
                 await client.query("INSERT INTO cbt_question_options(question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)",
                     [question.id, option.option_text, option.option_image_url || null, option.option_order, Boolean(option.is_correct)]);
+            }
+            // Keep the reusable question bank in sync with the examination import.
+            // Both records and their options are written in this transaction, so a partial
+            // import cannot leave the examination and question bank out of sync.
+            const bankQuestionResult = await client.query(
+                `INSERT INTO cbt_question_bank
+                    (school_id,subject_id,class_id,question_text,image_url,marks,explanation,is_active,created_by)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE,$8) RETURNING id`,
+                [schoolId, Number(item.subject_id), Number(examResult.rows[0].class_id),
+                 item.question_text, item.image_url || null, item.marks || 1,
+                 item.explanation || null, userId]
+            );
+            for (const option of item.options || []) {
+                await client.query(
+                    `INSERT INTO cbt_question_bank_options
+                        (bank_question_id,option_text,option_image_url,option_order,is_correct)
+                     VALUES ($1,$2,$3,$4,$5)`,
+                    [bankQuestionResult.rows[0].id, option.option_text,
+                     option.option_image_url || null, option.option_order, Boolean(option.is_correct)]
+                );
             }
             inserted.push(question);
         }
