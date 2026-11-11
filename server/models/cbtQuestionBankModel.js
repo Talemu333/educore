@@ -227,10 +227,10 @@ const copyToExam = async (examId, bankIds, schoolId, assignedTeacherId = null) =
             order += 1;
             const created = await client.query(`
                 INSERT INTO cbt_questions
-                    (school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation,question_group_id)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                    (school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation,question_group_id,question_bank_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
                 RETURNING id
-            `, [schoolId, examId, q.subject_id, q.question_text, q.image_url, q.marks, order, q.explanation, q.question_group_id || null]);
+            `, [schoolId, examId, q.subject_id, q.question_text, q.image_url, q.marks, order, q.explanation, q.question_group_id || null, q.id]);
 
             for (const option of q.options) {
                 await client.query(`
