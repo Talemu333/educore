@@ -94,3 +94,39 @@ exports.createGroup = async (req,res) => {
         return res.status(201).json({success:true,message:"Shared material group created and linked to the selected questions.",data});
     } catch(e){return sendError(res,e);}
 };
+
+
+exports.updateGroup = async (req,res) => {
+    try {
+        const id=Number(req.params.groupId);
+        const title=String(req.body?.title||"").trim();
+        const materialType=String(req.body?.material_type||"").trim().toLowerCase();
+        const allowedTypes=["passage","instruction","diagram","image","table","graph","mixed"];
+        const materialText=String(req.body?.material_text||"").trim();
+        const imageUrl=String(req.body?.image_url||"").trim();
+        if(!Number.isInteger(id)||id<1)return res.status(400).json({success:false,message:"Invalid question group."});
+        if(!title)return res.status(400).json({success:false,message:"A group title is required."});
+        if(!allowedTypes.includes(materialType))return res.status(400).json({success:false,message:"Choose a valid shared-material type."});
+        if(!materialText&&!imageUrl)return res.status(400).json({success:false,message:"Provide shared text or an image URL."});
+        const role=String(req.user?.role_name||"").trim().toLowerCase();
+        const manager=["admin","administrator","proprietor","principal","vice_principal"].includes(role);
+        if(!manager){
+            if(role!=="teacher")return res.status(403).json({success:false,message:"You are not authorised to edit question groups."});
+            const db=require("../config/database");
+            const access=await db.query(`
+                SELECT 1 FROM cbt_question_groups g
+                JOIN teacher_assignments ta ON ta.subject_id=g.subject_id AND ta.class_id=g.class_id
+                JOIN teachers t ON t.id=ta.teacher_id
+                JOIN users u ON u.id=t.user_id AND u.school_id=g.school_id
+                WHERE g.id=$1 AND g.school_id=$2 AND u.id=$3 LIMIT 1
+            `,[id,schoolId(req),Number(req.user.id)]);
+            if(!access.rows.length)return res.status(403).json({success:false,message:"You can only edit shared materials for subjects and classes assigned to you."});
+        }
+        const data=await require("../models/cbtQuestionGroupModel").updateGroup(id,schoolId(req),{
+            title,material_type:materialType,instructions:String(req.body?.instructions||"").trim(),
+            material_text:materialText,image_url:imageUrl
+        });
+        if(!data)return res.status(404).json({success:false,message:"Question group not found."});
+        return res.json({success:true,message:"Shared material updated.",data});
+    } catch(e){return sendError(res,e);}
+};
