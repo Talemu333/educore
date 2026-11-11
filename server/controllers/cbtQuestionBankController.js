@@ -20,8 +20,9 @@ const normalizeOptions = (options) => Array.isArray(options)
 const validOptions = (options) =>
     options.length >= 2 && options.filter((option) => option.is_correct).length === 1;
 
-exports.list = async (req,res) => { try { return res.json({success:true,data:await model.list(schoolId(req),{subjectId:req.query.subjectId,classId:req.query.classId,active:req.query.active === undefined ? undefined : req.query.active !== "false",createdById:ownerId(req)})}); } catch(e){return sendError(res,e);} };
-exports.get = async (req,res) => { try { const data=await model.getById(Number(req.params.id),schoolId(req),ownerId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,data}); } catch(e){return sendError(res,e);} };
+const assignedTeacherId = (req) => String(req.user?.role_name || "").trim().toLowerCase() === "teacher" ? Number(req.user.id) : null;
+exports.list = async (req,res) => { try { return res.json({success:true,data:await model.list(schoolId(req),{subjectId:req.query.subjectId,classId:req.query.classId,active:req.query.active === undefined ? undefined : req.query.active !== "false",assignedTeacherId:assignedTeacherId(req)})}); } catch(e){return sendError(res,e);} };
+exports.get = async (req,res) => { try { const data=await model.getById(Number(req.params.id),schoolId(req),null,assignedTeacherId(req)); if(!data)return res.status(404).json({success:false,message:"Question not found."}); return res.json({success:true,data}); } catch(e){return sendError(res,e);} };
 exports.create = async (req,res) => {
     try {
         const options = normalizeOptions(req.body.options);
@@ -48,4 +49,4 @@ exports.bulkRemove = async (req,res) => {
         return res.json({success:true,message:`${data.deleted} question(s) removed from the question bank.`,data});
     } catch(e){return sendError(res,e);}
 };
-exports.copyToExam = async (req,res) => { try { const role=String(req.user?.role_name||"").trim().toLowerCase(); const assignedTeacherId=role==="teacher"?Number(req.user.id):null; const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),ownerId(req),assignedTeacherId); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
+exports.copyToExam = async (req,res) => { try { const role=String(req.user?.role_name||"").trim().toLowerCase(); const assignedTeacherId=role==="teacher"?Number(req.user.id):null; const data=await model.copyToExam(Number(req.params.examId),req.body.bankQuestionIds,schoolId(req),null,assignedTeacherId); return res.json({success:true,message:`${data.copied} question(s) added to the examination.`,data}); } catch(e){return sendError(res,e);} };
