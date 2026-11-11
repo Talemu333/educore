@@ -56,6 +56,10 @@ const createFromBank = async (data, schoolId, userId) => {
             "UPDATE cbt_question_bank SET question_group_id=$1,updated_at=CURRENT_TIMESTAMP WHERE school_id=$2 AND id=ANY($3::int[])",
             [group.rows[0].id,schoolId,ids]
         );
+        await client.query(
+            "UPDATE cbt_questions SET question_group_id=$1 WHERE school_id=$2 AND question_bank_id=ANY($3::int[])",
+            [group.rows[0].id,schoolId,ids]
+        );
         await client.query("COMMIT");
         return { ...group.rows[0], question_count: ids.length };
     } catch (error) { await client.query("ROLLBACK"); throw error; }
