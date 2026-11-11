@@ -79,7 +79,7 @@ exports.createGroup = async (req,res) => {
             if(role!=="teacher")return res.status(403).json({success:false,message:"You are not authorised to create question groups."});
             const db=require("../config/database");
             const access=await db.query(`
-                SELECT COUNT(*)::int AS total
+                SELECT COUNT(DISTINCT q.id)::int AS total
                 FROM cbt_question_bank q
                 JOIN teacher_assignments ta ON ta.subject_id=q.subject_id AND ta.class_id=q.class_id
                 JOIN teachers t ON t.id=ta.teacher_id
