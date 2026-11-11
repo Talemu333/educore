@@ -80,5 +80,59 @@ const updateGroup = async (id, schoolId, data) => {
     return result.rows[0] || null;
 };
 
-module.exports = { list, createFromBank, updateGroup };
+
+const addQuestions = async (groupId, schoolId, questionIds) => {
+    const ids=[...new Set((questionIds||[]).map(Number).filter(id=>Number.isInteger(id)&&id>0))];
+    if(!ids.length) throw new Error("Select at least one question to add.");
+    const client=await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const groupResult=await client.query(
+            "SELECT id,subject_id,class_id FROM cbt_question_groups WHERE id=$1 AND school_id=$2 FOR UPDATE",
+            [groupId,schoolId]
+        );
+        if(!groupResult.rows[0]) throw new Error("Question group not found.");
+        const group=groupResult.rows[0];
+        const selected=await client.query(
+            "SELECT id,subject_id,class_id,question_group_id FROM cbt_question_bank WHERE school_id=$1 AND id=ANY($2::int[]) FOR UPDATE",
+            [schoolId,ids]
+        );
+        if(selected.rows.length!==ids.length) throw new Error("Some selected questions do not belong to this school's question bank.");
+        if(selected.rows.some(q=>Number(q.subject_id)!==Number(group.subject_id)||Number(q.class_id)!==Number(group.class_id)||q.question_group_id)) {
+            throw new Error("Questions must match the group's subject and class and must not already belong to another group.");
+        }
+        await client.query(
+            "UPDATE cbt_question_bank SET question_group_id=$1,updated_at=CURRENT_TIMESTAMP WHERE school_id=$2 AND id=ANY($3::int[])",
+            [groupId,schoolId,ids]
+        );
+        await client.query(
+            "UPDATE cbt_questions SET question_group_id=$1 WHERE school_id=$2 AND question_bank_id=ANY($3::int[])",
+            [groupId,schoolId,ids]
+        );
+        await client.query("COMMIT");
+        return { added: ids.length };
+    } catch(error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
+};
+
+const removeQuestion = async (groupId, questionId, schoolId) => {
+    const client=await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const result=await client.query(
+            "UPDATE cbt_question_bank SET question_group_id=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND school_id=$2 AND question_group_id=$3 RETURNING id",
+            [questionId,schoolId,groupId]
+        );
+        if(!result.rows.length) throw new Error("Question is not a member of this group.");
+        await client.query(
+            "UPDATE cbt_questions SET question_group_id=NULL WHERE school_id=$1 AND question_bank_id=$2 AND question_group_id=$3",
+            [schoolId,questionId,groupId]
+        );
+        await client.query("COMMIT");
+        return { removed: 1 };
+    } catch(error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
+};
+
+module.exports = { list, createFromBank, updateGroup, addQuestions, removeQuestion };
 
