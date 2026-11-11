@@ -21,15 +21,16 @@ const list = async (schoolId, filters = {}) => {
         values.push(filters.assignedTeacherId);
     }
     const result = await pool.query(`
-        SELECT q.*, s.subject_name, c.class_name, u.username AS creator_name,
+        SELECT q.*, s.subject_name, c.class_name, u.username AS creator_name, g.title AS group_title, g.material_type AS group_material_type, g.instructions AS group_instructions, g.material_text AS group_material_text, g.image_url AS group_image_url,
           COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
         FROM cbt_question_bank q
         JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
         JOIN classes c ON c.id=q.class_id AND c.school_id=q.school_id
         JOIN users u ON u.id=q.created_by AND u.school_id=q.school_id
         LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id
+        LEFT JOIN cbt_question_groups g ON g.id=q.question_group_id AND g.school_id=q.school_id
         WHERE ${where.join(" AND ")}
-        GROUP BY q.id,s.subject_name,c.class_name,u.username
+        GROUP BY q.id,s.subject_name,c.class_name,u.username,g.title,g.material_type,g.instructions,g.material_text,g.image_url
         ORDER BY q.created_at DESC,q.id DESC
     `, values);
     return result.rows;
@@ -37,12 +38,13 @@ const list = async (schoolId, filters = {}) => {
 
 const getById = async (id, schoolId, createdById = null, assignedTeacherId = null) => {
     const result = await pool.query(`
-        SELECT q.*, s.subject_name, c.class_name,
+        SELECT q.*, s.subject_name, c.class_name, g.title AS group_title, g.material_type AS group_material_type, g.instructions AS group_instructions, g.material_text AS group_material_text, g.image_url AS group_image_url,
           COALESCE(json_agg(json_build_object('id',o.id,'option_text',o.option_text,'option_image_url',o.option_image_url,'option_order',o.option_order,'is_correct',o.is_correct) ORDER BY o.option_order) FILTER(WHERE o.id IS NOT NULL),'[]') AS options
         FROM cbt_question_bank q
         JOIN subjects s ON s.id=q.subject_id AND s.school_id=q.school_id
         JOIN classes c ON c.id=q.class_id AND c.school_id=q.school_id
         LEFT JOIN cbt_question_bank_options o ON o.bank_question_id=q.id
+        LEFT JOIN cbt_question_groups g ON g.id=q.question_group_id AND g.school_id=q.school_id
         WHERE q.id=$1 AND q.school_id=$2
           AND ($3::integer IS NULL OR q.created_by=$3)
           AND ($4::integer IS NULL OR EXISTS (
@@ -54,7 +56,7 @@ const getById = async (id, schoolId, createdById = null, assignedTeacherId = nul
                 AND ta.class_id=q.class_id
                 AND assigned_user.id=$4
           ))
-        GROUP BY q.id,s.subject_name,c.class_name
+        GROUP BY q.id,s.subject_name,c.class_name,g.title,g.material_type,g.instructions,g.material_text,g.image_url
     `, [id, schoolId, createdById, assignedTeacherId]);
     return result.rows[0];
 };
@@ -225,10 +227,10 @@ const copyToExam = async (examId, bankIds, schoolId, assignedTeacherId = null) =
             order += 1;
             const created = await client.query(`
                 INSERT INTO cbt_questions
-                    (school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                    (school_id,exam_id,subject_id,question_text,image_url,marks,question_order,explanation,question_group_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
                 RETURNING id
-            `, [schoolId, examId, q.subject_id, q.question_text, q.image_url, q.marks, order, q.explanation]);
+            `, [schoolId, examId, q.subject_id, q.question_text, q.image_url, q.marks, order, q.explanation, q.question_group_id || null]);
 
             for (const option of q.options) {
                 await client.query(`
