@@ -7,7 +7,7 @@ const list = async (schoolId, filters = {}) => {
     if (filters.subjectId) { where.push(`q.subject_id=$${n++}`); values.push(filters.subjectId); }
     if (filters.classId) { where.push(`q.class_id=$${n++}`); values.push(filters.classId); }
     if (filters.active !== undefined) { where.push(`q.is_active=$${n++}`); values.push(filters.active); }
-    if (filters.createdById !== undefined && filters.createdById !== null) { where.push(`q.created_by=${n++}`); values.push(filters.createdById); }
+    if (filters.createdById !== undefined && filters.createdById !== null) { where.push(`q.created_by=$${n++}`); values.push(filters.createdById); }
     if (filters.assignedTeacherId !== undefined && filters.assignedTeacherId !== null) {
         where.push(`EXISTS (
             SELECT 1
@@ -16,7 +16,7 @@ const list = async (schoolId, filters = {}) => {
             JOIN users assigned_user ON assigned_user.id=t.user_id AND assigned_user.school_id=q.school_id
             WHERE ta.subject_id=q.subject_id
               AND ta.class_id=q.class_id
-              AND assigned_user.id=${n++}
+              AND assigned_user.id=$${n++}
         )`);
         values.push(filters.assignedTeacherId);
     }
