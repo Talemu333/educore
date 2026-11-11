@@ -12,6 +12,40 @@ const normalizeOptionText = (value) => clean(value)
     .replace(/^[-•]\s*/, "")
     .trim();
 
+
+const parseLeadingSharedMaterial = (prefix) => {
+    const marker = /(?:^|\\n)\\s*(Shared Material|Comprehension Passage|Passage|Instruction|Diagram|Table|Graph)\\s*:\\s*([^\\n]*)/i;
+    const match = marker.exec(prefix);
+    if (!match) return null;
+    const label = match[1].toLowerCase();
+    const header = String(match[2] || "").trim();
+    let materialType = label.includes("passage") ? "passage" : label;
+    let title = header;
+    if (label === "shared material") {
+        const typed = header.match(/^(passage|comprehension passage|instruction|diagram|image|table|graph)\\s*(?:[-–|:]\\s*)?(.*)$/i);
+        if (typed) {
+            const type = typed[1].toLowerCase();
+            materialType = type.includes("passage") ? "passage" : type;
+            title = typed[2].trim();
+        } else {
+            materialType = "mixed";
+        }
+    }
+    if (!["passage","instruction","diagram","table","graph","image","mixed"].includes(materialType)) materialType = "mixed";
+    const bodyStart = match.index + match[0].length;
+    let materialText = prefix.slice(bodyStart).trim();
+    materialText = materialText.replace(/(?:^|\\n)\\s*End Shared Material\\s*(?:\\n|$)/i, "\\n").trim();
+    if (!materialText) return null;
+    return {
+        group_key: "pdf-shared-1",
+        group_title: title || (materialType === "passage" ? "PDF comprehension passage" : "PDF shared material"),
+        group_material_type: materialType,
+        group_instructions: "",
+        group_material_text: materialText,
+        group_image_url: ""
+    };
+};
+
 const parseQuestionBlock = (number, rawBlock) => {
     const block = clean(rawBlock);
     const subjectMatch = block.match(/(?:^|\n)\s*Subject\s*:\s*([^\n]+)\s*(?=\n|$)/i);
@@ -103,7 +137,12 @@ exports.parsePdf = async (buffer) => {
         throw error;
     }
 
-    const questions = matches.slice(0, MAX_QUESTIONS).map((match) => parseQuestionBlock(match[1], match[2]));
+    const firstQuestionIndex = matches[0].index;
+    const sharedMaterial = parseLeadingSharedMaterial(text.slice(0, firstQuestionIndex));
+    const questions = matches.slice(0, MAX_QUESTIONS).map((match) => ({
+        ...parseQuestionBlock(match[1], match[2]),
+        ...(sharedMaterial ? { ...sharedMaterial } : {})
+    }));
     const truncated = matches.length > MAX_QUESTIONS;
     const validCount = questions.filter((question) => question.valid).length;
 
