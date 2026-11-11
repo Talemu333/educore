@@ -90,7 +90,7 @@ exports.importToExam = async (req, res) => {
                 if (!access.rows[0]) return res.status(403).json({ success: false, message: "You can only import questions into subject sections assigned to you." });
             }
         }
-        const result = await require("../models/cbtModel").bulkCreateExamQuestions(examId, schoolId(req), normalized);
+        const result = await require("../models/cbtModel").bulkCreateExamQuestions(examId, schoolId(req), normalized, Number(req.user.id));
         return res.status(201).json({ success: true, message: `${result.length} question(s) imported into the selected examination.`, data: result });
     } catch (error) {
         return sendError(res, error);
