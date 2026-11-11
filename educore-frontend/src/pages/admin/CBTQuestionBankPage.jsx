@@ -37,6 +37,7 @@ function CBTQuestionBankPage() {
     const [showForm, setShowForm] = useState(false);
     const [showCopy, setShowCopy] = useState(false);
     const [showGroupForm, setShowGroupForm] = useState(false);
+    const [editingGroupId, setEditingGroupId] = useState(null);
     const [groupDraft, setGroupDraft] = useState({ title: "", material_type: "passage", instructions: "", material_text: "", image_url: "" });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -359,7 +360,7 @@ function CBTQuestionBankPage() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase text-slate-500"><span>Question {index + 1}</span><span>•</span><span>{item.subject_name}</span><span>•</span><span>{item.class_name}</span><span>•</span><span>{item.marks} mark{Number(item.marks) === 1 ? "" : "s"}</span>{item.is_active === false && <span className="text-red-500">• inactive</span>}</div>
                                                 <p className="mt-1 font-medium">{item.question_text}</p>
-                                                {item.group_title && <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"><Layers className="h-3.5 w-3.5" /> Shared group: {item.group_title}</div>}
+                                                {item.group_title && <div className="mt-2 flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"><Layers className="h-3.5 w-3.5" /> Shared group: {item.group_title}</span><Button type="button" size="sm" variant="outline" onClick={() => { setEditingGroupId(item.question_group_id); setGroupDraft({ title: item.group_title || "", material_type: item.group_material_type || "passage", instructions: item.group_instructions || "", material_text: item.group_material_text || "", image_url: item.group_image_url || "" }); setSelectedIds([]); setShowGroupForm(true); window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); }}>Edit Shared Material</Button></div>}
                                                 {item.image_url && <img src={item.image_url} alt="Question" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-3 max-h-48 rounded-lg border object-contain" />}
                                                 <div className="mt-3 grid gap-2 sm:grid-cols-2">{(item.options || []).map((option, optionIndex) => <div key={option.id || optionIndex} className={`rounded-lg border p-2 text-sm ${option.is_correct ? "border-green-400 bg-green-50" : ""}`}><div>{String.fromCharCode(65 + optionIndex)}. {option.option_text}</div>{option.option_image_url && <img src={option.option_image_url} alt="Option" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-2 max-h-24 rounded object-contain" />}</div>)}</div>
                                             </div>
@@ -377,8 +378,8 @@ function CBTQuestionBankPage() {
                 <Card>
                     <CardContent className="space-y-4 p-5 sm:p-7">
                         <div className="flex items-center justify-between gap-3">
-                            <div><h2 className="font-semibold">Create a shared-material question group</h2><p className="text-sm text-slate-500">The selected questions will share one passage, diagram, graph, table or instruction.</p></div>
-                            <Button type="button" variant="outline" onClick={() => setShowGroupForm(false)}><X className="h-4 w-4" /></Button>
+                            <div><h2 className="font-semibold">{editingGroupId ? "Edit shared material" : "Create a shared-material question group"}</h2><p className="text-sm text-slate-500">{editingGroupId ? "Changes apply to every question linked to this group, including existing examination copies." : "The selected questions will share one passage, diagram, graph, table or instruction."}</p></div>
+                            <Button type="button" variant="outline" onClick={() => { setShowGroupForm(false); setEditingGroupId(null); }}><X className="h-4 w-4" /></Button>
                         </div>
                         <form className="space-y-4" onSubmit={createQuestionGroup}>
                             <label className="block text-sm font-medium">Group title<input className="mt-1 w-full rounded-lg border p-3" required value={groupDraft.title} onChange={e=>setGroupDraft({...groupDraft,title:e.target.value})} placeholder="e.g. English Comprehension – Section A" /></label>
@@ -387,8 +388,8 @@ function CBTQuestionBankPage() {
                             <label className="block text-sm font-medium">Passage / shared text<textarea className="mt-1 w-full rounded-lg border p-3" rows="6" value={groupDraft.material_text} onChange={e=>setGroupDraft({...groupDraft,material_text:e.target.value})} placeholder="Paste the comprehension passage, data, or instruction here. Leave blank if you are using an image." /></label>
                             <label className="block text-sm font-medium">Shared image URL (optional)<input className="mt-1 w-full rounded-lg border p-3" type="url" value={groupDraft.image_url} onChange={e=>setGroupDraft({...groupDraft,image_url:e.target.value})} placeholder="https://..." /></label>
                             {groupDraft.image_url && <img src={groupDraft.image_url} alt="Shared material preview" className="max-h-64 rounded-lg border bg-white object-contain p-2" onError={e=>{e.currentTarget.style.display="none";}} />}
-                            <p className="text-xs text-slate-500">{selectedIds.length} selected question(s). They must all belong to the same subject and class and must not already be in another group.</p>
-                            <div className="flex flex-wrap gap-2"><Button type="submit" disabled={saving}>{saving?"Creating group...":"Create Group"}</Button><Button type="button" variant="outline" onClick={()=>setShowGroupForm(false)}>Cancel</Button></div>
+                            {!editingGroupId && <p className="text-xs text-slate-500">{selectedIds.length} selected question(s). They must all belong to the same subject and class and must not already be in another group.</p>}
+                            <div className="flex flex-wrap gap-2"><Button type="submit" disabled={saving}>{saving?(editingGroupId?"Saving changes...":"Creating group..."):(editingGroupId?"Update Shared Material":"Create Group")}</Button><Button type="button" variant="outline" onClick={()=>{setShowGroupForm(false);setEditingGroupId(null);}}>Cancel</Button></div>
                         </form>
                     </CardContent>
                 </Card>
