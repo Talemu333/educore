@@ -354,6 +354,7 @@ const bulkCreateExamQuestions = async (examId, schoolId, questions, userId) => {
         const validSubjects = await client.query("SELECT subject_id FROM cbt_exam_subjects WHERE exam_id=$1 AND school_id=$2 AND subject_id=ANY($3::int[])", [examId, schoolId, subjectIds]);
         if (validSubjects.rows.length !== subjectIds.length) throw new Error("Every imported question must belong to a subject section in this examination.");
         const inserted = [];
+        const createdGroupMembers = [];
         // uq_cbt_question_order is unique across the entire examination (not per subject).
         // Continue one exam-wide sequence so combined-subject imports cannot reuse an order.
         const orderResult = await client.query(
@@ -396,7 +397,30 @@ const bulkCreateExamQuestions = async (examId, schoolId, questions, userId) => {
                 "UPDATE cbt_questions SET question_bank_id=$1 WHERE id=$2 AND school_id=$3",
                 [bankQuestionResult.rows[0].id, question.id, schoolId]
             );
+            createdGroupMembers.push({ item, questionId: question.id, bankQuestionId: bankQuestionResult.rows[0].id });
             inserted.push(question);
+        }
+        const grouped = new Map();
+        for (const member of createdGroupMembers) {
+            const item = member.item;
+            if (!item.group_key || !item.group_material_text && !item.group_image_url) continue;
+            const key = `${String(item.group_key)}:${Number(item.subject_id)}`;
+            if (!grouped.has(key)) grouped.set(key,{ item, members: [] });
+            grouped.get(key).members.push(member);
+        }
+        for (const {item,members} of grouped.values()) {
+            const materialType = ["passage","instruction","diagram","image","table","graph","mixed"].includes(item.group_material_type) ? item.group_material_type : "passage";
+            const group = await client.query(
+                `INSERT INTO cbt_question_groups(school_id,subject_id,class_id,title,material_type,instructions,material_text,image_url,created_by)
+                 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+                [schoolId,Number(item.subject_id),Number(examResult.rows[0].class_id),
+                 item.group_title || "Imported shared material",materialType,
+                 item.group_instructions || null,item.group_material_text || null,item.group_image_url || null,userId]
+            );
+            const bankIds = members.map(member => member.bankQuestionId);
+            const examQuestionIds = members.map(member => member.questionId);
+            await client.query("UPDATE cbt_question_bank SET question_group_id=$1 WHERE school_id=$2 AND id=ANY($3::int[])",[group.rows[0].id,schoolId,bankIds]);
+            await client.query("UPDATE cbt_questions SET question_group_id=$1 WHERE school_id=$2 AND id=ANY($3::int[])",[group.rows[0].id,schoolId,examQuestionIds]);
         }
         await syncExamTotalMarks(examId, schoolId, client);
         await client.query("COMMIT");
