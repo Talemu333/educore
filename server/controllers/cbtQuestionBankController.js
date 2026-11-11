@@ -130,3 +130,45 @@ exports.updateGroup = async (req,res) => {
         return res.json({success:true,message:"Shared material updated.",data});
     } catch(e){return sendError(res,e);}
 };
+
+
+const canManageQuestionGroup = async (req, groupId) => {
+    const role=String(req.user?.role_name||"").trim().toLowerCase();
+    if(["admin","administrator","proprietor","principal","vice_principal"].includes(role)) return true;
+    if(role!=="teacher") return false;
+    const db=require("../config/database");
+    const access=await db.query(`
+        SELECT 1
+        FROM cbt_question_groups g
+        JOIN teacher_assignments ta ON ta.subject_id=g.subject_id AND ta.class_id=g.class_id
+        JOIN teachers t ON t.id=ta.teacher_id
+        JOIN users u ON u.id=t.user_id AND u.school_id=g.school_id
+        WHERE g.id=$1 AND g.school_id=$2 AND u.id=$3
+        LIMIT 1
+    `,[groupId,schoolId(req),Number(req.user.id)]);
+    return access.rows.length>0;
+};
+
+exports.addQuestionsToGroup = async (req,res) => {
+    try {
+        const groupId=Number(req.params.groupId);
+        const ids=[...new Set((Array.isArray(req.body?.question_ids)?req.body.question_ids:[]).map(Number).filter(id=>Number.isInteger(id)&&id>0))];
+        if(!Number.isInteger(groupId)||groupId<1)return res.status(400).json({success:false,message:"Invalid question group."});
+        if(!ids.length)return res.status(400).json({success:false,message:"Select at least one question."});
+        if(ids.length>500)return res.status(400).json({success:false,message:"You can add at most 500 questions at a time."});
+        if(!await canManageQuestionGroup(req,groupId))return res.status(403).json({success:false,message:"You are not authorised to manage this question group."});
+        const data=await require("../models/cbtQuestionGroupModel").addQuestions(groupId,schoolId(req),ids);
+        return res.json({success:true,message:`${data.added} question(s) added to the shared-material group.`,data});
+    } catch(e){return sendError(res,e);}
+};
+
+exports.removeQuestionFromGroup = async (req,res) => {
+    try {
+        const groupId=Number(req.params.groupId), questionId=Number(req.params.questionId);
+        if(!Number.isInteger(groupId)||groupId<1||!Number.isInteger(questionId)||questionId<1)
+            return res.status(400).json({success:false,message:"Invalid question group or question."});
+        if(!await canManageQuestionGroup(req,groupId))return res.status(403).json({success:false,message:"You are not authorised to manage this question group."});
+        const data=await require("../models/cbtQuestionGroupModel").removeQuestion(groupId,questionId,schoolId(req));
+        return res.json({success:true,message:"Question removed from the shared-material group. The question itself has been kept.",data});
+    } catch(e){return sendError(res,e);}
+};
