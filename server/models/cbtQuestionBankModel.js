@@ -89,6 +89,24 @@ const bulkCreate = async (questions, schoolId, userId) => {
             createdIds.push(questionId);
             for (const o of data.options || []) await client.query(`INSERT INTO cbt_question_bank_options(bank_question_id,option_text,option_image_url,option_order,is_correct) VALUES($1,$2,$3,$4,$5)`, [questionId,o.option_text,o.option_image_url||null,o.option_order,Boolean(o.is_correct)]);
         }
+
+        const grouped = new Map();
+        questions.forEach((item,index) => {
+            if (!item.group_key || !item.group_material_text && !item.group_image_url) return;
+            const key = String(item.group_key);
+            if (!grouped.has(key)) grouped.set(key,{ item, ids: [] });
+            grouped.get(key).ids.push(createdIds[index]);
+        });
+        for (const {item,ids} of grouped.values()) {
+            const materialType = ["passage","instruction","diagram","image","table","graph","mixed"].includes(item.group_material_type) ? item.group_material_type : "passage";
+            const group = await client.query(
+                `INSERT INTO cbt_question_groups(school_id,subject_id,class_id,title,material_type,instructions,material_text,image_url,created_by)
+                 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+                [schoolId,item.subject_id,item.class_id,item.group_title || "Imported shared material",materialType,
+                 item.group_instructions || null,item.group_material_text || null,item.group_image_url || null,userId]
+            );
+            await client.query("UPDATE cbt_question_bank SET question_group_id=$1 WHERE school_id=$2 AND id=ANY($3::int[])",[group.rows[0].id,schoolId,ids]);
+        }
         await client.query("COMMIT");
         const result = await pool.query(`
             SELECT q.*, s.subject_name, c.class_name,
