@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Copy, Edit3, ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
+import { BookOpen, Copy, Edit3, ImagePlus, Layers, Plus, Search, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
 import PageHeader from "@/components/common/PageHeader";
@@ -36,6 +36,8 @@ function CBTQuestionBankPage() {
     const [search, setSearch] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [showCopy, setShowCopy] = useState(false);
+    const [showGroupForm, setShowGroupForm] = useState(false);
+    const [groupDraft, setGroupDraft] = useState({ title: "", material_type: "passage", instructions: "", material_text: "", image_url: "" });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -220,6 +222,30 @@ function CBTQuestionBankPage() {
         }
     };
 
+    const createQuestionGroup = async (event) => {
+        event.preventDefault();
+        if (!selectedIds.length) return toast.error("Select the questions that should share this material.");
+        if (!groupDraft.title.trim()) return toast.error("Enter a title for this question group.");
+        if (!groupDraft.material_text.trim() && !groupDraft.image_url.trim()) return toast.error("Enter the passage/instruction or provide an image URL.");
+        setSaving(true);
+        try {
+            const response = await api.post("/cbt-question-bank/groups", {
+                ...groupDraft,
+                title: groupDraft.title.trim(),
+                question_ids: selectedIds,
+            });
+            toast.success(response.data?.message || "Question group created.");
+            setSelectedIds([]);
+            setGroupDraft({ title: "", material_type: "passage", instructions: "", material_text: "", image_url: "" });
+            setShowGroupForm(false);
+            await load();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Unable to create question group. Check that the selected questions belong to one subject and class.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const setOption = (index, field, value) => {
         setQuestion((current) => ({
             ...current,
@@ -243,6 +269,9 @@ function CBTQuestionBankPage() {
                 </Button>
                 <Button variant="outline" disabled={!selectedIds.length} onClick={() => setShowCopy(true)}>
                     <Copy className="mr-2 h-4 w-4" /> Add {selectedIds.length || "Selected"} to Exam
+                </Button>
+                <Button variant="outline" disabled={!selectedIds.length} onClick={() => setShowGroupForm(true)}>
+                    <Layers className="mr-2 h-4 w-4" /> Group Selected Questions
                 </Button>
             </div>
 
@@ -342,6 +371,27 @@ function CBTQuestionBankPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {showGroupForm && (
+                <Card>
+                    <CardContent className="space-y-4 p-5 sm:p-7">
+                        <div className="flex items-center justify-between gap-3">
+                            <div><h2 className="font-semibold">Create a shared-material question group</h2><p className="text-sm text-slate-500">The selected questions will share one passage, diagram, graph, table or instruction.</p></div>
+                            <Button type="button" variant="outline" onClick={() => setShowGroupForm(false)}><X className="h-4 w-4" /></Button>
+                        </div>
+                        <form className="space-y-4" onSubmit={createQuestionGroup}>
+                            <label className="block text-sm font-medium">Group title<input className="mt-1 w-full rounded-lg border p-3" required value={groupDraft.title} onChange={e=>setGroupDraft({...groupDraft,title:e.target.value})} placeholder="e.g. English Comprehension – Section A" /></label>
+                            <label className="block text-sm font-medium">Shared material type<select className="mt-1 w-full rounded-lg border p-3" value={groupDraft.material_type} onChange={e=>setGroupDraft({...groupDraft,material_type:e.target.value})}><option value="passage">Comprehension passage</option><option value="instruction">Instruction / information</option><option value="diagram">Diagram</option><option value="image">Picture / image</option><option value="table">Table</option><option value="graph">Graph</option><option value="mixed">Mixed materials</option></select></label>
+                            <label className="block text-sm font-medium">Instruction shown to students (optional)<textarea className="mt-1 w-full rounded-lg border p-3" rows="2" value={groupDraft.instructions} onChange={e=>setGroupDraft({...groupDraft,instructions:e.target.value})} placeholder="Read the passage carefully and answer questions 1–5." /></label>
+                            <label className="block text-sm font-medium">Passage / shared text<textarea className="mt-1 w-full rounded-lg border p-3" rows="6" value={groupDraft.material_text} onChange={e=>setGroupDraft({...groupDraft,material_text:e.target.value})} placeholder="Paste the comprehension passage, data, or instruction here. Leave blank if you are using an image." /></label>
+                            <label className="block text-sm font-medium">Shared image URL (optional)<input className="mt-1 w-full rounded-lg border p-3" type="url" value={groupDraft.image_url} onChange={e=>setGroupDraft({...groupDraft,image_url:e.target.value})} placeholder="https://..." /></label>
+                            {groupDraft.image_url && <img src={groupDraft.image_url} alt="Shared material preview" className="max-h-64 rounded-lg border bg-white object-contain p-2" onError={e=>{e.currentTarget.style.display="none";}} />}
+                            <p className="text-xs text-slate-500">{selectedIds.length} selected question(s). They must all belong to the same subject and class and must not already be in another group.</p>
+                            <div className="flex flex-wrap gap-2"><Button type="submit" disabled={saving}>{saving?"Creating group...":"Create Group"}</Button><Button type="button" variant="outline" onClick={()=>setShowGroupForm(false)}>Cancel</Button></div>
+                        </form>
+                    </CardContent>
+                </Card>
+            )}
 
             {showCopy && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
