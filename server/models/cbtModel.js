@@ -392,6 +392,10 @@ const bulkCreateExamQuestions = async (examId, schoolId, questions, userId) => {
                      option.option_image_url || null, option.option_order, Boolean(option.is_correct)]
                 );
             }
+            await client.query(
+                "UPDATE cbt_questions SET question_bank_id=$1 WHERE id=$2 AND school_id=$3",
+                [bankQuestionResult.rows[0].id, question.id, schoolId]
+            );
             inserted.push(question);
         }
         await syncExamTotalMarks(examId, schoolId, client);
