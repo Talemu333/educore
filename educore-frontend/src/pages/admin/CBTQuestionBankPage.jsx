@@ -474,9 +474,8 @@ function CBTQuestionBankPage() {
                         </form>
                     </CardContent>
                 </Card>
-            )}
-
-                </div>\n            {showCopy && (
+                </div>
+            )}\n            {showCopy && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-700">
