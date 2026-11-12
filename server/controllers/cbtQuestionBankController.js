@@ -149,6 +149,16 @@ const canManageQuestionGroup = async (req, groupId) => {
     return access.rows.length>0;
 };
 
+exports.deleteQuestionGroup = async (req,res) => {
+    try {
+        const groupId=Number(req.params.groupId);
+        if(!Number.isInteger(groupId)||groupId<1)return res.status(400).json({success:false,message:"Invalid question group."});
+        if(!await canManageQuestionGroup(req,groupId))return res.status(403).json({success:false,message:"You are not authorised to delete this question group."});
+        await require("../models/cbtQuestionGroupModel").deleteGroup(groupId,schoolId(req));
+        return res.json({success:true,message:"Question group deleted. The questions and examination copies were kept."});
+    } catch(e){return sendError(res,e);}
+};
+
 exports.addQuestionsToGroup = async (req,res) => {
     try {
         const groupId=Number(req.params.groupId);
