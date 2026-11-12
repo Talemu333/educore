@@ -115,6 +115,21 @@ const addQuestions = async (groupId, schoolId, questionIds) => {
     finally { client.release(); }
 };
 
+const deleteGroup = async (groupId, schoolId) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const group = await client.query("SELECT id FROM cbt_question_groups WHERE id=$1 AND school_id=$2 FOR UPDATE", [groupId, schoolId]);
+        if (!group.rows.length) throw new Error("Question group not found.");
+        await client.query("UPDATE cbt_question_bank SET question_group_id=NULL,updated_at=CURRENT_TIMESTAMP WHERE school_id=$1 AND question_group_id=$2", [schoolId, groupId]);
+        await client.query("UPDATE cbt_questions SET question_group_id=NULL WHERE school_id=$1 AND question_group_id=$2", [schoolId, groupId]);
+        await client.query("DELETE FROM cbt_question_groups WHERE id=$1 AND school_id=$2", [groupId, schoolId]);
+        await client.query("COMMIT");
+        return { deleted: true };
+    } catch (error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
+};
+
 const removeQuestion = async (groupId, questionId, schoolId) => {
     const client=await pool.connect();
     try {
@@ -134,5 +149,5 @@ const removeQuestion = async (groupId, questionId, schoolId) => {
     finally { client.release(); }
 };
 
-module.exports = { list, createFromBank, updateGroup, addQuestions, removeQuestion };
+module.exports = { list, createFromBank, updateGroup, addQuestions, removeQuestion, deleteGroup };
 
