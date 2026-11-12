@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, Copy, Edit3, ImagePlus, Layers, Plus, Search, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
@@ -43,6 +43,12 @@ function CBTQuestionBankPage() {
     const [groupDraft, setGroupDraft] = useState({ title: "", material_type: "passage", instructions: "", material_text: "", image_url: "" });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const groupFormRef = useRef(null);
+    useEffect(() => {
+        if (!showGroupForm) return;
+        const frame = window.requestAnimationFrame(() => groupFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+        return () => window.cancelAnimationFrame(frame);
+    }, [showGroupForm, editingGroupId]);
 
     const load = async () => {
         setLoading(true);
@@ -266,6 +272,22 @@ function CBTQuestionBankPage() {
         } finally { setSaving(false); }
     };
 
+    const deleteQuestionGroup = async (group) => {
+        if (!window.confirm(`Delete “${group.title}”? Questions will remain in the question bank and examinations; only their shared-material link will be removed.`)) return;
+        setSaving(true);
+        try {
+            const response = await api.delete(`/cbt-question-bank/groups/${group.id}`);
+            toast.success(response.data?.message || "Question group deleted. Questions were kept.");
+            await load();
+        } catch (error) { toast.error(error.response?.data?.message || "Unable to delete question group."); }
+        finally { setSaving(false); }
+    };
+    const editGroup = (group) => {
+        setEditingGroupId(group.id);
+        setGroupDraft({ title: group.title || "", material_type: group.material_type || "passage", instructions: group.instructions || "", material_text: group.material_text || "", image_url: group.image_url || "" });
+        setSelectedIds([]);
+        setShowGroupForm(true);
+    };
     const removeFromGroup = async (item) => {
         if (!item.question_group_id) return;
         if (!window.confirm("Remove this question from its shared-material group? The question and any examination copies will be kept.")) return;
@@ -319,6 +341,22 @@ function CBTQuestionBankPage() {
                 </div>
             )}
 
+
+            {questionGroups.length > 0 && (
+                <Card><CardContent className="space-y-4 p-5 sm:p-7">
+                    <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">Question Groups</h2><p className="text-sm text-slate-500">Manage passages, diagrams, instructions and other materials shared by questions.</p></div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{questionGroups.length} group(s)</span></div>
+                    <div className="space-y-3">{questionGroups.map((group) => <div key={group.id} className="rounded-xl border p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{group.title}</h3><span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium capitalize text-blue-700">{group.material_type}</span></div>
+                            <p className="mt-1 text-xs text-slate-500">{group.subject_name} • {group.class_name} • {group.question_count || 0} linked question(s)</p>
+                            {group.instructions && <p className="mt-2 text-sm text-slate-600">{group.instructions}</p>}
+                            {group.material_text && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{group.material_text.length > 280 ? `${group.material_text.slice(0,280)}…` : group.material_text}</p>}
+                            {group.image_url && <a className="mt-2 inline-block text-sm text-blue-600 underline" href={group.image_url} target="_blank" rel="noreferrer">View shared image</a>}
+                            {Array.isArray(group.questions) && group.questions.length > 0 && <details className="mt-3"><summary className="cursor-pointer text-sm font-medium">View linked questions ({group.questions.length})</summary><ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">{group.questions.map((item) => <li key={item.id}>{item.question_text}</li>)}</ol></details>}
+                        </div><div className="flex shrink-0 flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={() => editGroup(group)}>Edit Material</Button><Button type="button" size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50" disabled={saving} onClick={() => deleteQuestionGroup(group)}>Delete Group</Button></div></div>
+                    </div>)}</div>
+                </CardContent></Card>
+            )}
             {showForm && (
                 <Card>
                     <CardContent className="p-5 sm:p-7">
@@ -417,7 +455,7 @@ function CBTQuestionBankPage() {
                 </CardContent>
             </Card>
 
-            {showGroupForm && (
+            {showGroupForm && (\n                <div ref={groupFormRef} className="scroll-mt-6">
                 <Card>
                     <CardContent className="space-y-4 p-5 sm:p-7">
                         <div className="flex items-center justify-between gap-3">
@@ -438,7 +476,7 @@ function CBTQuestionBankPage() {
                 </Card>
             )}
 
-            {showCopy && (
+                </div>\n            {showCopy && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-700">
