@@ -455,7 +455,8 @@ function CBTQuestionBankPage() {
                 </CardContent>
             </Card>
 
-            {showGroupForm && (\n                <div ref={groupFormRef} className="scroll-mt-6">
+            {showGroupForm && (
+                <div ref={groupFormRef} className="scroll-mt-6">
                 <Card>
                     <CardContent className="space-y-4 p-5 sm:p-7">
                         <div className="flex items-center justify-between gap-3">
