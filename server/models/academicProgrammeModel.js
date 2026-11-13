@@ -10,7 +10,7 @@ const listProgrammes = async (classId, schoolId, database = pool) => {
         JOIN classes c ON c.id = p.class_id AND c.school_id = p.school_id
         WHERE p.school_id = $1
           AND ($2::integer IS NULL OR p.class_id = $2)
-        GROUP BY p.id
+        GROUP BY p.id, c.sort_order
         ORDER BY c.sort_order, p.programme_name
     `, [schoolId, classId || null]);
     return result.rows;
