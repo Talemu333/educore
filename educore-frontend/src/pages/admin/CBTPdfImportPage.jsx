@@ -185,7 +185,7 @@ function CBTPdfImportPage() {
 
     return (
         <div className="w-full space-y-6">
-            <PageHeader title="Import CBT Questions from PDF" description="Upload a PDF with a Subject: line under each question. EduProw will match each question to the selected examination section automatically." />
+            <PageHeader title="Import CBT Questions from PDF" description="Upload a text-based PDF. EduProw detects shared passages and section instructions, then lets you review the questions before importing." />
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
                 <strong>Automatic shared-passage detection:</strong> place a labelled material block before the questions that use it. For example:
                 <pre className="my-2 overflow-x-auto rounded-lg bg-white p-3 text-xs text-slate-800">Passage: The Importance of Water{"\n"}Water is essential to life...{"\n"}End Shared Material{"\n"}1. Why is water important?{"\n"}A. ...</pre>
@@ -261,7 +261,8 @@ function CBTPdfImportPage() {
                                     </div>}
                                     {q.group_key && q.group_material_text && (
                                         <details className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
-                                            <summary className="cursor-pointer font-medium text-blue-900">Detected shared material: {q.group_title} ({q.group_material_type})</summary>
+                                            <summary className="cursor-pointer font-medium text-blue-900">Detected {q.group_material_type === "passage" ? "passage" : "section instructions"}: {q.group_title}</summary>
+                                            {q.group_instructions && <p className="mt-2 font-medium text-slate-700">{q.group_instructions}</p>}
                                             <p className="mt-2 whitespace-pre-wrap text-slate-700">{q.group_material_text}</p>
                                             <p className="mt-2 text-xs text-slate-500">This material will be attached to the detected question group when imported. PDF image extraction is not supported; add diagrams or pictures separately in the question bank.</p>
                                         </details>
