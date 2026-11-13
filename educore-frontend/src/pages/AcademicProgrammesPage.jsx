@@ -18,6 +18,7 @@ function AcademicProgrammesPage() {
     const [programmeCode, setProgrammeCode] = useState("");
     const [programmeDescription, setProgrammeDescription] = useState("");
     const [subjectChoices, setSubjectChoices] = useState([]);
+    const [assignmentSubjectIds, setAssignmentSubjectIds] = useState([]);
     const [studentIds, setStudentIds] = useState([]);
 
     const { data: classes = [] } = useQuery({ queryKey: ["classes"], queryFn: getClasses });
@@ -49,6 +50,7 @@ function AcademicProgrammesPage() {
 
     useEffect(() => {
         setSubjectChoices(programmeSubjects.map(item => ({ subject_id: item.subject_id, is_compulsory: item.is_compulsory })));
+        setAssignmentSubjectIds(programmeSubjects.filter(item => item.is_compulsory).map(item => Number(item.subject_id)));
     }, [programmeSubjects]);
 
     const createMutation = useMutation({
@@ -81,7 +83,7 @@ function AcademicProgrammesPage() {
             session_id: Number(sessionId),
             programme_id: Number(programmeId),
             student_ids: studentIds,
-            subject_ids: subjectChoices.map(item => Number(item.subject_id))
+            subject_ids: assignmentSubjectIds
         })).data,
         onSuccess: response => {
             toast.success(response.data?.message || "Student programme and subjects assigned.");
@@ -169,6 +171,16 @@ function AcademicProgrammesPage() {
                     <p className="text-sm text-slate-500 mt-1">Select students, choose a programme above, and assign the subjects they are registered to offer for this session.</p>
                 </div>
                 {!programmeId ? <p className="text-sm text-amber-700">Select a programme above first.</p> : !subjectChoices.length ? <p className="text-sm text-amber-700">Save at least one subject for this programme before assigning students.</p> : studentsLoading ? <p className="text-sm text-slate-500">Loading students...</p> : students.length === 0 ? <p className="text-sm text-slate-500">No active students found for this class and session.</p> : <>
+                    <div className="rounded-md border border-blue-100 bg-blue-50/60 p-3 space-y-2">
+                        <p className="text-sm font-medium text-slate-800">Choose this student group’s subject combination</p>
+                        <p className="text-xs text-slate-600">Compulsory subjects are preselected. Tick the electives each student should take. Students with different elective combinations should be assigned separately (select one student at a time).</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {programmeSubjects.map(subject => <label key={subject.subject_id} className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={assignmentSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setAssignmentSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id))} />
+                                <span>{subject.subject_name}{subject.is_compulsory ? " (Compulsory)" : " (Elective)"}</span>
+                            </label>)}
+                        </div>
+                    </div>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm text-slate-600">{studentIds.length} student(s) selected</p>
                         <button type="button" className="text-sm text-blue-700 underline" onClick={() => setStudentIds(students.map(item => Number(item.id)))}>Select all students</button>
@@ -179,7 +191,7 @@ function AcademicProgrammesPage() {
                             <span className="min-w-0 flex-1">{student.surname} {student.first_name} {student.middle_name || ""}<span className="block text-xs text-slate-500">{student.admission_number} · {student.arm_name || "No arm"}{student.programme_name ? ` · Currently: ${student.programme_name}` : " · Programme not assigned"}</span></span>
                         </label>)}
                     </div>
-                    <Button disabled={!studentIds.length || assignMutation.isPending} onClick={() => assignMutation.mutate()}>{assignMutation.isPending ? "Assigning..." : `Assign programme and subjects to ${studentIds.length} student(s)`}</Button>
+                    <Button disabled={!studentIds.length || !assignmentSubjectIds.length || assignMutation.isPending} onClick={() => assignMutation.mutate()}>{assignMutation.isPending ? "Assigning..." : `Assign programme and subjects to ${studentIds.length} student(s)`}</Button>
                     <p className="text-xs text-slate-500">To protect existing academic records, the system will not replace programme/subject assignments for students who already have results in this session.</p>
                 </>}
             </Card>}

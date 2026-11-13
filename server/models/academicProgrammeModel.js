@@ -149,13 +149,17 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
         }
 
         const allowed = await client.query(`
-            SELECT subject_id FROM academic_programme_subjects
+            SELECT subject_id, is_compulsory FROM academic_programme_subjects
             WHERE programme_id = $1 AND school_id = $2
         `, [programmeId, schoolId]);
         const allowedIds = new Set(allowed.rows.map(row => Number(row.subject_id)));
+        const requiredIds = allowed.rows.filter(row => row.is_compulsory).map(row => Number(row.subject_id));
         const selectedIds = [...new Set(subjectIds.map(Number))];
         if (!selectedIds.length || selectedIds.some(id => !allowedIds.has(id))) {
             throw Object.assign(new Error("Select one or more subjects offered by the chosen programme."), { statusCode: 400 });
+        }
+        if (requiredIds.some(id => !selectedIds.includes(id))) {
+            throw Object.assign(new Error("All compulsory programme subjects must be included in each student's subject registration."), { statusCode: 400 });
         }
 
         const existingResults = await client.query(`
