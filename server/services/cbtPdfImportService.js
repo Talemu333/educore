@@ -11,18 +11,18 @@ const clean = (value) => String(value || "")
 const normalizeOptionText = (value) => clean(value).replace(/^[-•]\s*/, "").trim();
 
 const parseLeadingSharedMaterial = (prefix) => {
-    const marker = /(?:^|\n)\s*(Shared Material|Comprehension Passage|Passage|Instruction|Diagram|Table|Graph)\s*:\s*([^\n]*)/i;
+    const marker = /(?:^|\n)\s*(Shared Material|Comprehension Passage|Passage|Instruction|Diagram|Image|Figure|Table|Graph|Chart)\s*:\s*([^\n]*)/i;
     const match = marker.exec(prefix);
     if (match) {
         const label = match[1].toLowerCase();
         const header = String(match[2] || "").trim();
-        let materialType = label.includes("passage") ? "passage" : label;
+        let materialType = label.includes("passage") ? "passage" : (label === "figure" ? "image" : (label === "chart" ? "graph" : label));
         let title = header;
         if (label === "shared material") {
-            const typed = header.match(/^(passage|comprehension passage|instruction|diagram|image|table|graph)\s*(?:[-–|:]\s*)?(.*)$/i);
+            const typed = header.match(/^(passage|comprehension passage|instruction|diagram|image|figure|table|graph|chart)\s*(?:[-–|:]\s*)?(.*)$/i);
             if (typed) {
                 const type = typed[1].toLowerCase();
-                materialType = type.includes("passage") ? "passage" : type;
+                materialType = type.includes("passage") ? "passage" : (type === "figure" ? "image" : (type === "chart" ? "graph" : type));
                 title = typed[2].trim();
             } else materialType = "mixed";
         }
@@ -34,17 +34,19 @@ const parseLeadingSharedMaterial = (prefix) => {
             material_type: materialType, instructions: "", material_text: materialText, start: 1, end: null };
     }
 
-    // Recognise natural comprehension instructions used in ordinary school papers.
+    // Recognise natural-language shared material prompts, not only formal labels.
     const prefixLines = prefix.split("\n");
-    const naturalIndex = prefixLines.findIndex((line) => /read the passage/i.test(line));
+    const naturalIndex = prefixLines.findIndex((line) => /(?:read\s+the\s+passage|study\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart)|use\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart)|refer\s+to\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart)|observe\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart))/i.test(line));
     if (naturalIndex < 0) return null;
     const naturalInstruction = String(prefixLines[naturalIndex] || "").trim();
     const naturalRange = naturalInstruction.match(/questions?\s*(\d+)\s*(?:to|-|–)\s*(\d+)/i);
+    const lowerInstruction = naturalInstruction.toLowerCase();
+    const materialType = /passage/.test(lowerInstruction) ? "passage" : /table/.test(lowerInstruction) ? "table" : /graph|chart/.test(lowerInstruction) ? "graph" : /diagram/.test(lowerInstruction) ? "diagram" : "image";
     const materialText = prefixLines.slice(naturalIndex + 1).join("\n").trim();
     if (!materialText) return null;
     return {
-        title: "Comprehension passage", material_type: "passage",
-        instructions: naturalInstruction, material_text: materialText,
+        title: materialType === "passage" ? "Comprehension passage" : (materialType[0].toUpperCase() + materialType.slice(1) + " for questions " + (naturalRange ? naturalRange[1] + "–" + naturalRange[2] : "that follow")),
+        material_type: materialType, instructions: naturalInstruction, material_text: materialText,
         start: naturalRange ? Number(naturalRange[1]) : 1,
         end: naturalRange ? Number(naturalRange[2]) : null
     };
