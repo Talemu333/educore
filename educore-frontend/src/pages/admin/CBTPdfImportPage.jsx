@@ -131,6 +131,13 @@ function CBTPdfImportPage() {
         }));
     };
 
+    const updateGroupMaterial = (groupKey, field, value) => {
+        setPreview((current) => ({
+            ...current,
+            questions: current.questions.map((question) => question.group_key === groupKey ? { ...question, [field]: value } : question),
+        }));
+    };
+
     const updateOption = (questionIndex, optionIndex, field, value) => {
         setPreview((current) => ({
             ...current,
@@ -259,12 +266,16 @@ function CBTPdfImportPage() {
                                             </label>
                                         </>}
                                     </div>}
-                                    {q.group_key && q.group_material_text && (
+                                    {q.group_key && (q.group_material_text || q.group_image_url) && (
                                         <details className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
-                                            <summary className="cursor-pointer font-medium text-blue-900">Detected {q.group_material_type === "passage" ? "passage" : "section instructions"}: {q.group_title}</summary>
+                                            <summary className="cursor-pointer font-medium text-blue-900">Detected shared {q.group_material_type || "material"}: {q.group_title}</summary>
                                             {q.group_instructions && <p className="mt-2 font-medium text-slate-700">{q.group_instructions}</p>}
-                                            <p className="mt-2 whitespace-pre-wrap text-slate-700">{q.group_material_text}</p>
-                                            <p className="mt-2 text-xs text-slate-500">This material will be attached to the detected question group when imported. PDF image extraction is not supported; add diagrams or pictures separately in the question bank.</p>
+                                            {q.group_material_text && <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-sm leading-6 text-slate-700">{q.group_material_text}</pre>}
+                                            <label className="mt-3 block text-xs font-medium text-slate-700">Shared image URL (optional)
+                                                <input className="mt-1 w-full rounded-lg border bg-white p-2 text-sm" value={q.group_image_url || ""} onChange={(e) => updateGroupMaterial(q.group_key, "group_image_url", e.target.value)} placeholder="Paste a publicly accessible image URL" />
+                                            </label>
+                                            {q.group_image_url && <img src={q.group_image_url} alt="Shared question material preview" className="mt-3 max-h-64 w-full rounded-lg border bg-white object-contain p-2" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+                                            <p className="mt-2 text-xs text-slate-500">The text and any supplied image URL will be shared by every question in this group. Text-based tables are retained as extracted text. Embedded PDF pictures are not yet extracted automatically; add their image URL here.</p>
                                         </details>
                                     )}
                                     <textarea className="w-full rounded-lg border p-3" rows="3" value={q.question_text} onChange={(e) => updateQuestion(index, "question_text", e.target.value)} placeholder="Question text" />
