@@ -35,15 +35,18 @@ const parseLeadingSharedMaterial = (prefix) => {
     }
 
     // Recognise natural comprehension instructions used in ordinary school papers.
-    const natural = /(?:^|\n)\s*(Read the passage[\s\S]*?(?:questions?\s*(\d+)\s*(?:to|-|–)\s*(\d+))?\.?)\s*(?:\n|$)/i.exec(prefix);
-    if (!natural) return null;
-    const materialText = prefix.slice(natural.index + natural[0].length).trim();
+    const prefixLines = prefix.split("\n");
+    const naturalIndex = prefixLines.findIndex((line) => /read the passage/i.test(line));
+    if (naturalIndex < 0) return null;
+    const naturalInstruction = String(prefixLines[naturalIndex] || "").trim();
+    const naturalRange = naturalInstruction.match(/questions?\s*(\d+)\s*(?:to|-|–)\s*(\d+)/i);
+    const materialText = prefixLines.slice(naturalIndex + 1).join("\n").trim();
     if (!materialText) return null;
     return {
         title: "Comprehension passage", material_type: "passage",
-        instructions: String(natural[1] || "").trim(), material_text: materialText,
-        start: natural[2] ? Number(natural[2]) : 1,
-        end: natural[3] ? Number(natural[3]) : null
+        instructions: naturalInstruction, material_text: materialText,
+        start: naturalRange ? Number(naturalRange[1]) : 1,
+        end: naturalRange ? Number(naturalRange[2]) : null
     };
 };
 
