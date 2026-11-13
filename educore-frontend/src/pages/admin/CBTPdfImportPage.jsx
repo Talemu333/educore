@@ -26,6 +26,16 @@ const mapQuestionSubjects = (questions, exam) => (questions || []).map((question
     return { ...question, subject_id: match ? String(match.subject_id) : "", mapped_subject_name: match?.section_title || match?.subject_name || "", subject_mapping_error: !match };
 });
 
+const isQuestionValid = (question) => Boolean(
+    (String(question.question_text || "").trim() || String(question.image_url || "").trim()) &&
+    Array.isArray(question.options) &&
+    question.options.length === 4 &&
+    question.options.every((option) => String(option.option_text || "").trim() || String(option.option_image_url || "").trim()) &&
+    question.options.filter((option) => option.is_correct).length === 1 &&
+    Number.isFinite(Number(question.marks)) &&
+    Number(question.marks) > 0
+);
+
 const normalizeQuestion = (q) => ({
     ...q,
     subject_id: q.subject_id || "",
@@ -126,7 +136,8 @@ function CBTPdfImportPage() {
                 ...q,
                 [field]: value,
                 ...(field === "subject_id" ? { mapped_subject_name: section?.section_title || section?.subject_name || "", subject_mapping_error: !section } : {}),
-                valid: field === "question_text" ? Boolean(String(value).trim()) : q.valid,
+                valid: isQuestionValid({ ...q, [field]: value }),
+                warning: isQuestionValid({ ...q, [field]: value }) ? null : "Add question text or an image, four options (text or image), and exactly one correct answer.",
             } : q),
         }));
     };
@@ -144,6 +155,8 @@ function CBTPdfImportPage() {
             questions: current.questions.map((q, qi) => qi !== questionIndex ? q : {
                 ...q,
                 options: q.options.map((o, oi) => oi === optionIndex ? { ...o, [field]: value } : o),
+                valid: isQuestionValid({ ...q, options: q.options.map((o, oi) => oi === optionIndex ? { ...o, [field]: value } : o) }),
+                warning: isQuestionValid({ ...q, options: q.options.map((o, oi) => oi === optionIndex ? { ...o, [field]: value } : o) }) ? null : "Add question text or an image, four options (text or image), and exactly one correct answer.",
             }),
         }));
     };
@@ -154,8 +167,8 @@ function CBTPdfImportPage() {
             questions: current.questions.map((q, qi) => qi !== questionIndex ? q : {
                 ...q,
                 options: q.options.map((o, oi) => ({ ...o, is_correct: oi === optionIndex })),
-                valid: true,
-                warning: null,
+                valid: isQuestionValid({ ...q, options: q.options.map((o, oi) => ({ ...o, is_correct: oi === optionIndex })) }),
+                warning: isQuestionValid({ ...q, options: q.options.map((o, oi) => ({ ...o, is_correct: oi === optionIndex })) }) ? null : "Add question text or an image, four options (text or image), and exactly one correct answer.",
             }),
         }));
     };
@@ -166,9 +179,9 @@ function CBTPdfImportPage() {
 
     const importQuestions = async () => {
         if (!targetExamId && (!subjectId || !classId)) return toast.error("Select the subject and class for these questions.");
-        const questions = (preview?.questions || []).filter((q) => q.question_text.trim());
-        if (!questions.length) return toast.error("There are no questions ready to import.");
-        const invalidIndex = questions.findIndex((q) => q.options.length !== 4 || q.options.some((o) => !o.option_text.trim()) || q.options.filter((o) => o.is_correct).length !== 1 || Number(q.marks) <= 0 || (targetExamId && !q.subject_id));
+        const questions = (preview?.questions || []).filter((q) => q.valid && (q.question_text.trim() || q.image_url.trim()));
+        if (!questions.length) return toast.error("There are no valid questions ready to import.");
+        const invalidIndex = questions.findIndex((q) => !isQuestionValid(q) || (targetExamId && !q.subject_id));
         if (invalidIndex >= 0) return toast.error(`Question ${invalidIndex + 1} still needs correction.`);
 
         setImporting(true);
