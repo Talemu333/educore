@@ -43,7 +43,7 @@ function Sidebar({ isOpen, onClose }) {
     });
     const findTop = title => filtered.find(item => item.title === title && item.path);
     const dashboard = findTop("Dashboard");
-    const academic = findItems(["/attendance", "/attendance/reports", "/timetable", "/student-promotion", "/promotion-history"]);
+    const academic = findItems(["/attendance", "/attendance/reports", "/timetable", "/student-promotion", "/promotion-history", "/academic-programmes"]);
     const students = findItems(["/students"]);
     const teachers = findItems(["/teachers", "/progress-report-review"]);
     const parents = findItems(["/parents"]);
