@@ -1532,7 +1532,7 @@ const processStudentDecisions = async ({
                             client.query(`
                                 SELECT subject_id, is_compulsory
                                 FROM academic_programme_subjects
-                                WHERE programme_id = $1 AND school_id = $2
+                                WHERE programme_id = $1 AND school_id = $2 AND is_active = TRUE
                             `, [targetProgrammeResult.rows[0].id, schoolId])
                         ]);
 

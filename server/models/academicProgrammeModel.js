@@ -6,7 +6,7 @@ const listProgrammes = async (classId, schoolId, database = pool) => {
                COUNT(ps.subject_id)::integer AS subject_count
         FROM academic_programmes p
         LEFT JOIN academic_programme_subjects ps
-          ON ps.programme_id = p.id AND ps.school_id = p.school_id
+          ON ps.programme_id = p.id AND ps.school_id = p.school_id AND ps.is_active = TRUE
         JOIN classes c ON c.id = p.class_id AND c.school_id = p.school_id
         WHERE p.school_id = $1
           AND ($2::integer IS NULL OR p.class_id = $2)
@@ -44,7 +44,7 @@ const getProgrammeSubjects = async (programmeId, schoolId, database = pool) => {
         FROM academic_programme_subjects ps
         JOIN academic_programmes p ON p.id = ps.programme_id AND p.school_id = ps.school_id
         JOIN subjects s ON s.id = ps.subject_id AND s.school_id = ps.school_id
-        WHERE ps.programme_id = $1 AND ps.school_id = $2
+        WHERE ps.programme_id = $1 AND ps.school_id = $2 AND ps.is_active = TRUE
         ORDER BY s.subject_name
     `, [programmeId, schoolId]);
     return result.rows;
@@ -84,12 +84,16 @@ const saveProgrammeSubjects = async (programmeId, subjects, schoolId, database =
             if (changed.rowCount) throw Object.assign(new Error("This programme already has enrolled students. Do not remove an offered subject while students are enrolled; end the current session or create a new programme offering."), { statusCode: 409 });
         }
 
-        await client.query("DELETE FROM academic_programme_subjects WHERE programme_id = $1 AND school_id = $2", [programmeId, schoolId]);
+        await client.query("UPDATE academic_programme_subjects SET is_active = FALSE WHERE programme_id = $1 AND school_id = $2", [programmeId, schoolId]);
         for (const item of subjects) {
             await client.query(`
                 INSERT INTO academic_programme_subjects
-                    (school_id, programme_id, subject_id, is_compulsory)
-                VALUES ($1, $2, $3, $4)
+                    (school_id, programme_id, subject_id, is_compulsory, is_active)
+                VALUES ($1, $2, $3, $4, TRUE)
+                ON CONFLICT (programme_id, subject_id)
+                DO UPDATE SET
+                    is_compulsory = EXCLUDED.is_compulsory,
+                    is_active = TRUE
             `, [schoolId, programmeId, Number(item.subject_id), item.is_compulsory !== false]);
         }
         await client.query("COMMIT");
@@ -154,7 +158,7 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
 
         const allowed = await client.query(`
             SELECT subject_id, is_compulsory FROM academic_programme_subjects
-            WHERE programme_id = $1 AND school_id = $2
+            WHERE programme_id = $1 AND school_id = $2 AND is_active = TRUE
         `, [programmeId, schoolId]);
         const allowedIds = new Set(allowed.rows.map(row => Number(row.subject_id)));
         const requiredIds = allowed.rows.filter(row => row.is_compulsory).map(row => Number(row.subject_id));
