@@ -76,6 +76,7 @@ import CreateParentPage
 
 import ClassSubjectsPage
     from "../pages/ClassSubjectsPage";
+import AcademicProgrammesPage from "../pages/AcademicProgrammesPage";
 
 
 import ResultEntryPage
@@ -712,6 +713,18 @@ function AppRouter() {
                         }
                     />
 
+
+                    <Route
+                        path="/academic-programmes"
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[ROLES.ADMIN]}
+                                allowedAdminTypes={["proprietor", "principal", "vice_principal"]}
+                            >
+                                <AcademicProgrammesPage />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* =====================================
                         ATTENDANCE

@@ -52,6 +52,7 @@ const sidebarMenu = [
     { title: "Teachers", icon: Users, path: "/teachers", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Parents", icon: UserRound, path: "/parents", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Classes", icon: School, path: "/class-subjects", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
+    { title: "Senior Academic Programmes", icon: BookOpen, path: "/academic-programmes", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "Progress Report Review", icon: FileText, path: "/progress-report-review", roles: [ADMIN], adminTypes: [PROPRIETOR, PRINCIPAL, VICE_PRINCIPAL] },
     { title: "My Students", icon: GraduationCap, path: "/teacher-students", roles: [ROLES.TEACHER] },
     { title: "Student Progress Reports", icon: FileText, path: "/class-teacher-progress", roles: [ROLES.TEACHER] },

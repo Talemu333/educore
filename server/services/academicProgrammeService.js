@@ -27,6 +27,13 @@ const createProgramme = async (data, schoolId, database) => {
     return result;
 };
 
+const getProgrammeSubjects = async (id, schoolId, database) => {
+    requireContext(schoolId, database);
+    const programme = await model.getProgramme(id, schoolId, database);
+    if (!programme) throw new ApiError(404, "Programme not found.");
+    return model.getProgrammeSubjects(id, schoolId, database);
+};
+
 const saveProgrammeSubjects = async (id, subjects, schoolId, database) => {
     requireContext(schoolId, database);
     return withModelErrors(() => model.saveProgrammeSubjects(id, subjects, schoolId, database));
@@ -52,4 +59,4 @@ const assignStudents = async (data, schoolId, assignedBy, database) => {
     }, schoolId, database));
 };
 
-module.exports = { listProgrammes, createProgramme, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents };
+module.exports = { listProgrammes, createProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents };

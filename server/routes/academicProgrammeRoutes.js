@@ -12,6 +12,7 @@ router.use(authenticate, schoolDatabaseContext, authorize(ROLES.ADMIN), academic
 
 router.get("/", controller.get);
 router.post("/", controller.create);
+router.get("/:id/subjects", controller.programmeSubjects);
 router.put("/:id/subjects", controller.saveSubjects);
 router.get("/students", controller.students);
 router.post("/assign-students", controller.assign);

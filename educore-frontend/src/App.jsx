@@ -33,7 +33,7 @@ import PlatformBillingPage from "./pages/admin/PlatformBillingPage";
 const RESERVED_PUBLIC_PREFIXES = new Set([
     "dashboard", "students", "teachers", "parents", "attendance", "results",
     "timetable", "payments", "announcements", "settings", "administrators",
-    "student-promotion", "promotion-history", "class-subjects", "admin", "login",
+    "student-promotion", "promotion-history", "class-subjects", "academic-programmes", "admin", "login",
     "website", "change-password", "logout", "contact-messages", "expenses", "lesson-notes", "lesson-syllabus", "partner-management",
     "parent-overview", "parent", "parent-dashboard", "parent-results", "parent-attendance", "parent-progress-reports",
     "teacher-dashboard", "teacher-students", "teacher-timetable", "class-teacher-progress", "progress-report-review", "forgot-password", "reset-password",

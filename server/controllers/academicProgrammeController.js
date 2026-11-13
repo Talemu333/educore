@@ -13,6 +13,10 @@ const saveSubjects = asyncHandler(async (req, res) => {
     const data = await service.saveProgrammeSubjects(req.params.id, req.body.subjects || [], req.user.school_id, req.schoolDatabase);
     res.json({ success: true, message: "Programme subjects saved.", data });
 });
+const programmeSubjects = asyncHandler(async (req, res) => {
+    const data = await service.getProgrammeSubjects(req.params.id, req.user.school_id, req.schoolDatabase);
+    res.json({ success: true, data });
+});
 const students = asyncHandler(async (req, res) => {
     const data = await service.getStudentsForProgrammeAssignment(req.query, req.user.school_id, req.schoolDatabase);
     res.json({ success: true, data });
@@ -21,4 +25,4 @@ const assign = asyncHandler(async (req, res) => {
     const data = await service.assignStudents(req.body, req.user.school_id, req.user.id, req.schoolDatabase);
     res.json({ success: true, message: "Student programme and subjects assigned.", data });
 });
-module.exports = { get, create, saveSubjects, students, assign };
+module.exports = { get, create, programmeSubjects, saveSubjects, students, assign };
