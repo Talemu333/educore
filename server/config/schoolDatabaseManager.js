@@ -79,6 +79,7 @@ const ensureSharedDatabaseResultApprovalMigration = async () => {
                 "20261105_add_combined_subject_cbt.sql",
                 "20261111_add_cbt_question_groups.sql",
                 "20261112_link_exam_questions_to_bank.sql",
+                "20261113_add_senior_academic_programmes.sql",
                 "20261113_allow_question_bank_cleanup.sql"
             ];
             for (const migration of sharedMigrations) {
