@@ -206,4 +206,56 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
     }
 };
 
-module.exports = { listProgrammes, createProgramme, getProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents };
+
+const getStudentSubjects = async (studentId, schoolId, database = pool) => {
+    const enrollmentResult = await database.query(`
+        SELECT se.session_id, se.class_id, c.class_name, c.class_level, a.arm_name
+        FROM student_enrollments se
+        JOIN students s ON s.id = se.student_id AND s.school_id = $2
+        JOIN academic_sessions ac ON ac.id = se.session_id AND ac.school_id = $2
+        JOIN classes c ON c.id = se.class_id AND c.school_id = $2
+        LEFT JOIN arms a ON a.id = se.arm_id AND a.school_id = $2
+        WHERE se.student_id = $1 AND se.enrollment_status = 'Active'
+        ORDER BY ac.is_current DESC NULLS LAST, se.enrollment_date DESC, se.id DESC
+        LIMIT 1
+    `, [studentId, schoolId]);
+    const enrollment = enrollmentResult.rows[0];
+    if (!enrollment) return { enrollment: null, programme: null, programme_required: false, subjects: [] };
+
+    if (String(enrollment.class_level).toLowerCase() === "senior") {
+        const programmeResult = await database.query(`
+            SELECT p.id, p.programme_name
+            FROM student_programme_enrollments spe
+            JOIN academic_programmes p ON p.id = spe.programme_id AND p.school_id = spe.school_id
+            WHERE spe.student_id = $1 AND spe.session_id = $2
+              AND spe.school_id = $3 AND spe.status = 'Active'
+            LIMIT 1
+        `, [studentId, enrollment.session_id, schoolId]);
+        const programme = programmeResult.rows[0] || null;
+        if (!programme) return { enrollment, programme: null, programme_required: true, subjects: [] };
+        const subjectResult = await database.query(`
+            SELECT s.id, s.subject_name, s.subject_code, ps.is_compulsory
+            FROM student_subject_enrollments sse
+            JOIN subjects s ON s.id = sse.subject_id AND s.school_id = sse.school_id
+            LEFT JOIN academic_programme_subjects ps
+              ON ps.programme_id = sse.programme_id AND ps.subject_id = sse.subject_id
+             AND ps.school_id = sse.school_id
+            WHERE sse.student_id = $1 AND sse.session_id = $2
+              AND sse.school_id = $3 AND sse.status = 'Active'
+            ORDER BY s.subject_name
+        `, [studentId, enrollment.session_id, schoolId]);
+        return { enrollment, programme, programme_required: false, subjects: subjectResult.rows };
+    }
+
+    const subjectResult = await database.query(`
+        SELECT s.id, s.subject_name, s.subject_code, cs.is_compulsory
+        FROM class_subjects cs
+        JOIN subjects s ON s.id = cs.subject_id AND s.school_id = cs.school_id
+        WHERE cs.class_id = $1 AND cs.school_id = $2
+        ORDER BY s.subject_name
+    `, [enrollment.class_id, schoolId]);
+    return { enrollment, programme: null, programme_required: false, subjects: subjectResult.rows };
+};
+
+module.exports = { listProgrammes, createProgramme, getProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents, getStudentSubjects };
+

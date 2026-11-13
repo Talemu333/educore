@@ -43,7 +43,7 @@ function StudentSubjectsPage() {
         <div className="w-full space-y-6">
             <PageHeader
                 title="My Subjects"
-                description="Subjects assigned to your current class."
+                description="Subjects registered for you in your current academic session."
             />
 
             {error ? (
@@ -59,7 +59,7 @@ function StudentSubjectsPage() {
                                 </h2>
                             </div>
                             <div className="text-sm text-slate-600">
-                                <span className="font-medium">Class:</span> {data?.student?.class_name || "—"}
+                                <span className="font-medium">Class:</span> {data?.student?.class_name || "—"}{data?.student?.programme_name ? <span className="ml-3"><span className="font-medium">Programme:</span> {data.student.programme_name}</span> : ""}
                                 {data?.student?.arm_name ? ` • ${data.student.arm_name}` : ""}
                             </div>
                         </div>
@@ -68,9 +68,9 @@ function StudentSubjectsPage() {
                     {!data?.subjects?.length ? (
                         <div className="app-surface p-8 text-center">
                             <BookOpen className="mx-auto h-10 w-10 text-slate-400" />
-                            <h2 className="mt-3 font-semibold text-slate-900">No subjects assigned</h2>
+                            <h2 className="mt-3 font-semibold text-slate-900">{data?.student?.programme_required ? "Programme not yet assigned" : "No subjects assigned"}</h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                Your class does not have any subjects assigned yet.
+                                {data?.student?.programme_required ? "Your school has not yet assigned you to a senior secondary programme and subject combination. Please contact the school administrator." : "Your class does not have any subjects assigned yet."}
                             </p>
                         </div>
                     ) : (

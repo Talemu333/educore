@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import api from "@/api/axios";
 import { getClasses } from "@/services/classService";
 import { getSessions } from "@/services/sessionService";
-import { getSubjects } from "@/services/subjectApi";
+import { getSubjects } from "@/api/subjectApi";
 import PageHeader from "@/components/common/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";

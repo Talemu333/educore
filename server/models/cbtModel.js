@@ -24,7 +24,26 @@ const getExams = async (schoolId, filters = {}, createdById = null) => {
 };
 
 const getAvailableStudentExams = async (studentId, schoolId) => {
-    const result = await pool.query(`SELECT e.id,e.title,e.description,e.duration_minutes,e.total_marks,e.pass_mark,e.max_attempts,e.question_selection_count,e.randomize_questions,e.randomize_options,e.show_result_immediately,e.starts_at,e.ends_at,s.subject_name,COALESCE((SELECT json_agg(json_build_object('subject_id',es.subject_id,'subject_name',ss.subject_name,'section_title',es.section_title,'section_order',es.section_order) ORDER BY es.section_order) FROM cbt_exam_subjects es JOIN subjects ss ON ss.id=es.subject_id AND ss.school_id=es.school_id WHERE es.exam_id=e.id AND es.school_id=e.school_id),'[]'::json) AS exam_subjects,c.class_name,a.arm_name,COALESCE(att.attempt_count,0) AS attempt_count,(SELECT COUNT(*)::int FROM cbt_questions q WHERE q.exam_id=e.id AND q.school_id=e.school_id) AS question_count FROM cbt_exams e JOIN students st ON st.id=$1 AND st.school_id=$2 AND st.class_id=e.class_id AND (e.arm_id IS NULL OR e.arm_id=st.arm_id) JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id LEFT JOIN (SELECT exam_id,COUNT(*)::int AS attempt_count,MAX(CASE WHEN status='in_progress' THEN 1 ELSE 0 END)::int AS has_active_attempt FROM cbt_attempts WHERE student_id=$1 AND school_id=$2 GROUP BY exam_id) att ON att.exam_id=e.id WHERE e.school_id=$2 AND e.status='published' AND (e.starts_at IS NULL OR e.starts_at<=CURRENT_TIMESTAMP) AND (e.ends_at IS NULL OR e.ends_at>=CURRENT_TIMESTAMP) AND (COALESCE(att.attempt_count,0)<e.max_attempts OR COALESCE(att.has_active_attempt,0)=1) ORDER BY e.starts_at NULLS FIRST,e.created_at DESC,e.id DESC;`, [studentId, schoolId]);
+    const result = await pool.query(`SELECT e.id,e.title,e.description,e.duration_minutes,e.total_marks,e.pass_mark,e.max_attempts,e.question_selection_count,e.randomize_questions,e.randomize_options,e.show_result_immediately,e.starts_at,e.ends_at,s.subject_name,COALESCE((SELECT json_agg(json_build_object('subject_id',es.subject_id,'subject_name',ss.subject_name,'section_title',es.section_title,'section_order',es.section_order) ORDER BY es.section_order) FROM cbt_exam_subjects es JOIN subjects ss ON ss.id=es.subject_id AND ss.school_id=es.school_id WHERE es.exam_id=e.id AND es.school_id=e.school_id),'[]'::json) AS exam_subjects,c.class_name,a.arm_name,COALESCE(att.attempt_count,0) AS attempt_count,(SELECT COUNT(*)::int FROM cbt_questions q WHERE q.exam_id=e.id AND q.school_id=e.school_id) AS question_count FROM cbt_exams e JOIN students st ON st.id=$1 AND st.school_id=$2 AND st.class_id=e.class_id AND (e.arm_id IS NULL OR e.arm_id=st.arm_id) JOIN subjects s ON s.id=e.subject_id AND s.school_id=e.school_id JOIN classes c ON c.id=e.class_id AND c.school_id=e.school_id LEFT JOIN arms a ON a.id=e.arm_id AND a.school_id=e.school_id LEFT JOIN (SELECT exam_id,COUNT(*)::int AS attempt_count,MAX(CASE WHEN status='in_progress' THEN 1 ELSE 0 END)::int AS has_active_attempt FROM cbt_attempts WHERE student_id=$1 AND school_id=$2 GROUP BY exam_id) att ON att.exam_id=e.id WHERE e.school_id=$2 AND e.status='published' AND (
+    LOWER(c.class_level) <> 'senior'
+    OR (
+        EXISTS (SELECT 1 FROM cbt_exam_subjects required_section WHERE required_section.exam_id=e.id AND required_section.school_id=e.school_id)
+        AND NOT EXISTS (
+            SELECT 1
+            FROM cbt_exam_subjects required_section
+            WHERE required_section.exam_id=e.id AND required_section.school_id=e.school_id
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM student_subject_enrollments eligible
+                  JOIN academic_sessions current_session
+                    ON current_session.id=eligible.session_id AND current_session.school_id=eligible.school_id
+                  WHERE eligible.student_id=st.id AND eligible.school_id=st.school_id
+                    AND eligible.subject_id=required_section.subject_id
+                    AND eligible.status='Active' AND current_session.is_current=TRUE
+              )
+        )
+    )
+) AND (e.starts_at IS NULL OR e.starts_at<=CURRENT_TIMESTAMP) AND (e.ends_at IS NULL OR e.ends_at>=CURRENT_TIMESTAMP) AND (COALESCE(att.attempt_count,0)<e.max_attempts OR COALESCE(att.has_active_attempt,0)=1) ORDER BY e.starts_at NULLS FIRST,e.created_at DESC,e.id DESC;`, [studentId, schoolId]);
     return result.rows;
 };
 

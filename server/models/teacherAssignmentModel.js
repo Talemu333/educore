@@ -186,6 +186,18 @@ const getStudentsByTeacher = async (teacherId, schoolId) => {
          AND a.school_id = u.school_id
         WHERE ta.teacher_id = $1
           AND u.school_id = $2
+          AND (
+              LOWER(c.class_level) <> 'senior'
+              OR EXISTS (
+                  SELECT 1
+                  FROM student_subject_enrollments eligible_subject
+                  WHERE eligible_subject.student_id = s.id
+                    AND eligible_subject.session_id = ta.session_id
+                    AND eligible_subject.subject_id = ta.subject_id
+                    AND eligible_subject.school_id = u.school_id
+                    AND eligible_subject.status = 'Active'
+              )
+          )
         GROUP BY
             s.id, s.admission_number, s.surname, s.first_name, s.middle_name,
             s.gender, ta.session_id, ac.session_name, ta.class_id,
