@@ -35,11 +35,22 @@ const getAvailableStudentExams = async (studentId, schoolId) => {
               AND NOT EXISTS (
                   SELECT 1
                   FROM student_subject_enrollments eligible
-                  JOIN academic_sessions current_session
-                    ON current_session.id=eligible.session_id AND current_session.school_id=eligible.school_id
                   WHERE eligible.student_id=st.id AND eligible.school_id=st.school_id
                     AND eligible.subject_id=required_section.subject_id
-                    AND eligible.status='Active' AND current_session.is_current=TRUE
+                    AND eligible.status='Active'
+                    AND eligible.session_id = (
+                        SELECT current_enrollment.session_id
+                        FROM student_enrollments current_enrollment
+                        JOIN academic_sessions enrolled_session
+                          ON enrolled_session.id=current_enrollment.session_id
+                         AND enrolled_session.school_id=st.school_id
+                        WHERE current_enrollment.student_id=st.id
+                          AND current_enrollment.enrollment_status='Active'
+                        ORDER BY enrolled_session.is_current DESC NULLS LAST,
+                                 current_enrollment.enrollment_date DESC,
+                                 current_enrollment.id DESC
+                        LIMIT 1
+                    )
               )
         )
     )

@@ -111,6 +111,8 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
                COUNT(sse.id) FILTER (WHERE sse.status = 'Active')::integer AS active_subject_count
         FROM student_enrollments se
         JOIN students s ON s.id = se.student_id AND s.school_id = $3
+        JOIN academic_sessions sess ON sess.id = se.session_id AND sess.school_id = $3
+        JOIN classes c ON c.id = se.class_id AND c.school_id = $3
         LEFT JOIN arms a ON a.id = se.arm_id AND a.school_id = $3
         LEFT JOIN student_programme_enrollments spe
           ON spe.student_id = s.id AND spe.session_id = se.session_id
@@ -140,6 +142,8 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
             SELECT s.id
             FROM students s
             JOIN student_enrollments se ON se.student_id = s.id
+            JOIN academic_sessions sess ON sess.id = se.session_id AND sess.school_id = $1
+            JOIN classes c ON c.id = se.class_id AND c.school_id = $1
             WHERE s.school_id = $1 AND se.session_id = $2 AND se.class_id = $3
               AND se.enrollment_status = 'Active'
               AND s.id = ANY($4::integer[])
