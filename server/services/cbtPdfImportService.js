@@ -36,7 +36,7 @@ const parseLeadingSharedMaterial = (prefix) => {
 
     // Recognise natural-language shared material prompts, not only formal labels.
     const prefixLines = prefix.split("\n");
-    const naturalIndex = prefixLines.findIndex((line) => /(?:read\s+the\s+passage|study\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart)|use\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart)|refer\s+to\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart)|observe\s+(?:the\s+)?(?:diagram|figure|image|table|graph|chart))/i.test(line));
+    const naturalIndex = prefixLines.findIndex((line) => /(?:read\s+the\s+passage|(?:study|use|refer\s+to|observe)\s+(?:(?:the|a)\s+)?(?:following\s+)?(?:diagram|figure|image|table|graph|chart))/i.test(line));
     if (naturalIndex < 0) return null;
     const naturalInstruction = String(prefixLines[naturalIndex] || "").trim();
     const naturalRange = naturalInstruction.match(/questions?\s*(\d+)\s*(?:to|-|–)\s*(\d+)/i);
