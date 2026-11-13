@@ -192,11 +192,11 @@ function CBTPdfImportPage() {
 
     return (
         <div className="w-full space-y-6">
-            <PageHeader title="Import CBT Questions from PDF" description="Upload a text-based PDF. EduProw detects shared passages and section instructions, then lets you review the questions before importing." />
+            <PageHeader title="Import CBT Questions from PDF" description="Upload a text-based PDF. EduProw detects shared passages, instructions, diagrams, tables and graphs, then lets you review questions and attach visual materials before importing." />
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-                <strong>Automatic shared-passage detection:</strong> place a labelled material block before the questions that use it. For example:
+                <strong>Shared material detection:</strong> put a passage, instruction, diagram, image, table or graph before the questions that use it. You can use natural wording such as “Study the following table and answer questions 1 to 5” or a labelled block such as “Table: Class test scores”. For example:
                 <pre className="my-2 overflow-x-auto rounded-lg bg-white p-3 text-xs text-slate-800">Passage: The Importance of Water{"\n"}Water is essential to life...{"\n"}End Shared Material{"\n"}1. Why is water important?{"\n"}A. ...</pre>
-                EduProw attaches the detected text to the imported questions as a shared-material group, whether you import into the question bank or directly into a draft examination. You can review the detected passage in the preview. PDF image extraction is not supported yet, so diagrams and pictures must still be added separately using an image URL in the question bank.
+                EduProw attaches the detected text to the imported questions as a shared-material group, whether you import into the question bank or directly into a draft examination. You can review the detected passage in the preview. Text-based tables are retained as text. Embedded PDF pictures are not extracted automatically yet; paste a publicly accessible image URL into the shared-material or individual-question image field in the preview.
             </div>
 
             <Card>
@@ -279,10 +279,15 @@ function CBTPdfImportPage() {
                                         </details>
                                     )}
                                     <textarea className="w-full rounded-lg border p-3" rows="3" value={q.question_text} onChange={(e) => updateQuestion(index, "question_text", e.target.value)} placeholder="Question text" />
+                                    <label className="mt-3 block text-xs font-medium text-slate-700">Question image URL (optional)
+                                        <input className="mt-1 w-full rounded-lg border p-2 text-sm" value={q.image_url || ""} onChange={(e) => updateQuestion(index, "image_url", e.target.value)} placeholder="Paste a publicly accessible image URL" />
+                                    </label>
+                                    {q.image_url && <img src={q.image_url} alt="Question image preview" className="mt-2 max-h-48 w-full rounded-lg border bg-white object-contain p-2" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {q.options.map((option, optionIndex) => (
                                             <div key={optionIndex} className="rounded-lg border p-3">
                                                 <div className="flex items-center gap-2"><span className="font-bold">{String.fromCharCode(65 + optionIndex)}.</span><input className="w-full outline-none" value={option.option_text} onChange={(e) => updateOption(index, optionIndex, "option_text", e.target.value)} placeholder="Option text" /><input type="radio" name={`correct-${index}`} checked={option.is_correct} onChange={() => setCorrect(index, optionIndex)} /></div>
+                                                <input className="mt-2 w-full rounded border p-2 text-xs" value={option.option_image_url || ""} onChange={(e) => updateOption(index, optionIndex, "option_image_url", e.target.value)} placeholder="Option image URL (optional)" />
                                             </div>
                                         ))}
                                     </div>
