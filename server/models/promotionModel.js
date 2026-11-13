@@ -1481,6 +1481,95 @@ const processStudentDecisions = async ({
 
             /*
             =====================================
+            CARRY SENIOR PROGRAMME TO NEXT SESSION
+            =====================================
+
+            Carry the student's programme and subject combination only when
+            the same named programme exists in the destination class and all
+            previously registered subjects remain offered there. If the
+            programme/combination changed, leave the student unassigned so
+            the school can make an explicit new-session selection.
+            =====================================
+            */
+
+            if (
+                String(currentEnrollment.class_level).toLowerCase() === "senior" &&
+                ["Promoted", "Repeated"].includes(action)
+            ) {
+                const currentProgrammeResult = await client.query(`
+                    SELECT p.programme_name
+                    FROM student_programme_enrollments spe
+                    JOIN academic_programmes p
+                      ON p.id = spe.programme_id AND p.school_id = spe.school_id
+                    WHERE spe.student_id = $1
+                      AND spe.session_id = $2
+                      AND spe.school_id = $3
+                      AND spe.status = 'Active'
+                    LIMIT 1
+                `, [studentId, currentSessionId, schoolId]);
+
+                if (currentProgrammeResult.rows[0]) {
+                    const targetProgrammeResult = await client.query(`
+                        SELECT id
+                        FROM academic_programmes
+                        WHERE school_id = $1
+                          AND class_id = $2
+                          AND is_active = TRUE
+                          AND LOWER(programme_name) = LOWER($3)
+                        LIMIT 1
+                    `, [schoolId, targetClassId, currentProgrammeResult.rows[0].programme_name]);
+
+                    if (targetProgrammeResult.rows[0]) {
+                        const [currentSubjectsResult, targetSubjectsResult] = await Promise.all([
+                            client.query(`
+                                SELECT subject_id
+                                FROM student_subject_enrollments
+                                WHERE student_id = $1
+                                  AND session_id = $2
+                                  AND school_id = $3
+                                  AND status = 'Active'
+                            `, [studentId, currentSessionId, schoolId]),
+                            client.query(`
+                                SELECT subject_id, is_compulsory
+                                FROM academic_programme_subjects
+                                WHERE programme_id = $1 AND school_id = $2
+                            `, [targetProgrammeResult.rows[0].id, schoolId])
+                        ]);
+
+                        const currentSubjectIds = currentSubjectsResult.rows.map(row => Number(row.subject_id));
+                        const targetSubjects = targetSubjectsResult.rows;
+                        const targetSubjectIds = new Set(targetSubjects.map(row => Number(row.subject_id)));
+                        const targetRequiredIds = targetSubjects
+                            .filter(row => row.is_compulsory)
+                            .map(row => Number(row.subject_id));
+                        const combinationStillValid =
+                            currentSubjectIds.length > 0 &&
+                            currentSubjectIds.every(id => targetSubjectIds.has(id)) &&
+                            targetRequiredIds.every(id => currentSubjectIds.includes(id));
+
+                        if (combinationStillValid) {
+                            const targetProgrammeId = targetProgrammeResult.rows[0].id;
+                            await client.query(`
+                                INSERT INTO student_programme_enrollments
+                                    (school_id, student_id, session_id, class_id, programme_id, assigned_by)
+                                VALUES ($1, $2, $3, $4, $5, $6)
+                            `, [schoolId, studentId, nextSession.id, targetClassId, targetProgrammeId, processedBy]);
+
+                            for (const subjectId of currentSubjectIds) {
+                                await client.query(`
+                                    INSERT INTO student_subject_enrollments
+                                        (school_id, student_id, session_id, class_id, programme_id, subject_id)
+                                    VALUES ($1, $2, $3, $4, $5, $6)
+                                `, [schoolId, studentId, nextSession.id, targetClassId, targetProgrammeId, subjectId]);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            /*
+            =====================================
             MARK CURRENT ENROLLMENT PROCESSED
             =====================================
             */
