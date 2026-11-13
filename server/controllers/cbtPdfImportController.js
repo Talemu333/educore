@@ -82,7 +82,7 @@ exports.importToExam = async (req, res) => {
                 is_correct: Boolean(o.is_correct),
             })) : [],
         }));
-        const invalid = normalized.findIndex((q) => !Number.isInteger(q.subject_id) || q.subject_id < 1 || !q.question_text ||
+        const invalid = normalized.findIndex((q) => !Number.isInteger(q.subject_id) || q.subject_id < 1 || (!q.question_text && !q.image_url) ||
             q.options.length !== 4 || q.options.some((o) => !o.option_text && !o.option_image_url) ||
             q.options.filter((o) => o.is_correct).length !== 1 || !Number.isFinite(q.marks) || q.marks <= 0);
         if (invalid >= 0) return res.status(400).json({ success: false, message: `Question ${invalid + 1} is invalid. Check its subject, text, four options, correct answer and marks.` });
