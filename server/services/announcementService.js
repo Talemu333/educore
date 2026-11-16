@@ -15,6 +15,62 @@ const getAnnouncements=async(schoolId,user,query={},db)=>{requireSchool(schoolId
 const updateAnnouncement=async(id,data,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);const item=normalize(data);await model.validateTargets(item,schoolId,db);const result=await model.updateAnnouncement(id,item,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found.");return result;};
 const deactivateAnnouncement=async(id,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);const result=await model.deactivateAnnouncement(id,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found.");return result;};
 const setPinned=async(id,value,schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);if(typeof value!=="boolean")throw new ApiError(400,"Pinned status must be true or false.");const result=await model.setPinned(id,value,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found.");return result;};
-const markRead=async(id,schoolId,user,db)=>{requireSchool(schoolId);const result=await model.markRead(id,user.id,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found or no longer available.");return result;};
+const markRead=async(id,schoolId,user,db)=>{requireSchool(schoolId);const visible=await model.getAnnouncementsForAudience(schoolId,user,{id:Number(id),page:1,limit:1},db);if(!visible.items.some(item=>Number(item.id)===Number(id)))throw new ApiError(404,"Announcement not found or no longer available.");const result=await model.markRead(id,user.id,schoolId,db);if(!result)throw new ApiError(404,"Announcement not found or no longer available.");return result;};
 const getTargetOptions=async(schoolId,user,db)=>{requireSchool(schoolId);requireManager(user);return model.getTargetOptions(schoolId,db);};
-module.exports={createAnnouncement,getAnnouncements,updateAnnouncement,deactivateAnnouncement,setPinned,markRead,getTargetOptions,canManageAnnouncements};
+
+const ALLOWED_FILE_TYPES = new Map([
+  [".pdf", ["application/pdf"]],
+  [".jpg", ["image/jpeg"]],
+  [".jpeg", ["image/jpeg"]],
+  [".png", ["image/png"]],
+  [".txt", ["text/plain"]],
+  [".csv", ["text/csv", "application/vnd.ms-excel"]],
+  [".doc", ["application/msword"]],
+  [".docx", ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]],
+  [".xls", ["application/vnd.ms-excel"]],
+  [".xlsx", ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]],
+  [".ppt", ["application/vnd.ms-powerpoint"]],
+  [".pptx", ["application/vnd.openxmlformats-officedocument.presentationml.presentation"]]
+]);
+const uploadAttachments = async (announcementId, files, schoolId, user, db) => {
+  requireSchool(schoolId);
+  requireManager(user);
+  if (!(await model.getAnnouncementById(announcementId, schoolId, db))) throw new ApiError(404, "Announcement not found.");
+  if (!Array.isArray(files) || files.length === 0) throw new ApiError(400, "Choose at least one file to upload.");
+  const existingCount = await model.countAttachments(announcementId, schoolId, db);
+  if (existingCount + files.length > 5) throw new ApiError(400, "An announcement can have at most 5 file attachments.");
+  const validated = [];
+  for (const file of files) {
+    const fileName = String(file.originalname || "").split("").filter(ch => ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) !== 127).join("").trim().slice(0, 255);
+    const extension = fileName.includes(".") ? fileName.slice(fileName.lastIndexOf(".")).toLowerCase() : "";
+    const allowedMimes = ALLOWED_FILE_TYPES.get(extension);
+    if (!fileName || !allowedMimes || !allowedMimes.includes(file.mimetype)) throw new ApiError(400, "An attachment has an unsupported type. Use PDF, JPG, PNG, TXT, CSV, Word, Excel or PowerPoint files.");
+    if (!file.buffer || !file.size || file.size > 5 * 1024 * 1024) throw new ApiError(400, "Each attachment must be no larger than 5 MB.");
+    validated.push({ file_name: fileName, mime_type: file.mimetype, file_size: file.size, file_data: file.buffer });
+  }
+  const saved = [];
+  for (const file of validated) saved.push(await model.createAttachment(announcementId, schoolId, user.id, file, db));
+  return saved;
+};
+const getAttachmentForUser = async (announcementId, attachmentId, schoolId, user, db) => {
+  requireSchool(schoolId);
+  if (canManageAnnouncements(user)) {
+    if (!(await model.getAnnouncementById(announcementId, schoolId, db))) throw new ApiError(404, "Announcement not found.");
+  } else {
+    const visible = await model.getAnnouncementsForAudience(schoolId, user, { id: Number(announcementId), page: 1, limit: 1 }, db);
+    if (!visible.items.some(item => Number(item.id) === Number(announcementId))) throw new ApiError(404, "Announcement not found.");
+  }
+  const attachment = await model.getAttachment(announcementId, attachmentId, schoolId, db);
+  if (!attachment) throw new ApiError(404, "Attachment not found.");
+  return attachment;
+};
+const deleteAttachment = async (announcementId, attachmentId, schoolId, user, db) => {
+  requireSchool(schoolId);
+  requireManager(user);
+  if (!(await model.getAnnouncementById(announcementId, schoolId, db))) throw new ApiError(404, "Announcement not found.");
+  const deleted = await model.deleteAttachment(announcementId, attachmentId, schoolId, db);
+  if (!deleted) throw new ApiError(404, "Attachment not found.");
+  return deleted;
+};
+
+module.exports={createAnnouncement,getAnnouncements,updateAnnouncement,deactivateAnnouncement,setPinned,markRead,getTargetOptions,canManageAnnouncements,uploadAttachments,getAttachmentForUser,deleteAttachment};
