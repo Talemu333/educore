@@ -66,9 +66,10 @@ const getStudentsForResultEntry = async (teacherAssignmentId, schoolId) => {
                   AND (s.arm_id = ta.arm_id OR (s.arm_id IS NULL AND ta.arm_id IS NULL))
                   AND NOT EXISTS (
                       SELECT 1
-                      FROM student_enrollments any_enrollment
-                      WHERE any_enrollment.student_id = s.id
-                        AND any_enrollment.session_id = ta.session_id
+                      FROM student_enrollments any_active_enrollment
+                      WHERE any_active_enrollment.student_id = s.id
+                        AND any_active_enrollment.session_id = ta.session_id
+                        AND any_active_enrollment.enrollment_status = 'Active'
                   )
               )
           )
