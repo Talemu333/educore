@@ -19,7 +19,7 @@ function AcademicProgrammesPage() {
     const [programmeDescription, setProgrammeDescription] = useState("");
     const [subjectChoices, setSubjectChoices] = useState([]);
     const [assignmentSubjectIds, setAssignmentSubjectIds] = useState([]);
-    const [studentIds, setStudentIds] = useState([]);
+    const [studentIds, setStudentIds] = useState([]);\n    const [correctionStudentId, setCorrectionStudentId] = useState(\"\");\n    const [correctionPreview, setCorrectionPreview] = useState(false);
 
     const { data: classes = [] } = useQuery({ queryKey: ["classes"], queryFn: getClasses });
     const { data: sessions = [] } = useQuery({ queryKey: ["sessions"], queryFn: getSessions });
@@ -75,6 +75,24 @@ function AcademicProgrammesPage() {
             queryClient.invalidateQueries({ queryKey: ["academic-programme-subjects", programmeId] });
         },
         onError: error => toast.error(error.response?.data?.message || "Could not save programme subjects.")
+    });
+
+    const correctionMutation = useMutation({
+        mutationFn: async () => (await api.post("/academic-programmes/correct-student", {
+            class_id: Number(classId),
+            session_id: Number(sessionId),
+            programme_id: Number(programmeId),
+            student_id: Number(correctionStudentId),
+            subject_ids: assignmentSubjectIds
+        })).data,
+        onSuccess: response => {
+            toast.success(response.data?.message || "Student programme corrected.");
+            setCorrectionStudentId("");
+            setCorrectionPreview(false);
+            setAssignmentSubjectIds(programmeSubjects.filter(item => item.is_compulsory).map(item => Number(item.subject_id)));
+            queryClient.invalidateQueries({ queryKey: ["programme-students", classId, sessionId] });
+        },
+        onError: error => toast.error(error.response?.data?.message || "Could not correct this student's programme.")
     });
 
     const assignMutation = useMutation({
@@ -165,6 +183,39 @@ function AcademicProgrammesPage() {
                 <Button disabled={!subjectChoices.length || saveSubjectsMutation.isPending} onClick={() => saveSubjectsMutation.mutate()}>{saveSubjectsMutation.isPending ? "Saving..." : "Save programme subjects"}</Button>
             </Card>}
 
+            {correctionStudentId && <Card className="app-surface border-amber-200 p-5 sm:p-6 space-y-4">
+                <div>
+                    <h2 className="font-semibold text-slate-900">Correct programme for a student with existing results</h2>
+                    <p className="text-sm text-slate-600 mt-1">This is a separate, audited correction. Existing scores, grades, examination attempts and result records will not be edited or deleted.</p>
+                </div>
+                {(() => {
+                    const student = students.find(item => String(item.id) === String(correctionStudentId));
+                    return <p className="text-sm font-medium">{student ? `${student.surname} ${student.first_name} ${student.middle_name || ""} · ${student.admission_number}` : "Selected student"}</p>;
+                })()}
+                <p className="text-sm">New programme: <strong>{selectedProgramme?.programme_name || "Select a programme above"}</strong></p>
+                {!programmeId ? <p className="text-sm text-amber-700">Select the correct programme above first.</p> : !programmeSubjects.length ? <p className="text-sm text-amber-700">Add and save subjects for this programme first.</p> : <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {programmeSubjects.map(subject => <label key={subject.subject_id} className="flex items-center gap-2 text-sm">
+                            <input type="checkbox" checked={assignmentSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setAssignmentSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id))} />
+                            {subject.subject_name}{subject.is_compulsory ? " (Compulsory)" : " (Elective)"}
+                        </label>)}
+                    </div>
+                    {!correctionPreview ? <div className="flex gap-2">
+                        <Button disabled={!assignmentSubjectIds.length} onClick={() => setCorrectionPreview(true)}>Preview correction</Button>
+                        <Button variant="outline" onClick={() => { setCorrectionStudentId(""); setCorrectionPreview(false); }}>Cancel</Button>
+                    </div> : <div className="rounded-md border border-amber-200 bg-amber-50 p-4 space-y-3">
+                        <p className="text-sm font-semibold text-amber-900">Confirm this correction</p>
+                        <p className="text-sm text-amber-900">The student's active programme and subject registration will be replaced for this session. Previous registrations will be retained as ended records, and all existing results remain unchanged.</p>
+                        <p className="text-sm text-amber-900">New subjects: {programmeSubjects.filter(item => assignmentSubjectIds.includes(Number(item.subject_id))).map(item => item.subject_name).join(", ")}</p>
+                        <div className="flex flex-wrap gap-2">
+                            <Button disabled={correctionMutation.isPending} onClick={() => correctionMutation.mutate()}>{correctionMutation.isPending ? "Applying correction..." : "Confirm and apply correction"}</Button>
+                            <Button variant="outline" onClick={() => setCorrectionPreview(false)}>Back to edit</Button>
+                            <Button variant="outline" onClick={() => { setCorrectionStudentId(""); setCorrectionPreview(false); }}>Cancel</Button>
+                        </div>
+                    </div>}
+                </>}
+            </Card>}
+
             {classId && sessionId && <Card className="app-surface p-5 sm:p-6 space-y-4">
                 <div>
                     <h2 className="font-semibold text-slate-900">4. Assign students to a programme</h2>
@@ -173,7 +224,7 @@ function AcademicProgrammesPage() {
                 {!programmeId ? <p className="text-sm text-amber-700">Select a programme above first.</p> : !subjectChoices.length ? <p className="text-sm text-amber-700">Save at least one subject for this programme before assigning students.</p> : studentsLoading ? <p className="text-sm text-slate-500">Loading students...</p> : students.length === 0 ? <p className="text-sm text-slate-500">No active students found for this class and session.</p> : <>
                     <div className="rounded-md border border-blue-100 bg-blue-50/60 p-3 space-y-2">
                         <p className="text-sm font-medium text-slate-800">Choose this student group’s subject combination</p>
-                        <p className="text-xs text-slate-600">Compulsory subjects are preselected. Tick the electives each student should take. Students with different elective combinations should be assigned separately (select one student at a time).</p>
+                        <p className="text-xs text-slate-600">Compulsory subjects are preselected. Tick the electives each student should take. Students with different elective combinations should be assigned separately. Students who already have results must use the separate correction workflow.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {programmeSubjects.map(subject => <label key={subject.subject_id} className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" checked={assignmentSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setAssignmentSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id)))} />
@@ -187,8 +238,8 @@ function AcademicProgrammesPage() {
                     </div>
                     <div className="max-h-72 overflow-y-auto divide-y rounded-md border border-slate-200">
                         {students.map(student => <label key={student.id} className="flex items-center gap-3 p-3 text-sm hover:bg-slate-50">
-                            <input type="checkbox" checked={studentIds.includes(Number(student.id))} onChange={e => toggleStudent(student.id, e.target.checked)} />
-                            <span className="min-w-0 flex-1">{student.surname} {student.first_name} {student.middle_name || ""}<span className="block text-xs text-slate-500">{student.admission_number} · {student.arm_name || "No arm"}{student.programme_name ? ` · Currently: ${student.programme_name}` : " · Programme not assigned"}</span></span>
+                            <input type="checkbox" checked={studentIds.includes(Number(student.id))} disabled={student.has_results} onChange={e => toggleStudent(student.id, e.target.checked)} />
+                            <span className="min-w-0 flex-1">{student.surname} {student.first_name} {student.middle_name || ""}<span className="block text-xs text-slate-500">{student.admission_number} · {student.arm_name || "No arm"}{student.programme_name ? ` · Currently: ${student.programme_name}` : " · Programme not assigned"}{student.has_results ? " · Has results (use correction)" : ""}</span></span>{student.has_results && <button type="button" className="text-sm font-medium text-amber-700 underline" onClick={() => { setCorrectionStudentId(String(student.id)); setCorrectionPreview(false); setStudentIds([]); setAssignmentSubjectIds(programmeSubjects.filter(item => item.is_compulsory).map(item => Number(item.subject_id))); }}>Correct programme</button>}
                         </label>)}
                     </div>
                     <Button disabled={!studentIds.length || !assignmentSubjectIds.length || assignMutation.isPending} onClick={() => assignMutation.mutate()}>{assignMutation.isPending ? "Assigning..." : `Assign programme and subjects to ${studentIds.length} student(s)`}</Button>
