@@ -112,7 +112,7 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
                COALESCE(a.arm_name, '') AS arm_name,
                spe.programme_id,
                p.programme_name,
-               EXISTS (SELECT 1 FROM student_results sr WHERE sr.student_id = s.id AND sr.session_id = se.session_id) AS has_results,
+               EXISTS (SELECT 1 FROM student_results sr WHERE sr.student_id = s.id AND sr.session_id = $2) AS has_results,
                COUNT(sse.id) FILTER (WHERE sse.status = 'Active')::integer AS active_subject_count
         FROM student_enrollments se
         JOIN students s ON s.id = se.student_id AND s.school_id = $3
