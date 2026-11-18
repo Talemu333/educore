@@ -81,7 +81,8 @@ const ensureSharedDatabaseResultApprovalMigration = async () => {
                 "20261112_link_exam_questions_to_bank.sql",
                 "20261113_add_senior_academic_programmes.sql",
                 "20261113_allow_question_bank_cleanup.sql",
-                "20261113_z_add_programme_subject_active_flag.sql"
+                "20261113_z_add_programme_subject_active_flag.sql",
+                "20261118_add_student_programme_correction_audit.sql"
             ];
             for (const migration of sharedMigrations) {
                 const sql = await fs.readFile(path.join(MIGRATIONS_DIR, migration), "utf8");
