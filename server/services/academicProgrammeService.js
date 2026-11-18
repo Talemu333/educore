@@ -58,5 +58,19 @@ const assignStudents = async (data, schoolId, assignedBy, database) => {
         assignedBy
     }, schoolId, database));
 };
+const correctStudentProgramme = async (data, schoolId, assignedBy, database) => {
+    requireContext(schoolId, database);
+    if (!data.student_id || !data.class_id || !data.session_id || !data.programme_id) throw new ApiError(400, "Student, class, session and programme are required.");
+    if (!Array.isArray(data.subject_ids) || !data.subject_ids.length) throw new ApiError(400, "Select at least one subject.");
+    return withModelErrors(() => model.correctStudentProgramme({
+        classId: Number(data.class_id),
+        sessionId: Number(data.session_id),
+        programmeId: Number(data.programme_id),
+        studentId: Number(data.student_id),
+        subjectIds: data.subject_ids,
+        assignedBy
+    }, schoolId, database));
+};
 
-module.exports = { listProgrammes, createProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents };
+
+module.exports = { listProgrammes, createProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents, correctStudentProgramme };
