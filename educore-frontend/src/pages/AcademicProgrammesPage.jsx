@@ -234,7 +234,7 @@ function AcademicProgrammesPage() {
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm text-slate-600">{studentIds.length} student(s) selected</p>
-                        <button type="button" className="text-sm text-blue-700 underline" onClick={() => setStudentIds(students.map(item => Number(item.id)))}>Select all students</button>
+                        <button type="button" className="text-sm text-blue-700 underline" onClick={() => setStudentIds(students.filter(item => !item.has_results).map(item => Number(item.id)))}>Select all students</button>
                     </div>
                     <div className="max-h-72 overflow-y-auto divide-y rounded-md border border-slate-200">
                         {students.map(student => <label key={student.id} className="flex items-center gap-3 p-3 text-sm hover:bg-slate-50">
