@@ -14,7 +14,70 @@ const getExistingResult = async (studentId, teacherAssignmentId, sessionId, term
 
 const updateResult = async (id,data,schoolId,client=pool) => { const r=await client.query(`UPDATE student_results sr SET ca_score=$1,exam_score=$2,total_score=$3,grade=$4,remark=$5,updated_at=CURRENT_TIMESTAMP FROM students s, teacher_assignments ta, teachers tch, users u WHERE sr.id=$6 AND sr.student_id=s.id AND s.school_id=$7 AND ta.id=sr.teacher_assignment_id AND tch.id=ta.teacher_id AND u.id=tch.user_id AND u.school_id=$7 RETURNING sr.*`,[data.ca_score,data.exam_score,data.total_score,data.grade,data.remark,id,schoolId]); return r.rows[0]; };
 
-const getStudentsForResultEntry = async (teacherAssignmentId,schoolId) => { const r=await pool.query(`SELECT s.id,s.admission_number,CONCAT(s.surname,' ',s.first_name,CASE WHEN s.middle_name IS NOT NULL AND s.middle_name<>'' THEN ' '||s.middle_name ELSE '' END) student_name,sr.id result_id,sr.ca_score,sr.exam_score,sr.total_score,sr.grade,sr.remark,sr.position FROM students s JOIN student_enrollments se ON se.student_id=s.id JOIN teacher_assignments ta ON ta.class_id=se.class_id AND (ta.arm_id=se.arm_id OR (ta.arm_id IS NULL AND se.arm_id IS NULL)) AND ta.session_id=se.session_id JOIN classes c ON c.id=se.class_id AND c.school_id=s.school_id LEFT JOIN student_subject_enrollments sse ON sse.student_id=s.id AND sse.session_id=ta.session_id AND sse.subject_id=ta.subject_id AND sse.school_id=s.school_id AND sse.status='Active' LEFT JOIN student_results sr ON sr.student_id=s.id AND sr.teacher_assignment_id=ta.id AND sr.session_id=ta.session_id AND sr.term_id=ta.term_id JOIN teachers tch ON tch.id=ta.teacher_id JOIN users u ON u.id=tch.user_id WHERE ta.id=$1 AND s.school_id=$2 AND u.school_id=$2 AND se.enrollment_status='Active' AND (LOWER(c.class_level) <> 'senior' OR sse.id IS NOT NULL) ORDER BY s.surname,s.first_name`,[teacherAssignmentId,schoolId]); return r.rows; };
+const getStudentsForResultEntry = async (teacherAssignmentId, schoolId) => {
+    const result = await pool.query(`
+        SELECT
+            s.id,
+            s.admission_number,
+            CONCAT(
+                s.surname, ' ', s.first_name,
+                CASE WHEN s.middle_name IS NOT NULL AND s.middle_name <> ''
+                    THEN ' ' || s.middle_name ELSE '' END
+            ) AS student_name,
+            sr.id AS result_id,
+            sr.ca_score,
+            sr.exam_score,
+            sr.total_score,
+            sr.grade,
+            sr.remark,
+            sr.position
+        FROM teacher_assignments ta
+        JOIN teachers tch ON tch.id = ta.teacher_id
+        JOIN users u ON u.id = tch.user_id AND u.school_id = $2
+        JOIN classes c ON c.id = ta.class_id AND c.school_id = $2
+        JOIN students s ON s.school_id = $2
+        LEFT JOIN LATERAL (
+            SELECT enrollment.id
+            FROM student_enrollments enrollment
+            WHERE enrollment.student_id = s.id
+              AND enrollment.session_id = ta.session_id
+              AND enrollment.class_id = ta.class_id
+              AND (enrollment.arm_id = ta.arm_id OR (enrollment.arm_id IS NULL AND ta.arm_id IS NULL))
+              AND enrollment.enrollment_status = 'Active'
+            ORDER BY enrollment.id DESC
+            LIMIT 1
+        ) active_enrollment ON TRUE
+        LEFT JOIN student_subject_enrollments sse
+          ON sse.student_id = s.id
+         AND sse.session_id = ta.session_id
+         AND sse.subject_id = ta.subject_id
+         AND sse.school_id = $2
+         AND sse.status = 'Active'
+        LEFT JOIN student_results sr
+          ON sr.student_id = s.id
+         AND sr.teacher_assignment_id = ta.id
+         AND sr.session_id = ta.session_id
+         AND sr.term_id = ta.term_id
+        WHERE ta.id = $1
+          AND (
+              active_enrollment.id IS NOT NULL
+              OR (
+                  s.class_id = ta.class_id
+                  AND (s.arm_id = ta.arm_id OR (s.arm_id IS NULL AND ta.arm_id IS NULL))
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM student_enrollments any_enrollment
+                      WHERE any_enrollment.student_id = s.id
+                        AND any_enrollment.session_id = ta.session_id
+                  )
+              )
+          )
+          AND (LOWER(COALESCE(c.class_level, '')) <> 'senior' OR sse.id IS NOT NULL)
+        ORDER BY s.surname, s.first_name, s.middle_name;
+    `, [teacherAssignmentId, schoolId]);
+
+    return result.rows;
+};
 
 const updatePositions = async (teacherAssignmentId,sessionId,termId,schoolId,client=pool) => { const r=await client.query(`WITH ranked AS (SELECT sr.id,DENSE_RANK() OVER(ORDER BY sr.total_score DESC) position FROM student_results sr JOIN students s ON s.id=sr.student_id JOIN teacher_assignments ta ON ta.id=sr.teacher_assignment_id JOIN teachers tch ON tch.id=ta.teacher_id JOIN users u ON u.id=tch.user_id WHERE sr.teacher_assignment_id=$1 AND sr.session_id=$2 AND sr.term_id=$3 AND s.school_id=$4 AND u.school_id=$4) UPDATE student_results sr SET position=ranked.position FROM ranked WHERE sr.id=ranked.id RETURNING sr.id,sr.student_id,sr.total_score,sr.position`,[teacherAssignmentId,sessionId,termId,schoolId]); return r.rows; };
 
