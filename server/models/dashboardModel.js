@@ -152,10 +152,15 @@ const getGenderDistribution = async (schoolId) => {
 
 const getClassPopulation = async (schoolId) => {
     const result = await pool.query(`
-        SELECT c.class_name, COUNT(DISTINCT se.student_id) AS total_students
+        SELECT
+            c.class_name,
+            COUNT(DISTINCT s.id) FILTER (
+                WHERE LOWER(COALESCE(s.status, 'active')) = 'active'
+            ) AS total_students
         FROM classes c
-        LEFT JOIN student_enrollments se
-          ON se.class_id = c.id AND se.enrollment_status = 'Active'
+        LEFT JOIN students s
+          ON s.class_id = c.id
+         AND s.school_id = c.school_id
         WHERE c.school_id = $1
         GROUP BY c.id, c.class_name
         ORDER BY c.class_name
