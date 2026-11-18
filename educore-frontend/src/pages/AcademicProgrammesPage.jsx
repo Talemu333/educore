@@ -173,7 +173,7 @@ function AcademicProgrammesPage() {
             {selectedProgramme && <Card className="app-surface p-5 sm:p-6 space-y-4">
                 <div>
                     <h2 className="font-semibold text-slate-900">3. Choose subjects for {selectedProgramme.programme_name}</h2>
-                    <p className="text-sm text-slate-500 mt-1">Select the subjects students in this programme may take. Mark each as compulsory or elective.</p>
+                    <p className="text-sm text-slate-500 mt-1">Select the subjects students in this programme may take. Newly added subjects are electives by default; tick “Compulsory” only for subjects every student in the programme must offer.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {subjects.map(subject => {
@@ -228,7 +228,7 @@ function AcademicProgrammesPage() {
                 {!programmeId ? <p className="text-sm text-amber-700">Select a programme above first.</p> : !subjectChoices.length ? <p className="text-sm text-amber-700">Save at least one subject for this programme before assigning students.</p> : studentsLoading ? <p className="text-sm text-slate-500">Loading students...</p> : students.length === 0 ? <p className="text-sm text-slate-500">No active students found for this class and session.</p> : <>
                     <div className="rounded-md border border-blue-100 bg-blue-50/60 p-3 space-y-2">
                         <p className="text-sm font-medium text-slate-800">Choose this student group’s subject combination</p>
-                        <p className="text-xs text-slate-600">Compulsory subjects are preselected. Tick the electives each student should take. Students with different elective combinations should be assigned separately. Students who already have results must use the separate correction workflow.</p>
+                        <p className="text-xs text-slate-600">Compulsory subjects are preselected and locked. Tick the electives this group should take. If every subject is locked but that is not intended, return to section 3, untick “Compulsory” for the relevant subjects, and save the programme subjects. Students with different elective combinations should be assigned separately. Students who already have results must use the separate correction workflow.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {programmeSubjects.map(subject => <label key={subject.subject_id} className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" checked={assignmentSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setAssignmentSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id)))} />
