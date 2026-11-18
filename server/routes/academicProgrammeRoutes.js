@@ -16,5 +16,6 @@ router.get("/:id/subjects", controller.programmeSubjects);
 router.put("/:id/subjects", controller.saveSubjects);
 router.get("/students", controller.students);
 router.post("/assign-students", controller.assign);
+router.post("/correct-student", controller.correctStudent);
 
 module.exports = router;
