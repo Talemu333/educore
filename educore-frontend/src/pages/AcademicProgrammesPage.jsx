@@ -19,7 +19,9 @@ function AcademicProgrammesPage() {
     const [programmeDescription, setProgrammeDescription] = useState("");
     const [subjectChoices, setSubjectChoices] = useState([]);
     const [assignmentSubjectIds, setAssignmentSubjectIds] = useState([]);
-    const [studentIds, setStudentIds] = useState([]);\n    const [correctionStudentId, setCorrectionStudentId] = useState(\"\");\n    const [correctionPreview, setCorrectionPreview] = useState(false);
+    const [studentIds, setStudentIds] = useState([]);
+    const [correctionStudentId, setCorrectionStudentId] = useState("");
+    const [correctionPreview, setCorrectionPreview] = useState(false);
 
     const { data: classes = [] } = useQuery({ queryKey: ["classes"], queryFn: getClasses });
     const { data: sessions = [] } = useQuery({ queryKey: ["sessions"], queryFn: getSessions });
