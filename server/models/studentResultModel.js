@@ -59,6 +59,7 @@ const getStudentsForResultEntry = async (teacherAssignmentId, schoolId) => {
          AND sr.session_id = ta.session_id
          AND sr.term_id = ta.term_id
         WHERE ta.id = $1
+          AND LOWER(COALESCE(s.status, 'active')) = 'active'
           AND (
               active_enrollment.id IS NOT NULL
               OR (
