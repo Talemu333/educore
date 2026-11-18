@@ -112,6 +112,7 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
                COALESCE(a.arm_name, '') AS arm_name,
                spe.programme_id,
                p.programme_name,
+               EXISTS (SELECT 1 FROM student_results sr WHERE sr.student_id = s.id AND sr.session_id = se.session_id) AS has_results,
                COUNT(sse.id) FILTER (WHERE sse.status = 'Active')::integer AS active_subject_count
         FROM student_enrollments se
         JOIN students s ON s.id = se.student_id AND s.school_id = $3
@@ -219,6 +220,109 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
 };
 
 
+const correctStudentProgramme = async ({ classId, sessionId, programmeId, studentId, subjectIds, assignedBy }, schoolId, database = pool) => {
+    const client = await database.connect();
+    try {
+        await client.query("BEGIN");
+        const programme = await getProgramme(programmeId, schoolId, client);
+        if (!programme || Number(programme.class_id) !== Number(classId)) {
+            throw Object.assign(new Error("The selected programme does not belong to this class and school."), { statusCode: 400 });
+        }
+        const studentResult = await client.query(`
+            SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name
+            FROM students s
+            JOIN student_enrollments se ON se.student_id = s.id
+            JOIN academic_sessions ac ON ac.id = se.session_id AND ac.school_id = $1
+            WHERE s.id = $2 AND s.school_id = $1 AND se.session_id = $3
+              AND se.class_id = $4 AND se.enrollment_status = 'Active'
+            FOR UPDATE OF s
+        `, [schoolId, studentId, sessionId, classId]);
+        if (!studentResult.rowCount) throw Object.assign(new Error("The student is not actively enrolled in this class and session."), { statusCode: 404 });
+
+        const results = await client.query(
+            "SELECT COUNT(*)::integer AS result_count FROM student_results sr JOIN students s ON s.id = sr.student_id AND s.school_id = $1 WHERE sr.student_id = $2 AND sr.session_id = $3",
+            [schoolId, studentId, sessionId]
+        );
+        if (!results.rows[0].result_count) throw Object.assign(new Error("This student has no existing results in this session. Use the normal bulk assignment workflow."), { statusCode: 409 });
+
+        const allowed = await client.query(`
+            SELECT subject_id, is_compulsory FROM academic_programme_subjects
+            WHERE programme_id = $1 AND school_id = $2 AND is_active = TRUE
+        `, [programmeId, schoolId]);
+        const allowedIds = new Set(allowed.rows.map(row => Number(row.subject_id)));
+        const requiredIds = allowed.rows.filter(row => row.is_compulsory).map(row => Number(row.subject_id));
+        const selectedIds = [...new Set((subjectIds || []).map(Number))];
+        if (!selectedIds.length || selectedIds.some(id => !allowedIds.has(id))) {
+            throw Object.assign(new Error("Select one or more subjects offered by the chosen programme."), { statusCode: 400 });
+        }
+        if (requiredIds.some(id => !selectedIds.includes(id))) {
+            throw Object.assign(new Error("All compulsory programme subjects must be included."), { statusCode: 400 });
+        }
+
+        const previousProgramme = await client.query(`
+            SELECT spe.programme_id, p.programme_name
+            FROM student_programme_enrollments spe
+            LEFT JOIN academic_programmes p ON p.id = spe.programme_id AND p.school_id = spe.school_id
+            WHERE spe.student_id = $1 AND spe.session_id = $2 AND spe.school_id = $3 AND spe.status = 'Active'
+            LIMIT 1
+        `, [studentId, sessionId, schoolId]);
+        const previousSubjects = await client.query(`
+            SELECT sse.subject_id, s.subject_name
+            FROM student_subject_enrollments sse
+            JOIN subjects s ON s.id = sse.subject_id AND s.school_id = sse.school_id
+            WHERE sse.student_id = $1 AND sse.session_id = $2 AND sse.school_id = $3 AND sse.status = 'Active'
+            ORDER BY s.subject_name
+        `, [studentId, sessionId, schoolId]);
+
+        await client.query(`
+            UPDATE student_subject_enrollments
+            SET status = 'Ended', ended_at = CURRENT_TIMESTAMP
+            WHERE school_id = $1 AND session_id = $2 AND student_id = $3 AND status = 'Active'
+        `, [schoolId, sessionId, studentId]);
+        await client.query(`
+            UPDATE student_programme_enrollments
+            SET status = 'Ended', ended_at = CURRENT_TIMESTAMP
+            WHERE school_id = $1 AND session_id = $2 AND student_id = $3 AND status = 'Active'
+        `, [schoolId, sessionId, studentId]);
+
+        await client.query(`
+            INSERT INTO student_programme_enrollments
+                (school_id, student_id, session_id, class_id, programme_id, assigned_by)
+            VALUES ($1, $2, $3, $4, $5, $6)
+        `, [schoolId, studentId, sessionId, classId, programmeId, assignedBy || null]);
+        for (const subjectId of selectedIds) {
+            await client.query(`
+                INSERT INTO student_subject_enrollments
+                    (school_id, student_id, session_id, class_id, programme_id, subject_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `, [schoolId, studentId, sessionId, classId, programmeId, subjectId]);
+        }
+
+        await client.query(`
+            INSERT INTO student_programme_correction_audit
+                (school_id, student_id, session_id, class_id, previous_programme_id, previous_programme_name,
+                 previous_subjects, new_programme_id, new_programme_name, new_subjects, result_count, corrected_by)
+            VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10::jsonb,$11,$12)
+        `, [
+            schoolId, studentId, sessionId, classId,
+            previousProgramme.rows[0]?.programme_id || null,
+            previousProgramme.rows[0]?.programme_name || null,
+            JSON.stringify(previousSubjects.rows),
+            programmeId, programme.programme_name,
+            JSON.stringify(allowed.rows.filter(row => selectedIds.includes(Number(row.subject_id)))),
+            results.rows[0].result_count, assignedBy || null
+        ]);
+        await client.query("COMMIT");
+        return { student_id: studentId, programme_name: programme.programme_name, subject_count: selectedIds.length, preserved_result_count: results.rows[0].result_count };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+
 const getStudentSubjects = async (studentId, schoolId, database = pool) => {
     const enrollmentResult = await database.query(`
         SELECT se.session_id, se.class_id, c.class_name, c.class_level, a.arm_name
@@ -269,5 +373,5 @@ const getStudentSubjects = async (studentId, schoolId, database = pool) => {
     return { enrollment, programme: null, programme_required: false, subjects: subjectResult.rows };
 };
 
-module.exports = { listProgrammes, createProgramme, getProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents, getStudentSubjects };
+module.exports = { listProgrammes, createProgramme, getProgramme, getProgrammeSubjects, saveProgrammeSubjects, getStudentsForProgrammeAssignment, assignStudents, correctStudentProgramme, getStudentSubjects };
 
