@@ -74,7 +74,7 @@ const getStudentsForResultEntry = async (teacherAssignmentId, schoolId) => {
                   )
               )
           )
-          AND (LOWER(COALESCE(c.class_level, '')) <> 'senior' OR sse.id IS NOT NULL)
+          AND (LOWER(COALESCE(c.class_level, '')) <> 'senior' OR sse.id IS NOT NULL OR sr.id IS NOT NULL)
         ORDER BY s.surname, s.first_name, s.middle_name;
     `, [teacherAssignmentId, schoolId]);
 
