@@ -25,4 +25,8 @@ const assign = asyncHandler(async (req, res) => {
     const data = await service.assignStudents(req.body, req.user.school_id, req.user.id, req.schoolDatabase);
     res.json({ success: true, message: "Student programme and subjects assigned.", data });
 });
-module.exports = { get, create, programmeSubjects, saveSubjects, students, assign };
+const correctStudent = asyncHandler(async (req, res) => {
+    const data = await service.correctStudentProgramme(req.body, req.user.school_id, req.user.id, req.schoolDatabase);
+    res.json({ success: true, message: "Student programme corrected. Existing result records were preserved.", data });
+});
+module.exports = { get, create, programmeSubjects, saveSubjects, students, assign, correctStudent };
