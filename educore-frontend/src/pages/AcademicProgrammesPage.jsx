@@ -196,7 +196,7 @@ function AcademicProgrammesPage() {
                 {!programmeId ? <p className="text-sm text-amber-700">Select the correct programme above first.</p> : !programmeSubjects.length ? <p className="text-sm text-amber-700">Add and save subjects for this programme first.</p> : <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {programmeSubjects.map(subject => <label key={subject.subject_id} className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" checked={assignmentSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setAssignmentSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id))} />
+                            <input type="checkbox" checked={assignmentSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setAssignmentSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id)))} />
                             {subject.subject_name}{subject.is_compulsory ? " (Compulsory)" : " (Elective)"}
                         </label>)}
                     </div>
