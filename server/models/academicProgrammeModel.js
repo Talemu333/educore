@@ -112,7 +112,15 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
                COALESCE(a.arm_name, '') AS arm_name,
                spe.programme_id,
                p.programme_name,
-               EXISTS (SELECT 1 FROM student_results sr WHERE sr.student_id = s.id AND sr.session_id = $2) AS has_results,
+               EXISTS (
+                   SELECT 1
+                   FROM student_results sr
+                   JOIN teacher_assignments result_ta ON result_ta.id = sr.teacher_assignment_id
+                   WHERE sr.student_id = s.id
+                     AND sr.session_id = se.session_id
+                     AND result_ta.class_id = se.class_id
+                     AND (result_ta.arm_id = se.arm_id OR (result_ta.arm_id IS NULL AND se.arm_id IS NULL))
+               ) AS has_results,
                COUNT(sse.id) FILTER (WHERE sse.status = 'Active')::integer AS active_subject_count
         FROM student_enrollments se
         JOIN students s ON s.id = se.student_id AND s.school_id = $3
@@ -240,8 +248,8 @@ const correctStudentProgramme = async ({ classId, sessionId, programmeId, studen
         if (!studentResult.rowCount) throw Object.assign(new Error("The student is not actively enrolled in this class and session."), { statusCode: 404 });
 
         const results = await client.query(
-            "SELECT COUNT(*)::integer AS result_count FROM student_results sr JOIN students s ON s.id = sr.student_id AND s.school_id = $1 WHERE sr.student_id = $2 AND sr.session_id = $3",
-            [schoolId, studentId, sessionId]
+            "SELECT COUNT(*)::integer AS result_count FROM student_results sr JOIN students s ON s.id = sr.student_id AND s.school_id = $1 JOIN teacher_assignments result_ta ON result_ta.id = sr.teacher_assignment_id WHERE sr.student_id = $2 AND sr.session_id = $3 AND result_ta.class_id = $4",
+            [schoolId, studentId, sessionId, classId]
         );
         if (!results.rows[0].result_count) throw Object.assign(new Error("This student has no existing results in this session. Use the normal bulk assignment workflow."), { statusCode: 409 });
 
