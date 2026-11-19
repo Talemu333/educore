@@ -202,7 +202,7 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
         await client.query(`
             UPDATE student_enrollments se
             SET class_id = s.class_id, arm_id = s.arm_id,
-                enrollment_status = 'Active', ended_at = NULL
+                enrollment_status = 'Active'
             FROM students s
             JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $1 AND sess.is_current = TRUE
             WHERE se.student_id = s.id AND se.session_id = $2
