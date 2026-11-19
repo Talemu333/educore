@@ -173,6 +173,20 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
             throw Object.assign(new Error("One or more selected students are not actively enrolled in the selected class and session."), { statusCode: 400 });
         }
 
+        // Keep the active session enrolment aligned with the student's current class/arm.
+        // Older records may retain the previous class after a student profile was updated.
+        await client.query(`
+            UPDATE student_enrollments se
+            SET class_id = s.class_id, arm_id = s.arm_id
+            FROM students s
+            WHERE se.student_id = s.id
+              AND se.session_id = $2
+              AND se.enrollment_status = 'Active'
+              AND s.school_id = $1
+              AND s.id = ANY($3::integer[])
+              AND s.class_id = $4
+        `, [schoolId, sessionId, studentIds, classId]);
+
         const allowed = await client.query(`
             SELECT subject_id, is_compulsory FROM academic_programme_subjects
             WHERE programme_id = $1 AND school_id = $2 AND is_active = TRUE
