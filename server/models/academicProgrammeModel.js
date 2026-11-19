@@ -335,6 +335,9 @@ const correctStudentProgramme = async ({ classId, sessionId, programmeId, studen
         `, [schoolId, studentId, sessionId, classId]);
         if (!studentResult.rowCount) throw Object.assign(new Error("The student is not actively enrolled in this class and session."), { statusCode: 404 });
 
+        // Student profile class/arm is the current placement used by the student portal.
+        // Reconcile a stale active session-enrolment row before applying the programme.
+        const activeEnrollment = studentResult.rows[0];
         if (!activeEnrollment.enrollment_id) {
             await client.query(`
                 INSERT INTO student_enrollments
@@ -342,10 +345,6 @@ const correctStudentProgramme = async ({ classId, sessionId, programmeId, studen
                 VALUES ($1, $2, $3, $4, CURRENT_DATE, 'Active')
             `, [studentId, sessionId, activeEnrollment.class_id, activeEnrollment.arm_id]);
         }
-
-        // Student profile class/arm is the current placement used by the student portal.
-        // Reconcile a stale active session-enrolment row before applying the programme.
-        const activeEnrollment = studentResult.rows[0];
         if (Number(activeEnrollment.enrolled_class_id) !== Number(activeEnrollment.class_id)
             || Number(activeEnrollment.enrolled_arm_id || 0) !== Number(activeEnrollment.arm_id || 0)) {
             await client.query(
