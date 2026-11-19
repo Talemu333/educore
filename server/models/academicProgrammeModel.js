@@ -127,12 +127,12 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
         JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $3
         LEFT JOIN arms a ON a.id = s.arm_id AND a.school_id = $3
         LEFT JOIN LATERAL (
-            SELECT enrollment.id, enrollment.session_id
+            SELECT enrollment.id, enrollment.session_id, enrollment.enrollment_status
             FROM student_enrollments enrollment
             WHERE enrollment.student_id = s.id
               AND enrollment.session_id = $2
-              AND enrollment.enrollment_status = 'Active'
-            ORDER BY enrollment.id DESC
+            ORDER BY CASE WHEN enrollment.enrollment_status = 'Active' THEN 0 ELSE 1 END,
+                     enrollment.id DESC
             LIMIT 1
         ) se ON TRUE
         LEFT JOIN student_programme_enrollments spe
@@ -145,17 +145,7 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
          AND sse.school_id = $3 AND sse.status = 'Active'
         WHERE s.class_id = $1
           AND LOWER(COALESCE(s.status, 'active')) = 'active'
-          AND (
-              se.id IS NOT NULL
-              OR (
-                  sess.is_current = TRUE
-                  AND NOT EXISTS (
-                      SELECT 1 FROM student_enrollments any_enrollment
-                      WHERE any_enrollment.student_id = s.id
-                        AND any_enrollment.session_id = $2
-                  )
-              )
-          )
+          AND (se.enrollment_status = 'Active' OR sess.is_current = TRUE)
         GROUP BY s.id, a.arm_name, spe.programme_id, p.programme_name
         ORDER BY s.surname, s.first_name
     `, [classId, sessionId, schoolId]);
@@ -176,14 +166,14 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
             JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $1
             JOIN classes c ON c.id = s.class_id AND c.school_id = $1
             LEFT JOIN LATERAL (
-                SELECT enrollment.id
-                FROM student_enrollments enrollment
-                WHERE enrollment.student_id = s.id
-                  AND enrollment.session_id = $2
-                  AND enrollment.enrollment_status = 'Active'
-                ORDER BY enrollment.id DESC
-                LIMIT 1
-            ) se ON TRUE
+                 SELECT enrollment.id, enrollment.enrollment_status
+                 FROM student_enrollments enrollment
+                 WHERE enrollment.student_id = s.id
+                   AND enrollment.session_id = $2
+                 ORDER BY CASE WHEN enrollment.enrollment_status = 'Active' THEN 0 ELSE 1 END,
+                          enrollment.id DESC
+                 LIMIT 1
+             ) se ON TRUE
             WHERE s.school_id = $1 AND s.class_id = $3
               AND s.id = ANY($4::integer[])
               AND (
@@ -202,7 +192,7 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
             throw Object.assign(new Error("One or more selected students are not actively enrolled in the selected class and session."), { statusCode: 400 });
         }
 
-        // Backfill a missing current-session enrolment for legacy/imported students.
+        // Backfill missing current-session enrolments for legacy/imported students.
         await client.query(`
             INSERT INTO student_enrollments
                 (student_id, session_id, class_id, arm_id, enrollment_date, enrollment_status)
@@ -214,6 +204,23 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
               AND NOT EXISTS (
                   SELECT 1 FROM student_enrollments existing
                   WHERE existing.student_id = s.id AND existing.session_id = $2
+              )
+        `, [schoolId, sessionId, studentIds, classId]);
+        // For the current session, the active student profile is authoritative.
+        // Reactivate the latest session row when legacy data left it ended/inactive.
+        await client.query(`
+            UPDATE student_enrollments se
+            SET class_id = s.class_id, arm_id = s.arm_id,
+                enrollment_status = 'Active', ended_at = NULL
+            FROM students s
+            JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $1 AND sess.is_current = TRUE
+            WHERE se.student_id = s.id AND se.session_id = $2
+              AND s.school_id = $1 AND s.class_id = $4
+              AND s.id = ANY($3::integer[])
+              AND se.id = (
+                  SELECT latest.id FROM student_enrollments latest
+                  WHERE latest.student_id = s.id AND latest.session_id = $2
+                  ORDER BY latest.id DESC LIMIT 1
               )
         `, [schoolId, sessionId, studentIds, classId]);
 
