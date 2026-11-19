@@ -248,7 +248,7 @@ const correctStudentProgramme = async ({ classId, sessionId, programmeId, studen
         if (!studentResult.rowCount) throw Object.assign(new Error("The student is not actively enrolled in this class and session."), { statusCode: 404 });
 
         const results = await client.query(
-            "SELECT COUNT(*)::integer AS result_count FROM student_results sr JOIN students s ON s.id = sr.student_id AND s.school_id = $1 JOIN teacher_assignments result_ta ON result_ta.id = sr.teacher_assignment_id JOIN student_enrollments active_se ON active_se.student_id = s.id AND active_se.session_id = sr.session_id AND active_se.class_id = result_ta.class_id AND active_se.enrollment_status = 'Active' WHERE sr.student_id = $2 AND sr.session_id = $3 AND result_ta.class_id = $4 AND (result_ta.arm_id = active_se.arm_id OR (result_ta.arm_id IS NULL AND active_se.arm_id IS NULL))",
+            "SELECT COUNT(DISTINCT sr.id)::integer AS result_count FROM student_results sr JOIN students s ON s.id = sr.student_id AND s.school_id = $1 JOIN teacher_assignments result_ta ON result_ta.id = sr.teacher_assignment_id JOIN student_enrollments active_se ON active_se.student_id = s.id AND active_se.session_id = sr.session_id AND active_se.class_id = result_ta.class_id AND active_se.enrollment_status = 'Active' WHERE sr.student_id = $2 AND sr.session_id = $3 AND result_ta.class_id = $4 AND (result_ta.arm_id = active_se.arm_id OR (result_ta.arm_id IS NULL AND active_se.arm_id IS NULL))",
             [schoolId, studentId, sessionId, classId]
         );
         if (!results.rows[0].result_count) throw Object.assign(new Error("This student has no existing results in this session. Use the normal bulk assignment workflow."), { statusCode: 409 });
