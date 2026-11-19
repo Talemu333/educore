@@ -218,7 +218,7 @@ function AcademicProgrammesPage() {
                         <p className="text-xs text-slate-500">Compulsory subjects are selected automatically. Tick only the electives this student actually offers.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {correctionProgrammeSubjects.map(subject => <label key={subject.subject_id} className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={correctionSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setCorrectionSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id))} />
+                                <input type="checkbox" checked={correctionSubjectIds.includes(Number(subject.subject_id))} disabled={subject.is_compulsory} onChange={e => setCorrectionSubjectIds(current => e.target.checked ? [...new Set([...current, Number(subject.subject_id)])] : current.filter(id => id !== Number(subject.subject_id)))} />
                                 {subject.subject_name}{subject.is_compulsory ? " (Compulsory)" : " (Elective)"}
                             </label>)}
                         </div>
