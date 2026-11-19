@@ -126,7 +126,7 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
         JOIN classes c ON c.id = s.class_id AND c.school_id = $3
         JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $3
         LEFT JOIN arms a ON a.id = s.arm_id AND a.school_id = $3
-        JOIN LATERAL (
+        LEFT JOIN LATERAL (
             SELECT enrollment.id, enrollment.session_id
             FROM student_enrollments enrollment
             WHERE enrollment.student_id = s.id
@@ -145,6 +145,17 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
          AND sse.school_id = $3 AND sse.status = 'Active'
         WHERE s.class_id = $1
           AND LOWER(COALESCE(s.status, 'active')) = 'active'
+          AND (
+              se.id IS NOT NULL
+              OR (
+                  sess.is_current = TRUE
+                  AND NOT EXISTS (
+                      SELECT 1 FROM student_enrollments any_enrollment
+                      WHERE any_enrollment.student_id = s.id
+                        AND any_enrollment.session_id = $2
+                  )
+              )
+          )
         GROUP BY s.id, a.arm_name, spe.programme_id, p.programme_name
         ORDER BY s.surname, s.first_name
     `, [classId, sessionId, schoolId]);
@@ -162,16 +173,49 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
         const validStudents = await client.query(`
             SELECT s.id, s.class_id, s.arm_id, se.id AS enrollment_id
             FROM students s
-            JOIN student_enrollments se ON se.student_id = s.id
-            JOIN academic_sessions sess ON sess.id = se.session_id AND sess.school_id = $1
+            JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $1
             JOIN classes c ON c.id = s.class_id AND c.school_id = $1
-            WHERE s.school_id = $1 AND se.session_id = $2 AND s.class_id = $3
-              AND se.enrollment_status = 'Active'
+            LEFT JOIN LATERAL (
+                SELECT enrollment.id
+                FROM student_enrollments enrollment
+                WHERE enrollment.student_id = s.id
+                  AND enrollment.session_id = $2
+                  AND enrollment.enrollment_status = 'Active'
+                ORDER BY enrollment.id DESC
+                LIMIT 1
+            ) se ON TRUE
+            WHERE s.school_id = $1 AND s.class_id = $3
               AND s.id = ANY($4::integer[])
+              AND (
+                  se.id IS NOT NULL
+                  OR (
+                      sess.is_current = TRUE
+                      AND NOT EXISTS (
+                          SELECT 1 FROM student_enrollments any_enrollment
+                          WHERE any_enrollment.student_id = s.id
+                            AND any_enrollment.session_id = $2
+                      )
+                  )
+              )
         `, [schoolId, sessionId, classId, studentIds]);
         if (validStudents.rowCount !== studentIds.length) {
             throw Object.assign(new Error("One or more selected students are not actively enrolled in the selected class and session."), { statusCode: 400 });
         }
+
+        // Backfill a missing current-session enrolment for legacy/imported students.
+        await client.query(`
+            INSERT INTO student_enrollments
+                (student_id, session_id, class_id, arm_id, enrollment_date, enrollment_status)
+            SELECT s.id, $2, s.class_id, s.arm_id, CURRENT_DATE, 'Active'
+            FROM students s
+            JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $1 AND sess.is_current = TRUE
+            WHERE s.school_id = $1 AND s.class_id = $4
+              AND s.id = ANY($3::integer[])
+              AND NOT EXISTS (
+                  SELECT 1 FROM student_enrollments existing
+                  WHERE existing.student_id = s.id AND existing.session_id = $2
+              )
+        `, [schoolId, sessionId, studentIds, classId]);
 
         // Keep the active session enrolment aligned with the student's current class/arm.
         // Older records may retain the previous class after a student profile was updated.
@@ -262,16 +306,42 @@ const correctStudentProgramme = async ({ classId, sessionId, programmeId, studen
             SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.class_id, s.arm_id,
                    se.id AS enrollment_id, se.class_id AS enrolled_class_id, se.arm_id AS enrolled_arm_id
             FROM students s
-            JOIN student_enrollments se ON se.student_id = s.id
-            JOIN academic_sessions ac ON ac.id = se.session_id AND ac.school_id = $1
+            JOIN academic_sessions ac ON ac.id = $3 AND ac.school_id = $1
             JOIN classes current_class ON current_class.id = s.class_id AND current_class.school_id = $1
-            WHERE s.id = $2 AND s.school_id = $1 AND se.session_id = $3
-              AND s.class_id = $4 AND se.enrollment_status = 'Active'
-            ORDER BY se.id DESC
+            LEFT JOIN LATERAL (
+                SELECT enrollment.id, enrollment.class_id, enrollment.arm_id
+                FROM student_enrollments enrollment
+                WHERE enrollment.student_id = s.id
+                  AND enrollment.session_id = $3
+                  AND enrollment.enrollment_status = 'Active'
+                ORDER BY enrollment.id DESC
+                LIMIT 1
+            ) se ON TRUE
+            WHERE s.id = $2 AND s.school_id = $1
+              AND s.class_id = $4
+              AND (
+                  se.id IS NOT NULL
+                  OR (
+                      ac.is_current = TRUE
+                      AND NOT EXISTS (
+                          SELECT 1 FROM student_enrollments any_enrollment
+                          WHERE any_enrollment.student_id = s.id
+                            AND any_enrollment.session_id = $3
+                      )
+                  )
+              )
             LIMIT 1
-            FOR UPDATE OF s, se
+            FOR UPDATE OF s
         `, [schoolId, studentId, sessionId, classId]);
         if (!studentResult.rowCount) throw Object.assign(new Error("The student is not actively enrolled in this class and session."), { statusCode: 404 });
+
+        if (!activeEnrollment.enrollment_id) {
+            await client.query(`
+                INSERT INTO student_enrollments
+                    (student_id, session_id, class_id, arm_id, enrollment_date, enrollment_status)
+                VALUES ($1, $2, $3, $4, CURRENT_DATE, 'Active')
+            `, [studentId, sessionId, activeEnrollment.class_id, activeEnrollment.arm_id]);
+        }
 
         // Student profile class/arm is the current placement used by the student portal.
         // Reconcile a stale active session-enrolment row before applying the programme.
