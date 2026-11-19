@@ -117,16 +117,24 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
                    FROM student_results sr
                    JOIN teacher_assignments result_ta ON result_ta.id = sr.teacher_assignment_id
                    WHERE sr.student_id = s.id
-                     AND sr.session_id = se.session_id
-                     AND result_ta.class_id = se.class_id
-                     AND (result_ta.arm_id = se.arm_id OR (result_ta.arm_id IS NULL AND se.arm_id IS NULL))
+                     AND sr.session_id = $2
+                     AND result_ta.class_id = s.class_id
+                     AND (result_ta.arm_id = s.arm_id OR (result_ta.arm_id IS NULL AND s.arm_id IS NULL))
                ) AS has_results,
                COUNT(sse.id) FILTER (WHERE sse.status = 'Active')::integer AS active_subject_count
-        FROM student_enrollments se
-        JOIN students s ON s.id = se.student_id AND s.school_id = $3
-        JOIN academic_sessions sess ON sess.id = se.session_id AND sess.school_id = $3
-        JOIN classes c ON c.id = se.class_id AND c.school_id = $3
-        LEFT JOIN arms a ON a.id = se.arm_id AND a.school_id = $3
+        FROM students s
+        JOIN classes c ON c.id = s.class_id AND c.school_id = $3
+        JOIN academic_sessions sess ON sess.id = $2 AND sess.school_id = $3
+        LEFT JOIN arms a ON a.id = s.arm_id AND a.school_id = $3
+        JOIN LATERAL (
+            SELECT enrollment.id, enrollment.session_id
+            FROM student_enrollments enrollment
+            WHERE enrollment.student_id = s.id
+              AND enrollment.session_id = $2
+              AND enrollment.enrollment_status = 'Active'
+            ORDER BY enrollment.id DESC
+            LIMIT 1
+        ) se ON TRUE
         LEFT JOIN student_programme_enrollments spe
           ON spe.student_id = s.id AND spe.session_id = se.session_id
          AND spe.school_id = $3 AND spe.status = 'Active'
@@ -135,8 +143,8 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
         LEFT JOIN student_subject_enrollments sse
           ON sse.student_id = s.id AND sse.session_id = se.session_id
          AND sse.school_id = $3 AND sse.status = 'Active'
-        WHERE se.class_id = $1 AND se.session_id = $2
-          AND se.enrollment_status = 'Active'
+        WHERE s.class_id = $1
+          AND LOWER(COALESCE(s.status, 'active')) = 'active'
         GROUP BY s.id, a.arm_name, spe.programme_id, p.programme_name
         ORDER BY s.surname, s.first_name
     `, [classId, sessionId, schoolId]);
@@ -152,12 +160,12 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
             throw Object.assign(new Error("The selected programme does not belong to this class and school."), { statusCode: 400 });
         }
         const validStudents = await client.query(`
-            SELECT s.id
+            SELECT s.id, s.class_id, s.arm_id, se.id AS enrollment_id
             FROM students s
             JOIN student_enrollments se ON se.student_id = s.id
             JOIN academic_sessions sess ON sess.id = se.session_id AND sess.school_id = $1
-            JOIN classes c ON c.id = se.class_id AND c.school_id = $1
-            WHERE s.school_id = $1 AND se.session_id = $2 AND se.class_id = $3
+            JOIN classes c ON c.id = s.class_id AND c.school_id = $1
+            WHERE s.school_id = $1 AND se.session_id = $2 AND s.class_id = $3
               AND se.enrollment_status = 'Active'
               AND s.id = ANY($4::integer[])
         `, [schoolId, sessionId, classId, studentIds]);
@@ -237,15 +245,30 @@ const correctStudentProgramme = async ({ classId, sessionId, programmeId, studen
             throw Object.assign(new Error("The selected programme does not belong to this class and school."), { statusCode: 400 });
         }
         const studentResult = await client.query(`
-            SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name
+            SELECT s.id, s.admission_number, s.surname, s.first_name, s.middle_name, s.class_id, s.arm_id,
+                   se.id AS enrollment_id, se.class_id AS enrolled_class_id, se.arm_id AS enrolled_arm_id
             FROM students s
             JOIN student_enrollments se ON se.student_id = s.id
             JOIN academic_sessions ac ON ac.id = se.session_id AND ac.school_id = $1
+            JOIN classes current_class ON current_class.id = s.class_id AND current_class.school_id = $1
             WHERE s.id = $2 AND s.school_id = $1 AND se.session_id = $3
-              AND se.class_id = $4 AND se.enrollment_status = 'Active'
-            FOR UPDATE OF s
+              AND s.class_id = $4 AND se.enrollment_status = 'Active'
+            ORDER BY se.id DESC
+            LIMIT 1
+            FOR UPDATE OF s, se
         `, [schoolId, studentId, sessionId, classId]);
         if (!studentResult.rowCount) throw Object.assign(new Error("The student is not actively enrolled in this class and session."), { statusCode: 404 });
+
+        // Student profile class/arm is the current placement used by the student portal.
+        // Reconcile a stale active session-enrolment row before applying the programme.
+        const activeEnrollment = studentResult.rows[0];
+        if (Number(activeEnrollment.enrolled_class_id) !== Number(activeEnrollment.class_id)
+            || Number(activeEnrollment.enrolled_arm_id || 0) !== Number(activeEnrollment.arm_id || 0)) {
+            await client.query(
+                "UPDATE student_enrollments SET class_id = $2, arm_id = $3 WHERE id = $1 AND enrollment_status = 'Active'",
+                [activeEnrollment.enrollment_id, activeEnrollment.class_id, activeEnrollment.arm_id]
+            );
+        }
 
         const results = await client.query(
             "SELECT COUNT(DISTINCT sr.id)::integer AS result_count FROM student_results sr JOIN students s ON s.id = sr.student_id AND s.school_id = $1 JOIN teacher_assignments result_ta ON result_ta.id = sr.teacher_assignment_id JOIN student_enrollments active_se ON active_se.student_id = s.id AND active_se.session_id = sr.session_id AND active_se.class_id = result_ta.class_id AND active_se.enrollment_status = 'Active' WHERE sr.student_id = $2 AND sr.session_id = $3 AND result_ta.class_id = $4 AND (result_ta.arm_id = active_se.arm_id OR (result_ta.arm_id IS NULL AND active_se.arm_id IS NULL))",
