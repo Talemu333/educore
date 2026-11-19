@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
@@ -24,6 +24,7 @@ function AcademicProgrammesPage() {
     const [correctionStudentId, setCorrectionStudentId] = useState("");
     const [correctionProgrammeId, setCorrectionProgrammeId] = useState("");
     const [correctionPreview, setCorrectionPreview] = useState(false);
+    const correctionPanelRef = useRef(null);
 
     const { data: classes = [] } = useQuery({ queryKey: ["classes"], queryFn: getClasses });
     const { data: sessions = [] } = useQuery({ queryKey: ["sessions"], queryFn: getSessions });
@@ -66,6 +67,12 @@ function AcademicProgrammesPage() {
         setCorrectionSubjectIds(correctionProgrammeSubjects.filter(item => item.is_compulsory).map(item => Number(item.subject_id)));
         setCorrectionPreview(false);
     }, [correctionProgrammeSubjects]);
+
+    useEffect(() => {
+        if (correctionStudentId) {
+            correctionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [correctionStudentId]);
 
     const createMutation = useMutation({
         mutationFn: async () => (await api.post("/academic-programmes", {
@@ -197,7 +204,7 @@ function AcademicProgrammesPage() {
                 <Button disabled={!subjectChoices.length || saveSubjectsMutation.isPending} onClick={() => saveSubjectsMutation.mutate()}>{saveSubjectsMutation.isPending ? "Saving..." : "Save programme subjects"}</Button>
             </Card>}
 
-            {correctionStudentId && <Card className="app-surface border-amber-200 p-5 sm:p-6 space-y-4">
+            {correctionStudentId && <div ref={correctionPanelRef}><Card className="app-surface border-amber-200 p-5 sm:p-6 space-y-4">
                 <div>
                     <h2 className="font-semibold text-slate-900">Correct this student's programme and subjects</h2>
                     <p className="text-sm text-slate-600 mt-1">Choose the student's correct programme here. This choice is independent of the programme selected for ordinary group assignment. Existing scores, grades, examination attempts and result records will remain unchanged.</p>
@@ -238,7 +245,7 @@ function AcademicProgrammesPage() {
                         </div>
                     </div>}
                 </>}
-            </Card>}
+            </Card></div>}
 
             {classId && sessionId && <Card className="app-surface p-5 sm:p-6 space-y-4">
                 <div>
