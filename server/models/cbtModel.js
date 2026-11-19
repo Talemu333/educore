@@ -38,18 +38,27 @@ const getAvailableStudentExams = async (studentId, schoolId) => {
                   WHERE eligible.student_id=st.id AND eligible.school_id=st.school_id
                     AND eligible.subject_id=required_section.subject_id
                     AND eligible.status='Active'
-                    AND eligible.session_id = (
-                        SELECT current_enrollment.session_id
-                        FROM student_enrollments current_enrollment
-                        JOIN academic_sessions enrolled_session
-                          ON enrolled_session.id=current_enrollment.session_id
-                         AND enrolled_session.school_id=st.school_id
-                        WHERE current_enrollment.student_id=st.id
-                          AND current_enrollment.enrollment_status='Active'
-                        ORDER BY enrolled_session.is_current DESC NULLS LAST,
-                                 current_enrollment.enrollment_date DESC,
-                                 current_enrollment.id DESC
-                        LIMIT 1
+                    AND eligible.session_id = COALESCE(
+                        (
+                            SELECT current_session.id
+                            FROM academic_sessions current_session
+                            WHERE current_session.school_id=st.school_id
+                              AND current_session.is_current=TRUE
+                            ORDER BY current_session.id DESC
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT current_enrollment.session_id
+                            FROM student_enrollments current_enrollment
+                            JOIN academic_sessions enrolled_session
+                              ON enrolled_session.id=current_enrollment.session_id
+                             AND enrolled_session.school_id=st.school_id
+                            WHERE current_enrollment.student_id=st.id
+                              AND current_enrollment.enrollment_status='Active'
+                            ORDER BY current_enrollment.enrollment_date DESC,
+                                     current_enrollment.id DESC
+                            LIMIT 1
+                        )
                     )
               )
         )
