@@ -136,12 +136,12 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
             LIMIT 1
         ) se ON TRUE
         LEFT JOIN student_programme_enrollments spe
-          ON spe.student_id = s.id AND spe.session_id = se.session_id
+          ON spe.student_id = s.id AND spe.session_id = $2
          AND spe.school_id = $3 AND spe.status = 'Active'
         LEFT JOIN academic_programmes p
           ON p.id = spe.programme_id AND p.school_id = $3
         LEFT JOIN student_subject_enrollments sse
-          ON sse.student_id = s.id AND sse.session_id = se.session_id
+          ON sse.student_id = s.id AND sse.session_id = $2
          AND sse.school_id = $3 AND sse.status = 'Active'
         WHERE s.class_id = $1
           AND LOWER(COALESCE(s.status, 'active')) = 'active'
