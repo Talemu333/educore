@@ -143,7 +143,8 @@ const getStudentsForProgrammeAssignment = async ({ classId, sessionId, schoolId 
         LEFT JOIN student_subject_enrollments sse
           ON sse.student_id = s.id AND sse.session_id = $2
          AND sse.school_id = $3 AND sse.status = 'Active'
-        WHERE s.class_id = $1
+        WHERE s.school_id = $3
+          AND s.class_id = $1
           AND LOWER(COALESCE(s.status, 'active')) = 'active'
           AND (se.enrollment_status = 'Active' OR sess.is_current = TRUE)
         GROUP BY s.id, a.arm_name, spe.programme_id, p.programme_name
@@ -176,17 +177,7 @@ const assignStudents = async ({ classId, sessionId, programmeId, studentIds, sub
              ) se ON TRUE
             WHERE s.school_id = $1 AND s.class_id = $3
               AND s.id = ANY($4::integer[])
-              AND (
-                  se.id IS NOT NULL
-                  OR (
-                      sess.is_current = TRUE
-                      AND NOT EXISTS (
-                          SELECT 1 FROM student_enrollments any_enrollment
-                          WHERE any_enrollment.student_id = s.id
-                            AND any_enrollment.session_id = $2
-                      )
-                  )
-              )
+              AND (se.enrollment_status = 'Active' OR sess.is_current = TRUE)
         `, [schoolId, sessionId, classId, studentIds]);
         if (validStudents.rowCount !== studentIds.length) {
             throw Object.assign(new Error("One or more selected students are not actively enrolled in the selected class and session."), { statusCode: 400 });
