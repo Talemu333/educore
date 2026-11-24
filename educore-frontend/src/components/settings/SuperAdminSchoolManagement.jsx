@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, GraduationCap, Users, UserRound, Search, RotateCcw, Plus, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -45,6 +45,13 @@ function SuperAdminSchoolManagement() {
     const [passwordSchool, setPasswordSchool] = useState(null);
     const [proprietorPassword, setProprietorPassword] = useState("");
     const [passwordSaving, setPasswordSaving] = useState(false);
+    const passwordFormRef = useRef(null);
+
+    useEffect(() => {
+        if (passwordSchool) {
+            passwordFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [passwordSchool]);
     const [adminForm, setAdminForm] = useState(initialAdminForm);
     const [schoolSearch, setSchoolSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -267,7 +274,7 @@ function SuperAdminSchoolManagement() {
             )}
 
             {passwordSchool && (
-                <form onSubmit={handleChangeProprietorPassword} className="grid gap-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+                <form ref={passwordFormRef} onSubmit={handleChangeProprietorPassword} className="grid gap-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
                     <div>
                         <h3 className="font-semibold text-slate-900">Change Proprietor Password</h3>
                         <p className="text-sm text-muted-foreground">School: <strong>{passwordSchool.school_name}</strong> (ID {passwordSchool.school_id}). This updates the active proprietor account and synchronizes its password across the school's database and EduProw's platform account.</p>
