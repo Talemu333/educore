@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const schoolModel = require("../models/superAdminSchoolModel");
 const schoolDomainModel = require("../models/schoolDomainModel");
+const authModel = require("../models/authModel");
 
 const normalize = (value) => typeof value === "string" ? value.trim() : value;
 
@@ -31,6 +32,25 @@ const createSchoolAdministrator = async (schoolId, payload) => {
     return schoolModel.createSchoolAdministrator(schoolId, { username, email }, await bcrypt.hash(password, 10), adminType.toLowerCase());
 };
 
+const changeProprietorPassword = async (schoolId, newPassword) => {
+    const normalizedSchoolId = Number(schoolId);
+    if (!Number.isInteger(normalizedSchoolId) || normalizedSchoolId < 1) {
+        throw Object.assign(new Error("Invalid school."), { status: 400 });
+    }
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+        throw Object.assign(new Error("Password must be at least 8 characters long."), { status: 400 });
+    }
+    const school = await schoolModel.getSchoolById(normalizedSchoolId);
+    if (!school) throw Object.assign(new Error("School not found."), { status: 404 });
+    const proprietor = await schoolModel.getActiveProprietor(normalizedSchoolId);
+    if (!proprietor) throw Object.assign(new Error("No active proprietor account was found for this school."), { status: 404 });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const updated = await authModel.updatePassword(proprietor.id, hashedPassword, normalizedSchoolId);
+    if (!updated) throw Object.assign(new Error("The proprietor password could not be updated."), { status: 409 });
+    return { user_id: proprietor.id, username: proprietor.username, email: proprietor.email };
+};
+
 const updateSchool = async (id, data) => schoolModel.updateSchool(id, { school_name: normalize(data.school_name), admission_prefix: normalize(data.admission_prefix), school_email: normalize(data.school_email), school_phone: normalize(data.school_phone), school_address: normalize(data.school_address), school_motto: normalize(data.school_motto), school_level: normalize(data.school_level) });
 const setSchoolStatus = async (id, isActive) => schoolModel.setSchoolStatus(id, isActive);
 
@@ -48,4 +68,4 @@ const setSchoolDomain = async (schoolId, value) => {
     return school;
 };
 
-module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator, updateSchool, setSchoolStatus, setSchoolDomain };
+module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator, changeProprietorPassword, updateSchool, setSchoolStatus, setSchoolDomain };
