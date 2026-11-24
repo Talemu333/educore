@@ -226,4 +226,20 @@ const createSchoolAdministrator = async (schoolId, admin, hashedPassword, adminT
     return result.rows[0];
 };
 
-module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator };
+const getActiveProprietor = async (schoolId) => {
+    const schoolPool = await getSchoolDatabase(Number(schoolId));
+    const result = await schoolPool.query(`
+        SELECT u.id, u.username, u.email, u.school_id
+        FROM users u
+        JOIN roles r ON r.id = u.role_id
+        WHERE u.school_id = $1
+          AND u.is_active IS TRUE
+          AND LOWER(TRIM(r.role_name)) IN ('admin', 'administrator')
+          AND LOWER(TRIM(COALESCE(u.admin_type, ''))) = 'proprietor'
+        ORDER BY u.id
+        LIMIT 1
+    `, [Number(schoolId)]);
+    return result.rows[0] || null;
+};
+
+module.exports = { getSchools, getSchoolById, createSchool, createSchoolAdministrator, getActiveProprietor };
