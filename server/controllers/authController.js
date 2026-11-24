@@ -57,7 +57,11 @@ const changePassword = async (req, res, next) => {
         if (!user) return res.status(404).json({ success: false, message: "User account not found." });
         if (!(await bcrypt.compare(current_password, user.password))) return res.status(401).json({ success: false, message: "Current password is incorrect." });
         if (await bcrypt.compare(new_password, user.password)) return res.status(400).json({ success: false, message: "New password must be different from your current password." });
-        await authModel.updatePassword(req.user.id, await bcrypt.hash(new_password, 10));
+        await authModel.updatePassword(
+            req.user.id,
+            await bcrypt.hash(new_password, 10),
+            String(req.user?.role_name || "").trim().toLowerCase() === "super admin" ? null : req.user.school_id
+        );
         res.json({ success: true, message: "Password changed successfully." });
     } catch (error) { next(error); }
 };
