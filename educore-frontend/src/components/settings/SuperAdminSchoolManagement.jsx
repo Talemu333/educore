@@ -6,7 +6,8 @@ import {
     getSchools,
     createSchool,
     createSchoolAdministrator,
-    setSchoolStatus
+    setSchoolStatus,
+    changeProprietorPassword
 } from "@/services/superAdminSchoolService";
 
 const initialForm = {
@@ -41,6 +42,9 @@ function SuperAdminSchoolManagement() {
     const [success, setSuccess] = useState("");
     const [form, setForm] = useState(initialForm);
     const [adminSchool, setAdminSchool] = useState(null);
+    const [passwordSchool, setPasswordSchool] = useState(null);
+    const [proprietorPassword, setProprietorPassword] = useState("");
+    const [passwordSaving, setPasswordSaving] = useState(false);
     const [adminForm, setAdminForm] = useState(initialAdminForm);
     const [schoolSearch, setSchoolSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -150,6 +154,35 @@ function SuperAdminSchoolManagement() {
         }
     };
 
+    const openPasswordForm = (school) => {
+        setError("");
+        setSuccess("");
+        setPasswordSchool(school);
+        setProprietorPassword("");
+    };
+
+    const closePasswordForm = () => {
+        setPasswordSchool(null);
+        setProprietorPassword("");
+    };
+
+    const handleChangeProprietorPassword = async (event) => {
+        event.preventDefault();
+        if (!passwordSchool) return;
+        setError("");
+        setSuccess("");
+        setPasswordSaving(true);
+        try {
+            const response = await changeProprietorPassword(passwordSchool.school_id, proprietorPassword);
+            setSuccess(response.message || `Proprietor password changed for ${passwordSchool.school_name}.`);
+            closePasswordForm();
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to change the proprietor password.");
+        } finally {
+            setPasswordSaving(false);
+        }
+    };
+
     const toggleStatus = async (school) => {
         setError("");
         setSuccess("");
@@ -231,6 +264,23 @@ function SuperAdminSchoolManagement() {
                     {saving ? "Creating..." : "Create School"}
                 </button>
             </form>
+            )}
+
+            {passwordSchool && (
+                <form onSubmit={handleChangeProprietorPassword} className="grid gap-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+                    <div>
+                        <h3 className="font-semibold text-slate-900">Change Proprietor Password</h3>
+                        <p className="text-sm text-muted-foreground">School: <strong>{passwordSchool.school_name}</strong> (ID {passwordSchool.school_id}). This updates the active proprietor account and synchronizes its password across the school's database and EduProw's platform account.</p>
+                    </div>
+                    <div className="max-w-xl">
+                        <label className="mb-1 block text-sm font-medium" htmlFor="super-admin-proprietor-password">New password</label>
+                        <input id="super-admin-proprietor-password" type="password" autoComplete="new-password" minLength="8" required value={proprietorPassword} onChange={(event) => setProprietorPassword(event.target.value)} placeholder="Enter new password (at least 8 characters)" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <button type="submit" disabled={passwordSaving || proprietorPassword.length < 8} className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{passwordSaving ? "Updating..." : "Update Password"}</button>
+                        <button type="button" onClick={closePasswordForm} disabled={passwordSaving} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium">Cancel</button>
+                    </div>
+                </form>
             )}
 
             {adminSchool && (
@@ -335,6 +385,7 @@ function SuperAdminSchoolManagement() {
                                             <td className="border border-slate-200 px-4 py-3">
                                                 <div className="flex min-w-[250px] flex-wrap gap-2">
                                                     <button type="button" onClick={() => navigate(`/settings?schoolId=${school.school_id}`)} className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700">Manage</button>
+                                                    <button type="button" onClick={() => openPasswordForm(school)} className="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-50">Change Proprietor Password</button>
                                                     <button type="button" onClick={() => openAdminForm(school)} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50">Add Admin</button>
                                                     <button type="button" onClick={() => toggleStatus(school)} className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${school.is_active ? "border-rose-200 bg-white text-rose-700 hover:bg-rose-50" : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"}`}>{school.is_active ? "Deactivate" : "Activate"}</button>
                                                 </div>
