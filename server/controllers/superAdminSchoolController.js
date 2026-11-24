@@ -37,6 +37,20 @@ const createSchoolAdministrator = async (req, res, next) => {
     }
 };
 
+const changeProprietorPassword = async (req, res, next) => {
+    try {
+        const result = await schoolService.changeProprietorPassword(req.params.id, req.body?.new_password);
+        res.json({
+            success: true,
+            message: `Password changed successfully for proprietor account ${result.username}.`,
+            data: result
+        });
+    } catch (error) {
+        if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+        next(error);
+    }
+};
+
 const updateSchool = async (req, res, next) => {
     try {
         const school = await schoolService.updateSchool(req.params.id, req.body);
@@ -65,4 +79,4 @@ const setSchoolDomain = async (req, res, next) => {
     }
 };
 
-module.exports = { getSchools, getSchool, createSchool, createSchoolAdministrator, updateSchool, setSchoolStatus, setSchoolDomain };
+module.exports = { getSchools, getSchool, createSchool, createSchoolAdministrator, changeProprietorPassword, updateSchool, setSchoolStatus, setSchoolDomain };
