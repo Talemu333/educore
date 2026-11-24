@@ -121,6 +121,67 @@ const hydrateAdministratorType = async (user) => {
     };
 };
 
+const updatePasswordCopies = async (userId, schoolId, hashedPassword, mustChangePassword) => {
+    const normalizedSchoolId = Number(schoolId);
+    if (!Number.isInteger(normalizedSchoolId) || normalizedSchoolId < 1) {
+        throw new Error("A valid school ID is required to update this password.");
+    }
+
+    const schoolPool = await getSchoolDatabase(normalizedSchoolId);
+    const updateSql = `
+        UPDATE users
+        SET password = $1,
+            must_change_password = $2,
+            password_changed_at = CASE WHEN $2 THEN NULL ELSE CURRENT_TIMESTAMP END,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3 AND school_id = $4
+        RETURNING id
+    `;
+
+    if (schoolPool === pool) {
+        const result = await pool.query(updateSql, [hashedPassword, mustChangePassword, userId, normalizedSchoolId]);
+        return result.rows[0];
+    }
+
+    const previousResult = await schoolPool.query(
+        `SELECT password, must_change_password, password_changed_at
+         FROM users WHERE id = $1 AND school_id = $2 LIMIT 1`,
+        [userId, normalizedSchoolId]
+    );
+    if (!previousResult.rows[0]) return null;
+
+    const tenantResult = await schoolPool.query(
+        updateSql,
+        [hashedPassword, mustChangePassword, userId, normalizedSchoolId]
+    );
+    if (!tenantResult.rows[0]) return null;
+
+    try {
+        const centralResult = await pool.query(
+            updateSql,
+            [hashedPassword, mustChangePassword, userId, normalizedSchoolId]
+        );
+        if (!centralResult.rows[0]) {
+            throw new Error("The matching platform account could not be updated.");
+        }
+        return centralResult.rows[0];
+    } catch (error) {
+        const previous = previousResult.rows[0];
+        await schoolPool.query(
+            `UPDATE users
+             SET password = $1,
+                 must_change_password = $2,
+                 password_changed_at = $3,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $4 AND school_id = $5`,
+            [previous.password, previous.must_change_password, previous.password_changed_at, userId, normalizedSchoolId]
+        ).catch((rollbackError) => {
+            console.error("Failed to restore tenant password after platform sync error:", rollbackError);
+        });
+        throw error;
+    }
+};
+
 const findUser = async (login) => {
     const result = await database.query(`
         SELECT users.id, users.username, users.email, users.password, COALESCE(users.profile_image_url, students.profile_image_url, teachers.profile_image_url, parents.profile_image_url) AS profile_image_url,
@@ -178,7 +239,10 @@ const updateLastLogin = async (userId) => {
     );
 };
 
-const updatePassword = async (userId, hashedPassword) => {
+const updatePassword = async (userId, hashedPassword, schoolId = null) => {
+    if (schoolId) {
+        return updatePasswordCopies(userId, schoolId, hashedPassword, false);
+    }
     const result = await database.query(`
         UPDATE users
         SET password = $1,
@@ -272,20 +336,9 @@ const updateProfileImageUrl = async (userId, profileImageUrl) => {
 };
 
 const resetPasswordByAdmin = async (userId, schoolId, hashedPassword) => {
-    const result = await database.query(`
-        UPDATE users
-        SET password = $1,
-            must_change_password = TRUE,
-            password_changed_at = NULL,
-            password_reset_token_hash = NULL,
-            password_reset_expires_at = NULL,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2
-          AND school_id = $3
-          AND is_active = TRUE
-        RETURNING id, username, email, school_id, role_id, admin_type, must_change_password;
-    `, [hashedPassword, userId, schoolId]);
-    return result.rows[0];
+    const updated = await updatePasswordCopies(userId, schoolId, hashedPassword, true);
+    if (!updated) return null;
+    return findUserByIdInSchool(userId, schoolId);
 };
 
 // Email reset flows are platform-level and therefore remain on the central DB.
