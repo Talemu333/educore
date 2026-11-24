@@ -20,6 +20,7 @@ router.get("/", controller.getSchools);
 router.get("/:id", controller.getSchool);
 router.post("/", controller.createSchool);
 router.post("/:id/administrator", controller.createSchoolAdministrator);
+router.patch("/:id/proprietor-password", controller.changeProprietorPassword);
 router.post("/:id/migrate-data", async (req, res) => {
     const schoolId = Number(req.params.id);
 
