@@ -134,7 +134,7 @@ const updatePasswordCopies = async (userId, schoolId, hashedPassword, mustChange
             must_change_password = $2,
             password_changed_at = CASE WHEN $2 THEN NULL ELSE CURRENT_TIMESTAMP END,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $3 AND school_id = $4
+        WHERE id = $3 AND school_id = $4 AND is_active = TRUE
         RETURNING id
     `;
 
