@@ -25,6 +25,11 @@ export const updateSchool = async (id, payload) => {
     return response.data;
 };
 
+export const changeProprietorPassword = async (id, newPassword) => {
+    const response = await api.patch(`/super-admin/schools/${id}/proprietor-password`, { new_password: newPassword });
+    return response.data;
+};
+
 export const setSchoolStatus = async (id, isActive) => {
     const response = await api.patch(`/super-admin/schools/${id}/status`, { is_active: isActive });
     return response.data;
