@@ -204,7 +204,13 @@ const resetPassword = async (req, res, next) => {
         const tokenHash = crypto.createHash("sha256").update(String(token)).digest("hex");
         const user = await authModel.findUserByResetTokenHash(tokenHash);
         if (!user || user.is_active === false) return res.status(400).json({ success: false, message: "Invalid or expired reset token." });
-        await authModel.resetPassword(user.id, await bcrypt.hash(new_password, 10));
+        const updated = await authModel.resetPassword(
+            user.id,
+            user.school_id,
+            await bcrypt.hash(new_password, 10),
+            tokenHash
+        );
+        if (!updated) return res.status(400).json({ success: false, message: "Invalid or expired reset token." });
         res.json({ success: true, message: "Password reset successfully." });
     } catch (error) { next(error); }
 };
