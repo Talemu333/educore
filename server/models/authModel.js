@@ -1,4 +1,5 @@
 const database = require("../config/database");
+const { getSchoolDatabase } = require("../config/schoolDatabaseManager");
 
 // Authentication uses the active database context for school accounts.
 // Platform-level password-reset-by-email flows continue to use the central DB.
@@ -319,19 +320,105 @@ const findUserByResetTokenHash = async (tokenHash) => {
     return result.rows[0];
 };
 
-const resetPassword = async (userId, hashedPassword) => {
-    const result = await pool.query(`
-        UPDATE users
-        SET password = $1,
-            must_change_password = FALSE,
-            password_changed_at = CURRENT_TIMESTAMP,
-            password_reset_token_hash = NULL,
-            password_reset_expires_at = NULL,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2
-        RETURNING id;
-    `, [hashedPassword, userId]);
-    return result.rows[0];
+// A reset token is stored centrally, but school accounts may authenticate
+// against a dedicated tenant database. Update both copies so the same
+// credentials work on the school's custom domain and the platform domain.
+const resetPassword = async (userId, schoolId, hashedPassword, tokenHash) => {
+    const normalizedSchoolId = Number(schoolId);
+    if (!Number.isInteger(normalizedSchoolId) || normalizedSchoolId < 1) {
+        throw new Error("A valid school ID is required to reset this account.");
+    }
+
+    const schoolPool = await getSchoolDatabase(normalizedSchoolId);
+    const centralClient = await pool.connect();
+    const tenantClient = schoolPool === pool ? null : await schoolPool.connect();
+
+    let centralTransaction = false;
+    let tenantTransaction = false;
+
+    try {
+        await centralClient.query("BEGIN");
+        centralTransaction = true;
+
+        const tokenResult = await centralClient.query(
+            `SELECT id, school_id
+             FROM users
+             WHERE id = $1
+               AND school_id = $2
+               AND password_reset_token_hash = $3
+               AND password_reset_expires_at > CURRENT_TIMESTAMP
+               AND is_active = TRUE
+             FOR UPDATE`,
+            [userId, normalizedSchoolId, tokenHash]
+        );
+
+        if (!tokenResult.rows[0]) {
+            await centralClient.query("ROLLBACK");
+            centralTransaction = false;
+            return null;
+        }
+
+        if (tenantClient) {
+            await tenantClient.query("BEGIN");
+            tenantTransaction = true;
+
+            const tenantResult = await tenantClient.query(
+                `UPDATE users
+                 SET password = $1,
+                     must_change_password = FALSE,
+                     password_changed_at = CURRENT_TIMESTAMP,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $2
+                   AND school_id = $3
+                   AND is_active = TRUE
+                 RETURNING id`,
+                [hashedPassword, userId, normalizedSchoolId]
+            );
+
+            if (!tenantResult.rows[0]) {
+                throw new Error("The school account could not be found in its dedicated database. The password was not reset.");
+            }
+        }
+
+        const centralResult = await centralClient.query(
+            `UPDATE users
+             SET password = $1,
+                 must_change_password = FALSE,
+                 password_changed_at = CURRENT_TIMESTAMP,
+                 password_reset_token_hash = NULL,
+                 password_reset_expires_at = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2
+               AND school_id = $3
+               AND password_reset_token_hash = $4
+             RETURNING id`,
+            [hashedPassword, userId, normalizedSchoolId, tokenHash]
+        );
+
+        if (!centralResult.rows[0]) {
+            throw new Error("The password reset could not be completed. Please request a new reset link.");
+        }
+
+        // Commit the tenant copy first while the central token row remains
+        // locked. If either operation fails, the still-open transaction can
+        // be rolled back rather than reporting a partially completed reset.
+        if (tenantClient) {
+            await tenantClient.query("COMMIT");
+            tenantTransaction = false;
+        }
+
+        await centralClient.query("COMMIT");
+        centralTransaction = false;
+
+        return centralResult.rows[0];
+    } catch (error) {
+        if (tenantTransaction) await tenantClient.query("ROLLBACK").catch(() => {});
+        if (centralTransaction) await centralClient.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        tenantClient?.release();
+        centralClient.release();
+    }
 };
 
 module.exports = {
