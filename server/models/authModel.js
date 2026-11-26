@@ -157,14 +157,30 @@ const updatePasswordCopies = async (userId, schoolId, hashedPassword, mustChange
     if (!tenantResult.rows[0]) return null;
 
     try {
+        // Dedicated school databases are the source of truth for their users.
+        // Some legitimate tenant accounts (especially student accounts created
+        // after database isolation) do not have a matching row in the central
+        // platform database. Synchronize the central copy when it exists, but
+        // do not fail an otherwise successful tenant password update when it
+        // does not.
         const centralResult = await pool.query(
-            updateSql,
+            `UPDATE users
+             SET password = $1,
+                 must_change_password = $2,
+                 password_changed_at = CASE WHEN $2 THEN NULL ELSE CURRENT_TIMESTAMP END,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $3 AND school_id = $4
+             RETURNING id`,
             [hashedPassword, mustChangePassword, userId, normalizedSchoolId]
         );
+
         if (!centralResult.rows[0]) {
-            throw new Error("The matching platform account could not be updated.");
+            console.info(
+                `No central password mirror exists for school ${normalizedSchoolId}, user ${userId}; tenant password update completed.`
+            );
         }
-        return centralResult.rows[0];
+
+        return tenantResult.rows[0];
     } catch (error) {
         const previous = previousResult.rows[0];
         await schoolPool.query(
