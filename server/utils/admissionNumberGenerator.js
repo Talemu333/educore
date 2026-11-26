@@ -14,7 +14,15 @@ const generateAdmissionNumber = async (client, schoolId) => {
         throw error;
     }
 
-    const prefix = schoolResult.rows[0].admission_prefix;
+    // Always use the currently configured school admission prefix. Normalizing
+    // whitespace and casing prevents visually different prefixes such as
+    // "sas", "SAS " and "SAS" from being generated for the same school.
+    const prefix = String(schoolResult.rows[0].admission_prefix || "").trim().toUpperCase();
+    if (!prefix) {
+        const error = new Error("The school's admission prefix has not been configured.");
+        error.statusCode = 400;
+        throw error;
+    }
 
     const sequenceResult = await client.query(`
         SELECT COALESCE(MAX(admission_sequence), 0) + 1 AS next_sequence
